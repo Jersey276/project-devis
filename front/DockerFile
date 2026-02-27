@@ -1,0 +1,15 @@
+FROM node:25.7-alpine3.22 AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+
+USER nginx
+COPY --from=builder /app/prod /var/www
+EXPOSE 80
