@@ -1,4 +1,4 @@
-module project-devis-auth
+module project-devis-quote
 
 go 1.25.6
 
