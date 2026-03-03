@@ -1,115 +1,70 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppLayout } from "../layout";
-import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-  DataTableRowAction,
-  DataTableRowActions,
-  DataTableSortableHead,
-} from "@/components/custom/data-table";
-import { PencilIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { PlusIcon } from "lucide-react";
+import { ClientsTable } from "./clients-table";
 
 interface Clients {
   id: string;
-  name: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  nb_active_projects?: number;
 }
 
 const data: Clients[] = [
   {
     id: "m5gr84i9",
-    name: "John Doe",
-    email: "ken99@example.com",
-    nb_active_projects: 3,
+    first_name: "John",
+    last_name: "Doe",
+    email: "john.doe@example.com",
   },
   {
     id: "3u1reuv4",
-    name: "Jane Smith",
-    email: "Abe45@example.com",
-    nb_active_projects: 5,
+    first_name: "Jane",
+    last_name: "Smith",
+    email: "jane.smith@example.com",
   },
   {
     id: "derv1ws0",
-    name: "Monserrat",
-    email: "Monserrat44@example.com",
-    nb_active_projects: 2,
+    first_name: "Monserrat",
+    last_name: "Lopez",
+    email: "monserrat@example.com",
   },
   {
     id: "5kma53ae",
-    name: "Silas",
-    email: "Silas22@example.com",
-    nb_active_projects: 1,
+    first_name: "Silas",
+    last_name: "Brown",
+    email: "silas.brown@example.com",
   },
   {
     id: "bhqecj4p",
-    name: "Carmella",
+    first_name: "Carmella",
+    last_name: "Rossi",
     email: "carmella@example.com",
-    nb_active_projects: 0,
   },
 ];
 
-const EditActionIcon = () => <PencilIcon className="h-4 w-4" />;
-
-const row_actions: DataTableRowAction[] = [
-  {
-    type: "link",
-    label: "Voir/Modifier",
-    icon: EditActionIcon,
-    href: "/edit/{id}",
-  },
-];
-
-export default function clientIndex() {
-  const sortBy = "id";
-  const sortDirection = "asc";
-
+export default function ClientIndex() {
   return (
     <AppLayout>
       <Card>
         <CardHeader>
-          <CardTitle>Clients</CardTitle>
+          <div className="flex items-center justify-between gap-4">
+            <CardTitle>Clients</CardTitle>
+            <Button asChild>
+              <Link
+                href="/clients/create"
+                className="inline-flex items-center gap-2"
+              >
+                <PlusIcon className="h-4 w-4" />
+                Nouveau client
+              </Link>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <DataTable
-            datas={data}
-            sortBy={sortBy}
-            sortDirection={sortDirection}
-            row_actions={row_actions}
-          >
-            <DataTableHeader>
-              <DataTableRow>
-                <DataTableSortableHead name="id">ID</DataTableSortableHead>
-                <DataTableSortableHead name="name">Name</DataTableSortableHead>
-                <DataTableSortableHead name="email">
-                  Email
-                </DataTableSortableHead>
-                <DataTableSortableHead name="nb_active_projects">
-                  Projet Actifs
-                </DataTableSortableHead>
-                <DataTableHead>Actions</DataTableHead>
-              </DataTableRow>
-            </DataTableHeader>
-            <DataTableBody>
-              {data.map((client, index) => (
-                <DataTableRow key={index}>
-                  <DataTableCell>{client.id}</DataTableCell>
-                  <DataTableCell>{client.name}</DataTableCell>
-                  <DataTableCell>{client.email}</DataTableCell>
-                  <DataTableCell className="text-right">
-                    {client.nb_active_projects}
-                  </DataTableCell>
-                  <DataTableCell>
-                    <DataTableRowActions id={client.id} />
-                  </DataTableCell>
-                </DataTableRow>
-              ))}
-            </DataTableBody>
-          </DataTable>
+          <ClientsTable data={data} />
         </CardContent>
       </Card>
     </AppLayout>
