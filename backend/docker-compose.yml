@@ -1,41 +1,45 @@
 services:
   # Auth Service
   devis-auth:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: auth
     restart: unless-stopped
-    ports:
-      - 8080:8080
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USER: devis-auth
       DB_PASSWORD_FILE: /run/secrets/db_password
       DB_NAME: auth
-      PROJECT: auth
       TZ: Europe/Paris
     depends_on:
       - postgres
     secrets:
       - db_password
-  devis-devis:
-    build: .
+  devis-quote:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: quote
     restart: unless-stopped
-    ports:
-      - 8080:8080
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_USER: devis-auth
+      DB_USER: devis-quote
       DB_PASSWORD_FILE: /run/secrets/db_password
-      DB_NAME: auth
-      PROJECT: devis
+      DB_NAME: quote
       TZ: Europe/Paris
     depends_on:
       - postgres
     secrets:
       - db_password
   postgres:
-    image: postgres:18.2-alpine3.23
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: devis-auth
@@ -46,13 +50,6 @@ services:
       - postgres:/var/lib/postgresql/data
     secrets:
       - db_password
-  adminer:
-    image: adminer:5.4.2
-    restart: unless-stopped
-    ports:
-      - 8081:8081
-    depends_on:
-      - postgres
 secrets:
   db_password:
     file: secrets/postgres_pswd.txt

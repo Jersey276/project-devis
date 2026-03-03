@@ -1,0 +1,6 @@
+FROM postgres:18.2-alpine3.23
+
+RUN apk update && apk upgrade --no-cache \
+    && apk add --no-cache postgresql-contrib postgresql-client
+
+CMD ["postgres"]
