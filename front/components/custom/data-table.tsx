@@ -166,7 +166,13 @@ function DataTableBody({ children }: { children: React.ReactNode }) {
   return <TableBody>{children}</TableBody>;
 }
 
-function DataTableRowActions({ id }: { id?: string | number }) {
+function DataTableRowActions({
+  id,
+  row,
+}: {
+  id?: string | number;
+  row?: object;
+}) {
   const { row_actions } = useDataContext();
   if (!row_actions || row_actions.length === 0) {
     return null;
@@ -198,7 +204,7 @@ function DataTableRowActions({ id }: { id?: string | number }) {
             return (
               <DropdownMenuItem
                 key={element.label}
-                onClick={() => element.callback!(element)}
+                onClick={() => element.callback!(row!)}
               >
                 <div className="flex items-center gap-2">
                   {element.icon ? React.createElement(element.icon) : null}
