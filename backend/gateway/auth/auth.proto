@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+option go_package = "project-devis-gateway/auth";
+
+// AuthService provides authentication operations
+service AuthService {
+    // Register creates a new user account
+    rpc Register(RegisterRequest) returns (RegisterResponse);
+    // Login authenticates a user and returns credentials
+    rpc Login(LoginRequest) returns (LoginResponse);
+}
+
+// RegisterRequest contains user registration information
+message RegisterRequest {
+    string name = 1;
+    string email = 2;
+    string password = 3;
+}
+
+// RegisterResponse returns the result of registration
+message RegisterResponse {
+    bool success = 1;
+}
+
+// LoginRequest contains user login credentials
+message LoginRequest {
+    string email = 1;
+    string password = 2;
+    bool remember_me = 3;
+}
+
+// LoginResponse returns authentication tokens
+message LoginResponse {
+    bool success = 1;
+    string token = 2;
+}
