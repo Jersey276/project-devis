@@ -1,59 +1,70 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
+	"flag"
 	"net/http"
-	"net/http/httptest"
+	authGrpc "project-devis-auth/services/grpc"
 	"testing"
+
+	"google.golang.org/grpc"
 )
 
-// Assume you have a RegisterHandler function in your main code
-// import your handler package if needed
+	var (
+	port = flag.Int("port", 50051, "The server port")
+)
 
-func TestRegisterRoute(t *testing.T) {
-	router := setupRouter()
+type server struct {
+	authGrpc.UnimplementedAuthServiceServer
+}
 
-	// Prepare input JSON
-	input := struct {
-		Email           string
-		Password        string
-		ConfirmPassword string
-	}{
-		Email:           "test@example.com",
-		Password:        "securepassword",
-		ConfirmPassword: "securepassword",
+
+func TestRegister(t *testing.T) {
+	// Create a test server using the main function
+	ts := http.Server{
+		Addr: ":50051",
 	}
-	body, err := json.Marshal(input)
+
+	if err := ts.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		t.Fatalf("Could not start test server: %v", err)
+	}
+
+	conn, err := grpc.NewClient("localhost:50051", grpc.WithInsecure())
 	if err != nil {
-		t.Fatalf("Failed to marshal input: %v", err)
+		t.Fatalf("Failed to connect to server: %v", err)
 	}
+	defer conn.Close()
+	client := authGrpc.NewAuthServiceClient(conn)
 
-	// Create a request to the register route
-	req, err := http.NewRequest("POST", "/api/register", bytes.NewBuffer(body))
+	resp, err := client.Register(context.Background(), &authGrpc.RegisterRequest{
+		Email: "test@example.com",
+		Password: "password123",
+	})
 	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
+		t.Fatalf("Failed to register: %v", err)
 	}
-	req.Header.Set("Content-Type", "application/json")
-
-	// Use httptest to record the response
-	rr := httptest.NewRecorder()
-
-	router.ServeHTTP(rr, req)
-
-	// Check status code
-	if rr.Code != http.StatusOK {
-		t.Errorf("Expected status 200 OK, got %d", rr.Code)
+	if !resp.Success {
+		t.Fatalf("Registration failed: %v", resp.Message)
 	}
+}
 
-	// Parse response JSON
-	var resp map[string]interface{}
-	if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("Failed to unmarshal response: %v", err)
+func TestLogin(t *testing.T) {
+	// Similar setup as TestRegister, but call the Login method instead
+	conn, err := grpc.NewClient("localhost:50051", grpc.WithInsecure())
+	if err != nil {
+		t.Fatalf("Failed to connect to server: %v", err)
 	}
+	defer conn.Close()
+	client := authGrpc.NewAuthServiceClient(conn)
 
-	// Check for JWT token in response
-	if _, ok := resp["token"]; !ok {
-		t.Errorf("Expected 'token' in response, got %v", resp)
+	resp, err := client.Login(context.Background(), &authGrpc.LoginRequest{
+		Email: "test@example.com",
+		Password: "password123",
+	})
+	if err != nil {
+		t.Fatalf("Failed to login: %v", err)
+	}
+	if !resp.Success {
+		t.Fatalf("Login failed: %v", resp.Message)
 	}
 }

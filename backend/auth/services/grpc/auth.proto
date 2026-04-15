@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "project-devis-auth/auth/services/grpc";
+option go_package = "project-devis/auth/services/grpc";
 
 // AuthService provides authentication operations
 service AuthService {
@@ -8,6 +8,16 @@ service AuthService {
     rpc Register(RegisterRequest) returns (RegisterResponse);
     // Login authenticates a user and returns credentials
     rpc Login(LoginRequest) returns (LoginResponse);
+    // ResetPassword initiates a password reset process
+    rpc ResetPassword(ResetPasswordRequest) returns (GenericResponse);
+    // UpdatePassword changes a user's password
+    rpc UpdatePassword(UpdatePasswordRequest) returns (GenericResponse);
+    // VerifyEmail confirms a user's email address
+    rpc VerifyEmail(VerifyEmailRequest) returns (GenericResponse);
+    // RefreshToken generates new access and refresh tokens
+    rpc RefreshToken(RefreshTokenRequest) returns (LoginResponse);
+    // Logout invalidates a refresh token
+    rpc Logout(LogoutRequest) returns (GenericResponse);
 }
 
 // RegisterRequest contains user registration information
@@ -20,6 +30,7 @@ message RegisterRequest {
 // RegisterResponse returns the result of registration
 message RegisterResponse {
     bool success = 1;
+    int32 code = 2;
 }
 
 // LoginRequest contains user login credentials
@@ -32,5 +43,35 @@ message LoginRequest {
 // LoginResponse returns authentication tokens
 message LoginResponse {
     bool success = 1;
+    optional string token = 2;
+    optional int32 code = 3;
+    optional string refresh_token = 4;
+}
+
+message UpdatePasswordRequest {
+    string email = 1;
+    string old_password = 2;
+    string new_password = 3;
+}
+
+message GenericResponse {
+    bool success = 1;
+    int32 code = 2;
+}
+
+message ResetPasswordRequest {
+    string email = 1;
+}
+
+message VerifyEmailRequest {
+    string email = 1;
     string token = 2;
+}
+
+message RefreshTokenRequest {
+    string refresh_token = 1;
+}
+
+message LogoutRequest {
+    string refresh_token = 1;
 }
