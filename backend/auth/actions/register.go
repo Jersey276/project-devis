@@ -36,9 +36,13 @@ func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*
 		}, err
 	}
 	if !insertResp.GetSuccess() {
+		code := insertResp.GetCode()
+		if code == 0 {
+			code = CodeUserServiceError
+		}
 		return &authGrpc.RegisterResponse{
 			Success: false,
-			Code:    CodeUserServiceError,
+			Code:    code,
 		}, nil
 	}
 
