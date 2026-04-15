@@ -1,64 +1,260 @@
 package controllers
 
 import (
-	"gateway/auth"
+	"net/http"
+
+	auth "gateway/auth"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 )
 
-type server struct {
-	pb auth.AuthServiceClient
+// Auth service error codes
+const (
+	CodeSuccess             int32 = 0
+	CodeUserAlreadyExists   int32 = 1001
+	CodeUserNotFound        int32 = 1002
+	CodeInvalidCredentials  int32 = 1003
+	CodeInvalidRefreshToken int32 = 1004
+	CodeUserServiceError    int32 = 2001
+	CodeInternalError       int32 = 2002
+	CodeNotImplemented      int32 = 2003
+)
+
+// Maps auth service error codes to HTTP status codes and user-facing messages.
+var authErrorMap = map[int32]struct {
+	Status  int
+	Message string
+}{
+	CodeUserAlreadyExists:   {http.StatusConflict, "Un compte avec cette adresse email existe déjà."},
+	CodeUserNotFound:        {http.StatusNotFound, "Aucun compte trouvé avec cette adresse email."},
+	CodeInvalidCredentials:  {http.StatusUnauthorized, "Adresse email ou mot de passe incorrect."},
+	CodeInvalidRefreshToken: {http.StatusUnauthorized, "Session expirée, veuillez vous reconnecter."},
+	CodeUserServiceError:    {http.StatusBadGateway, "Erreur lors de la création du compte, veuillez réessayer."},
+	CodeInternalError:       {http.StatusInternalServerError, "Une erreur interne est survenue."},
+	CodeNotImplemented:      {http.StatusNotImplemented, "Cette fonctionnalité n'est pas encore disponible."},
+}
+
+func authError(c *gin.Context, code int32) {
+	if mapped, ok := authErrorMap[code]; ok {
+		c.JSON(mapped.Status, gin.H{"success": false, "message": mapped.Message, "code": code})
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Une erreur inconnue est survenue.", "code": code})
+	}
 }
 
 func AuthRoutes(conn *grpc.ClientConn, r *gin.RouterGroup) *gin.RouterGroup {
-	grpc := auth.NewAuthServiceClient(conn)
+	client := auth.NewAuthServiceClient(conn)
 
-	public := r.Group("/auth")
+	r.POST("/register", func(c *gin.Context) { Register(c, client) })
+	r.POST("/login", func(c *gin.Context) { Login(c, client) })
+	r.POST("/refresh", func(c *gin.Context) { RefreshToken(c, client) })
+	r.POST("/logout", func(c *gin.Context) { Logout(c, client) })
 
-	public.POST("/register", func(c *gin.Context) { Register(c, grpc) })
-	public.POST("/login", func(c *gin.Context) { Login(c, grpc) })
-	password := public.Group("/password")
-	password.POST("/reset", func(c *gin.Context) { ResetPassword(c, grpc) })
-	password.POST("/update", func(c *gin.Context) { UpdatePassword(c, grpc) })
+	password := r.Group("/password")
+	password.POST("/reset", func(c *gin.Context) { ResetPassword(c, client) })
+	password.POST("/update", func(c *gin.Context) { UpdatePassword(c, client) })
 
-	email := public.Group("/email")
-	email.POST("/verify", func(c *gin.Context) { VerifyEmail(c, grpc) })
-	return r;
+	email := r.Group("/email")
+	email.POST("/verify", func(c *gin.Context) { VerifyEmail(c, client) })
+
+	return r
 }
 
-func Register(c *gin.Context, grpc auth.AuthServiceClient) {
-	
-	grpc.Register(c.Request.Context(), &auth.RegisterRequest{
-		Email:    c.PostForm("email"),
-		Password: c.PostForm("password"),
+type registerInput struct {
+	Name     string `json:"name" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=8"`
+}
+
+func Register(c *gin.Context, client auth.AuthServiceClient) {
+	var input registerInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides.", "code": "VALIDATION_ERROR"})
+		return
+	}
+
+	resp, err := client.Register(c.Request.Context(), &auth.RegisterRequest{
+		Name:     input.Name,
+		Email:    input.Email,
+		Password: input.Password,
+	})
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"success": false, "message": "Service d'authentification indisponible.", "code": "SERVICE_UNAVAILABLE"})
+		return
+	}
+	if !resp.Success {
+		authError(c, resp.Code)
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"success": true, "message": "Inscription réussie."})
+}
+
+type loginInput struct {
+	Email      string `json:"email" binding:"required,email"`
+	Password   string `json:"password" binding:"required"`
+	RememberMe bool   `json:"remember_me"`
+}
+
+func Login(c *gin.Context, client auth.AuthServiceClient) {
+	var input loginInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides.", "code": "VALIDATION_ERROR"})
+		return
+	}
+
+	resp, err := client.Login(c.Request.Context(), &auth.LoginRequest{
+		Email:      input.Email,
+		Password:   input.Password,
+		RememberMe: input.RememberMe,
+	})
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"success": false, "message": "Service d'authentification indisponible.", "code": "SERVICE_UNAVAILABLE"})
+		return
+	}
+	if !resp.Success {
+		authError(c, resp.GetCode())
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":       true,
+		"token":         resp.GetToken(),
+		"refresh_token": resp.GetRefreshToken(),
 	})
 }
 
-func Login(c *gin.Context, grpc auth.AuthServiceClient) {
-	grpc.Login(c.Request.Context(), &auth.LoginRequest{
-		Email:    c.PostForm("email"),
-		Password: c.PostForm("password"),
+type refreshInput struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+func RefreshToken(c *gin.Context, client auth.AuthServiceClient) {
+	var input refreshInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides.", "code": "VALIDATION_ERROR"})
+		return
+	}
+
+	resp, err := client.RefreshToken(c.Request.Context(), &auth.RefreshTokenRequest{
+		RefreshToken: input.RefreshToken,
+	})
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"success": false, "message": "Service d'authentification indisponible.", "code": "SERVICE_UNAVAILABLE"})
+		return
+	}
+	if !resp.Success {
+		authError(c, resp.GetCode())
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":       true,
+		"token":         resp.GetToken(),
+		"refresh_token": resp.GetRefreshToken(),
 	})
 }
 
-func ResetPassword(c *gin.Context, grpc auth.AuthServiceClient) {
-	grpc.ResetPassword(c.Request.Context(), &auth.ResetPasswordRequest{
-		Email: c.PostForm("email"),
-	})
+type logoutInput struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
-func UpdatePassword(c *gin.Context, grpc auth.AuthServiceClient) {
-	grpc.UpdatePassword(c.Request.Context(), &auth.UpdatePasswordRequest{
-		Email:       c.PostForm("email"),
-		OldPassword: c.PostForm("old_password"),
-		NewPassword: c.PostForm("new_password"),
+func Logout(c *gin.Context, client auth.AuthServiceClient) {
+	var input logoutInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides.", "code": "VALIDATION_ERROR"})
+		return
+	}
+
+	resp, err := client.Logout(c.Request.Context(), &auth.LogoutRequest{
+		RefreshToken: input.RefreshToken,
 	})
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"success": false, "message": "Service d'authentification indisponible.", "code": "SERVICE_UNAVAILABLE"})
+		return
+	}
+	if !resp.Success {
+		authError(c, resp.Code)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Déconnexion réussie."})
 }
 
-func VerifyEmail(c *gin.Context, grpc auth.AuthServiceClient) {
-	grpc.VerifyEmail(c.Request.Context(), &auth.VerifyEmailRequest{
-		Email: c.PostForm("email"),
-		Token: c.PostForm("token"),
+func ResetPassword(c *gin.Context, client auth.AuthServiceClient) {
+	var input struct {
+		Email string `json:"email" binding:"required,email"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides.", "code": "VALIDATION_ERROR"})
+		return
+	}
+
+	resp, err := client.ResetPassword(c.Request.Context(), &auth.ResetPasswordRequest{
+		Email: input.Email,
 	})
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"success": false, "message": "Service d'authentification indisponible.", "code": "SERVICE_UNAVAILABLE"})
+		return
+	}
+	if !resp.Success {
+		authError(c, resp.Code)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Email de réinitialisation envoyé."})
+}
+
+func UpdatePassword(c *gin.Context, client auth.AuthServiceClient) {
+	var input struct {
+		Email       string `json:"email" binding:"required,email"`
+		OldPassword string `json:"old_password" binding:"required"`
+		NewPassword string `json:"new_password" binding:"required,min=8"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides.", "code": "VALIDATION_ERROR"})
+		return
+	}
+
+	resp, err := client.UpdatePassword(c.Request.Context(), &auth.UpdatePasswordRequest{
+		Email:       input.Email,
+		OldPassword: input.OldPassword,
+		NewPassword: input.NewPassword,
+	})
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"success": false, "message": "Service d'authentification indisponible.", "code": "SERVICE_UNAVAILABLE"})
+		return
+	}
+	if !resp.Success {
+		authError(c, resp.Code)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Mot de passe mis à jour."})
+}
+
+func VerifyEmail(c *gin.Context, client auth.AuthServiceClient) {
+	var input struct {
+		Email string `json:"email" binding:"required,email"`
+		Token string `json:"token" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides.", "code": "VALIDATION_ERROR"})
+		return
+	}
+
+	resp, err := client.VerifyEmail(c.Request.Context(), &auth.VerifyEmailRequest{
+		Email: input.Email,
+		Token: input.Token,
+	})
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"success": false, "message": "Service d'authentification indisponible.", "code": "SERVICE_UNAVAILABLE"})
+		return
+	}
+	if !resp.Success {
+		authError(c, resp.Code)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Email vérifié."})
 }

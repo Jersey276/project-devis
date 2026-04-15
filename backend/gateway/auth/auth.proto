@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+option go_package = "gateway/auth";
+
+service AuthService {
+    rpc Register(RegisterRequest) returns (RegisterResponse);
+    rpc Login(LoginRequest) returns (LoginResponse);
+    rpc ResetPassword(ResetPasswordRequest) returns (GenericResponse);
+    rpc UpdatePassword(UpdatePasswordRequest) returns (GenericResponse);
+    rpc VerifyEmail(VerifyEmailRequest) returns (GenericResponse);
+    rpc RefreshToken(RefreshTokenRequest) returns (LoginResponse);
+    rpc Logout(LogoutRequest) returns (GenericResponse);
+}
+
+message RegisterRequest {
+    string name = 1;
+    string email = 2;
+    string password = 3;
+}
+
+message RegisterResponse {
+    bool success = 1;
+    int32 code = 2;
+}
+
+message LoginRequest {
+    string email = 1;
+    string password = 2;
+    bool remember_me = 3;
+}
+
+message LoginResponse {
+    bool success = 1;
+    optional string token = 2;
+    optional int32 code = 3;
+    optional string refresh_token = 4;
+}
+
+message UpdatePasswordRequest {
+    string email = 1;
+    string old_password = 2;
+    string new_password = 3;
+}
+
+message GenericResponse {
+    bool success = 1;
+    int32 code = 2;
+}
+
+message ResetPasswordRequest {
+    string email = 1;
+}
+
+message VerifyEmailRequest {
+    string email = 1;
+    string token = 2;
+}
+
+message RefreshTokenRequest {
+    string refresh_token = 1;
+}
+
+message LogoutRequest {
+    string refresh_token = 1;
+}
