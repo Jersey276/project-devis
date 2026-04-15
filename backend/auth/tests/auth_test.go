@@ -1,70 +1,380 @@
-package main
+﻿package tests
 
 import (
 	"context"
-	"flag"
-	"net/http"
-	authGrpc "project-devis-auth/services/grpc"
+	"os"
 	"testing"
+	"time"
 
-	"google.golang.org/grpc"
+	"project-devis-auth/actions"
+	authGrpc "project-devis-auth/services/grpc"
+	userGrpc "project-devis-auth/services/user_auth"
+
+	"github.com/DATA-DOG/go-sqlmock"
 )
 
-	var (
-	port = flag.Int("port", 50051, "The server port")
-)
-
-type server struct {
-	authGrpc.UnimplementedAuthServiceServer
+func TestMain(m *testing.M) {
+	os.Setenv("APP_KEY", "test-secret-key-for-jwt-signing-32b")
+	os.Exit(m.Run())
 }
 
+// --- helpers ---
 
-func TestRegister(t *testing.T) {
-	// Create a test server using the main function
-	ts := http.Server{
-		Addr: ":50051",
-	}
-
-	if err := ts.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		t.Fatalf("Could not start test server: %v", err)
-	}
-
-	conn, err := grpc.NewClient("localhost:50051", grpc.WithInsecure())
+func setupServer(t *testing.T, mockUser *MockUserClient) (*actions.Server, sqlmock.Sqlmock) {
+	t.Helper()
+	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("Failed to connect to server: %v", err)
+		t.Fatalf("failed to create sqlmock: %v", err)
 	}
-	defer conn.Close()
-	client := authGrpc.NewAuthServiceClient(conn)
+	t.Cleanup(func() { db.Close() })
+	srv := actions.NewServerWithClient(db, mockUser)
+	return srv, mock
+}
 
-	resp, err := client.Register(context.Background(), &authGrpc.RegisterRequest{
-		Email: "test@example.com",
+// --- Register ---
+
+func TestRegister_Success(t *testing.T) {
+	mockUser := &MockUserClient{
+		InsertUserFn: func(ctx context.Context, req *userGrpc.InsertUserRequest) (*userGrpc.InsertUserResponse, error) {
+			return &userGrpc.InsertUserResponse{Success: true, Code: actions.CodeSuccess, UserId: "user-123"}, nil
+		},
+	}
+	srv, mock := setupServer(t, mockUser)
+
+	// SELECT email â†’ no rows (user doesn't exist)
+	mock.ExpectQuery(`SELECT email FROM auth WHERE email = \$1`).
+		WithArgs("new@example.com").
+		WillReturnRows(sqlmock.NewRows([]string{"email"}))
+
+	// INSERT auth
+	mock.ExpectExec(`INSERT INTO auth`).
+		WithArgs("user-123", "new@example.com", sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
+		Name:     "testuser",
+		Email:    "new@example.com",
 		Password: "password123",
 	})
 	if err != nil {
-		t.Fatalf("Failed to register: %v", err)
+		t.Fatalf("unexpected error: %v", err)
 	}
 	if !resp.Success {
-		t.Fatalf("Registration failed: %v", resp.Message)
+		t.Fatalf("expected success, got code %d", resp.Code)
+	}
+	if resp.Code != actions.CodeSuccess {
+		t.Fatalf("expected code %d, got %d", actions.CodeSuccess, resp.Code)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
 	}
 }
 
-func TestLogin(t *testing.T) {
-	// Similar setup as TestRegister, but call the Login method instead
-	conn, err := grpc.NewClient("localhost:50051", grpc.WithInsecure())
-	if err != nil {
-		t.Fatalf("Failed to connect to server: %v", err)
-	}
-	defer conn.Close()
-	client := authGrpc.NewAuthServiceClient(conn)
+func TestRegister_UserAlreadyExists(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
 
-	resp, err := client.Login(context.Background(), &authGrpc.LoginRequest{
-		Email: "test@example.com",
+	// SELECT email â†’ returns a row (user exists)
+	mock.ExpectQuery(`SELECT email FROM auth WHERE email = \$1`).
+		WithArgs("existing@example.com").
+		WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("existing@example.com"))
+
+	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
+		Name:     "testuser",
+		Email:    "existing@example.com",
 		Password: "password123",
 	})
 	if err != nil {
-		t.Fatalf("Failed to login: %v", err)
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for existing user")
+	}
+	if resp.Code != actions.CodeUserAlreadyExists {
+		t.Fatalf("expected code %d, got %d", actions.CodeUserAlreadyExists, resp.Code)
+	}
+}
+
+func TestRegister_RollbackOnAuthInsertFailure(t *testing.T) {
+	var deletedUserID string
+	mockUser := &MockUserClient{
+		InsertUserFn: func(ctx context.Context, req *userGrpc.InsertUserRequest) (*userGrpc.InsertUserResponse, error) {
+			return &userGrpc.InsertUserResponse{Success: true, Code: actions.CodeSuccess, UserId: "user-456"}, nil
+		},
+		DeleteUserFn: func(ctx context.Context, req *userGrpc.DeleteUserRequest) (*userGrpc.GenericResponse, error) {
+			deletedUserID = req.UserId
+			return &userGrpc.GenericResponse{Success: true, Code: actions.CodeSuccess}, nil
+		},
+	}
+	srv, mock := setupServer(t, mockUser)
+
+	// SELECT email â†’ no rows
+	mock.ExpectQuery(`SELECT email FROM auth WHERE email = \$1`).
+		WithArgs("fail@example.com").
+		WillReturnRows(sqlmock.NewRows([]string{"email"}))
+
+	// INSERT auth â†’ fails
+	mock.ExpectExec(`INSERT INTO auth`).
+		WithArgs("user-456", "fail@example.com", sqlmock.AnyArg()).
+		WillReturnError(sqlmock.ErrCancelled)
+
+	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
+		Name:     "testuser",
+		Email:    "fail@example.com",
+		Password: "password123",
+	})
+	if err == nil {
+		t.Fatal("expected error from failed insert")
+	}
+	if resp.Success {
+		t.Fatal("expected failure")
+	}
+	if resp.Code != actions.CodeInternalError {
+		t.Fatalf("expected code %d, got %d", actions.CodeInternalError, resp.Code)
+	}
+	if deletedUserID != "user-456" {
+		t.Fatalf("expected rollback for user-456, got %q", deletedUserID)
+	}
+}
+
+func TestRegister_UserServiceError(t *testing.T) {
+	mockUser := &MockUserClient{
+		InsertUserFn: func(ctx context.Context, req *userGrpc.InsertUserRequest) (*userGrpc.InsertUserResponse, error) {
+			return &userGrpc.InsertUserResponse{Success: false, Code: actions.CodeUserServiceError}, nil
+		},
+	}
+	srv, mock := setupServer(t, mockUser)
+
+	mock.ExpectQuery(`SELECT email FROM auth WHERE email = \$1`).
+		WithArgs("new@example.com").
+		WillReturnRows(sqlmock.NewRows([]string{"email"}))
+
+	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
+		Name:     "testuser",
+		Email:    "new@example.com",
+		Password: "password123",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure when user service errors")
+	}
+	if resp.Code != actions.CodeUserServiceError {
+		t.Fatalf("expected code %d, got %d", actions.CodeUserServiceError, resp.Code)
+	}
+}
+
+// --- Login ---
+
+func TestLogin_Success(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	// bcrypt hash of "password123" (cost 14 is slow for tests, use a pre-computed hash)
+	hashedPassword := "$2a$14$XC05j1ejsVEfzQm6g5f52.dw2EN.cadB6VJPH2R5YsdKIpYHmf/NW"
+
+	mock.ExpectQuery(`SELECT email, password, user_id FROM auth WHERE email = \$1`).
+		WithArgs("user@example.com").
+		WillReturnRows(sqlmock.NewRows([]string{"email", "password", "user_id"}).
+			AddRow("user@example.com", hashedPassword, "user-789"))
+
+	// INSERT refresh token
+	mock.ExpectExec(`INSERT INTO refresh_tokens`).
+		WithArgs("user-789", sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	resp, err := srv.Login(context.Background(), &authGrpc.LoginRequest{
+		Email:    "user@example.com",
+		Password: "password123",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
 	if !resp.Success {
-		t.Fatalf("Login failed: %v", resp.Message)
+		t.Fatalf("expected success, got code %d", resp.GetCode())
+	}
+	if resp.GetToken() == "" {
+		t.Fatal("expected access token, got empty")
+	}
+	if resp.GetRefreshToken() == "" {
+		t.Fatal("expected refresh token, got empty")
+	}
+}
+
+func TestLogin_UserNotFound(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	mock.ExpectQuery(`SELECT email, password, user_id FROM auth WHERE email = \$1`).
+		WithArgs("unknown@example.com").
+		WillReturnRows(sqlmock.NewRows([]string{"email", "password", "user_id"}))
+
+	resp, err := srv.Login(context.Background(), &authGrpc.LoginRequest{
+		Email:    "unknown@example.com",
+		Password: "password123",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for unknown user")
+	}
+	if resp.GetCode() != actions.CodeUserNotFound {
+		t.Fatalf("expected code %d, got %d", actions.CodeUserNotFound, resp.GetCode())
+	}
+}
+
+func TestLogin_InvalidPassword(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	// Hash for "correctpassword", NOT "wrongpassword"
+	hashedPassword := "$2a$14$XC05j1ejsVEfzQm6g5f52.dw2EN.cadB6VJPH2R5YsdKIpYHmf/NW"
+
+	mock.ExpectQuery(`SELECT email, password, user_id FROM auth WHERE email = \$1`).
+		WithArgs("user@example.com").
+		WillReturnRows(sqlmock.NewRows([]string{"email", "password", "user_id"}).
+			AddRow("user@example.com", hashedPassword, "user-789"))
+
+	resp, err := srv.Login(context.Background(), &authGrpc.LoginRequest{
+		Email:    "user@example.com",
+		Password: "wrongpassword",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for wrong password")
+	}
+	if resp.GetCode() != actions.CodeInvalidCredentials {
+		t.Fatalf("expected code %d, got %d", actions.CodeInvalidCredentials, resp.GetCode())
+	}
+}
+
+func TestLogin_RememberMe(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	hashedPassword := "$2a$14$XC05j1ejsVEfzQm6g5f52.dw2EN.cadB6VJPH2R5YsdKIpYHmf/NW"
+
+	mock.ExpectQuery(`SELECT email, password, user_id FROM auth WHERE email = \$1`).
+		WithArgs("user@example.com").
+		WillReturnRows(sqlmock.NewRows([]string{"email", "password", "user_id"}).
+			AddRow("user@example.com", hashedPassword, "user-789"))
+
+	mock.ExpectExec(`INSERT INTO refresh_tokens`).
+		WithArgs("user-789", sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	resp, err := srv.Login(context.Background(), &authGrpc.LoginRequest{
+		Email:      "user@example.com",
+		Password:   "password123",
+		RememberMe: true,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatalf("expected success, got code %d", resp.GetCode())
+	}
+	if resp.GetToken() == "" || resp.GetRefreshToken() == "" {
+		t.Fatal("expected both tokens")
+	}
+}
+
+// --- RefreshToken ---
+
+func TestRefreshToken_Success(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	// We need a real refresh token in the DB. We'll simulate:
+	// 1. ValidateRefreshToken: SELECT by token_hash â†’ returns user_id + future expiry
+	// 2. Get email: SELECT email from auth
+	// 3. DeleteRefreshToken: DELETE by token_hash
+	// 4. GenerateRefreshToken: INSERT new token
+
+	fakeTokenHash := sqlmock.AnyArg()
+
+	// ValidateRefreshToken SELECT
+	mock.ExpectQuery(`SELECT user_id, expires_at FROM refresh_tokens WHERE token_hash = \$1`).
+		WithArgs(fakeTokenHash).
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "expires_at"}).
+			AddRow("user-789", time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)))
+
+	// Get email
+	mock.ExpectQuery(`SELECT email FROM auth WHERE user_id = \$1`).
+		WithArgs("user-789").
+		WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("user@example.com"))
+
+	// DeleteRefreshToken
+	mock.ExpectExec(`DELETE FROM refresh_tokens WHERE token_hash = \$1`).
+		WithArgs(fakeTokenHash).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	// GenerateRefreshToken INSERT
+	mock.ExpectExec(`INSERT INTO refresh_tokens`).
+		WithArgs("user-789", sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	resp, err := srv.RefreshToken(context.Background(), &authGrpc.RefreshTokenRequest{
+		RefreshToken: "some-uuid-token",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatalf("expected success, got code %d", resp.GetCode())
+	}
+	if resp.GetToken() == "" {
+		t.Fatal("expected new access token")
+	}
+	if resp.GetRefreshToken() == "" {
+		t.Fatal("expected new refresh token")
+	}
+}
+
+func TestRefreshToken_InvalidToken(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	// ValidateRefreshToken SELECT â†’ no rows
+	mock.ExpectQuery(`SELECT user_id, expires_at FROM refresh_tokens WHERE token_hash = \$1`).
+		WithArgs(sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "expires_at"}))
+
+	resp, err := srv.RefreshToken(context.Background(), &authGrpc.RefreshTokenRequest{
+		RefreshToken: "invalid-token",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for invalid refresh token")
+	}
+	if resp.GetCode() != actions.CodeInvalidRefreshToken {
+		t.Fatalf("expected code %d, got %d", actions.CodeInvalidRefreshToken, resp.GetCode())
+	}
+}
+
+// --- Logout ---
+
+func TestLogout_Success(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	mock.ExpectExec(`DELETE FROM refresh_tokens WHERE token_hash = \$1`).
+		WithArgs(sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	resp, err := srv.Logout(context.Background(), &authGrpc.LogoutRequest{
+		RefreshToken: "some-uuid-token",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatalf("expected success, got code %d", resp.Code)
 	}
 }

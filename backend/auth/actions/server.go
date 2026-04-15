@@ -20,3 +20,10 @@ func NewServer(db *sql.DB, userConn *grpc.ClientConn) *Server {
 		userClient: userGrpc.NewAuthUserServiceClient(userConn),
 	}
 }
+
+func NewServerWithClient(db *sql.DB, userClient userGrpc.AuthUserServiceClient) *Server {
+	return &Server{
+		db:         db,
+		userClient: userClient,
+	}
+}
