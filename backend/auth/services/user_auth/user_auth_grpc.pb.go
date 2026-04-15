@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v7.34.0
-// source: user_auth.proto
+// source: services/user_auth/user_auth.proto
 
 package user_auth
 
@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthUserService_InsertUser_FullMethodName = "/AuthUserService/InsertUser"
-	AuthUserService_DeleteUser_FullMethodName = "/AuthUserService/DeleteUser"
+	AuthUserService_InsertUser_FullMethodName = "/user_auth.AuthUserService/InsertUser"
+	AuthUserService_DeleteUser_FullMethodName = "/user_auth.AuthUserService/DeleteUser"
 )
 
 // AuthUserServiceClient is the client API for AuthUserService service.
@@ -150,7 +150,7 @@ func _AuthUserService_DeleteUser_Handler(srv interface{}, ctx context.Context, d
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AuthUserService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "AuthUserService",
+	ServiceName: "user_auth.AuthUserService",
 	HandlerType: (*AuthUserServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -163,5 +163,5 @@ var AuthUserService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "user_auth.proto",
+	Metadata: "services/user_auth/user_auth.proto",
 }

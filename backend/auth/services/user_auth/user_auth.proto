@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+package user_auth;
+
 option go_package = "project-devis-auth/services/user_auth";
 
 // AuthUserService serves communication with user service
@@ -17,7 +19,7 @@ message InsertUserRequest {
 
 message InsertUserResponse {
     bool success = 1;
-    string message = 2;
+    int32 code = 2;
     string user_id = 3;
 }
 
@@ -27,5 +29,5 @@ message DeleteUserRequest {
 
 message GenericResponse {
     bool success = 1;
-    string message = 2;
+    int32 code = 2;
 }

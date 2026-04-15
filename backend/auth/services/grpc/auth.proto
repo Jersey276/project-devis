@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+package auth;
+
 option go_package = "project-devis/auth/services/grpc";
 
 // AuthService provides authentication operations
