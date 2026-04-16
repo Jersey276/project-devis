@@ -1,0 +1,25 @@
+name: Deploy to production
+on:
+  pull_request:
+    branches: ["main"]
+jobs:
+  deploy:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: remote_ssh_commands
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd projet-ci
+            git pull
+            npm install
+            npm run build
+            pm2 restart npm

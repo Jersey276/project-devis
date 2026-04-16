@@ -4,10 +4,8 @@ on:
   pull_request:
     paths:
       - "backend/auth/**"
-
-  push:
-    paths:
-      - "backend/auth/**"
+    branches:
+      - develop
 
 permissions:
   contents: read
