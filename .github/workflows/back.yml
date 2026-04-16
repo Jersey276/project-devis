@@ -14,7 +14,8 @@ permissions:
   packages: write
   pull-requests: read
 jobs:
-  changes:
+  check-changes:
+    name: Check for changes
     runs-on: ubuntu-latest
     outputs:
       auth: ${{ steps.filter.outputs.auth }}
@@ -28,8 +29,8 @@ jobs:
               - "backend/auth/**"
 
   ci-auth:
-    needs: changes
-    if: needs.changes.outputs.auth == 'true'
+    needs: check-changes
+    if: needs.check-changes.outputs.auth == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -43,15 +44,6 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: "1.25.x"
-
-      - name: Auto-format code
-        run: gofmt -w .
-
-      - name: Commit formatted code
-        uses: stefanzweifel/git-auto-commit-action@v7
-        with:
-          commit_message: "ci: auto-format auth"
-          file_pattern: "backend/auth/**/*.go"
 
       - name: Run tests with coverage
         id: tests
