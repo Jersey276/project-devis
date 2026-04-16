@@ -10,8 +10,9 @@ on:
       - "backend/auth/**"
 
 permissions:
-  contents: write
-
+  contents: read
+  packages: write
+  pull-requests: read
 jobs:
   changes:
     runs-on: ubuntu-latest
