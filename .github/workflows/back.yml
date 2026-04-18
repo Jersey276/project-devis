@@ -5,7 +5,7 @@ on:
     paths:
       - "backend/auth/**"
     branches:
-      - develop
+      - dev
 
 permissions:
   contents: read
