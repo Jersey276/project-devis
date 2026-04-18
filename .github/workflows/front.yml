@@ -5,7 +5,7 @@ on:
     branches:
       - dev
     paths:
-      - "frontend/**"
+      - "front/**"
 jobs:
   build-and-push-docker:
     runs-on: ubuntu-latest
