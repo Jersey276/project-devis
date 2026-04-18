@@ -1,4 +1,4 @@
-﻿package tests
+package tests
 
 import (
 	"context"
@@ -31,6 +31,20 @@ func setupServer(t *testing.T, mockUser *MockUserClient) (*actions.Server, sqlmo
 	return srv, mock
 }
 
+// findFieldError reports whether the given field has the given error code in the response.
+func findFieldError(fieldErrors []*authGrpc.FormFieldError, field string, code int32) bool {
+	for _, fe := range fieldErrors {
+		if fe.Field == field {
+			for _, c := range fe.ErrorCode {
+				if c == code {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
 // --- Register ---
 
 func TestRegister_Success(t *testing.T) {
@@ -41,12 +55,10 @@ func TestRegister_Success(t *testing.T) {
 	}
 	srv, mock := setupServer(t, mockUser)
 
-	// SELECT email â†’ no rows (user doesn't exist)
 	mock.ExpectQuery(`SELECT email FROM auth WHERE email = \$1`).
 		WithArgs("new@example.com").
 		WillReturnRows(sqlmock.NewRows([]string{"email"}))
 
-	// INSERT auth
 	mock.ExpectExec(`INSERT INTO auth`).
 		WithArgs("user-123", "new@example.com", sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
@@ -65,6 +77,9 @@ func TestRegister_Success(t *testing.T) {
 	if resp.Code != actions.CodeSuccess {
 		t.Fatalf("expected code %d, got %d", actions.CodeSuccess, resp.Code)
 	}
+	if len(resp.FieldErrors) != 0 {
+		t.Fatalf("expected no field errors on success, got %v", resp.FieldErrors)
+	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet expectations: %v", err)
 	}
@@ -74,7 +89,6 @@ func TestRegister_UserAlreadyExists(t *testing.T) {
 	mockUser := &MockUserClient{}
 	srv, mock := setupServer(t, mockUser)
 
-	// SELECT email â†’ returns a row (user exists)
 	mock.ExpectQuery(`SELECT email FROM auth WHERE email = \$1`).
 		WithArgs("existing@example.com").
 		WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("existing@example.com"))
@@ -93,6 +107,107 @@ func TestRegister_UserAlreadyExists(t *testing.T) {
 	if resp.Code != actions.CodeUserAlreadyExists {
 		t.Fatalf("expected code %d, got %d", actions.CodeUserAlreadyExists, resp.Code)
 	}
+	if !findFieldError(resp.FieldErrors, "email", actions.FieldErrAlreadyInUse) {
+		t.Fatal("expected FieldErrAlreadyInUse on email field")
+	}
+}
+
+func TestRegister_ValidationMissingName(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
+		Name:     "",
+		Email:    "test@example.com",
+		Password: "password123",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for missing name")
+	}
+	if !findFieldError(resp.FieldErrors, "name", actions.FieldErrRequired) {
+		t.Fatal("expected FieldErrRequired on name field")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations (no DB calls expected): %v", err)
+	}
+}
+
+func TestRegister_ValidationInvalidEmail(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
+		Name:     "testuser",
+		Email:    "not-an-email",
+		Password: "password123",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for invalid email")
+	}
+	if !findFieldError(resp.FieldErrors, "email", actions.FieldErrInvalidFormat) {
+		t.Fatal("expected FieldErrInvalidFormat on email field")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations (no DB calls expected): %v", err)
+	}
+}
+
+func TestRegister_ValidationPasswordTooShort(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
+		Name:     "testuser",
+		Email:    "test@example.com",
+		Password: "short",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for short password")
+	}
+	if !findFieldError(resp.FieldErrors, "password", actions.FieldErrTooShort) {
+		t.Fatal("expected FieldErrTooShort on password field")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations (no DB calls expected): %v", err)
+	}
+}
+
+func TestRegister_ValidationMultipleErrors(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
+		Name:     "",
+		Email:    "bad-email",
+		Password: "x",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for multiple invalid fields")
+	}
+	if !findFieldError(resp.FieldErrors, "name", actions.FieldErrRequired) {
+		t.Fatal("expected FieldErrRequired on name field")
+	}
+	if !findFieldError(resp.FieldErrors, "email", actions.FieldErrInvalidFormat) {
+		t.Fatal("expected FieldErrInvalidFormat on email field")
+	}
+	if !findFieldError(resp.FieldErrors, "password", actions.FieldErrTooShort) {
+		t.Fatal("expected FieldErrTooShort on password field")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations (no DB calls expected): %v", err)
+	}
 }
 
 func TestRegister_RollbackOnAuthInsertFailure(t *testing.T) {
@@ -108,12 +223,10 @@ func TestRegister_RollbackOnAuthInsertFailure(t *testing.T) {
 	}
 	srv, mock := setupServer(t, mockUser)
 
-	// SELECT email â†’ no rows
 	mock.ExpectQuery(`SELECT email FROM auth WHERE email = \$1`).
 		WithArgs("fail@example.com").
 		WillReturnRows(sqlmock.NewRows([]string{"email"}))
 
-	// INSERT auth â†’ fails
 	mock.ExpectExec(`INSERT INTO auth`).
 		WithArgs("user-456", "fail@example.com", sqlmock.AnyArg()).
 		WillReturnError(sqlmock.ErrCancelled)
@@ -289,31 +402,21 @@ func TestRefreshToken_Success(t *testing.T) {
 	mockUser := &MockUserClient{}
 	srv, mock := setupServer(t, mockUser)
 
-	// We need a real refresh token in the DB. We'll simulate:
-	// 1. ValidateRefreshToken: SELECT by token_hash â†’ returns user_id + future expiry
-	// 2. Get email: SELECT email from auth
-	// 3. DeleteRefreshToken: DELETE by token_hash
-	// 4. GenerateRefreshToken: INSERT new token
-
 	fakeTokenHash := sqlmock.AnyArg()
 
-	// ValidateRefreshToken SELECT
 	mock.ExpectQuery(`SELECT user_id, expires_at FROM refresh_tokens WHERE token_hash = \$1`).
 		WithArgs(fakeTokenHash).
 		WillReturnRows(sqlmock.NewRows([]string{"user_id", "expires_at"}).
 			AddRow("user-789", time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)))
 
-	// Get email
 	mock.ExpectQuery(`SELECT email FROM auth WHERE user_id = \$1`).
 		WithArgs("user-789").
 		WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("user@example.com"))
 
-	// DeleteRefreshToken
 	mock.ExpectExec(`DELETE FROM refresh_tokens WHERE token_hash = \$1`).
 		WithArgs(fakeTokenHash).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	// GenerateRefreshToken INSERT
 	mock.ExpectExec(`INSERT INTO refresh_tokens`).
 		WithArgs("user-789", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
@@ -339,7 +442,6 @@ func TestRefreshToken_InvalidToken(t *testing.T) {
 	mockUser := &MockUserClient{}
 	srv, mock := setupServer(t, mockUser)
 
-	// ValidateRefreshToken SELECT â†’ no rows
 	mock.ExpectQuery(`SELECT user_id, expires_at FROM refresh_tokens WHERE token_hash = \$1`).
 		WithArgs(sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"user_id", "expires_at"}))

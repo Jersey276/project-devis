@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
+	"strings"
 
 	_ "github.com/lib/pq"
 )
@@ -31,6 +33,15 @@ func ConnectDB() *sql.DB {
 	}
 
 	password := DBPassword.GetValue()
+	if password == "" {
+		if path := DBPasswordFile.GetValue(); path != "" {
+			data, err := os.ReadFile(path)
+			if err != nil {
+				log.Fatalf("failed to read DB_PASSWORD_FILE: %v", err)
+			}
+			password = strings.TrimSpace(string(data))
+		}
+	}
 	if password == "" {
 		password = PostgresPassword.GetValue()
 	}

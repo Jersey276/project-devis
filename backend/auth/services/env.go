@@ -20,6 +20,7 @@ const (
  DBPort                  EnvKey = "DB_PORT"
  DBUser                  EnvKey = "DB_USER"
  DBPassword              EnvKey = "DB_PASSWORD"
+ DBPasswordFile          EnvKey = "DB_PASSWORD_FILE"
  DBName                  EnvKey = "DB_NAME"
  UserServiceAddress      EnvKey = "USER_SERVICE_ADDRESS"
 )
