@@ -7,7 +7,7 @@ option go_package = "project-devis/auth/services/grpc";
 // AuthService provides authentication operations
 service AuthService {
     // Register creates a new user account
-    rpc Register(RegisterRequest) returns (RegisterResponse);
+    rpc Register(RegisterRequest) returns (FormGenericResponse);
     // Login authenticates a user and returns credentials
     rpc Login(LoginRequest) returns (LoginResponse);
     // ResetPassword initiates a password reset process
@@ -27,12 +27,6 @@ message RegisterRequest {
     string name = 1;
     string email = 2;
     string password = 3;
-}
-
-// RegisterResponse returns the result of registration
-message RegisterResponse {
-    bool success = 1;
-    int32 code = 2;
 }
 
 // LoginRequest contains user login credentials
@@ -76,4 +70,15 @@ message RefreshTokenRequest {
 
 message LogoutRequest {
     string refresh_token = 1;
+}
+
+message FormGenericResponse {
+    bool success = 1;
+    int32 code = 2;
+    repeated FormFieldError field_errors = 3;
+}
+
+message FormFieldError {
+    string field = 1;
+    repeated int32 error_code = 2;
 }
