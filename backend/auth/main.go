@@ -12,6 +12,7 @@ import (
 	authGrpc "project-devis-auth/services/grpc"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 //go:embed migrations
@@ -30,7 +31,7 @@ func main() {
 	if userServiceAddress == "" {
 		userServiceAddress = "localhost:50052"
 	}
-	userConn, err := grpc.NewClient(userServiceAddress)
+	userConn, err := grpc.NewClient(userServiceAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("failed to create user service client: %v", err)
 	}
@@ -38,7 +39,7 @@ func main() {
 
 	authServer := actions.NewServer(db, userConn)
 
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", *port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

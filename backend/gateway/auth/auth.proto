@@ -1,9 +1,11 @@
 syntax = "proto3";
 
+package auth;
+
 option go_package = "gateway/auth";
 
 service AuthService {
-    rpc Register(RegisterRequest) returns (RegisterResponse);
+    rpc Register(RegisterRequest) returns (FormGenericResponse);
     rpc Login(LoginRequest) returns (LoginResponse);
     rpc ResetPassword(ResetPasswordRequest) returns (GenericResponse);
     rpc UpdatePassword(UpdatePasswordRequest) returns (GenericResponse);
@@ -16,11 +18,6 @@ message RegisterRequest {
     string name = 1;
     string email = 2;
     string password = 3;
-}
-
-message RegisterResponse {
-    bool success = 1;
-    int32 code = 2;
 }
 
 message LoginRequest {
@@ -62,4 +59,15 @@ message RefreshTokenRequest {
 
 message LogoutRequest {
     string refresh_token = 1;
+}
+
+message FormGenericResponse {
+    bool success = 1;
+    int32 code = 2;
+    repeated FormFieldError field_errors = 3;
+}
+
+message FormFieldError {
+    string field = 1;
+    repeated int32 error_code = 2;
 }

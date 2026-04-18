@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v7.34.0
-// source: auth.proto
+// source: auth/auth.proto
 
 package auth
 
@@ -19,20 +19,20 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_Register_FullMethodName       = "/AuthService/Register"
-	AuthService_Login_FullMethodName          = "/AuthService/Login"
-	AuthService_ResetPassword_FullMethodName  = "/AuthService/ResetPassword"
-	AuthService_UpdatePassword_FullMethodName = "/AuthService/UpdatePassword"
-	AuthService_VerifyEmail_FullMethodName    = "/AuthService/VerifyEmail"
-	AuthService_RefreshToken_FullMethodName   = "/AuthService/RefreshToken"
-	AuthService_Logout_FullMethodName         = "/AuthService/Logout"
+	AuthService_Register_FullMethodName       = "/auth.AuthService/Register"
+	AuthService_Login_FullMethodName          = "/auth.AuthService/Login"
+	AuthService_ResetPassword_FullMethodName  = "/auth.AuthService/ResetPassword"
+	AuthService_UpdatePassword_FullMethodName = "/auth.AuthService/UpdatePassword"
+	AuthService_VerifyEmail_FullMethodName    = "/auth.AuthService/VerifyEmail"
+	AuthService_RefreshToken_FullMethodName   = "/auth.AuthService/RefreshToken"
+	AuthService_Logout_FullMethodName         = "/auth.AuthService/Logout"
 )
 
 // AuthServiceClient is the client API for AuthService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthServiceClient interface {
-	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
+	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*FormGenericResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	ResetPassword(ctx context.Context, in *ResetPasswordRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	UpdatePassword(ctx context.Context, in *UpdatePasswordRequest, opts ...grpc.CallOption) (*GenericResponse, error)
@@ -49,9 +49,9 @@ func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
 	return &authServiceClient{cc}
 }
 
-func (c *authServiceClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
+func (c *authServiceClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*FormGenericResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RegisterResponse)
+	out := new(FormGenericResponse)
 	err := c.cc.Invoke(ctx, AuthService_Register_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -123,7 +123,7 @@ func (c *authServiceClient) Logout(ctx context.Context, in *LogoutRequest, opts 
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
 type AuthServiceServer interface {
-	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
+	Register(context.Context, *RegisterRequest) (*FormGenericResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	ResetPassword(context.Context, *ResetPasswordRequest) (*GenericResponse, error)
 	UpdatePassword(context.Context, *UpdatePasswordRequest) (*GenericResponse, error)
@@ -140,7 +140,7 @@ type AuthServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAuthServiceServer struct{}
 
-func (UnimplementedAuthServiceServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
+func (UnimplementedAuthServiceServer) Register(context.Context, *RegisterRequest) (*FormGenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Register not implemented")
 }
 func (UnimplementedAuthServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
@@ -312,7 +312,7 @@ func _AuthService_Logout_Handler(srv interface{}, ctx context.Context, dec func(
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AuthService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "AuthService",
+	ServiceName: "auth.AuthService",
 	HandlerType: (*AuthServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -345,5 +345,5 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "auth.proto",
+	Metadata: "auth/auth.proto",
 }
