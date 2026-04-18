@@ -1,12 +1,15 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
+	"os"
 
 	auth "gateway/auth"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // Auth service error codes
@@ -43,7 +46,15 @@ func authError(c *gin.Context, code int32) {
 	}
 }
 
-func AuthRoutes(conn *grpc.ClientConn, r *gin.RouterGroup) *gin.RouterGroup {
+func AuthRoutes(r *gin.RouterGroup) *gin.RouterGroup {
+	address := os.Getenv("AUTH_SERVICE_ADDRESS")
+	if address == "" {
+		address = "localhost:50051"
+	}
+	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Failed to connect to auth gRPC server: %v", err)
+	}
 	client := auth.NewAuthServiceClient(conn)
 
 	r.POST("/register", func(c *gin.Context) { Register(c, client) })
@@ -62,15 +73,15 @@ func AuthRoutes(conn *grpc.ClientConn, r *gin.RouterGroup) *gin.RouterGroup {
 }
 
 type registerInput struct {
-	Name     string `json:"name" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=8"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func Register(c *gin.Context, client auth.AuthServiceClient) {
 	var input registerInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides.", "code": "VALIDATION_ERROR"})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides.", "code": "SERVICE_UNAVAILABLE"})
 		return
 	}
 
@@ -84,6 +95,14 @@ func Register(c *gin.Context, client auth.AuthServiceClient) {
 		return
 	}
 	if !resp.Success {
+		if len(resp.FieldErrors) > 0 {
+			c.JSON(http.StatusUnprocessableEntity, gin.H{
+				"success":      false,
+				"code":         resp.Code,
+				"field_errors": resp.FieldErrors,
+			})
+			return
+		}
 		authError(c, resp.Code)
 		return
 	}
