@@ -1,0 +1,86 @@
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - "frontend/**"
+jobs:
+  build-and-push-docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Prepare image tag
+        id: prep-image
+        run: |
+          echo "tag=ghcr.io/${GITHUB_REPOSITORY,,}:latest" >> "$GITHUB_OUTPUT"
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.prep-image.outputs.tag }}
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - id: cache-node_modules
+        uses: actions/cache@v5
+        with:
+          path: |
+            node_modules
+            .next
+            /home/runner/.cache/Cypress
+          key: ${{ runner.os }}-node_modules-${{ hashFiles('package-lock.json') }}
+      - run: |
+          npm install
+          npm run build
+  test:
+    runs-on: ubuntu-latest
+    needs: [build]
+    strategy:
+      matrix:
+        browser: ["chrome", "edge"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - id: cache-node_modules
+        uses: actions/cache@v5
+        with:
+          path: |
+            node_modules
+            .next
+            /home/runner/.cache/Cypress
+          key: ${{ runner.os }}-node_modules-${{ hashFiles('package-lock.json') }}
+      - name: Cypress run
+        uses: cypress-io/github-action@v4
+        with:
+          install: false
+          start: npm run start
+          browser: ${{ matrix.browser }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: cypress-videos-${{ matrix.browser }}
+          path: cypress/videos
+          retention-days: 7
+        if: always()
+      - uses: actions/upload-artifact@v7
+        with:
+          name: cypress-screenshots-${{ matrix.browser }}
+          path: cypress/screenshots
+          retention-days: 7
+        if: failure()
+  audit:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v6
+      - name: npm audit
+        run: npm audit --audit-level=moderate
