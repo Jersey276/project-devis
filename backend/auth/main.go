@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"flag"
 	"fmt"
 	"log"
@@ -13,6 +14,9 @@ import (
 	"google.golang.org/grpc"
 )
 
+//go:embed migrations
+var migrationsFS embed.FS
+
 var (
 	port = flag.Int("port", 50051, "The server port")
 )
@@ -21,7 +25,7 @@ func main() {
 	flag.Parse()
 
 	db := services.ConnectDB()
-	services.RunMigrations(db)
+	services.RunMigrations(db, migrationsFS)
 	userServiceAddress := services.UserServiceAddress.GetValue()
 	if userServiceAddress == "" {
 		userServiceAddress = "localhost:50052"
