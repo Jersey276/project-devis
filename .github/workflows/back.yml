@@ -5,7 +5,7 @@ on:
     paths:
       - "backend/auth/**"
       - "backend/gateway/**"
-      - "backend/user/**"
+      - "backend/users/**"
     branches:
       - dev
 
@@ -28,8 +28,8 @@ jobs:
           filters: |
             auth:
               - "backend/auth/**"
-            user:
-              - "backend/user/**"
+            users:
+              - "backend/users/**"
 
   ci:
     needs: check-changes
