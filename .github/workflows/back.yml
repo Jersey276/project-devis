@@ -28,8 +28,6 @@ jobs:
           filters: |
             auth:
               - "backend/auth/**"
-            gateway:
-              - "backend/gateway/**"
             user:
               - "backend/user/**"
 
