@@ -1,0 +1,343 @@
+syntax = "proto3";
+
+package users;
+
+option go_package = "gateway/users";
+
+service UserService {
+    // User
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+    rpc GetUser(GetUserRequest) returns (GetUserResponse);
+    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+    rpc DeleteUser(DeleteUserRequest) returns (GenericResponse);
+
+    // Address
+    rpc CreateAddress(CreateAddressRequest) returns (CreateAddressResponse);
+    rpc GetAddress(GetAddressRequest) returns (GetAddressResponse);
+    rpc ListAddresses(ListAddressesRequest) returns (ListAddressesResponse);
+    rpc UpdateAddress(UpdateAddressRequest) returns (UpdateAddressResponse);
+    rpc ArchiveAddress(ArchiveAddressRequest) returns (GenericResponse);
+
+    // Country
+    rpc CreateCountry(CreateCountryRequest) returns (CreateCountryResponse);
+    rpc GetCountry(GetCountryRequest) returns (GetCountryResponse);
+    rpc ListCountries(ListCountriesRequest) returns (ListCountriesResponse);
+    rpc UpdateCountry(UpdateCountryRequest) returns (UpdateCountryResponse);
+    rpc DeleteCountry(DeleteCountryRequest) returns (GenericResponse);
+
+    // CountryGroup
+    rpc CreateCountryGroup(CreateCountryGroupRequest) returns (CreateCountryGroupResponse);
+    rpc GetCountryGroup(GetCountryGroupRequest) returns (GetCountryGroupResponse);
+    rpc ListCountryGroups(ListCountryGroupsRequest) returns (ListCountryGroupsResponse);
+    rpc UpdateCountryGroup(UpdateCountryGroupRequest) returns (UpdateCountryGroupResponse);
+    rpc DeleteCountryGroup(DeleteCountryGroupRequest) returns (GenericResponse);
+    rpc AttachCountry(AttachCountryRequest) returns (GenericResponse);
+    rpc DetachCountry(DetachCountryRequest) returns (GenericResponse);
+
+    // Tax
+    rpc CreateTax(CreateTaxRequest) returns (CreateTaxResponse);
+    rpc GetTax(GetTaxRequest) returns (GetTaxResponse);
+    rpc ListTaxes(ListTaxesRequest) returns (ListTaxesResponse);
+    rpc UpdateTax(UpdateTaxRequest) returns (UpdateTaxResponse);
+    rpc DeleteTax(DeleteTaxRequest) returns (GenericResponse);
+}
+
+message GenericResponse {
+    bool success = 1;
+    int32 code = 2;
+}
+
+// ─── User ────────────────────────────────────────────────────────────────────
+
+message User {
+    string user_id = 1;
+    string email = 2;
+    string phone = 3;
+    string company = 4;
+    string siren = 5;
+    string vat = 6;
+}
+
+message CreateUserRequest {
+    string email = 1;
+}
+
+message CreateUserResponse {
+    bool success = 1;
+    int32 code = 2;
+    string user_id = 3;
+}
+
+message GetUserRequest {
+    string user_id = 1;
+}
+
+message GetUserResponse {
+    bool success = 1;
+    int32 code = 2;
+    User user = 3;
+}
+
+message UpdateUserRequest {
+    string user_id = 1;
+    string phone = 2;
+    string company = 3;
+    string siren = 4;
+    string vat = 5;
+}
+
+message UpdateUserResponse {
+    bool success = 1;
+    int32 code = 2;
+}
+
+message DeleteUserRequest {
+    string user_id = 1;
+}
+
+// ─── Address ─────────────────────────────────────────────────────────────────
+
+message Address {
+    int32 id = 1;
+    string user_id = 2;
+    string name = 3;
+    string street = 4;
+    string additional_street = 5;
+    string city = 6;
+    string zip_code = 7;
+    int32 country_id = 8;
+    string email = 9;
+    string phone = 10;
+    bool archived = 11;
+}
+
+message CreateAddressRequest {
+    string user_id = 1;
+    string name = 2;
+    string street = 3;
+    string additional_street = 4;
+    string city = 5;
+    string zip_code = 6;
+    int32 country_id = 7;
+    string email = 8;
+    string phone = 9;
+}
+
+message CreateAddressResponse {
+    bool success = 1;
+    int32 code = 2;
+    int32 address_id = 3;
+}
+
+message GetAddressRequest {
+    int32 address_id = 1;
+    string user_id = 2;
+}
+
+message GetAddressResponse {
+    bool success = 1;
+    int32 code = 2;
+    Address address = 3;
+}
+
+message ListAddressesRequest {
+    string user_id = 1;
+}
+
+message ListAddressesResponse {
+    bool success = 1;
+    int32 code = 2;
+    repeated Address addresses = 3;
+}
+
+message UpdateAddressRequest {
+    int32 address_id = 1;
+    string user_id = 2;
+    string name = 3;
+    string street = 4;
+    string additional_street = 5;
+    string city = 6;
+    string zip_code = 7;
+    int32 country_id = 8;
+    string email = 9;
+    string phone = 10;
+}
+
+message UpdateAddressResponse {
+    bool success = 1;
+    int32 code = 2;
+}
+
+message ArchiveAddressRequest {
+    int32 address_id = 1;
+    string user_id = 2;
+}
+
+// ─── Country ──────────────────────────────────────────────────────────────────
+
+message Country {
+    int32 id = 1;
+    string code = 2;
+    string name = 3;
+}
+
+message CreateCountryRequest {
+    string code = 1;
+    string name = 2;
+}
+
+message CreateCountryResponse {
+    bool success = 1;
+    int32 code = 2;
+    int32 country_id = 3;
+}
+
+message GetCountryRequest {
+    int32 country_id = 1;
+}
+
+message GetCountryResponse {
+    bool success = 1;
+    int32 code = 2;
+    Country country = 3;
+}
+
+message ListCountriesRequest {}
+
+message ListCountriesResponse {
+    bool success = 1;
+    int32 code = 2;
+    repeated Country countries = 3;
+}
+
+message UpdateCountryRequest {
+    int32 country_id = 1;
+    string code = 2;
+    string name = 3;
+}
+
+message UpdateCountryResponse {
+    bool success = 1;
+    int32 code = 2;
+}
+
+message DeleteCountryRequest {
+    int32 country_id = 1;
+}
+
+// ─── CountryGroup ─────────────────────────────────────────────────────────────
+
+message CountryGroup {
+    int32 id = 1;
+    string name = 2;
+    repeated Country countries = 3;
+    repeated Tax taxes = 4;
+}
+
+message CreateCountryGroupRequest {
+    string name = 1;
+}
+
+message CreateCountryGroupResponse {
+    bool success = 1;
+    int32 code = 2;
+    int32 country_group_id = 3;
+}
+
+message GetCountryGroupRequest {
+    int32 country_group_id = 1;
+}
+
+message GetCountryGroupResponse {
+    bool success = 1;
+    int32 code = 2;
+    CountryGroup country_group = 3;
+}
+
+message ListCountryGroupsRequest {}
+
+message ListCountryGroupsResponse {
+    bool success = 1;
+    int32 code = 2;
+    repeated CountryGroup country_groups = 3;
+}
+
+message UpdateCountryGroupRequest {
+    int32 country_group_id = 1;
+    string name = 2;
+}
+
+message UpdateCountryGroupResponse {
+    bool success = 1;
+    int32 code = 2;
+}
+
+message DeleteCountryGroupRequest {
+    int32 country_group_id = 1;
+}
+
+message AttachCountryRequest {
+    int32 country_group_id = 1;
+    int32 country_id = 2;
+}
+
+message DetachCountryRequest {
+    int32 country_group_id = 1;
+    int32 country_id = 2;
+}
+
+// ─── Tax ─────────────────────────────────────────────────────────────────────
+
+message Tax {
+    int32 id = 1;
+    string name = 2;
+    string rate = 3;
+    int32 country_group_id = 4;
+}
+
+message CreateTaxRequest {
+    string name = 1;
+    string rate = 2;
+    int32 country_group_id = 3;
+}
+
+message CreateTaxResponse {
+    bool success = 1;
+    int32 code = 2;
+    int32 tax_id = 3;
+}
+
+message GetTaxRequest {
+    int32 tax_id = 1;
+}
+
+message GetTaxResponse {
+    bool success = 1;
+    int32 code = 2;
+    Tax tax = 3;
+}
+
+message ListTaxesRequest {
+    int32 country_group_id = 1;
+}
+
+message ListTaxesResponse {
+    bool success = 1;
+    int32 code = 2;
+    repeated Tax taxes = 3;
+}
+
+message UpdateTaxRequest {
+    int32 tax_id = 1;
+    string name = 2;
+    string rate = 3;
+}
+
+message UpdateTaxResponse {
+    bool success = 1;
+    int32 code = 2;
+}
+
+message DeleteTaxRequest {
+    int32 tax_id = 1;
+}

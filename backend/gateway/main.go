@@ -2,19 +2,18 @@ package main
 
 import (
 	"gateway/controllers"
+	"gateway/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
-
 type Route struct {
-    TargetURL string
+	TargetURL string
 }
 
 func main() {
-    	r := setupRouter()
-
-    r.Run(":8080")
+	r := setupRouter()
+	r.Run(":8080")
 }
 
 func setupRouter() *gin.Engine {
@@ -22,7 +21,11 @@ func setupRouter() *gin.Engine {
 
 	api := r.Group("/api")
 	controllers.AuthRoutes(api.Group("/auth"))
-	// controllers.UserRoutes(api.Group("/users"))
+
+	users := api.Group("/users")
+	users.Use(middleware.AuthRequired())
+	controllers.UserRoutes(users)
+
 	// controllers.ProjectRoutes(api.Group("/project"))
 	// controllers.PaymentRoutes(api.Group("/payments"))
 
