@@ -73,7 +73,6 @@ func AuthRoutes(r *gin.RouterGroup) *gin.RouterGroup {
 }
 
 type registerInput struct {
-	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -86,7 +85,6 @@ func Register(c *gin.Context, client auth.AuthServiceClient) {
 	}
 
 	resp, err := client.Register(c.Request.Context(), &auth.RegisterRequest{
-		Name:     input.Name,
 		Email:    input.Email,
 		Password: input.Password,
 	})

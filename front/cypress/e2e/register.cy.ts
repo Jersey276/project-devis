@@ -2,7 +2,6 @@ describe("Register", () => {
   it("has a register form", () => {
     cy.visit("/register");
     cy.get("form").should("exist");
-    cy.get("input[name='name']").should("exist");
     cy.get("input[name='email']").should("exist");
     cy.get("input[name='password']").should("exist");
     cy.get("input[name='confirm-password']").should("exist");
@@ -16,7 +15,6 @@ describe("Register", () => {
     }).as("registerSuccess");
 
     cy.visit("/register");
-    cy.get("input[name='name']").type("John Doe");
     cy.get("input[name='email']").type("john@test.fr");
     cy.get("input[name='password']").type("password123");
     cy.get("input[name='confirm-password']").type("password123");
@@ -33,7 +31,6 @@ describe("Register", () => {
     }).as("registerSuccessToast");
 
     cy.visit("/register");
-    cy.get("input[name='name']").type("John Doe");
     cy.get("input[name='email']").type("john@test.fr");
     cy.get("input[name='password']").type("password123");
     cy.get("input[name='confirm-password']").type("password123");
@@ -53,7 +50,6 @@ describe("Register", () => {
     }).as("registerFailure");
 
     cy.visit("/register");
-    cy.get("input[name='name']").type("John Doe");
     cy.get("input[name='email']").type("existing@test.fr");
     cy.get("input[name='password']").type("password123");
     cy.get("input[name='confirm-password']").type("password123");
@@ -72,7 +68,6 @@ describe("Register", () => {
     }).as("registerNetworkError");
 
     cy.visit("/register");
-    cy.get("input[name='name']").type("John Doe");
     cy.get("input[name='email']").type("john@test.fr");
     cy.get("input[name='password']").type("password123");
     cy.get("input[name='confirm-password']").type("password123");
@@ -91,7 +86,6 @@ describe("Register", () => {
       }).as("registerMismatch");
 
       cy.visit("/register");
-      cy.get("input[name='name']").type("John Doe");
       cy.get("input[name='email']").type("john@test.fr");
       cy.get("input[name='password']").type("password123");
       cy.get("input[name='confirm-password']").type("different");
@@ -114,7 +108,6 @@ describe("Register", () => {
       }).as("registerEmailInUse");
 
       cy.visit("/register");
-      cy.get("input[name='name']").type("John Doe");
       cy.get("input[name='email']").type("existing@test.fr");
       cy.get("input[name='password']").type("password123");
       cy.get("input[name='confirm-password']").type("password123");
@@ -127,14 +120,13 @@ describe("Register", () => {
         .should("contain", "This email address is already in use.");
     });
 
-    it("shows inline field errors for required, invalid format, and too short", () => {
+    it("shows inline field errors for invalid format and too short", () => {
       cy.intercept("POST", "/api/auth/register", {
         statusCode: 422,
         body: {
           success: false,
           code: 2002,
           field_errors: [
-            { field: "name", error_code: [1] },
             { field: "email", error_code: [2] },
             { field: "password", error_code: [3] },
           ],
@@ -142,18 +134,12 @@ describe("Register", () => {
       }).as("registerValidationErrors");
 
       cy.visit("/register");
-      cy.get("input[name='name']").type("x");
       cy.get("input[name='email']").type("bad");
       cy.get("input[name='password']").type("short");
       cy.get("input[name='confirm-password']").type("short");
       cy.get("button[type='submit']").click();
 
       cy.wait("@registerValidationErrors");
-
-      cy.get("input[name='name']")
-        .closest("[data-slot='field']")
-        .find("[data-slot='field-error']")
-        .should("contain", "This field is required.");
 
       cy.get("input[name='email']")
         .closest("[data-slot='field']")
@@ -177,7 +163,6 @@ describe("Register", () => {
       }).as("registerClearErrorsFirst");
 
       cy.visit("/register");
-      cy.get("input[name='name']").type("John Doe");
       cy.get("input[name='email']").type("existing@test.fr");
       cy.get("input[name='password']").type("password123");
       cy.get("input[name='confirm-password']").type("password123");
