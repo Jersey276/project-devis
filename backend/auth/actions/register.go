@@ -37,9 +37,8 @@ func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*
 		}, err
 	}
 
-	insertResp, err := s.userClient.InsertUser(ctx, &userGrpc.InsertUserRequest{
-		Email:    req.Email,
-		Username: req.Name,
+	insertResp, err := s.userClient.CreateUser(ctx, &userGrpc.CreateUserRequest{
+		Email: req.Email,
 	})
 	if err != nil {
 		return &authGrpc.FormGenericResponse{

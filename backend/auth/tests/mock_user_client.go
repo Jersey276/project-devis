@@ -9,17 +9,17 @@ import (
 	"google.golang.org/grpc"
 )
 
-// MockUserClient implements userGrpc.AuthUserServiceClient for testing.
+// MockUserClient implements userGrpc.UserServiceClient for testing.
 type MockUserClient struct {
-	InsertUserFn func(ctx context.Context, req *userGrpc.InsertUserRequest) (*userGrpc.InsertUserResponse, error)
+	CreateUserFn func(ctx context.Context, req *userGrpc.CreateUserRequest) (*userGrpc.CreateUserResponse, error)
 	DeleteUserFn func(ctx context.Context, req *userGrpc.DeleteUserRequest) (*userGrpc.GenericResponse, error)
 }
 
-func (m *MockUserClient) InsertUser(ctx context.Context, in *userGrpc.InsertUserRequest, opts ...grpc.CallOption) (*userGrpc.InsertUserResponse, error) {
-	if m.InsertUserFn != nil {
-		return m.InsertUserFn(ctx, in)
+func (m *MockUserClient) CreateUser(ctx context.Context, in *userGrpc.CreateUserRequest, opts ...grpc.CallOption) (*userGrpc.CreateUserResponse, error) {
+	if m.CreateUserFn != nil {
+		return m.CreateUserFn(ctx, in)
 	}
-	return nil, fmt.Errorf("InsertUserFn not set")
+	return nil, fmt.Errorf("CreateUserFn not set")
 }
 
 func (m *MockUserClient) DeleteUser(ctx context.Context, in *userGrpc.DeleteUserRequest, opts ...grpc.CallOption) (*userGrpc.GenericResponse, error) {
