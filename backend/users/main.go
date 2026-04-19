@@ -1,48 +1,40 @@
 package main
 
 import (
-	"project-devis-users/controllers"
+	"embed"
+	"flag"
+	"fmt"
+	"log"
+	"net"
 
-	"github.com/gin-gonic/gin"
+	"project-devis-users/actions"
+	"project-devis-users/services"
+	usersGrpc "project-devis-users/services/grpc"
+
+	"google.golang.org/grpc"
 )
 
-func setupRouter() *gin.Engine {
-	r := gin.Default()
-	api := r.Group("/api")
-	users := api.Group("/users")
-	
-	
+//go:embed migrations
+var migrationsFS embed.FS
 
-	users.GET("/", controllers.GetMe)
-
-	// Address routes
-	address := users.Group("/address")
-	address.GET("/", controllers.ListAddresses)
-	address.POST("/", controllers.CreateAddress)
-	addressId := address.Group("/:id")
-	addressId.GET("/", controllers.GetAddress)
-	addressId.PUT("/", controllers.UpdateAddress)
-	addressId.DELETE("/", controllers.DeleteAddress)
-
-	// Customer routes
-	customer := users.Group("/customer")
-	customer.GET("/", controllers.ListCustomer)
-	customer.POST("/", controllers.CreateCustomer)
-	customerId := customer.Group("/:id")
-	customerId.GET("/", controllers.GetCustomer)
-	customerId.DELETE("/", controllers.DeleteCustomer)
-
-	// Country and Country Group routes
-	country := api.Group("/country")
-	country.GET("/", controllers.ListCountries)
-	countryGroup := country.Group("/:id")
-	countryGroup.GET("/", controllers.GetCountry)
-
-	return r
-}
+var port = flag.Int("port", 50052, "The server port")
 
 func main() {
-	r := setupRouter()
+	flag.Parse()
 
-	r.Run(":8080")
+	db := services.ConnectDB()
+	services.RunMigrations(db, migrationsFS)
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	grpcServer := grpc.NewServer()
+	usersGrpc.RegisterUserServiceServer(grpcServer, actions.NewServer(db))
+
+	log.Printf("users gRPC server listening on %s", lis.Addr().String())
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("serve failed: %v", err)
+	}
 }
