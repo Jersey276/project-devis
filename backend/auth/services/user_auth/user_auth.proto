@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package user_auth;
+
+option go_package = "project-devis-auth/services/user_auth";
+
+// AuthUserService serves communication with user service
+service AuthUserService {
+    // InsertUser adds a new user to the database
+    rpc InsertUser(InsertUserRequest) returns (InsertUserResponse);
+    // DeleteUser removes a user from the database
+    rpc DeleteUser(DeleteUserRequest) returns (GenericResponse);
+}
+
+message InsertUserRequest {
+    string email = 1;
+    string username = 2;
+}
+
+message InsertUserResponse {
+    bool success = 1;
+    int32 code = 2;
+    string user_id = 3;
+}
+
+message DeleteUserRequest {
+    string user_id = 1;
+}
+
+message GenericResponse {
+    bool success = 1;
+    int32 code = 2;
+}

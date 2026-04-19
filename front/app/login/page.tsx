@@ -1,3 +1,11 @@
+import { FormEvent } from "react";
+import { AuthLayout } from "../layout";
+import LoginForm from "@/components/auth/login-form";
+
 export default function loginPage() {
-  return <div>Login Page</div>;
+  return (
+    <AuthLayout>
+      <LoginForm />
+    </AuthLayout>
+  );
 }
