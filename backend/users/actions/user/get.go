@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 
+	"project-devis-users/actions/codes"
 	usersGrpc "project-devis-users/services/grpc"
 )
 
 func Get(ctx context.Context, db *sql.DB, req *usersGrpc.GetUserRequest) (*usersGrpc.GetUserResponse, error) {
 	if req.UserId == "" {
-		return &usersGrpc.GetUserResponse{Success: false, Code: codeInvalidInput}, nil
+		return &usersGrpc.GetUserResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 
 	var u usersGrpc.User
@@ -18,11 +19,11 @@ func Get(ctx context.Context, db *sql.DB, req *usersGrpc.GetUserRequest) (*users
 		req.UserId,
 	).Scan(&u.UserId, &u.Email, &u.Phone, &u.Company, &u.Siren, &u.Vat)
 	if err == sql.ErrNoRows {
-		return &usersGrpc.GetUserResponse{Success: false, Code: codeNotFound}, nil
+		return &usersGrpc.GetUserResponse{Success: false, Code: codes.NotFound}, nil
 	}
 	if err != nil {
-		return &usersGrpc.GetUserResponse{Success: false, Code: codeInternalError}, err
+		return &usersGrpc.GetUserResponse{Success: false, Code: codes.InternalError}, err
 	}
 
-	return &usersGrpc.GetUserResponse{Success: true, Code: codeSuccess, User: &u}, nil
+	return &usersGrpc.GetUserResponse{Success: true, Code: codes.Success, User: &u}, nil
 }

@@ -6,15 +6,16 @@ import (
 	"fmt"
 	"strconv"
 
+	"project-devis-users/actions/codes"
 	usersGrpc "project-devis-users/services/grpc"
 )
 
 func Create(ctx context.Context, db *sql.DB, req *usersGrpc.CreateTaxRequest) (*usersGrpc.CreateTaxResponse, error) {
 	if req.Name == "" || req.Rate == "" || req.CountryGroupId == 0 {
-		return &usersGrpc.CreateTaxResponse{Success: false, Code: codeInvalidInput}, nil
+		return &usersGrpc.CreateTaxResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 	if err := validateRate(req.Rate); err != nil {
-		return &usersGrpc.CreateTaxResponse{Success: false, Code: codeInvalidInput}, nil
+		return &usersGrpc.CreateTaxResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 
 	var taxID int32
@@ -23,10 +24,10 @@ func Create(ctx context.Context, db *sql.DB, req *usersGrpc.CreateTaxRequest) (*
 		req.Name, req.Rate, req.CountryGroupId,
 	).Scan(&taxID)
 	if err != nil {
-		return &usersGrpc.CreateTaxResponse{Success: false, Code: codeInternalError}, err
+		return &usersGrpc.CreateTaxResponse{Success: false, Code: codes.InternalError}, err
 	}
 
-	return &usersGrpc.CreateTaxResponse{Success: true, Code: codeSuccess, TaxId: taxID}, nil
+	return &usersGrpc.CreateTaxResponse{Success: true, Code: codes.Success, TaxId: taxID}, nil
 }
 
 func validateRate(rate string) error {

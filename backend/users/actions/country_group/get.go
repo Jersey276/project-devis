@@ -4,36 +4,37 @@ import (
 	"context"
 	"database/sql"
 
+	"project-devis-users/actions/codes"
 	usersGrpc "project-devis-users/services/grpc"
 )
 
 func Get(ctx context.Context, db *sql.DB, req *usersGrpc.GetCountryGroupRequest) (*usersGrpc.GetCountryGroupResponse, error) {
 	if req.CountryGroupId == 0 {
-		return &usersGrpc.GetCountryGroupResponse{Success: false, Code: codeInvalidInput}, nil
+		return &usersGrpc.GetCountryGroupResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 
 	var g usersGrpc.CountryGroup
 	err := db.QueryRowContext(ctx, "SELECT id, name FROM country_groups WHERE id=$1", req.CountryGroupId).
 		Scan(&g.Id, &g.Name)
 	if err == sql.ErrNoRows {
-		return &usersGrpc.GetCountryGroupResponse{Success: false, Code: codeNotFound}, nil
+		return &usersGrpc.GetCountryGroupResponse{Success: false, Code: codes.NotFound}, nil
 	}
 	if err != nil {
-		return &usersGrpc.GetCountryGroupResponse{Success: false, Code: codeInternalError}, err
+		return &usersGrpc.GetCountryGroupResponse{Success: false, Code: codes.InternalError}, err
 	}
 
 	countries, err := fetchCountries(ctx, db, g.Id)
 	if err != nil {
-		return &usersGrpc.GetCountryGroupResponse{Success: false, Code: codeInternalError}, err
+		return &usersGrpc.GetCountryGroupResponse{Success: false, Code: codes.InternalError}, err
 	}
 	taxes, err := fetchTaxes(ctx, db, g.Id)
 	if err != nil {
-		return &usersGrpc.GetCountryGroupResponse{Success: false, Code: codeInternalError}, err
+		return &usersGrpc.GetCountryGroupResponse{Success: false, Code: codes.InternalError}, err
 	}
 	g.Countries = countries
 	g.Taxes = taxes
 
-	return &usersGrpc.GetCountryGroupResponse{Success: true, Code: codeSuccess, CountryGroup: &g}, nil
+	return &usersGrpc.GetCountryGroupResponse{Success: true, Code: codes.Success, CountryGroup: &g}, nil
 }
 
 func fetchCountries(ctx context.Context, db *sql.DB, groupID int32) ([]*usersGrpc.Country, error) {
@@ -56,7 +57,7 @@ func fetchCountries(ctx context.Context, db *sql.DB, groupID int32) ([]*usersGrp
 		}
 		countries = append(countries, &c)
 	}
-	return countries, nil
+	return countries, rows.Err()
 }
 
 func fetchTaxes(ctx context.Context, db *sql.DB, groupID int32) ([]*usersGrpc.Tax, error) {
@@ -77,5 +78,5 @@ func fetchTaxes(ctx context.Context, db *sql.DB, groupID int32) ([]*usersGrpc.Ta
 		}
 		taxes = append(taxes, &t)
 	}
-	return taxes, nil
+	return taxes, rows.Err()
 }

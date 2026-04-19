@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 
+	"project-devis-users/actions/codes"
 	usersGrpc "project-devis-users/services/grpc"
 )
 
 func List(ctx context.Context, db *sql.DB, req *usersGrpc.ListAddressesRequest) (*usersGrpc.ListAddressesResponse, error) {
 	if req.UserId == "" {
-		return &usersGrpc.ListAddressesResponse{Success: false, Code: codeInvalidInput}, nil
+		return &usersGrpc.ListAddressesResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 
 	rows, err := db.QueryContext(ctx,
@@ -19,7 +20,7 @@ func List(ctx context.Context, db *sql.DB, req *usersGrpc.ListAddressesRequest) 
 		req.UserId,
 	)
 	if err != nil {
-		return &usersGrpc.ListAddressesResponse{Success: false, Code: codeInternalError}, err
+		return &usersGrpc.ListAddressesResponse{Success: false, Code: codes.InternalError}, err
 	}
 	defer rows.Close()
 
@@ -28,13 +29,16 @@ func List(ctx context.Context, db *sql.DB, req *usersGrpc.ListAddressesRequest) 
 		var a usersGrpc.Address
 		var addlStreet, email, phone sql.NullString
 		if err := rows.Scan(&a.Id, &a.UserId, &a.Name, &a.Street, &addlStreet, &a.City, &a.ZipCode, &a.CountryId, &email, &phone, &a.Archived); err != nil {
-			return &usersGrpc.ListAddressesResponse{Success: false, Code: codeInternalError}, err
+			return &usersGrpc.ListAddressesResponse{Success: false, Code: codes.InternalError}, err
 		}
 		a.AdditionalStreet = addlStreet.String
 		a.Email = email.String
 		a.Phone = phone.String
 		addresses = append(addresses, &a)
 	}
+	if err := rows.Err(); err != nil {
+		return &usersGrpc.ListAddressesResponse{Success: false, Code: codes.InternalError}, err
+	}
 
-	return &usersGrpc.ListAddressesResponse{Success: true, Code: codeSuccess, Addresses: addresses}, nil
+	return &usersGrpc.ListAddressesResponse{Success: true, Code: codes.Success, Addresses: addresses}, nil
 }

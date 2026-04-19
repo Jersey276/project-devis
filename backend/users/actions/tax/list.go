@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"project-devis-users/actions/codes"
 	usersGrpc "project-devis-users/services/grpc"
 )
 
@@ -22,7 +23,7 @@ func List(ctx context.Context, db *sql.DB, req *usersGrpc.ListTaxesRequest) (*us
 		)
 	}
 	if err != nil {
-		return &usersGrpc.ListTaxesResponse{Success: false, Code: codeInternalError}, err
+		return &usersGrpc.ListTaxesResponse{Success: false, Code: codes.InternalError}, err
 	}
 	defer rows.Close()
 
@@ -30,10 +31,13 @@ func List(ctx context.Context, db *sql.DB, req *usersGrpc.ListTaxesRequest) (*us
 	for rows.Next() {
 		var t usersGrpc.Tax
 		if err := rows.Scan(&t.Id, &t.Name, &t.Rate, &t.CountryGroupId); err != nil {
-			return &usersGrpc.ListTaxesResponse{Success: false, Code: codeInternalError}, err
+			return &usersGrpc.ListTaxesResponse{Success: false, Code: codes.InternalError}, err
 		}
 		taxes = append(taxes, &t)
 	}
+	if err := rows.Err(); err != nil {
+		return &usersGrpc.ListTaxesResponse{Success: false, Code: codes.InternalError}, err
+	}
 
-	return &usersGrpc.ListTaxesResponse{Success: true, Code: codeSuccess, Taxes: taxes}, nil
+	return &usersGrpc.ListTaxesResponse{Success: true, Code: codes.Success, Taxes: taxes}, nil
 }

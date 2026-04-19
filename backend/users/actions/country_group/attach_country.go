@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 
+	"project-devis-users/actions/codes"
 	usersGrpc "project-devis-users/services/grpc"
 )
 
 func AttachCountry(ctx context.Context, db *sql.DB, req *usersGrpc.AttachCountryRequest) (*usersGrpc.GenericResponse, error) {
 	if req.CountryGroupId == 0 || req.CountryId == 0 {
-		return &usersGrpc.GenericResponse{Success: false, Code: codeInvalidInput}, nil
+		return &usersGrpc.GenericResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 
 	_, err := db.ExecContext(ctx,
@@ -17,8 +18,8 @@ func AttachCountry(ctx context.Context, db *sql.DB, req *usersGrpc.AttachCountry
 		req.CountryGroupId, req.CountryId,
 	)
 	if err != nil {
-		return &usersGrpc.GenericResponse{Success: false, Code: codeInternalError}, err
+		return &usersGrpc.GenericResponse{Success: false, Code: codes.InternalError}, err
 	}
 
-	return &usersGrpc.GenericResponse{Success: true, Code: codeSuccess}, nil
+	return &usersGrpc.GenericResponse{Success: true, Code: codes.Success}, nil
 }

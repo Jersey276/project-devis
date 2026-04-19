@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 
+	"project-devis-users/actions/codes"
 	usersGrpc "project-devis-users/services/grpc"
 )
 
 func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateCountryRequest) (*usersGrpc.UpdateCountryResponse, error) {
 	if req.CountryId == 0 || (len(req.Code) > 0 && len(req.Code) != 2) {
-		return &usersGrpc.UpdateCountryResponse{Success: false, Code: codeInvalidInput}, nil
+		return &usersGrpc.UpdateCountryResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 
 	res, err := db.ExecContext(ctx,
@@ -17,11 +18,11 @@ func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateCountryRequest
 		req.Code, req.Name, req.CountryId,
 	)
 	if err != nil {
-		return &usersGrpc.UpdateCountryResponse{Success: false, Code: codeInternalError}, err
+		return &usersGrpc.UpdateCountryResponse{Success: false, Code: codes.InternalError}, err
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
-		return &usersGrpc.UpdateCountryResponse{Success: false, Code: codeNotFound}, nil
+		return &usersGrpc.UpdateCountryResponse{Success: false, Code: codes.NotFound}, nil
 	}
 
-	return &usersGrpc.UpdateCountryResponse{Success: true, Code: codeSuccess}, nil
+	return &usersGrpc.UpdateCountryResponse{Success: true, Code: codes.Success}, nil
 }

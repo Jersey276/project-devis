@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 
+	"project-devis-users/actions/codes"
 	usersGrpc "project-devis-users/services/grpc"
 )
 
 func Get(ctx context.Context, db *sql.DB, req *usersGrpc.GetAddressRequest) (*usersGrpc.GetAddressResponse, error) {
 	if req.AddressId == 0 || req.UserId == "" {
-		return &usersGrpc.GetAddressResponse{Success: false, Code: codeInvalidInput}, nil
+		return &usersGrpc.GetAddressResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 
 	var a usersGrpc.Address
@@ -21,15 +22,15 @@ func Get(ctx context.Context, db *sql.DB, req *usersGrpc.GetAddressRequest) (*us
 		req.AddressId, req.UserId,
 	).Scan(&a.Id, &a.UserId, &a.Name, &a.Street, &addlStreet, &a.City, &a.ZipCode, &a.CountryId, &email, &phone, &a.Archived)
 	if err == sql.ErrNoRows {
-		return &usersGrpc.GetAddressResponse{Success: false, Code: codeNotFound}, nil
+		return &usersGrpc.GetAddressResponse{Success: false, Code: codes.NotFound}, nil
 	}
 	if err != nil {
-		return &usersGrpc.GetAddressResponse{Success: false, Code: codeInternalError}, err
+		return &usersGrpc.GetAddressResponse{Success: false, Code: codes.InternalError}, err
 	}
 
 	a.AdditionalStreet = addlStreet.String
 	a.Email = email.String
 	a.Phone = phone.String
 
-	return &usersGrpc.GetAddressResponse{Success: true, Code: codeSuccess, Address: &a}, nil
+	return &usersGrpc.GetAddressResponse{Success: true, Code: codes.Success, Address: &a}, nil
 }

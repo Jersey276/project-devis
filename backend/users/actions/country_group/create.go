@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 
+	"project-devis-users/actions/codes"
 	usersGrpc "project-devis-users/services/grpc"
 )
 
 func Create(ctx context.Context, db *sql.DB, req *usersGrpc.CreateCountryGroupRequest) (*usersGrpc.CreateCountryGroupResponse, error) {
 	if req.Name == "" {
-		return &usersGrpc.CreateCountryGroupResponse{Success: false, Code: codeInvalidInput}, nil
+		return &usersGrpc.CreateCountryGroupResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 
 	var groupID int32
@@ -18,8 +19,8 @@ func Create(ctx context.Context, db *sql.DB, req *usersGrpc.CreateCountryGroupRe
 		req.Name,
 	).Scan(&groupID)
 	if err != nil {
-		return &usersGrpc.CreateCountryGroupResponse{Success: false, Code: codeInternalError}, err
+		return &usersGrpc.CreateCountryGroupResponse{Success: false, Code: codes.InternalError}, err
 	}
 
-	return &usersGrpc.CreateCountryGroupResponse{Success: true, Code: codeSuccess, CountryGroupId: groupID}, nil
+	return &usersGrpc.CreateCountryGroupResponse{Success: true, Code: codes.Success, CountryGroupId: groupID}, nil
 }
