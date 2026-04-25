@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 
+	"gateway/authcookie"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -24,16 +26,19 @@ type authClaims struct {
 func AuthRequired() gin.HandlerFunc {
 	key := []byte(os.Getenv("APP_KEY"))
 	return func(c *gin.Context) {
-		header := c.GetHeader("Authorization")
-		if !strings.HasPrefix(header, "Bearer ") {
+		var tokenStr string
+		if header := c.GetHeader("Authorization"); strings.HasPrefix(header, "Bearer ") {
+			tokenStr = strings.TrimPrefix(header, "Bearer ")
+		} else if cookie, err := c.Cookie(authcookie.AccessName); err == nil {
+			tokenStr = cookie
+		}
+		if tokenStr == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"success": false,
 				"message": "Token d'authentification manquant.",
 			})
 			return
 		}
-
-		tokenStr := strings.TrimPrefix(header, "Bearer ")
 
 		token, err := jwt.ParseWithClaims(tokenStr, &authClaims{}, func(t *jwt.Token) (interface{}, error) {
 			if t.Method != jwt.SigningMethodHS256 {

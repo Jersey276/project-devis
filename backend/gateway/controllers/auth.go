@@ -6,6 +6,7 @@ import (
 	"os"
 
 	auth "gateway/auth"
+	"gateway/authcookie"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -23,6 +24,30 @@ const (
 	CodeInternalError       int32 = 2002
 	CodeNotImplemented      int32 = 2003
 )
+
+const (
+	cookieAccessMaxAge          = 15 * 60          // must not outlive the JWT (services/jwt.go)
+	cookieRefreshMaxAge         = 7 * 24 * 60 * 60 // default refresh-token lifetime
+	cookieRefreshRememberMaxAge = 60 * 24 * 60 * 60
+)
+
+var cookieSecure = os.Getenv("ENV") == "production"
+
+func setAuthCookies(c *gin.Context, accessToken, refreshToken string, rememberMe bool) {
+	refreshMaxAge := cookieRefreshMaxAge
+	if rememberMe {
+		refreshMaxAge = cookieRefreshRememberMaxAge
+	}
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie(authcookie.AccessName, accessToken, cookieAccessMaxAge, "/", "", cookieSecure, true)
+	c.SetCookie(authcookie.RefreshName, refreshToken, refreshMaxAge, "/", "", cookieSecure, true)
+}
+
+func clearAuthCookies(c *gin.Context) {
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie(authcookie.AccessName, "", -1, "/", "", cookieSecure, true)
+	c.SetCookie(authcookie.RefreshName, "", -1, "/", "", cookieSecure, true)
+}
 
 // Maps auth service error codes to HTTP status codes and user-facing messages.
 var authErrorMap = map[int32]struct {
@@ -135,6 +160,8 @@ func Login(c *gin.Context, client auth.AuthServiceClient) {
 		return
 	}
 
+	setAuthCookies(c, resp.GetToken(), resp.GetRefreshToken(), input.RememberMe)
+
 	c.JSON(http.StatusOK, gin.H{
 		"success":       true,
 		"token":         resp.GetToken(),
@@ -143,13 +170,20 @@ func Login(c *gin.Context, client auth.AuthServiceClient) {
 }
 
 type refreshInput struct {
-	RefreshToken string `json:"refresh_token" binding:"required"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 func RefreshToken(c *gin.Context, client auth.AuthServiceClient) {
 	var input refreshInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides.", "code": "VALIDATION_ERROR"})
+	_ = c.ShouldBindJSON(&input)
+	if input.RefreshToken == "" {
+		if cookie, err := c.Cookie(authcookie.RefreshName); err == nil {
+			input.RefreshToken = cookie
+		}
+	}
+	if input.RefreshToken == "" {
+		clearAuthCookies(c)
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Refresh token manquant.", "code": CodeInvalidRefreshToken})
 		return
 	}
 
@@ -161,9 +195,12 @@ func RefreshToken(c *gin.Context, client auth.AuthServiceClient) {
 		return
 	}
 	if !resp.Success {
+		clearAuthCookies(c)
 		authError(c, resp.GetCode())
 		return
 	}
+
+	setAuthCookies(c, resp.GetToken(), resp.GetRefreshToken(), false)
 
 	c.JSON(http.StatusOK, gin.H{
 		"success":       true,
@@ -173,13 +210,21 @@ func RefreshToken(c *gin.Context, client auth.AuthServiceClient) {
 }
 
 type logoutInput struct {
-	RefreshToken string `json:"refresh_token" binding:"required"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 func Logout(c *gin.Context, client auth.AuthServiceClient) {
 	var input logoutInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides.", "code": "VALIDATION_ERROR"})
+	_ = c.ShouldBindJSON(&input)
+	if input.RefreshToken == "" {
+		if cookie, err := c.Cookie(authcookie.RefreshName); err == nil {
+			input.RefreshToken = cookie
+		}
+	}
+	// No token to revoke: clear browser state and treat as already logged out.
+	if input.RefreshToken == "" {
+		clearAuthCookies(c)
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Déconnexion réussie."})
 		return
 	}
 
@@ -195,6 +240,7 @@ func Logout(c *gin.Context, client auth.AuthServiceClient) {
 		return
 	}
 
+	clearAuthCookies(c)
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Déconnexion réussie."})
 }
 
