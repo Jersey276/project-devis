@@ -12,7 +12,7 @@ describe("Taxes page", () => {
     taxes?: typeof TAXES;
     groups?: typeof GROUPS;
   }) {
-    cy.setCookie("auth-token", "fake-token");
+    cy.login();
     cy.intercept("GET", "/api/users/taxes", {
       statusCode: 200,
       body: { success: true, taxes: opts?.taxes ?? TAXES },
@@ -56,7 +56,7 @@ describe("Taxes page", () => {
       cy.get("input[name='name']").type("TVA réduite");
       cy.get("input[name='rate']").type("5.50");
       cy.get("input[name='country_group_id']").type("Mercosur");
-      cy.contains("[data-slot='combobox-item']", "Mercosur").click();
+      cy.contains("[data-slot='combobox-item']", "Mercosur").click({ force: true });
 
       cy.contains("[data-slot='dialog-content'] button", "Enregistrer").click();
 
@@ -88,7 +88,7 @@ describe("Taxes page", () => {
       cy.get("input[name='name']").type("Mauvais taux");
       cy.get("input[name='rate']").type("abc");
       cy.get("input[name='country_group_id']").type("Union");
-      cy.contains("[data-slot='combobox-item']", "Union européenne").click();
+      cy.contains("[data-slot='combobox-item']", "Union européenne").click({ force: true });
       cy.contains("[data-slot='dialog-content'] button", "Enregistrer").click();
 
       cy.wait("@createTaxInvalid");
@@ -114,7 +114,7 @@ describe("Taxes page", () => {
       cy.wait("@getTaxes");
       cy.wait("@getCountryGroups");
 
-      cy.get("[data-slot='dropdown-menu-trigger']").first().click();
+      cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
       cy.contains("Modifier").click();
 
       cy.get("input[name='name']").should("have.value", "TVA 20");
@@ -150,7 +150,7 @@ describe("Taxes page", () => {
       cy.wait("@getTaxes");
       cy.wait("@getCountryGroups");
 
-      cy.get("[data-slot='dropdown-menu-trigger']").first().click();
+      cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
       cy.contains("Supprimer").click();
       cy.contains("[data-slot='alert-dialog-action']", "Supprimer").click();
 
@@ -168,7 +168,7 @@ describe("Taxes page", () => {
       cy.wait("@getTaxes");
       cy.wait("@getCountryGroups");
 
-      cy.get("[data-slot='dropdown-menu-trigger']").first().click();
+      cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
       cy.contains("Supprimer").click();
       cy.contains("[data-slot='alert-dialog-action']", "Supprimer").click();
 

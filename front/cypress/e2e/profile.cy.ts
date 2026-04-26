@@ -25,7 +25,7 @@ const INITIAL_ADDRESSES = [
 ];
 
 function stubProfile(addresses = INITIAL_ADDRESSES) {
-  cy.setCookie("auth-token", "fake-token");
+  cy.login();
   cy.intercept("GET", "/api/users/me", {
     statusCode: 200,
     body: { success: true, user: USER },
@@ -188,7 +188,7 @@ describe("Profile page", () => {
       cy.get("input[name='city']").type("Lyon");
       cy.get("input[name='zip_code']").type("69002");
       cy.get("input[name='country_id']").type("Bel");
-      cy.contains("[data-slot='combobox-item']", "Belgique").click();
+      cy.contains("[data-slot='combobox-item']", "Belgique").click({ force: true });
 
       cy.contains("[data-slot='drawer-footer'] button", "Enregistrer").click();
 
@@ -241,7 +241,7 @@ describe("Profile page", () => {
       cy.contains("[role='tab']", "Adresses").click();
       cy.wait("@getAddresses");
 
-      cy.get("[data-slot='dropdown-menu-trigger']").first().click();
+      cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
       cy.contains("Modifier").click();
       cy.get("input[name='city']").should("have.value", "Paris");
       cy.get("input[name='city']").clear().type("Marseille");
@@ -266,7 +266,7 @@ describe("Profile page", () => {
       cy.contains("[role='tab']", "Adresses").click();
       cy.wait("@getAddresses");
 
-      cy.get("[data-slot='dropdown-menu-trigger']").first().click();
+      cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
       cy.contains("Supprimer").click();
       cy.get("[data-slot='alert-dialog-content']").should("be.visible");
       cy.contains("[data-slot='alert-dialog-cancel']", "Annuler").click();
@@ -279,17 +279,21 @@ describe("Profile page", () => {
         statusCode: 200,
         body: { success: true },
       }).as("deleteAddress");
-      cy.intercept("GET", "/api/users/me/addresses", {
-        statusCode: 200,
-        body: { success: true, addresses: [] },
-      });
 
       cy.visit("/profile");
       cy.wait("@getMe");
       cy.contains("[role='tab']", "Adresses").click();
+      cy.wait("@getAddresses");
 
-      cy.get("[data-slot='dropdown-menu-trigger']").first().click();
+      cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
       cy.contains("Supprimer").click();
+
+      // Post-delete reload must return an empty list — register only now so the
+      // initial GET above still resolves with INITIAL_ADDRESSES (LIFO matching).
+      cy.intercept("GET", "/api/users/me/addresses", {
+        statusCode: 200,
+        body: { success: true, addresses: [] },
+      });
       cy.contains("[data-slot='alert-dialog-action']", "Supprimer").click();
 
       cy.wait("@deleteAddress");
@@ -308,7 +312,7 @@ describe("Profile page", () => {
       cy.contains("[role='tab']", "Adresses").click();
       cy.wait("@getAddresses");
 
-      cy.get("[data-slot='dropdown-menu-trigger']").first().click();
+      cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
       cy.contains("Supprimer").click();
       cy.contains("[data-slot='alert-dialog-action']", "Supprimer").click();
 

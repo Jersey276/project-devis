@@ -16,7 +16,7 @@ describe("Countries page", () => {
     countries?: typeof COUNTRIES;
     groups?: typeof GROUPS;
   }) {
-    cy.setCookie("auth-token", "fake-token");
+    cy.login();
     cy.intercept("GET", "/api/users/countries", {
       statusCode: 200,
       body: { success: true, countries: opts?.countries ?? COUNTRIES },
@@ -132,7 +132,7 @@ describe("Countries page", () => {
       cy.visit("/countries");
       cy.wait("@getCountries");
 
-      cy.get("[data-slot='dropdown-menu-trigger']").first().click();
+      cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
       cy.contains("Modifier").click();
       cy.get("input[name='name']").should("have.value", "France");
       cy.get("input[name='name']").clear().type("République française");
@@ -155,7 +155,7 @@ describe("Countries page", () => {
       cy.visit("/countries");
       cy.wait("@getCountries");
 
-      cy.get("[data-slot='dropdown-menu-trigger']").first().click();
+      cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
       cy.contains("Supprimer").click();
       cy.get("[data-slot='alert-dialog-content']").should("be.visible");
       cy.contains("[data-slot='alert-dialog-cancel']", "Annuler").click();
@@ -172,7 +172,7 @@ describe("Countries page", () => {
       cy.visit("/countries");
       cy.wait("@getCountries");
 
-      cy.get("[data-slot='dropdown-menu-trigger']").first().click();
+      cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
       cy.contains("Supprimer").click();
       cy.contains("[data-slot='alert-dialog-action']", "Supprimer").click();
 
@@ -189,7 +189,7 @@ describe("Countries page", () => {
       cy.visit("/countries");
       cy.wait("@getCountries");
 
-      cy.get("[data-slot='dropdown-menu-trigger']").first().click();
+      cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
       cy.contains("Supprimer").click();
       cy.contains("[data-slot='alert-dialog-action']", "Supprimer").click();
 
@@ -245,7 +245,7 @@ describe("Countries page", () => {
       cy.contains("[role='tab']", "Groupes de pays").click();
       cy.wait("@getCountryGroups");
 
-      cy.get("[data-slot='dropdown-menu-trigger']").first().click();
+      cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
       cy.contains("Modifier").click();
 
       cy.get("input[name='name']").should("have.value", "Union européenne");
@@ -283,13 +283,13 @@ describe("Countries page", () => {
       cy.contains("[role='tab']", "Groupes de pays").click();
       cy.wait("@getCountryGroups");
 
-      cy.get("[data-slot='dropdown-menu-trigger']").first().click();
+      cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
       cy.contains("Modifier").click();
 
       cy.get("[data-slot='group-members']").within(() => {
         cy.get("input[name='attach_country_id']").type("Belg");
       });
-      cy.contains("[data-slot='combobox-item']", "Belgique").click();
+      cy.contains("[data-slot='combobox-item']", "Belgique").click({ force: true });
       cy.contains("[data-slot='group-members'] button", "Ajouter").click();
 
       cy.wait("@attach");
@@ -323,7 +323,7 @@ describe("Countries page", () => {
       cy.contains("[role='tab']", "Groupes de pays").click();
       cy.wait("@getCountryGroups");
 
-      cy.get("[data-slot='dropdown-menu-trigger']").first().click();
+      cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
       cy.contains("Modifier").click();
 
       cy.get("[data-slot='group-member-remove']").first().click();
@@ -348,7 +348,7 @@ describe("Countries page", () => {
       cy.contains("[role='tab']", "Groupes de pays").click();
       cy.wait("@getCountryGroups");
 
-      cy.get("[data-slot='dropdown-menu-trigger']").first().click();
+      cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
       cy.contains("Supprimer").click();
       cy.contains("[data-slot='alert-dialog-action']", "Supprimer").click();
 

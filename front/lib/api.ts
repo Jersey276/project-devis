@@ -25,10 +25,13 @@ export type ApiResult = {
 };
 
 // Endpoints that must not trigger the refresh-and-retry loop (would recurse or mask login failures).
+// /api/auth/password/update returns 401 when the current password is wrong — not a session
+// expiry — so refreshing the token and retrying would just log the user out on a typo.
 const REFRESH_SKIP_PATHS = new Set([
   "/api/auth/refresh",
   "/api/auth/login",
   "/api/auth/logout",
+  "/api/auth/password/update",
 ]);
 
 // Coalesces concurrent 401s onto a single /api/auth/refresh call.

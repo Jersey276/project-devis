@@ -7,7 +7,10 @@ import "./commands";
 Cypress.on("uncaught:exception", (err) => {
   if (
     err.message.includes("Hydration failed") ||
-    err.message.includes("server rendered HTML didn't match the client")
+    err.message.includes("server rendered HTML didn't match the client") ||
+    // Radix UI sometimes calls setPointerCapture with a synthesized pointer id
+    // that the browser rejects under Cypress. Harmless — ignore.
+    err.message.includes("Invalid pointer id")
   ) {
     return false;
   }
