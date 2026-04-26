@@ -12,6 +12,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -19,6 +20,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "../ui/sidebar";
+import UserMenu from "../user/user-menu";
 
 type SidebarItem = {
   title: string;
@@ -85,6 +87,9 @@ export default function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="bg-primary-foreground text-primary">
+        <UserMenu />
+      </SidebarFooter>
     </Sidebar>
   );
 }

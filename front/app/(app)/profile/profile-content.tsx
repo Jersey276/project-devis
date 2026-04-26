@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -9,12 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UserInfoForm, {
   type UserProfile,
 } from "@/components/user/profile/user-info-form";
@@ -22,9 +18,17 @@ import AddressesTable from "@/components/user/profile/addresses-table";
 import ConnectionForm from "@/components/user/profile/connection-form";
 import { apiFetch } from "@/lib/api";
 
+const PROFILE_TABS = ["information", "adresse", "compte"] as const;
+type ProfileTab = (typeof PROFILE_TABS)[number];
+
 export default function ProfileContent() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const requestedTab = useSearchParams().get("tab");
+  const defaultTab: ProfileTab =
+    requestedTab && (PROFILE_TABS as readonly string[]).includes(requestedTab)
+      ? (requestedTab as ProfileTab)
+      : "information";
 
   useEffect(() => {
     let cancelled = false;
@@ -60,7 +64,7 @@ export default function ProfileContent() {
             Chargement de votre profil…
           </p>
         ) : (
-          <Tabs defaultValue="information">
+          <Tabs defaultValue={defaultTab}>
             <TabsList>
               <TabsTrigger value="information">Information</TabsTrigger>
               <TabsTrigger value="adresse">Adresses</TabsTrigger>
