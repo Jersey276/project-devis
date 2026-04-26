@@ -16,13 +16,18 @@ jobs:
         with:
           path: |
             front/node_modules
-            front/.next
             /home/runner/.cache/Cypress
           key: ${{ runner.os }}-node_modules-${{ hashFiles('front/package-lock.json') }}
       - run: |
           npm install
           npm run build
         working-directory: front
+      - uses: actions/upload-artifact@v7
+        with:
+          name: next-build
+          path: front/.next
+          retention-days: 1
+          include-hidden-files: true
   test:
     runs-on: ubuntu-latest
     needs: [build]
@@ -37,9 +42,12 @@ jobs:
         with:
           path: |
             front/node_modules
-            front/.next
             /home/runner/.cache/Cypress
           key: ${{ runner.os }}-node_modules-${{ hashFiles('front/package-lock.json') }}
+      - uses: actions/download-artifact@v7
+        with:
+          name: next-build
+          path: front/.next
       - name: Cypress run
         uses: cypress-io/github-action@v4
         with:
