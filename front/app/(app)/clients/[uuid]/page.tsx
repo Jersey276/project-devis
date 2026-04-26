@@ -1,6 +1,5 @@
 "use client";
 
-import { AppLayout } from "@/app/layout";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -57,8 +56,7 @@ export default function ClientProfilePage() {
   };
 
   return (
-    <AppLayout>
-      <Card className="gap-4">
+    <Card className="gap-4">
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-1">
@@ -105,8 +103,7 @@ export default function ClientProfilePage() {
               </Card>
             ))}
           </div>
-        </CardContent>
-      </Card>
-    </AppLayout>
+      </CardContent>
+    </Card>
   );
 }

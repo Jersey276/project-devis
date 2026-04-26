@@ -1,22 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import AppSidebar from "@/components/custom/app-sidebar";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({
@@ -48,54 +32,5 @@ export default function RootLayout({
         <Toaster />
       </body>
     </html>
-  );
-}
-
-export async function AppLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth-token");
-  if (!token) {
-    redirect("/login");
-  }
-  return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">
-                  Building Your Application
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className="hidden md:block" />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </header>
-        <main className="p-4">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
-  );
-}
-
-export function AuthLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <div className="bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm md:max-w-4xl">{children}</div>
-    </div>
   );
 }

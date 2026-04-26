@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AppLayout } from "../layout";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
@@ -47,26 +46,24 @@ const data: Clients[] = [
 
 export default function ClientIndex() {
   return (
-    <AppLayout>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between gap-4">
-            <CardTitle>Clients</CardTitle>
-            <Button asChild>
-              <Link
-                href="/clients/create"
-                className="inline-flex items-center gap-2"
-              >
-                <PlusIcon className="h-4 w-4" />
-                Nouveau client
-              </Link>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <ClientsTable data={data} />
-        </CardContent>
-      </Card>
-    </AppLayout>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between gap-4">
+          <CardTitle>Clients</CardTitle>
+          <Button asChild>
+            <Link
+              href="/clients/create"
+              className="inline-flex items-center gap-2"
+            >
+              <PlusIcon className="h-4 w-4" />
+              Nouveau client
+            </Link>
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <ClientsTable data={data} />
+      </CardContent>
+    </Card>
   );
 }

@@ -44,12 +44,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import TestToast from "@/components/custom/test/test-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AppLayout } from "../layout";
 import { ComponentExample } from "@/components/component-example";
 
 export default function testPage() {
   return (
-    <AppLayout>
     <div className="grid grid-cols-3 gap-4 p-4">
       {/* Alert */}
       <Card>
@@ -294,6 +292,5 @@ export default function testPage() {
         <ComponentExample />
         </div>
     </div>
-    </AppLayout>
   );
 }
