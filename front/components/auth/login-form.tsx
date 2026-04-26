@@ -28,6 +28,7 @@ function submitLoginForm(router: ReturnType<typeof useRouter>) {
     const password = data.get("password");
     await fetch("/api/auth/login", {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
       },
@@ -35,10 +36,6 @@ function submitLoginForm(router: ReturnType<typeof useRouter>) {
     })
       .then(async (response) => {
         if (response.ok) {
-          const data = await response.json();
-          if (data.token) {
-            document.cookie = `auth-token=${data.token}; path=/; SameSite=Lax`;
-          }
           toast.success("Login successful!");
           router.replace("/");
         } else {

@@ -1,7 +1,18 @@
-import { QuoteIcon, ReceiptEuroIcon, WrenchIcon } from "lucide-react";
+"use client";
+
+import Link from "next/link";
+import {
+  GlobeIcon,
+  PercentIcon,
+  QuoteIcon,
+  ReceiptEuroIcon,
+  WrenchIcon,
+  type LucideIcon,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -9,8 +20,17 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "../ui/sidebar";
+import UserMenu from "../user/user-menu";
 
-const items = [
+type SidebarItem = {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  // Marker for entries that will be gated by the upcoming roles/permissions system.
+  temp?: boolean;
+};
+
+const items: SidebarItem[] = [
   {
     title: "Devis",
     url: "/quote",
@@ -27,6 +47,18 @@ const items = [
     icon: QuoteIcon,
   },
   {
+    title: "Pays",
+    url: "/countries",
+    icon: GlobeIcon,
+    temp: true,
+  },
+  {
+    title: "Taxes",
+    url: "/taxes",
+    icon: PercentIcon,
+    temp: true,
+  },
+  {
     title: "Test",
     url: "/test",
     icon: WrenchIcon,
@@ -35,28 +67,29 @@ const items = [
 
 export default function AppSidebar() {
   return (
-    <>
-      <Sidebar>
-        <SidebarContent className="bg-primary-foreground text-primary">
-          <SidebarGroup>
-            <SidebarGroupLabel>Application</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <a href={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-      </Sidebar>
-    </>
+    <Sidebar>
+      <SidebarContent className="bg-primary-foreground text-primary">
+        <SidebarGroup>
+          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {items.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <Link href={item.url}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter className="bg-primary-foreground text-primary">
+        <UserMenu />
+      </SidebarFooter>
+    </Sidebar>
   );
 }

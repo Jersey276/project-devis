@@ -1,57 +1,75 @@
+x-service-build: &service-build
+  context: .
+  dockerfile: Dockerfile
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+
+x-db-env: &db-env
+  TZ: Europe/Paris
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_PASSWORD_FILE: /run/secrets/db_password
+
+x-db-service: &db-service
+  <<: *service-defaults
+  depends_on:
+    postgres:
+      condition: service_healthy
+  secrets:
+    - db_password
+
 services:
   devis-gateway:
+    <<: *service-defaults
     build:
-      context: .
-      dockerfile: Dockerfile
+      <<: *service-build
       args:
         SERVICE_NAME: gateway
-    restart: unless-stopped
     environment:
       TZ: Europe/Paris
       AUTH_SERVICE_ADDRESS: devis-auth:50051
+      USER_SERVICE_ADDRESS: devis-user:50052
     ports:
       - "8080:8080"
     depends_on:
       - devis-auth
-  # Auth Service
+      - devis-user
+
   devis-auth:
+    <<: *db-service
     build:
-      context: .
-      dockerfile: Dockerfile
+      <<: *service-build
       args:
         SERVICE_NAME: auth
-    restart: unless-stopped
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
+      <<: *db-env
       DB_USER: devis-auth
-      DB_PASSWORD_FILE: /run/secrets/db_password
       DB_NAME: auth
-      TZ: Europe/Paris
-    depends_on:
-      postgres:
-        condition: service_healthy
-    secrets:
-      - db_password
+      USER_SERVICE_ADDRESS: devis-user:50052
+
+  devis-user:
+    <<: *db-service
+    build:
+      <<: *service-build
+      args:
+        SERVICE_NAME: users
+    environment:
+      <<: *db-env
+      DB_USER: devis-users
+      DB_NAME: users
+
   # devis-quote:
+  #   <<: *db-service
   #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
+  #     <<: *service-build
   #     args:
   #       SERVICE_NAME: quote
-  #   restart: unless-stopped
   #   environment:
-  #     DB_HOST: postgres
-  #     DB_PORT: 5432
+  #     <<: *db-env
   #     DB_USER: devis-quote
-  #     DB_PASSWORD_FILE: /run/secrets/db_password
   #     DB_NAME: quote
-  #     TZ: Europe/Paris
-  #   depends_on:
-  #     - postgres
-  #     - devis-gateway
-  #   secrets:
-  #     - db_password
+
   postgres:
     build:
       context: .
@@ -71,8 +89,10 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
 secrets:
   db_password:
     file: secrets/postgres_pswd.txt
+
 volumes:
   postgres:

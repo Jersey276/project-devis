@@ -1,0 +1,43 @@
+package tax
+
+import (
+	"context"
+	"database/sql"
+
+	"project-devis-users/actions/codes"
+	usersGrpc "project-devis-users/services/grpc"
+)
+
+func List(ctx context.Context, db *sql.DB, req *usersGrpc.ListTaxesRequest) (*usersGrpc.ListTaxesResponse, error) {
+	var rows *sql.Rows
+	var err error
+
+	if req.CountryGroupId != 0 {
+		rows, err = db.QueryContext(ctx,
+			"SELECT id, name, rate::TEXT, country_group_id FROM taxes WHERE country_group_id=$1 ORDER BY name",
+			req.CountryGroupId,
+		)
+	} else {
+		rows, err = db.QueryContext(ctx,
+			"SELECT id, name, rate::TEXT, country_group_id FROM taxes ORDER BY name",
+		)
+	}
+	if err != nil {
+		return &usersGrpc.ListTaxesResponse{Success: false, Code: codes.InternalError}, err
+	}
+	defer rows.Close()
+
+	var taxes []*usersGrpc.Tax
+	for rows.Next() {
+		var t usersGrpc.Tax
+		if err := rows.Scan(&t.Id, &t.Name, &t.Rate, &t.CountryGroupId); err != nil {
+			return &usersGrpc.ListTaxesResponse{Success: false, Code: codes.InternalError}, err
+		}
+		taxes = append(taxes, &t)
+	}
+	if err := rows.Err(); err != nil {
+		return &usersGrpc.ListTaxesResponse{Success: false, Code: codes.InternalError}, err
+	}
+
+	return &usersGrpc.ListTaxesResponse{Success: true, Code: codes.Success, Taxes: taxes}, nil
+}

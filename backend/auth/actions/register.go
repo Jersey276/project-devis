@@ -37,9 +37,8 @@ func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*
 		}, err
 	}
 
-	insertResp, err := s.userClient.InsertUser(ctx, &userGrpc.InsertUserRequest{
-		Email:    req.Email,
-		Username: req.Name,
+	insertResp, err := s.userClient.CreateUser(ctx, &userGrpc.CreateUserRequest{
+		Email: req.Email,
 	})
 	if err != nil {
 		return &authGrpc.FormGenericResponse{
@@ -86,13 +85,6 @@ func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*
 
 func validateRegisterRequest(req *authGrpc.RegisterRequest) []*authGrpc.FormFieldError {
 	var fieldErrors []*authGrpc.FormFieldError
-
-	if req.Name == "" {
-		fieldErrors = append(fieldErrors, &authGrpc.FormFieldError{
-			Field:     "name",
-			ErrorCode: []int32{FieldErrRequired},
-		})
-	}
 
 	if req.Email == "" {
 		fieldErrors = append(fieldErrors, &authGrpc.FormFieldError{

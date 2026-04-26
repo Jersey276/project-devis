@@ -32,7 +32,7 @@ type FieldErrors = Record<string, string[]>;
 
 function toMessages(codes: number[]): string[] {
   return codes.map(
-    (code) => FIELD_VALIDATION_MESSAGES[code] ?? `Validation error (${code}).`
+    (code) => FIELD_VALIDATION_MESSAGES[code] ?? `Validation error (${code}).`,
   );
 }
 
@@ -55,7 +55,6 @@ export default function RegisterForm({
 
     const form = e.currentTarget;
     const data = new FormData(form);
-    const name = data.get("name") as string;
     const email = data.get("email") as string;
     const password = data.get("password") as string;
     const confirmPassword = data.get("confirm-password") as string;
@@ -68,8 +67,11 @@ export default function RegisterForm({
     try {
       const response = await fetch("/api/auth/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ email, password }),
       });
 
       if (response.ok) {
@@ -82,7 +84,10 @@ export default function RegisterForm({
 
       if (response.status === 422 && Array.isArray(body.field_errors)) {
         const errors: FieldErrors = {};
-        for (const entry of body.field_errors as { field: string; error_code: number[] }[]) {
+        for (const entry of body.field_errors as {
+          field: string;
+          error_code: number[];
+        }[]) {
           errors[entry.field] = toMessages(entry.error_code);
         }
         setFieldErrors(errors);
@@ -107,17 +112,6 @@ export default function RegisterForm({
         <CardContent>
           <form onSubmit={handleSubmit} noValidate>
             <FieldGroup>
-              <Field data-invalid={!!fieldErrors.name?.length}>
-                <FieldLabel htmlFor="name">Full Name</FieldLabel>
-                <Input
-                  id="name"
-                  type="text"
-                  name="name"
-                  placeholder="John Doe"
-                  aria-invalid={!!fieldErrors.name?.length}
-                />
-                <FieldError errors={toErrorProps(fieldErrors.name)} />
-              </Field>
               <Field data-invalid={!!fieldErrors.email?.length}>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
@@ -157,7 +151,9 @@ export default function RegisterForm({
                   aria-invalid={!!confirmError}
                 />
                 <FieldError
-                  errors={confirmError ? [{ message: confirmError }] : undefined}
+                  errors={
+                    confirmError ? [{ message: confirmError }] : undefined
+                  }
                 />
                 <FieldDescription>
                   Please confirm your password.

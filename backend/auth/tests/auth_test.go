@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 
 // --- helpers ---
 
-func setupServer(t *testing.T, mockUser *MockUserClient) (*actions.Server, sqlmock.Sqlmock) {
+func setupServer(t *testing.T, mockUser userGrpc.UserServiceClient) (*actions.Server, sqlmock.Sqlmock) {
 	t.Helper()
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -49,8 +49,8 @@ func findFieldError(fieldErrors []*authGrpc.FormFieldError, field string, code i
 
 func TestRegister_Success(t *testing.T) {
 	mockUser := &MockUserClient{
-		InsertUserFn: func(ctx context.Context, req *userGrpc.InsertUserRequest) (*userGrpc.InsertUserResponse, error) {
-			return &userGrpc.InsertUserResponse{Success: true, Code: actions.CodeSuccess, UserId: "user-123"}, nil
+		CreateUserFn: func(ctx context.Context, req *userGrpc.CreateUserRequest) (*userGrpc.CreateUserResponse, error) {
+			return &userGrpc.CreateUserResponse{Success: true, Code: actions.CodeSuccess, UserId: "user-123"}, nil
 		},
 	}
 	srv, mock := setupServer(t, mockUser)
@@ -64,7 +64,6 @@ func TestRegister_Success(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
-		Name:     "testuser",
 		Email:    "new@example.com",
 		Password: "password123",
 	})
@@ -94,7 +93,6 @@ func TestRegister_UserAlreadyExists(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("existing@example.com"))
 
 	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
-		Name:     "testuser",
 		Email:    "existing@example.com",
 		Password: "password123",
 	})
@@ -112,35 +110,11 @@ func TestRegister_UserAlreadyExists(t *testing.T) {
 	}
 }
 
-func TestRegister_ValidationMissingName(t *testing.T) {
-	mockUser := &MockUserClient{}
-	srv, mock := setupServer(t, mockUser)
-
-	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
-		Name:     "",
-		Email:    "test@example.com",
-		Password: "password123",
-	})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if resp.Success {
-		t.Fatal("expected failure for missing name")
-	}
-	if !findFieldError(resp.FieldErrors, "name", actions.FieldErrRequired) {
-		t.Fatal("expected FieldErrRequired on name field")
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("unmet expectations (no DB calls expected): %v", err)
-	}
-}
-
 func TestRegister_ValidationInvalidEmail(t *testing.T) {
 	mockUser := &MockUserClient{}
 	srv, mock := setupServer(t, mockUser)
 
 	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
-		Name:     "testuser",
 		Email:    "not-an-email",
 		Password: "password123",
 	})
@@ -163,7 +137,6 @@ func TestRegister_ValidationPasswordTooShort(t *testing.T) {
 	srv, mock := setupServer(t, mockUser)
 
 	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
-		Name:     "testuser",
 		Email:    "test@example.com",
 		Password: "short",
 	})
@@ -186,7 +159,6 @@ func TestRegister_ValidationMultipleErrors(t *testing.T) {
 	srv, mock := setupServer(t, mockUser)
 
 	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
-		Name:     "",
 		Email:    "bad-email",
 		Password: "x",
 	})
@@ -195,9 +167,6 @@ func TestRegister_ValidationMultipleErrors(t *testing.T) {
 	}
 	if resp.Success {
 		t.Fatal("expected failure for multiple invalid fields")
-	}
-	if !findFieldError(resp.FieldErrors, "name", actions.FieldErrRequired) {
-		t.Fatal("expected FieldErrRequired on name field")
 	}
 	if !findFieldError(resp.FieldErrors, "email", actions.FieldErrInvalidFormat) {
 		t.Fatal("expected FieldErrInvalidFormat on email field")
@@ -213,8 +182,8 @@ func TestRegister_ValidationMultipleErrors(t *testing.T) {
 func TestRegister_RollbackOnAuthInsertFailure(t *testing.T) {
 	var deletedUserID string
 	mockUser := &MockUserClient{
-		InsertUserFn: func(ctx context.Context, req *userGrpc.InsertUserRequest) (*userGrpc.InsertUserResponse, error) {
-			return &userGrpc.InsertUserResponse{Success: true, Code: actions.CodeSuccess, UserId: "user-456"}, nil
+		CreateUserFn: func(ctx context.Context, req *userGrpc.CreateUserRequest) (*userGrpc.CreateUserResponse, error) {
+			return &userGrpc.CreateUserResponse{Success: true, Code: actions.CodeSuccess, UserId: "user-456"}, nil
 		},
 		DeleteUserFn: func(ctx context.Context, req *userGrpc.DeleteUserRequest) (*userGrpc.GenericResponse, error) {
 			deletedUserID = req.UserId
@@ -232,7 +201,6 @@ func TestRegister_RollbackOnAuthInsertFailure(t *testing.T) {
 		WillReturnError(sqlmock.ErrCancelled)
 
 	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
-		Name:     "testuser",
 		Email:    "fail@example.com",
 		Password: "password123",
 	})
@@ -252,8 +220,8 @@ func TestRegister_RollbackOnAuthInsertFailure(t *testing.T) {
 
 func TestRegister_UserServiceError(t *testing.T) {
 	mockUser := &MockUserClient{
-		InsertUserFn: func(ctx context.Context, req *userGrpc.InsertUserRequest) (*userGrpc.InsertUserResponse, error) {
-			return &userGrpc.InsertUserResponse{Success: false, Code: actions.CodeUserServiceError}, nil
+		CreateUserFn: func(ctx context.Context, req *userGrpc.CreateUserRequest) (*userGrpc.CreateUserResponse, error) {
+			return &userGrpc.CreateUserResponse{Success: false, Code: actions.CodeUserServiceError}, nil
 		},
 	}
 	srv, mock := setupServer(t, mockUser)
@@ -263,7 +231,6 @@ func TestRegister_UserServiceError(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"email"}))
 
 	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
-		Name:     "testuser",
 		Email:    "new@example.com",
 		Password: "password123",
 	})
