@@ -26,6 +26,10 @@ func setupRouter() *gin.Engine {
 	users.Use(middleware.AuthRequired())
 	controllers.UserRoutes(users)
 
+	quotes := api.Group("/quotes")
+	quotes.Use(middleware.AuthRequired())
+	controllers.QuotesRoutes(quotes)
+
 	// controllers.ProjectRoutes(api.Group("/project"))
 	// controllers.PaymentRoutes(api.Group("/payments"))
 

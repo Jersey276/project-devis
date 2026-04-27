@@ -59,16 +59,16 @@ services:
       DB_USER: devis-users
       DB_NAME: users
 
-  # devis-quote:
-  #   <<: *db-service
-  #   build:
-  #     <<: *service-build
-  #     args:
-  #       SERVICE_NAME: quote
-  #   environment:
-  #     <<: *db-env
-  #     DB_USER: devis-quote
-  #     DB_NAME: quote
+  devis-quote:
+    <<: *db-service
+    build:
+      <<: *service-build
+      args:
+        SERVICE_NAME: quote
+    environment:
+      <<: *db-env
+      DB_USER: devis-quote
+      DB_NAME: quote
 
   postgres:
     build:
