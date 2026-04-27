@@ -7,5 +7,6 @@ const (
 	InvalidInput    int32 = 1003
 	InvalidLineType int32 = 1004
 	InvalidLineData int32 = 1005
+	QuoteFinalized  int32 = 1006
 	InternalError   int32 = 2001
 )

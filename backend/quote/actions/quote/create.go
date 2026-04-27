@@ -16,7 +16,7 @@ func Create(ctx context.Context, db *sql.DB, req *quoteGrpc.CreateQuoteRequest) 
 
 	quoteID := uuid.New().String()
 	_, err := db.ExecContext(ctx,
-		`INSERT INTO quotes (quote_id, user_id, name) VALUES ($1, $2, $3)`,
+		`INSERT INTO quotes (quote_id, user_id, name, state) VALUES ($1, $2, $3, 'draft')`,
 		quoteID, req.UserId, req.Name,
 	)
 	if err != nil {

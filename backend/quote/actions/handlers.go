@@ -42,6 +42,14 @@ func (s *Server) TrashQuotes(ctx context.Context, req *quoteGrpc.TrashQuotesRequ
 	return quote.Trash(ctx, s.db, req)
 }
 
+func (s *Server) DropQuote(ctx context.Context, req *quoteGrpc.DropQuoteRequest) (*quoteGrpc.GenericResponse, error) {
+	return quote.Drop(ctx, s.db, req)
+}
+
+func (s *Server) ContinueQuote(ctx context.Context, req *quoteGrpc.ContinueQuoteRequest) (*quoteGrpc.GenericResponse, error) {
+	return quote.Continue(ctx, s.db, req)
+}
+
 // ─── Line ────────────────────────────────────────────────────────────────────
 
 func (s *Server) CreateQuoteLine(ctx context.Context, req *quoteGrpc.CreateQuoteLineRequest) (*quoteGrpc.CreateQuoteLineResponse, error) {

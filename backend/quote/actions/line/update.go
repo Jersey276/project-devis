@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"project-devis-quote/actions/codes"
+	"project-devis-quote/actions/quote"
 	"project-devis-quote/actions/sqlutil"
 	quoteGrpc "project-devis-quote/services/grpc"
 )
@@ -29,18 +30,18 @@ func Update(ctx context.Context, db *sql.DB, req *quoteGrpc.UpdateQuoteLineReque
 		return &quoteGrpc.UpdateQuoteLineResponse{Success: false, Code: codes.InvalidLineData}, nil
 	}
 
+	if code, ok := quote.LineParentEditable(ctx, db, req.LineId, req.UserId); !ok {
+		return &quoteGrpc.UpdateQuoteLineResponse{Success: false, Code: code}, nil
+	}
+
 	res, err := db.ExecContext(ctx,
-		`UPDATE quote_lines l
+		`UPDATE quote_lines
 		 SET type=$1, name=$2, quantity=$3::DECIMAL, unit=$4, unit_price=$5, data=$6::jsonb,
 		     position=$7, updated_at=NOW()
-		 FROM quotes q
-		 WHERE l.quote_id = q.quote_id
-		   AND l.line_id = $8
-		   AND q.user_id = $9
-		   AND q.archived_at IS NULL`,
+		 WHERE line_id=$8`,
 		req.Type, req.Name, req.Quantity, sqlutil.NullableStr(req.Unit),
 		req.UnitPrice, cleanData, req.Position,
-		req.LineId, req.UserId,
+		req.LineId,
 	)
 	if err != nil {
 		return &quoteGrpc.UpdateQuoteLineResponse{Success: false, Code: codes.InternalError}, err

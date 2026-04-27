@@ -1,26 +1,22 @@
-package line
+package quote
 
 import (
 	"context"
 	"database/sql"
 
 	"project-devis-quote/actions/codes"
-	"project-devis-quote/actions/quote"
 	quoteGrpc "project-devis-quote/services/grpc"
 )
 
-func Delete(ctx context.Context, db *sql.DB, req *quoteGrpc.DeleteQuoteLineRequest) (*quoteGrpc.GenericResponse, error) {
-	if req.LineId == "" || req.UserId == "" {
+func Continue(ctx context.Context, db *sql.DB, req *quoteGrpc.ContinueQuoteRequest) (*quoteGrpc.GenericResponse, error) {
+	if req.QuoteId == "" || req.UserId == "" {
 		return &quoteGrpc.GenericResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 
-	if code, ok := quote.LineParentEditable(ctx, db, req.LineId, req.UserId); !ok {
-		return &quoteGrpc.GenericResponse{Success: false, Code: code}, nil
-	}
-
 	res, err := db.ExecContext(ctx,
-		`DELETE FROM quote_lines WHERE line_id=$1`,
-		req.LineId,
+		`UPDATE quotes SET state='draft', updated_at=NOW()
+		 WHERE quote_id=$1 AND user_id=$2 AND state='drop'`,
+		req.QuoteId, req.UserId,
 	)
 	if err != nil {
 		return &quoteGrpc.GenericResponse{Success: false, Code: codes.InternalError}, err

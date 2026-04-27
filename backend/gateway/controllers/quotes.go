@@ -19,6 +19,7 @@ const (
 	QuoteCodeInvalidInput    int32 = 1003
 	QuoteCodeInvalidLineType int32 = 1004
 	QuoteCodeInvalidLineData int32 = 1005
+	QuoteCodeFinalized       int32 = 1006
 	QuoteCodeInternalError   int32 = 2001
 )
 
@@ -31,6 +32,7 @@ var quoteErrorMap = map[int32]struct {
 	QuoteCodeInvalidInput:    {http.StatusBadRequest, "Données invalides."},
 	QuoteCodeInvalidLineType: {http.StatusBadRequest, "Type de ligne invalide."},
 	QuoteCodeInvalidLineData: {http.StatusBadRequest, "Données de ligne invalides."},
+	QuoteCodeFinalized:       {http.StatusConflict, "Ce devis est finalisé et ne peut plus être modifié."},
 	QuoteCodeInternalError:   {http.StatusInternalServerError, "Une erreur interne est survenue."},
 }
 
@@ -70,6 +72,8 @@ func QuotesRoutes(r *gin.RouterGroup) {
 	one.DELETE("", func(c *gin.Context) { DeleteQuote(c, client) })
 	one.POST("/archive", func(c *gin.Context) { ArchiveQuote(c, client) })
 	one.POST("/restore", func(c *gin.Context) { RestoreQuote(c, client) })
+	one.POST("/drop", func(c *gin.Context) { DropQuote(c, client) })
+	one.POST("/continue", func(c *gin.Context) { ContinueQuote(c, client) })
 
 	lines := one.Group("/lines")
 	lines.GET("", func(c *gin.Context) { ListQuoteLines(c, client) })
@@ -95,7 +99,7 @@ func ListQuotes(c *gin.Context, client quote.QuoteServiceClient) {
 		quoteError(c, resp.Code)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "quotes": resp.Quotes})
+	c.JSON(http.StatusOK, gin.H{"success": true, "quotes": marshalQuotes(resp.Quotes)})
 }
 
 func CreateQuote(c *gin.Context, client quote.QuoteServiceClient) {
@@ -136,7 +140,7 @@ func GetQuote(c *gin.Context, client quote.QuoteServiceClient) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"quote":   resp.Quote,
+		"quote":   marshalQuote(resp.Quote),
 		"lines":   marshalLines(resp.Lines),
 	})
 }
@@ -216,6 +220,38 @@ func RestoreQuote(c *gin.Context, client quote.QuoteServiceClient) {
 func TrashQuotes(c *gin.Context, client quote.QuoteServiceClient) {
 	resp, err := client.TrashQuotes(c.Request.Context(), &quote.TrashQuotesRequest{
 		UserId: userIDFromCtx(c),
+	})
+	if err != nil {
+		quoteUnavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteError(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func DropQuote(c *gin.Context, client quote.QuoteServiceClient) {
+	resp, err := client.DropQuote(c.Request.Context(), &quote.DropQuoteRequest{
+		QuoteId: c.Param("id"),
+		UserId:  userIDFromCtx(c),
+	})
+	if err != nil {
+		quoteUnavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteError(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func ContinueQuote(c *gin.Context, client quote.QuoteServiceClient) {
+	resp, err := client.ContinueQuote(c.Request.Context(), &quote.ContinueQuoteRequest{
+		QuoteId: c.Param("id"),
+		UserId:  userIDFromCtx(c),
 	})
 	if err != nil {
 		quoteUnavailable(c)
@@ -349,6 +385,44 @@ func DeleteQuoteLine(c *gin.Context, client quote.QuoteServiceClient) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// marshalQuote emits state as a lowercase string instead of the proto enum's
+// integer value, so the frontend can use literal "draft"|"sent"|"validated"|"drop".
+func marshalQuote(q *quote.Quote) gin.H {
+	if q == nil {
+		return nil
+	}
+	return gin.H{
+		"quote_id": q.QuoteId,
+		"user_id":  q.UserId,
+		"name":     q.Name,
+		"archived": q.Archived,
+		"state":    stateToLower(q.State),
+	}
+}
+
+func marshalQuotes(quotes []*quote.Quote) []gin.H {
+	out := make([]gin.H, 0, len(quotes))
+	for _, q := range quotes {
+		out = append(out, marshalQuote(q))
+	}
+	return out
+}
+
+func stateToLower(s quote.QuoteState) string {
+	switch s {
+	case quote.QuoteState_QUOTE_STATE_DRAFT:
+		return "draft"
+	case quote.QuoteState_QUOTE_STATE_SENT:
+		return "sent"
+	case quote.QuoteState_QUOTE_STATE_VALIDATED:
+		return "validated"
+	case quote.QuoteState_QUOTE_STATE_DROP:
+		return "drop"
+	default:
+		return "draft"
+	}
 }
 
 // marshalLine emits the raw JSON `data` field as an object instead of a string,

@@ -18,6 +18,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Loader2Icon } from "lucide-react";
 import QuoteStepBasicInfo from "@/components/quote/steps/quote-step-basic-info";
 import QuoteStepItems, {
@@ -25,16 +37,23 @@ import QuoteStepItems, {
 } from "@/components/quote/steps/quote-step-items";
 import QuoteStepSummary from "@/components/quote/steps/quote-step-summary";
 import {
+  continueQuote,
   createLine,
   createQuote,
   deleteLine,
+  dropQuote,
   getQuote,
   type LineDraft,
   updateLine,
   updateQuote,
 } from "@/lib/services/quotes";
 import { fieldErrorsFromBody } from "@/lib/api";
-import type { BackendQuote, BackendQuoteLine } from "@/types/backend";
+import {
+  QUOTE_STATE_LABEL,
+  type BackendQuote,
+  type BackendQuoteLine,
+  type BackendQuoteState,
+} from "@/types/backend";
 
 type FormItem = RenderedRow & { position: number };
 
@@ -51,6 +70,16 @@ const STEP_LABELS = [
 const SAVE_DEBOUNCE_MS = 600;
 const SAVED_INDICATOR_MS = 1500;
 const EMPTY_CLIENTS: string[] = [];
+
+const STATE_BADGE_VARIANT: Record<
+  BackendQuoteState,
+  "default" | "secondary" | "destructive"
+> = {
+  draft: "secondary",
+  sent: "default",
+  validated: "default",
+  drop: "destructive",
+};
 
 function rowFromBackendLine(line: BackendQuoteLine): FormItem {
   return {
@@ -97,6 +126,12 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const [nameErrors, setNameErrors] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [quoteState, setQuoteState] =
+    useState<BackendQuoteState>("draft");
+  const [transitioning, setTransitioning] = useState(false);
+
+  const isReadonly =
+    quoteState === "validated" || quoteState === "drop";
 
   const itemsRef = useRef(items);
   itemsRef.current = items;
@@ -125,6 +160,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       const fetchedQuote = body.quote as BackendQuote;
       const fetchedLines = (body.lines ?? []) as BackendQuoteLine[];
       setProjectName(fetchedQuote.name);
+      setQuoteState(fetchedQuote.state ?? "draft");
       const sorted = [...fetchedLines].sort(
         (a, b) => a.position - b.position,
       );
@@ -169,7 +205,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     (value: string) => {
       setProjectName(value);
       setNameErrors([]);
-      if (!quoteId) return;
+      if (!quoteId || isReadonly) return;
       if (nameTimerRef.current) clearTimeout(nameTimerRef.current);
       nameTimerRef.current = setTimeout(async () => {
         nameTimerRef.current = null;
@@ -184,7 +220,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         }
       }, SAVE_DEBOUNCE_MS);
     },
-    [quoteId],
+    [isReadonly, quoteId],
   );
 
   const handleNextFromStep1 = useCallback(async () => {
@@ -236,7 +272,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
 
   const scheduleLineSave = useCallback(
     (lineId: string) => {
-      if (!quoteId) return;
+      if (!quoteId || isReadonly) return;
 
       const existingSaved = savedIndicatorTimersRef.current.get(lineId);
       if (existingSaved) {
@@ -275,8 +311,42 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
 
       lineTimersRef.current.set(lineId, timer);
     },
-    [quoteId, setRow],
+    [isReadonly, quoteId, setRow],
   );
+
+  const handleDrop = useCallback(async () => {
+    if (!quoteId || transitioning) return;
+    setTransitioning(true);
+    try {
+      const { ok, body } = await dropQuote(quoteId);
+      if (ok && body.success) {
+        setQuoteState("drop");
+      } else {
+        toast.error(
+          (body.message as string) ?? "Impossible d'abandonner le devis.",
+        );
+      }
+    } finally {
+      setTransitioning(false);
+    }
+  }, [quoteId, transitioning]);
+
+  const handleContinue = useCallback(async () => {
+    if (!quoteId || transitioning) return;
+    setTransitioning(true);
+    try {
+      const { ok, body } = await continueQuote(quoteId);
+      if (ok && body.success) {
+        setQuoteState("draft");
+      } else {
+        toast.error(
+          (body.message as string) ?? "Impossible de réactiver le devis.",
+        );
+      }
+    } finally {
+      setTransitioning(false);
+    }
+  }, [quoteId, transitioning]);
 
   const handleAddItem = useCallback(async () => {
     if (!quoteId || adding) return;
@@ -379,19 +449,70 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
 
   const canGoNextFromStep1 = projectName.trim().length > 0 && !creating;
 
+  const showDropButton = !isCreate && (quoteState === "draft" || quoteState === "sent");
+  const showContinueButton = !isCreate && quoteState === "drop";
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          {isCreate
-            ? "Création d'un devis"
-            : `Devis ${projectName || "…"}`}
-        </CardTitle>
-        <CardDescription>
-          {isCreate
-            ? "Complète les étapes pour générer un nouveau devis."
-            : "Modification du devis."}
-        </CardDescription>
+    <Card data-quote-state={quoteState}>
+      <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <div className="space-y-1.5">
+          <CardTitle className="flex items-center gap-2">
+            {isCreate ? "Création d'un devis" : `Devis ${projectName || "…"}`}
+            {!isCreate && (
+              <Badge
+                data-slot="quote-state-badge"
+                variant={STATE_BADGE_VARIANT[quoteState]}
+              >
+                {QUOTE_STATE_LABEL[quoteState]}
+              </Badge>
+            )}
+          </CardTitle>
+          <CardDescription>
+            {isCreate
+              ? "Complète les étapes pour générer un nouveau devis."
+              : "Modification du devis."}
+          </CardDescription>
+        </div>
+        {showDropButton && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={transitioning}
+              >
+                Abandonner
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Abandonner ce devis ?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Le devis ne pourra plus être modifié. Vous pourrez le
+                  réactiver via le bouton Continuer.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={handleDrop}
+                >
+                  Confirmer
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+        {showContinueButton && (
+          <Button
+            type="button"
+            onClick={handleContinue}
+            disabled={transitioning}
+          >
+            Continuer
+          </Button>
+        )}
       </CardHeader>
 
       <CardContent className="space-y-6">
@@ -420,7 +541,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           <QuoteStepBasicInfo
             projectName={projectName}
             clientId={clientId}
-            isReadonly={false}
+            isReadonly={isReadonly}
             emptyClients={EMPTY_CLIENTS}
             nameErrors={nameErrors}
             onProjectNameChange={handleProjectNameChange}
@@ -431,7 +552,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         {step === 1 && (
           <QuoteStepItems
             items={items}
-            isReadonly={isCreate}
+            isReadonly={isCreate || isReadonly}
             totalAmount={totalAmount}
             isAdding={adding}
             onNameChange={handleNameChange}

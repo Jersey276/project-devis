@@ -14,6 +14,8 @@ service QuoteService {
     rpc ArchiveQuote(ArchiveQuoteRequest) returns (GenericResponse);
     rpc RestoreQuote(RestoreQuoteRequest) returns (GenericResponse);
     rpc TrashQuotes(TrashQuotesRequest) returns (GenericResponse);
+    rpc DropQuote(DropQuoteRequest) returns (GenericResponse);
+    rpc ContinueQuote(ContinueQuoteRequest) returns (GenericResponse);
 
     // Line
     rpc CreateQuoteLine(CreateQuoteLineRequest) returns (CreateQuoteLineResponse);
@@ -30,11 +32,20 @@ message GenericResponse {
 
 // ─── Quote ───────────────────────────────────────────────────────────────────
 
+enum QuoteState {
+    QUOTE_STATE_UNSPECIFIED = 0;
+    QUOTE_STATE_DRAFT       = 1;
+    QUOTE_STATE_SENT        = 2;
+    QUOTE_STATE_VALIDATED   = 3;
+    QUOTE_STATE_DROP        = 4;
+}
+
 message Quote {
-    string quote_id = 1;
-    string user_id = 2;
-    string name = 3;
-    bool archived = 4;
+    string     quote_id = 1;
+    string     user_id  = 2;
+    string     name     = 3;
+    bool       archived = 4;
+    QuoteState state    = 5;
 }
 
 message CreateQuoteRequest {
@@ -99,6 +110,16 @@ message RestoreQuoteRequest {
 
 message TrashQuotesRequest {
     string user_id = 1;
+}
+
+message DropQuoteRequest {
+    string quote_id = 1;
+    string user_id = 2;
+}
+
+message ContinueQuoteRequest {
+    string quote_id = 1;
+    string user_id = 2;
 }
 
 // ─── Line ────────────────────────────────────────────────────────────────────

@@ -4,6 +4,7 @@ describe("Quote", () => {
     user_id: string;
     name: string;
     archived_at: string | null;
+    state: "draft" | "sent" | "validated" | "drop";
     created_at: string;
     updated_at: string;
   };
@@ -26,6 +27,7 @@ describe("Quote", () => {
       user_id: "u-1",
       name: "Devis Alpha",
       archived_at: null,
+      state: "draft",
       created_at: "2026-01-01T00:00:00Z",
       updated_at: "2026-01-01T00:00:00Z",
       ...over,
@@ -48,7 +50,7 @@ describe("Quote", () => {
   }
 
   describe("List", () => {
-    it("renders quotes and maps archived_at to status", () => {
+    it("renders quotes and maps state + archived_at to status", () => {
       cy.login();
       cy.intercept("GET", "/api/quotes", {
         statusCode: 200,
@@ -61,6 +63,11 @@ describe("Quote", () => {
               name: "Devis Beta",
               archived_at: "2026-04-01T00:00:00Z",
             }),
+            quote({
+              quote_id: "q-3",
+              name: "Devis Gamma",
+              state: "drop",
+            }),
           ],
         },
       }).as("listQuotes");
@@ -72,6 +79,8 @@ describe("Quote", () => {
       cy.contains("td", "brouillon").should("be.visible");
       cy.contains("td", "Devis Beta").should("be.visible");
       cy.contains("td", "archivé").should("be.visible");
+      cy.contains("td", "Devis Gamma").should("be.visible");
+      cy.contains("td", "abandonné").should("be.visible");
     });
 
     it("shows the empty state when no quotes are returned", () => {
@@ -257,6 +266,95 @@ describe("Quote", () => {
         "[data-line-id='l-1'] [data-slot='line-save-indicator'][data-status='error']",
       ).should("exist");
       cy.get("[data-sonner-toaster]").should("contain", "Échec serveur.");
+    });
+  });
+
+  describe("Drop / Continue", () => {
+    it("drops a draft quote with confirmation and switches form to readonly", () => {
+      cy.login();
+      cy.intercept("GET", "/api/quotes/q-1", {
+        statusCode: 200,
+        body: { success: true, quote: quote({ state: "draft" }), lines: [line()] },
+      }).as("getQuote");
+      cy.intercept("POST", "/api/quotes/q-1/drop", {
+        statusCode: 200,
+        body: { success: true },
+      }).as("dropQuote");
+
+      cy.visit("/quote/q-1");
+      cy.wait("@getQuote");
+
+      cy.get("[data-quote-state='draft']").should("exist");
+      cy.contains("button", "Abandonner").click();
+      cy.get("[data-slot='alert-dialog-content']").should("be.visible");
+      cy.contains("button", "Confirmer").click();
+
+      cy.wait("@dropQuote");
+      cy.get("[data-quote-state='drop']").should("exist");
+      cy.get("[data-slot='quote-state-badge']").should(
+        "contain",
+        "Abandonné",
+      );
+      cy.get("input[name='name']").should("be.disabled");
+      cy.contains("button", "Continuer").should("be.visible");
+      cy.contains("button", "Abandonner").should("not.exist");
+    });
+
+    it("cancels the drop confirmation without calling the API", () => {
+      cy.login();
+      cy.intercept("GET", "/api/quotes/q-1", {
+        statusCode: 200,
+        body: { success: true, quote: quote({ state: "draft" }), lines: [] },
+      }).as("getQuote");
+      cy.intercept("POST", "/api/quotes/q-1/drop", cy.spy().as("dropSpy"));
+
+      cy.visit("/quote/q-1");
+      cy.wait("@getQuote");
+
+      cy.contains("button", "Abandonner").click();
+      cy.contains("button", "Annuler").click();
+      cy.get("[data-slot='alert-dialog-content']").should("not.exist");
+      cy.get("[data-quote-state='draft']").should("exist");
+      cy.get("@dropSpy").should("not.have.been.called");
+    });
+
+    it("reactivates a Drop quote via Continuer", () => {
+      cy.login();
+      cy.intercept("GET", "/api/quotes/q-1", {
+        statusCode: 200,
+        body: { success: true, quote: quote({ state: "drop" }), lines: [] },
+      }).as("getQuote");
+      cy.intercept("POST", "/api/quotes/q-1/continue", {
+        statusCode: 200,
+        body: { success: true },
+      }).as("continueQuote");
+
+      cy.visit("/quote/q-1");
+      cy.wait("@getQuote");
+
+      cy.get("[data-quote-state='drop']").should("exist");
+      cy.get("input[name='name']").should("be.disabled");
+      cy.contains("button", "Continuer").click();
+      cy.wait("@continueQuote");
+
+      cy.get("[data-quote-state='draft']").should("exist");
+      cy.get("input[name='name']").should("not.be.disabled");
+    });
+
+    it("shows readonly UI and no Abandonner button for validated quotes", () => {
+      cy.login();
+      cy.intercept("GET", "/api/quotes/q-1", {
+        statusCode: 200,
+        body: { success: true, quote: quote({ state: "validated" }), lines: [] },
+      }).as("getQuote");
+
+      cy.visit("/quote/q-1");
+      cy.wait("@getQuote");
+
+      cy.get("[data-quote-state='validated']").should("exist");
+      cy.get("input[name='name']").should("be.disabled");
+      cy.contains("button", "Abandonner").should("not.exist");
+      cy.contains("button", "Continuer").should("not.exist");
     });
   });
 });

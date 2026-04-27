@@ -13,7 +13,7 @@ func List(ctx context.Context, db *sql.DB, req *quoteGrpc.ListQuotesRequest) (*q
 		return &quoteGrpc.ListQuotesResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 
-	query := `SELECT quote_id, user_id, name, archived_at FROM quotes WHERE user_id=$1`
+	query := `SELECT quote_id, user_id, name, archived_at, state FROM quotes WHERE user_id=$1`
 	if !req.IncludeArchived {
 		query += ` AND archived_at IS NULL`
 	}
@@ -32,8 +32,9 @@ func List(ctx context.Context, db *sql.DB, req *quoteGrpc.ListQuotesRequest) (*q
 			userID     string
 			name       string
 			archivedAt sql.NullTime
+			state      string
 		)
-		if err := rows.Scan(&quoteID, &userID, &name, &archivedAt); err != nil {
+		if err := rows.Scan(&quoteID, &userID, &name, &archivedAt, &state); err != nil {
 			return &quoteGrpc.ListQuotesResponse{Success: false, Code: codes.InternalError}, err
 		}
 		quotes = append(quotes, &quoteGrpc.Quote{
@@ -41,6 +42,7 @@ func List(ctx context.Context, db *sql.DB, req *quoteGrpc.ListQuotesRequest) (*q
 			UserId:   userID,
 			Name:     name,
 			Archived: archivedAt.Valid,
+			State:    StateFromString(state),
 		})
 	}
 	if err := rows.Err(); err != nil {

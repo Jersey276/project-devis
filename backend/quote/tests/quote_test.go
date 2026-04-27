@@ -73,10 +73,10 @@ func TestCreateQuote_MissingUser(t *testing.T) {
 func TestGetQuote_Success(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at FROM quotes`).
+	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at, state FROM quotes`).
 		WithArgs("q-1", "user-1").
-		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at"}).
-			AddRow("q-1", "user-1", "Devis", nil))
+		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at", "state"}).
+			AddRow("q-1", "user-1", "Devis", nil, "draft"))
 
 	mock.ExpectQuery(`SELECT line_id, quote_id, type, name`).
 		WithArgs("q-1").
@@ -107,10 +107,10 @@ func TestGetQuote_Success(t *testing.T) {
 func TestGetQuote_Archived(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at FROM quotes`).
+	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at, state FROM quotes`).
 		WithArgs("q-1", "user-1").
-		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at"}).
-			AddRow("q-1", "user-1", "Devis", time.Now()))
+		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at", "state"}).
+			AddRow("q-1", "user-1", "Devis", time.Now(), "draft"))
 
 	mock.ExpectQuery(`SELECT line_id, quote_id, type, name`).
 		WithArgs("q-1").
@@ -134,9 +134,9 @@ func TestGetQuote_Archived(t *testing.T) {
 func TestGetQuote_NotFound(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at FROM quotes`).
+	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at, state FROM quotes`).
 		WithArgs("ghost", "user-1").
-		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at"}))
+		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at", "state"}))
 
 	resp, err := srv.GetQuote(context.Background(), &quoteGrpc.GetQuoteRequest{
 		QuoteId: "ghost",
@@ -156,11 +156,11 @@ func TestGetQuote_NotFound(t *testing.T) {
 func TestListQuotes_ExcludesArchivedByDefault(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at FROM quotes WHERE user_id=\$1 AND archived_at IS NULL`).
+	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at, state FROM quotes WHERE user_id=\$1 AND archived_at IS NULL`).
 		WithArgs("user-1").
-		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at"}).
-			AddRow("q-1", "user-1", "A", nil).
-			AddRow("q-2", "user-1", "B", nil))
+		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at", "state"}).
+			AddRow("q-1", "user-1", "A", nil, "draft").
+			AddRow("q-2", "user-1", "B", nil, "draft"))
 
 	resp, err := srv.ListQuotes(context.Background(), &quoteGrpc.ListQuotesRequest{UserId: "user-1"})
 	if err != nil {
@@ -178,11 +178,11 @@ func TestListQuotes_IncludeArchived(t *testing.T) {
 	srv, mock := setupServer(t)
 
 	// When include_archived=true, the WHERE clause must NOT contain archived_at IS NULL
-	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at FROM quotes WHERE user_id=\$1 ORDER`).
+	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at, state FROM quotes WHERE user_id=\$1 ORDER`).
 		WithArgs("user-1").
-		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at"}).
-			AddRow("q-1", "user-1", "A", nil).
-			AddRow("q-2", "user-1", "B", time.Now()))
+		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at", "state"}).
+			AddRow("q-1", "user-1", "A", nil, "draft").
+			AddRow("q-2", "user-1", "B", time.Now(), "draft"))
 
 	resp, err := srv.ListQuotes(context.Background(), &quoteGrpc.ListQuotesRequest{
 		UserId:          "user-1",
@@ -205,6 +205,7 @@ func TestListQuotes_IncludeArchived(t *testing.T) {
 func TestUpdateQuote_Success(t *testing.T) {
 	srv, mock := setupServer(t)
 
+	expectEditableCheck(mock, "q-1", "user-1", "draft")
 	mock.ExpectExec(`UPDATE quotes SET name`).
 		WithArgs("New name", "q-1", "user-1").
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -225,9 +226,7 @@ func TestUpdateQuote_Success(t *testing.T) {
 func TestUpdateQuote_NotFound(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	mock.ExpectExec(`UPDATE quotes SET name`).
-		WithArgs("x", "q-1", "user-1").
-		WillReturnResult(sqlmock.NewResult(0, 0))
+	expectEditableCheck(mock, "q-1", "user-1", "")
 
 	resp, err := srv.UpdateQuote(context.Background(), &quoteGrpc.UpdateQuoteRequest{
 		QuoteId: "q-1",
@@ -238,7 +237,156 @@ func TestUpdateQuote_NotFound(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if resp.Success {
-		t.Fatal("expected failure when no rows affected")
+		t.Fatal("expected failure when quote does not exist")
+	}
+	if resp.Code != actions.CodeNotFound {
+		t.Fatalf("expected CodeNotFound, got %d", resp.Code)
+	}
+}
+
+func TestUpdateQuote_BlockedWhenValidated(t *testing.T) {
+	srv, mock := setupServer(t)
+
+	expectEditableCheck(mock, "q-1", "user-1", "validated")
+
+	resp, err := srv.UpdateQuote(context.Background(), &quoteGrpc.UpdateQuoteRequest{
+		QuoteId: "q-1",
+		UserId:  "user-1",
+		Name:    "x",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Code != actions.CodeQuoteFinalized {
+		t.Fatalf("expected CodeQuoteFinalized, got %d", resp.Code)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unexpected DB calls: %v", err)
+	}
+}
+
+func TestUpdateQuote_BlockedWhenDrop(t *testing.T) {
+	srv, mock := setupServer(t)
+
+	expectEditableCheck(mock, "q-1", "user-1", "drop")
+
+	resp, err := srv.UpdateQuote(context.Background(), &quoteGrpc.UpdateQuoteRequest{
+		QuoteId: "q-1",
+		UserId:  "user-1",
+		Name:    "x",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Code != actions.CodeQuoteFinalized {
+		t.Fatalf("expected CodeQuoteFinalized, got %d", resp.Code)
+	}
+}
+
+func TestUpdateQuote_AllowedWhenSent(t *testing.T) {
+	srv, mock := setupServer(t)
+
+	expectEditableCheck(mock, "q-1", "user-1", "sent")
+	mock.ExpectExec(`UPDATE quotes SET name`).
+		WithArgs("Updated", "q-1", "user-1").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	resp, err := srv.UpdateQuote(context.Background(), &quoteGrpc.UpdateQuoteRequest{
+		QuoteId: "q-1",
+		UserId:  "user-1",
+		Name:    "Updated",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatalf("expected success, got code %d", resp.Code)
+	}
+}
+
+func TestDropQuote_Success(t *testing.T) {
+	srv, mock := setupServer(t)
+
+	mock.ExpectExec(`UPDATE quotes SET state='drop'`).
+		WithArgs("q-1", "user-1").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	resp, err := srv.DropQuote(context.Background(), &quoteGrpc.DropQuoteRequest{
+		QuoteId: "q-1",
+		UserId:  "user-1",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatalf("expected success, got code %d", resp.Code)
+	}
+}
+
+func TestDropQuote_NotFound(t *testing.T) {
+	srv, mock := setupServer(t)
+
+	mock.ExpectExec(`UPDATE quotes SET state='drop'`).
+		WithArgs("q-1", "user-1").
+		WillReturnResult(sqlmock.NewResult(0, 0))
+
+	resp, err := srv.DropQuote(context.Background(), &quoteGrpc.DropQuoteRequest{
+		QuoteId: "q-1",
+		UserId:  "user-1",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Code != actions.CodeNotFound {
+		t.Fatalf("expected CodeNotFound, got %d", resp.Code)
+	}
+}
+
+func TestDropQuote_MissingInput(t *testing.T) {
+	srv, _ := setupServer(t)
+
+	resp, err := srv.DropQuote(context.Background(), &quoteGrpc.DropQuoteRequest{UserId: "user-1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Code != actions.CodeInvalidInput {
+		t.Fatalf("expected CodeInvalidInput, got %d", resp.Code)
+	}
+}
+
+func TestContinueQuote_Success(t *testing.T) {
+	srv, mock := setupServer(t)
+
+	mock.ExpectExec(`UPDATE quotes SET state='draft'`).
+		WithArgs("q-1", "user-1").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	resp, err := srv.ContinueQuote(context.Background(), &quoteGrpc.ContinueQuoteRequest{
+		QuoteId: "q-1",
+		UserId:  "user-1",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatalf("expected success, got code %d", resp.Code)
+	}
+}
+
+func TestContinueQuote_NotInDropState(t *testing.T) {
+	srv, mock := setupServer(t)
+
+	// rows=0 because the WHERE state='drop' filter excluded it
+	mock.ExpectExec(`UPDATE quotes SET state='draft'`).
+		WithArgs("q-1", "user-1").
+		WillReturnResult(sqlmock.NewResult(0, 0))
+
+	resp, err := srv.ContinueQuote(context.Background(), &quoteGrpc.ContinueQuoteRequest{
+		QuoteId: "q-1",
+		UserId:  "user-1",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
 	if resp.Code != actions.CodeNotFound {
 		t.Fatalf("expected CodeNotFound, got %d", resp.Code)

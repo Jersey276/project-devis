@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"project-devis-quote/actions/codes"
+	"project-devis-quote/actions/quote"
 	"project-devis-quote/actions/sqlutil"
 	quoteGrpc "project-devis-quote/services/grpc"
 )
@@ -30,17 +31,8 @@ func Create(ctx context.Context, db *sql.DB, req *quoteGrpc.CreateQuoteLineReque
 		return &quoteGrpc.CreateQuoteLineResponse{Success: false, Code: codes.InvalidLineData}, nil
 	}
 
-	// Verify the parent quote belongs to the user and is not archived.
-	var ownerOK bool
-	err = db.QueryRowContext(ctx,
-		`SELECT EXISTS(SELECT 1 FROM quotes WHERE quote_id=$1 AND user_id=$2 AND archived_at IS NULL)`,
-		req.QuoteId, req.UserId,
-	).Scan(&ownerOK)
-	if err != nil {
-		return &quoteGrpc.CreateQuoteLineResponse{Success: false, Code: codes.InternalError}, err
-	}
-	if !ownerOK {
-		return &quoteGrpc.CreateQuoteLineResponse{Success: false, Code: codes.NotFound}, nil
+	if code, ok := quote.EditableForUser(ctx, db, req.QuoteId, req.UserId); !ok {
+		return &quoteGrpc.CreateQuoteLineResponse{Success: false, Code: code}, nil
 	}
 
 	lineID := uuid.New().String()

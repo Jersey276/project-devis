@@ -55,6 +55,18 @@ export async function updateQuote(
   });
 }
 
+export async function dropQuote(quoteId: string): Promise<ApiResult> {
+  return apiFetch(`/api/quotes/${encodeURIComponent(quoteId)}/drop`, {
+    method: "POST",
+  });
+}
+
+export async function continueQuote(quoteId: string): Promise<ApiResult> {
+  return apiFetch(`/api/quotes/${encodeURIComponent(quoteId)}/continue`, {
+    method: "POST",
+  });
+}
+
 export async function createLine(
   quoteId: string,
   draft: LineDraft,

@@ -1,0 +1,2 @@
+DROP INDEX IF EXISTS idx_quotes_state;
+ALTER TABLE quotes DROP COLUMN IF EXISTS state;

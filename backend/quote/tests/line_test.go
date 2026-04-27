@@ -13,16 +13,10 @@ const (
 	multipleData = `{"sublines":[{"name":"a","quantity":"1","unit_price":1000}]}`
 )
 
-func expectOwnerCheck(mock sqlmock.Sqlmock, quoteID, userID string, ok bool) {
-	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM quotes WHERE quote_id=\$1 AND user_id=\$2 AND archived_at IS NULL\)`).
-		WithArgs(quoteID, userID).
-		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(ok))
-}
-
 func TestCreateLine_SimpleSuccess(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	expectOwnerCheck(mock, "q-1", "user-1", true)
+	expectEditableCheck(mock, "q-1", "user-1", "draft")
 	mock.ExpectExec(`INSERT INTO quote_lines`).
 		WithArgs(sqlmock.AnyArg(), "q-1", "simple", "Item", "2", "u", int64(1500), "{}", int32(0)).
 		WillReturnResult(sqlmock.NewResult(1, 1))
@@ -54,7 +48,7 @@ func TestCreateLine_SimpleSuccess(t *testing.T) {
 func TestCreateLine_MultipleSuccess(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	expectOwnerCheck(mock, "q-1", "user-1", true)
+	expectEditableCheck(mock, "q-1", "user-1", "draft")
 	mock.ExpectExec(`INSERT INTO quote_lines`).
 		WithArgs(sqlmock.AnyArg(), "q-1", "multiple", "Pack", "1", nil, int64(0), multipleData, int32(0)).
 		WillReturnResult(sqlmock.NewResult(1, 1))
@@ -146,7 +140,7 @@ func TestCreateLine_InvalidData_SimpleNonEmpty(t *testing.T) {
 func TestCreateLine_OwnerNotFound(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	expectOwnerCheck(mock, "q-1", "user-1", false)
+	expectEditableCheck(mock, "q-1", "user-1", "")
 
 	resp, err := srv.CreateQuoteLine(context.Background(), &quoteGrpc.CreateQuoteLineRequest{
 		QuoteId:  "q-1",
@@ -164,6 +158,30 @@ func TestCreateLine_OwnerNotFound(t *testing.T) {
 	}
 	if resp.Code != actions.CodeNotFound {
 		t.Fatalf("expected CodeNotFound, got %d", resp.Code)
+	}
+}
+
+func TestCreateLine_BlockedWhenFinalized(t *testing.T) {
+	srv, mock := setupServer(t)
+
+	expectEditableCheck(mock, "q-1", "user-1", "validated")
+
+	resp, err := srv.CreateQuoteLine(context.Background(), &quoteGrpc.CreateQuoteLineRequest{
+		QuoteId:  "q-1",
+		UserId:   "user-1",
+		Type:     "simple",
+		Name:     "X",
+		Quantity: "1",
+		Data:     "{}",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Code != actions.CodeQuoteFinalized {
+		t.Fatalf("expected CodeQuoteFinalized, got %d", resp.Code)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
 	}
 }
 
@@ -301,8 +319,9 @@ func TestListLines_OwnerNotFound(t *testing.T) {
 func TestUpdateLine_Success(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	mock.ExpectExec(`UPDATE quote_lines l\s+SET type`).
-		WithArgs("simple", "Item v2", "3", "u", int64(2000), "{}", int32(2), "l-1", "user-1").
+	expectLineParentEditable(mock, "l-1", "user-1", "draft")
+	mock.ExpectExec(`UPDATE quote_lines\s+SET type`).
+		WithArgs("simple", "Item v2", "3", "u", int64(2000), "{}", int32(2), "l-1").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	resp, err := srv.UpdateQuoteLine(context.Background(), &quoteGrpc.UpdateQuoteLineRequest{
@@ -324,12 +343,10 @@ func TestUpdateLine_Success(t *testing.T) {
 	}
 }
 
-func TestUpdateLine_NotFound(t *testing.T) {
+func TestUpdateLine_LineNotFound(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	mock.ExpectExec(`UPDATE quote_lines l\s+SET type`).
-		WithArgs("simple", "X", "1", nil, int64(0), "{}", int32(0), "l-1", "user-1").
-		WillReturnResult(sqlmock.NewResult(0, 0))
+	expectLineParentEditable(mock, "l-1", "user-1", "")
 
 	resp, err := srv.UpdateQuoteLine(context.Background(), &quoteGrpc.UpdateQuoteLineRequest{
 		LineId:   "l-1",
@@ -347,11 +364,33 @@ func TestUpdateLine_NotFound(t *testing.T) {
 	}
 }
 
+func TestUpdateLine_BlockedWhenFinalized(t *testing.T) {
+	srv, mock := setupServer(t)
+
+	expectLineParentEditable(mock, "l-1", "user-1", "drop")
+
+	resp, err := srv.UpdateQuoteLine(context.Background(), &quoteGrpc.UpdateQuoteLineRequest{
+		LineId:   "l-1",
+		UserId:   "user-1",
+		Type:     "simple",
+		Name:     "X",
+		Quantity: "1",
+		Data:     "{}",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Code != actions.CodeQuoteFinalized {
+		t.Fatalf("expected CodeQuoteFinalized, got %d", resp.Code)
+	}
+}
+
 func TestDeleteLine_Success(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	mock.ExpectExec(`DELETE FROM quote_lines l\s+USING quotes q`).
-		WithArgs("l-1", "user-1").
+	expectLineParentEditable(mock, "l-1", "user-1", "draft")
+	mock.ExpectExec(`DELETE FROM quote_lines WHERE line_id=\$1`).
+		WithArgs("l-1").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	resp, err := srv.DeleteQuoteLine(context.Background(), &quoteGrpc.DeleteQuoteLineRequest{
@@ -366,12 +405,10 @@ func TestDeleteLine_Success(t *testing.T) {
 	}
 }
 
-func TestDeleteLine_NotFound(t *testing.T) {
+func TestDeleteLine_LineNotFound(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	mock.ExpectExec(`DELETE FROM quote_lines l\s+USING quotes q`).
-		WithArgs("l-1", "user-1").
-		WillReturnResult(sqlmock.NewResult(0, 0))
+	expectLineParentEditable(mock, "l-1", "user-1", "")
 
 	resp, err := srv.DeleteQuoteLine(context.Background(), &quoteGrpc.DeleteQuoteLineRequest{
 		LineId: "l-1",
@@ -382,5 +419,22 @@ func TestDeleteLine_NotFound(t *testing.T) {
 	}
 	if resp.Code != actions.CodeNotFound {
 		t.Fatalf("expected CodeNotFound, got %d", resp.Code)
+	}
+}
+
+func TestDeleteLine_BlockedWhenFinalized(t *testing.T) {
+	srv, mock := setupServer(t)
+
+	expectLineParentEditable(mock, "l-1", "user-1", "validated")
+
+	resp, err := srv.DeleteQuoteLine(context.Background(), &quoteGrpc.DeleteQuoteLineRequest{
+		LineId: "l-1",
+		UserId: "user-1",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Code != actions.CodeQuoteFinalized {
+		t.Fatalf("expected CodeQuoteFinalized, got %d", resp.Code)
 	}
 }

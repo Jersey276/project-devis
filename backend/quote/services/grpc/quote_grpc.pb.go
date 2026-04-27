@@ -27,6 +27,8 @@ const (
 	QuoteService_ArchiveQuote_FullMethodName    = "/quote.QuoteService/ArchiveQuote"
 	QuoteService_RestoreQuote_FullMethodName    = "/quote.QuoteService/RestoreQuote"
 	QuoteService_TrashQuotes_FullMethodName     = "/quote.QuoteService/TrashQuotes"
+	QuoteService_DropQuote_FullMethodName       = "/quote.QuoteService/DropQuote"
+	QuoteService_ContinueQuote_FullMethodName   = "/quote.QuoteService/ContinueQuote"
 	QuoteService_CreateQuoteLine_FullMethodName = "/quote.QuoteService/CreateQuoteLine"
 	QuoteService_GetQuoteLine_FullMethodName    = "/quote.QuoteService/GetQuoteLine"
 	QuoteService_ListQuoteLines_FullMethodName  = "/quote.QuoteService/ListQuoteLines"
@@ -47,6 +49,8 @@ type QuoteServiceClient interface {
 	ArchiveQuote(ctx context.Context, in *ArchiveQuoteRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	RestoreQuote(ctx context.Context, in *RestoreQuoteRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	TrashQuotes(ctx context.Context, in *TrashQuotesRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	DropQuote(ctx context.Context, in *DropQuoteRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	ContinueQuote(ctx context.Context, in *ContinueQuoteRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	// Line
 	CreateQuoteLine(ctx context.Context, in *CreateQuoteLineRequest, opts ...grpc.CallOption) (*CreateQuoteLineResponse, error)
 	GetQuoteLine(ctx context.Context, in *GetQuoteLineRequest, opts ...grpc.CallOption) (*GetQuoteLineResponse, error)
@@ -143,6 +147,26 @@ func (c *quoteServiceClient) TrashQuotes(ctx context.Context, in *TrashQuotesReq
 	return out, nil
 }
 
+func (c *quoteServiceClient) DropQuote(ctx context.Context, in *DropQuoteRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, QuoteService_DropQuote_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *quoteServiceClient) ContinueQuote(ctx context.Context, in *ContinueQuoteRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, QuoteService_ContinueQuote_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *quoteServiceClient) CreateQuoteLine(ctx context.Context, in *CreateQuoteLineRequest, opts ...grpc.CallOption) (*CreateQuoteLineResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateQuoteLineResponse)
@@ -206,6 +230,8 @@ type QuoteServiceServer interface {
 	ArchiveQuote(context.Context, *ArchiveQuoteRequest) (*GenericResponse, error)
 	RestoreQuote(context.Context, *RestoreQuoteRequest) (*GenericResponse, error)
 	TrashQuotes(context.Context, *TrashQuotesRequest) (*GenericResponse, error)
+	DropQuote(context.Context, *DropQuoteRequest) (*GenericResponse, error)
+	ContinueQuote(context.Context, *ContinueQuoteRequest) (*GenericResponse, error)
 	// Line
 	CreateQuoteLine(context.Context, *CreateQuoteLineRequest) (*CreateQuoteLineResponse, error)
 	GetQuoteLine(context.Context, *GetQuoteLineRequest) (*GetQuoteLineResponse, error)
@@ -245,6 +271,12 @@ func (UnimplementedQuoteServiceServer) RestoreQuote(context.Context, *RestoreQuo
 }
 func (UnimplementedQuoteServiceServer) TrashQuotes(context.Context, *TrashQuotesRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method TrashQuotes not implemented")
+}
+func (UnimplementedQuoteServiceServer) DropQuote(context.Context, *DropQuoteRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DropQuote not implemented")
+}
+func (UnimplementedQuoteServiceServer) ContinueQuote(context.Context, *ContinueQuoteRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ContinueQuote not implemented")
 }
 func (UnimplementedQuoteServiceServer) CreateQuoteLine(context.Context, *CreateQuoteLineRequest) (*CreateQuoteLineResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateQuoteLine not implemented")
@@ -426,6 +458,42 @@ func _QuoteService_TrashQuotes_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _QuoteService_DropQuote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DropQuoteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuoteServiceServer).DropQuote(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QuoteService_DropQuote_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuoteServiceServer).DropQuote(ctx, req.(*DropQuoteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _QuoteService_ContinueQuote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ContinueQuoteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuoteServiceServer).ContinueQuote(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QuoteService_ContinueQuote_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuoteServiceServer).ContinueQuote(ctx, req.(*ContinueQuoteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _QuoteService_CreateQuoteLine_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateQuoteLineRequest)
 	if err := dec(in); err != nil {
@@ -554,6 +622,14 @@ var QuoteService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "TrashQuotes",
 			Handler:    _QuoteService_TrashQuotes_Handler,
+		},
+		{
+			MethodName: "DropQuote",
+			Handler:    _QuoteService_DropQuote_Handler,
+		},
+		{
+			MethodName: "ContinueQuote",
+			Handler:    _QuoteService_ContinueQuote_Handler,
 		},
 		{
 			MethodName: "CreateQuoteLine",
