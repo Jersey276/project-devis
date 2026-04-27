@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AppLayout } from "@/app/layout";
+import PageBreadcrumb from "@/components/custom/page-breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -46,7 +46,8 @@ const breadcrumbs = [
 
 export default function QuoteIndexPage() {
   return (
-    <AppLayout breadcrumbs={breadcrumbs}>
+    <>
+      <PageBreadcrumb items={breadcrumbs} />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Devis</CardTitle>
@@ -92,6 +93,6 @@ export default function QuoteIndexPage() {
           </DataTable>
         </CardContent>
       </Card>
-    </AppLayout>
+    </>
   );
 }

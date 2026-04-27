@@ -1,4 +1,4 @@
-import { AppLayout } from "@/app/layout";
+import PageBreadcrumb from "@/components/custom/page-breadcrumb";
 import QuoteForm from "@/components/quote/quote-form";
 
 const breadcrumbs = [
@@ -14,8 +14,9 @@ const breadcrumbs = [
 
 export default function CreateQuotePage() {
   return (
-    <AppLayout breadcrumbs={breadcrumbs}>
+    <>
+      <PageBreadcrumb items={breadcrumbs} />
       <QuoteForm />
-    </AppLayout>
+    </>
   );
 }

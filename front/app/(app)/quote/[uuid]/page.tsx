@@ -1,4 +1,4 @@
-import { AppLayout } from "@/app/layout";
+import PageBreadcrumb from "@/components/custom/page-breadcrumb";
 import QuoteForm from "@/components/quote/quote-form";
 import { getQuoteMockById } from "@/lib/mocks/quotes";
 import { redirect } from "next/navigation";
@@ -13,6 +13,11 @@ export default async function QuoteDetailPage({ params }: PageProps) {
   const { uuid } = await params;
   const existingQuote = getQuoteMockById(uuid);
 
+  if (!existingQuote) {
+    redirect("/quote");
+  }
+  const quote = existingQuote;
+
   const breadcrumbs = [
     {
       href: "/quote",
@@ -24,14 +29,10 @@ export default async function QuoteDetailPage({ params }: PageProps) {
     },
   ];
 
-  if (!existingQuote) {
-    redirect("/quote");
-  }
-  const quote = existingQuote;
-
   return (
-    <AppLayout breadcrumbs={breadcrumbs}>
+    <>
+      <PageBreadcrumb items={breadcrumbs} />
       <QuoteForm quote={quote} />
-    </AppLayout>
+    </>
   );
 }
