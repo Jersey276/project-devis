@@ -11,7 +11,7 @@ import (
 )
 
 func Update(ctx context.Context, db *sql.DB, req *quoteGrpc.UpdateQuoteLineRequest) (*quoteGrpc.UpdateQuoteLineResponse, error) {
-	if req.LineId == "" || req.UserId == "" || req.Type == "" || req.Name == "" || req.Quantity == "" {
+	if req.LineId == "" || req.UserId == "" || req.Type == "" || req.Quantity == "" {
 		return &quoteGrpc.UpdateQuoteLineResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 	if req.UnitPrice < 0 {

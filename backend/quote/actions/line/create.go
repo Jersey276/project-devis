@@ -12,7 +12,7 @@ import (
 )
 
 func Create(ctx context.Context, db *sql.DB, req *quoteGrpc.CreateQuoteLineRequest) (*quoteGrpc.CreateQuoteLineResponse, error) {
-	if req.QuoteId == "" || req.UserId == "" || req.Type == "" || req.Name == "" || req.Quantity == "" {
+	if req.QuoteId == "" || req.UserId == "" || req.Type == "" || req.Quantity == "" {
 		return &quoteGrpc.CreateQuoteLineResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 	if req.UnitPrice < 0 {

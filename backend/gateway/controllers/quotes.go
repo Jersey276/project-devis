@@ -232,7 +232,7 @@ func TrashQuotes(c *gin.Context, client quote.QuoteServiceClient) {
 
 type lineInput struct {
 	Type      string          `json:"type" binding:"required"`
-	Name      string          `json:"name" binding:"required"`
+	Name      string          `json:"name"`
 	Quantity  string          `json:"quantity" binding:"required"`
 	Unit      string          `json:"unit"`
 	UnitPrice int64           `json:"unit_price"`

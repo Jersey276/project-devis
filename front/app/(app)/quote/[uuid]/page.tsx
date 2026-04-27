@@ -1,7 +1,5 @@
 import PageBreadcrumb from "@/components/custom/page-breadcrumb";
 import QuoteForm from "@/components/quote/quote-form";
-import { getQuoteMockById } from "@/lib/mocks/quotes";
-import { redirect } from "next/navigation";
 
 type PageProps = {
   params: Promise<{
@@ -11,12 +9,6 @@ type PageProps = {
 
 export default async function QuoteDetailPage({ params }: PageProps) {
   const { uuid } = await params;
-  const existingQuote = getQuoteMockById(uuid);
-
-  if (!existingQuote) {
-    redirect("/quote");
-  }
-  const quote = existingQuote;
 
   const breadcrumbs = [
     {
@@ -32,7 +24,7 @@ export default async function QuoteDetailPage({ params }: PageProps) {
   return (
     <>
       <PageBreadcrumb items={breadcrumbs} />
-      <QuoteForm quote={quote} />
+      <QuoteForm quoteId={uuid} />
     </>
   );
 }
