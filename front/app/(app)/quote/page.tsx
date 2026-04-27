@@ -1,8 +1,31 @@
-import { DataTable, DataTableBody, DataTableHead, DataTableHeader, DataTableSortableHead } from "@/components/custom/data-table";
+import Link from "next/link";
+import PageBreadcrumb from "@/components/custom/page-breadcrumb";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import QuoteListTable from "@/components/quote/quote-list-table";
 
-export default function quoteIndex() {
+const breadcrumbs = [
+  {
+    href: "/quote",
+    label: "Devis",
+  },
+];
 
+export default function QuoteIndexPage() {
   return (
-    <div>quote</div>
-  )
+    <>
+      <PageBreadcrumb items={breadcrumbs} />
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Devis</CardTitle>
+          <Button asChild>
+            <Link href="/quote/create">Nouveau devis</Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <QuoteListTable />
+        </CardContent>
+      </Card>
+    </>
+  );
 }

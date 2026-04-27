@@ -6,6 +6,7 @@ on:
       - "backend/auth/**"
       - "backend/gateway/**"
       - "backend/users/**"
+      - "backend/quote/**"
     branches:
       - dev
 
@@ -30,7 +31,8 @@ jobs:
               - "backend/auth/**"
             users:
               - "backend/users/**"
-
+            quote:
+              - "backend/quote/**"
   ci:
     needs: check-changes
     if: needs.check-changes.outputs.services != '[]'

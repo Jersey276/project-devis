@@ -4,6 +4,7 @@ RUN apk update && apk upgrade --no-cache \
     && apk add --no-cache postgresql-contrib postgresql-client
 
 COPY postgres/init.sh /docker-entrypoint-initdb.d/init.sh
-RUN chmod +x /docker-entrypoint-initdb.d/init.sh
+RUN sed -i 's/\r$//' /docker-entrypoint-initdb.d/init.sh \
+    && chmod +x /docker-entrypoint-initdb.d/init.sh
 
 CMD ["postgres"]

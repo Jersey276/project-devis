@@ -30,11 +30,13 @@ services:
       TZ: Europe/Paris
       AUTH_SERVICE_ADDRESS: devis-auth:50051
       USER_SERVICE_ADDRESS: devis-user:50052
+      QUOTE_SERVICE_ADDRESS: devis-quote:50053
     ports:
       - "8080:8080"
     depends_on:
       - devis-auth
       - devis-user
+      - devis-quote
 
   devis-auth:
     <<: *db-service
@@ -59,16 +61,16 @@ services:
       DB_USER: devis-users
       DB_NAME: users
 
-  # devis-quote:
-  #   <<: *db-service
-  #   build:
-  #     <<: *service-build
-  #     args:
-  #       SERVICE_NAME: quote
-  #   environment:
-  #     <<: *db-env
-  #     DB_USER: devis-quote
-  #     DB_NAME: quote
+  devis-quote:
+    <<: *db-service
+    build:
+      <<: *service-build
+      args:
+        SERVICE_NAME: quote
+    environment:
+      <<: *db-env
+      DB_USER: devis-quote
+      DB_NAME: quote
 
   postgres:
     build:
