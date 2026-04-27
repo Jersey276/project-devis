@@ -1,0 +1,178 @@
+syntax = "proto3";
+
+package quote;
+
+option go_package = "project-devis-quote/services/grpc";
+
+service QuoteService {
+    // Quote
+    rpc CreateQuote(CreateQuoteRequest) returns (CreateQuoteResponse);
+    rpc GetQuote(GetQuoteRequest) returns (GetQuoteResponse);
+    rpc ListQuotes(ListQuotesRequest) returns (ListQuotesResponse);
+    rpc UpdateQuote(UpdateQuoteRequest) returns (UpdateQuoteResponse);
+    rpc DeleteQuote(DeleteQuoteRequest) returns (GenericResponse);
+    rpc ArchiveQuote(ArchiveQuoteRequest) returns (GenericResponse);
+    rpc RestoreQuote(RestoreQuoteRequest) returns (GenericResponse);
+    rpc TrashQuotes(TrashQuotesRequest) returns (GenericResponse);
+
+    // Line
+    rpc CreateQuoteLine(CreateQuoteLineRequest) returns (CreateQuoteLineResponse);
+    rpc GetQuoteLine(GetQuoteLineRequest) returns (GetQuoteLineResponse);
+    rpc ListQuoteLines(ListQuoteLinesRequest) returns (ListQuoteLinesResponse);
+    rpc UpdateQuoteLine(UpdateQuoteLineRequest) returns (UpdateQuoteLineResponse);
+    rpc DeleteQuoteLine(DeleteQuoteLineRequest) returns (GenericResponse);
+}
+
+message GenericResponse {
+    bool success = 1;
+    int32 code = 2;
+}
+
+// ─── Quote ───────────────────────────────────────────────────────────────────
+
+message Quote {
+    string quote_id = 1;
+    string user_id = 2;
+    string name = 3;
+    bool archived = 4;
+}
+
+message CreateQuoteRequest {
+    string user_id = 1;
+    string name = 2;
+}
+
+message CreateQuoteResponse {
+    bool success = 1;
+    int32 code = 2;
+    string quote_id = 3;
+}
+
+message GetQuoteRequest {
+    string quote_id = 1;
+    string user_id = 2;
+}
+
+message GetQuoteResponse {
+    bool success = 1;
+    int32 code = 2;
+    Quote quote = 3;
+    repeated QuoteLine lines = 4;
+}
+
+message ListQuotesRequest {
+    string user_id = 1;
+    bool include_archived = 2;
+}
+
+message ListQuotesResponse {
+    bool success = 1;
+    int32 code = 2;
+    repeated Quote quotes = 3;
+}
+
+message UpdateQuoteRequest {
+    string quote_id = 1;
+    string user_id = 2;
+    string name = 3;
+}
+
+message UpdateQuoteResponse {
+    bool success = 1;
+    int32 code = 2;
+}
+
+message DeleteQuoteRequest {
+    string quote_id = 1;
+    string user_id = 2;
+}
+
+message ArchiveQuoteRequest {
+    string quote_id = 1;
+    string user_id = 2;
+}
+
+message RestoreQuoteRequest {
+    string quote_id = 1;
+    string user_id = 2;
+}
+
+message TrashQuotesRequest {
+    string user_id = 1;
+}
+
+// ─── Line ────────────────────────────────────────────────────────────────────
+
+message QuoteLine {
+    string line_id = 1;
+    string quote_id = 2;
+    string type = 3;
+    string name = 4;
+    string quantity = 5;
+    string unit = 6;
+    int64 unit_price = 7;
+    string data = 8;
+    int32 position = 9;
+}
+
+message CreateQuoteLineRequest {
+    string quote_id = 1;
+    string user_id = 2;
+    string type = 3;
+    string name = 4;
+    string quantity = 5;
+    string unit = 6;
+    int64 unit_price = 7;
+    string data = 8;
+    int32 position = 9;
+}
+
+message CreateQuoteLineResponse {
+    bool success = 1;
+    int32 code = 2;
+    string line_id = 3;
+}
+
+message GetQuoteLineRequest {
+    string line_id = 1;
+    string user_id = 2;
+}
+
+message GetQuoteLineResponse {
+    bool success = 1;
+    int32 code = 2;
+    QuoteLine line = 3;
+}
+
+message ListQuoteLinesRequest {
+    string quote_id = 1;
+    string user_id = 2;
+}
+
+message ListQuoteLinesResponse {
+    bool success = 1;
+    int32 code = 2;
+    repeated QuoteLine lines = 3;
+}
+
+message UpdateQuoteLineRequest {
+    string line_id = 1;
+    string user_id = 2;
+    string type = 3;
+    string name = 4;
+    string quantity = 5;
+    string unit = 6;
+    int64 unit_price = 7;
+    string data = 8;
+    int32 position = 9;
+}
+
+message UpdateQuoteLineResponse {
+    bool success = 1;
+    int32 code = 2;
+}
+
+message DeleteQuoteLineRequest {
+    string line_id = 1;
+    string user_id = 2;
+}
