@@ -1,27 +1,40 @@
 package main
 
 import (
-	"project-devis-quote/controllers"
+	"embed"
+	"flag"
+	"fmt"
+	"log"
+	"net"
 
-	"github.com/gin-gonic/gin"
+	"project-devis-quote/actions"
+	"project-devis-quote/services"
+	quoteGrpc "project-devis-quote/services/grpc"
+
+	"google.golang.org/grpc"
 )
 
-func setupRouter() *gin.Engine {
-	r := gin.Default()
-	quote := r.Group("/api/quote")
+//go:embed migrations
+var migrationsFS embed.FS
 
-	quote.GET("/", controllers.ListQuotes)
-	quote.POST("/", controllers.CreateQuote)
-	quoteId := quote.Group("/:id")
-	{
-		quoteId.GET("/", controllers.GetQuote)
-		quoteId.PUT("/", controllers.UpdateQuote)
-	}
-	return r
-}
+var port = flag.Int("port", 50053, "The server port")
 
 func main() {
-	r := setupRouter()
+	flag.Parse()
 
-	r.Run(":8080")
+	db := services.ConnectDB()
+	services.RunMigrations(db, migrationsFS)
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	grpcServer := grpc.NewServer()
+	quoteGrpc.RegisterQuoteServiceServer(grpcServer, actions.NewServer(db))
+
+	log.Printf("quote gRPC server listening on %s", lis.Addr().String())
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("serve failed: %v", err)
+	}
 }
