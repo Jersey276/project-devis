@@ -6,6 +6,7 @@ on:
       - "backend/auth/**"
       - "backend/gateway/**"
       - "backend/users/**"
+      - "backend/quotes/**"
     branches:
       - dev
 
