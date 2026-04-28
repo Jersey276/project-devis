@@ -6,6 +6,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/custom/app-sidebar";
+import { ModeProvider } from "@/lib/mode-context";
 
 export default async function AppLayout({
   children,
@@ -18,14 +19,16 @@ export default async function AppLayout({
     redirect("/login");
   }
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-        </header>
-        <main className="p-4">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
+    <ModeProvider>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+          </header>
+          <main className="p-4">{children}</main>
+        </SidebarInset>
+      </SidebarProvider>
+    </ModeProvider>
   );
 }

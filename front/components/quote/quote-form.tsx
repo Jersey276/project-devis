@@ -48,6 +48,7 @@ import {
   updateQuote,
 } from "@/lib/services/quotes";
 import { fieldErrorsFromBody } from "@/lib/api";
+import { useMode } from "@/lib/mode-context";
 import {
   QUOTE_STATE_LABEL,
   type BackendQuote,
@@ -105,6 +106,7 @@ function lineDraftFromRow(row: FormItem): LineDraft {
 export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isCustomer } = useMode();
   const isCreate = !quoteId;
 
   const initialStep = useMemo(() => {
@@ -131,7 +133,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const [transitioning, setTransitioning] = useState(false);
 
   const isReadonly =
-    quoteState === "validated" || quoteState === "drop";
+    isCustomer || quoteState === "validated" || quoteState === "drop";
 
   const itemsRef = useRef(items);
   itemsRef.current = items;
@@ -449,8 +451,9 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
 
   const canGoNextFromStep1 = projectName.trim().length > 0 && !creating;
 
-  const showDropButton = !isCreate && (quoteState === "draft" || quoteState === "sent");
-  const showContinueButton = !isCreate && quoteState === "drop";
+  const showDropButton =
+    !isCustomer && !isCreate && (quoteState === "draft" || quoteState === "sent");
+  const showContinueButton = !isCustomer && !isCreate && quoteState === "drop";
 
   return (
     <Card data-quote-state={quoteState}>

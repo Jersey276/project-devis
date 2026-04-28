@@ -161,15 +161,17 @@ export default function QuoteStepItems({
                   <SaveIndicator status={item.saveStatus} />
                 </TableCell>
                 <TableCell>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => onRemoveItem(item.lineId)}
-                    disabled={isReadonly || items.length <= 1}
-                    aria-label="Supprimer la ligne"
-                  >
-                    <Trash2Icon className="size-4" />
-                  </Button>
+                  {!isReadonly && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => onRemoveItem(item.lineId)}
+                      disabled={items.length <= 1}
+                      aria-label="Supprimer la ligne"
+                    >
+                      <Trash2Icon className="size-4" />
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             );
