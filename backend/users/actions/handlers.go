@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"project-devis-users/actions/address"
+	"project-devis-users/actions/client"
 	"project-devis-users/actions/country"
 	country_group "project-devis-users/actions/country_group"
 	"project-devis-users/actions/tax"
@@ -27,6 +28,28 @@ func (s *Server) UpdateUser(ctx context.Context, req *usersGrpc.UpdateUserReques
 
 func (s *Server) DeleteUser(ctx context.Context, req *usersGrpc.DeleteUserRequest) (*usersGrpc.GenericResponse, error) {
 	return user.Delete(ctx, s.db, req)
+}
+
+// ─── Client ──────────────────────────────────────────────────────────────────
+
+func (s *Server) CreateClient(ctx context.Context, req *usersGrpc.CreateClientRequest) (*usersGrpc.CreateClientResponse, error) {
+	return client.Create(ctx, s.db, req)
+}
+
+func (s *Server) GetClient(ctx context.Context, req *usersGrpc.GetClientRequest) (*usersGrpc.GetClientResponse, error) {
+	return client.Get(ctx, s.db, req)
+}
+
+func (s *Server) ListClients(ctx context.Context, req *usersGrpc.ListClientsRequest) (*usersGrpc.ListClientsResponse, error) {
+	return client.List(ctx, s.db, req)
+}
+
+func (s *Server) UpdateClient(ctx context.Context, req *usersGrpc.UpdateClientRequest) (*usersGrpc.UpdateClientResponse, error) {
+	return client.Update(ctx, s.db, req)
+}
+
+func (s *Server) ArchiveClient(ctx context.Context, req *usersGrpc.ArchiveClientRequest) (*usersGrpc.GenericResponse, error) {
+	return client.Archive(ctx, s.db, req)
 }
 
 // ─── Address ─────────────────────────────────────────────────────────────────

@@ -1,8 +1,7 @@
-import Link from "next/link";
 import PageBreadcrumb from "@/components/custom/page-breadcrumb";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import QuoteListTable from "@/components/quote/quote-list-table";
+import NewQuoteButton from "@/components/quote/new-quote-button";
 
 const breadcrumbs = [
   {
@@ -18,9 +17,7 @@ export default function QuoteIndexPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Devis</CardTitle>
-          <Button asChild>
-            <Link href="/quote/create">Nouveau devis</Link>
-          </Button>
+          <NewQuoteButton />
         </CardHeader>
         <CardContent>
           <QuoteListTable />

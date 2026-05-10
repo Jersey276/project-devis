@@ -104,15 +104,19 @@ func ListQuotes(c *gin.Context, client quote.QuoteServiceClient) {
 
 func CreateQuote(c *gin.Context, client quote.QuoteServiceClient) {
 	var input struct {
-		Name string `json:"name" binding:"required"`
+		Name      string `json:"name" binding:"required"`
+		ClientID  string `json:"client_id" binding:"required"`
+		AddressID int32  `json:"address_id" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
 		return
 	}
 	resp, err := client.CreateQuote(c.Request.Context(), &quote.CreateQuoteRequest{
-		UserId: userIDFromCtx(c),
-		Name:   input.Name,
+		UserId:    userIDFromCtx(c),
+		Name:      input.Name,
+		ClientId:  input.ClientID,
+		AddressId: input.AddressID,
 	})
 	if err != nil {
 		quoteUnavailable(c)
@@ -147,16 +151,20 @@ func GetQuote(c *gin.Context, client quote.QuoteServiceClient) {
 
 func UpdateQuote(c *gin.Context, client quote.QuoteServiceClient) {
 	var input struct {
-		Name string `json:"name" binding:"required"`
+		Name      string `json:"name" binding:"required"`
+		ClientID  string `json:"client_id"`
+		AddressID int32  `json:"address_id"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
 		return
 	}
 	resp, err := client.UpdateQuote(c.Request.Context(), &quote.UpdateQuoteRequest{
-		QuoteId: c.Param("id"),
-		UserId:  userIDFromCtx(c),
-		Name:    input.Name,
+		QuoteId:   c.Param("id"),
+		UserId:    userIDFromCtx(c),
+		Name:      input.Name,
+		ClientId:  input.ClientID,
+		AddressId: input.AddressID,
 	})
 	if err != nil {
 		quoteUnavailable(c)
@@ -394,11 +402,13 @@ func marshalQuote(q *quote.Quote) gin.H {
 		return nil
 	}
 	return gin.H{
-		"quote_id": q.QuoteId,
-		"user_id":  q.UserId,
-		"name":     q.Name,
-		"archived": q.Archived,
-		"state":    stateToLower(q.State),
+		"quote_id":   q.QuoteId,
+		"user_id":    q.UserId,
+		"name":       q.Name,
+		"archived":   q.Archived,
+		"state":      stateToLower(q.State),
+		"client_id":  q.ClientId,
+		"address_id": q.AddressId,
 	}
 }
 

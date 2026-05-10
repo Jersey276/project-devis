@@ -3,26 +3,29 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogContent,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/custom/responsive-dialog";
 import AddressForm, {
   type AddressValues,
 } from "@/components/address/address-form";
+import { fieldErrorsFromBody, FieldErrors } from "@/lib/api";
 import {
-  apiFetch,
-  fieldErrorsFromBody,
-  FieldErrors,
-} from "@/lib/api";
+  buildOwner,
+  createAddress,
+  updateAddress,
+} from "@/lib/services/addresses";
 import { toast } from "sonner";
 
 export type ExistingAddress = AddressValues & { id: number };
 
-type AddressDrawerProps = {
+type AddressDialogProps = {
+  ownerType: "user" | "client";
+  ownerId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   address?: ExistingAddress | null;
@@ -31,12 +34,14 @@ type AddressDrawerProps = {
 
 const FORM_ID = "address-form";
 
-export default function AddressDrawer({
+export default function AddressDialog({
+  ownerType,
+  ownerId,
   open,
   onOpenChange,
   address,
   onSaved,
-}: AddressDrawerProps) {
+}: AddressDialogProps) {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -51,14 +56,11 @@ export default function AddressDrawer({
     setFieldErrors({});
     setSubmitting(true);
     const isEdit = address?.id != null;
-    const path = isEdit
-      ? `/api/users/me/addresses/${address!.id}`
-      : "/api/users/me/addresses";
     try {
-      const { ok, status, body } = await apiFetch(path, {
-        method: isEdit ? "PUT" : "POST",
-        body: JSON.stringify(values),
-      });
+      const owner = buildOwner(ownerType, ownerId);
+      const { ok, status, body } = isEdit
+        ? await updateAddress(owner, address!.id, values)
+        : await createAddress(owner, values);
       if (ok && body.success) {
         toast.success(isEdit ? "Adresse mise à jour." : "Adresse ajoutée.");
         onSaved();
@@ -78,14 +80,14 @@ export default function AddressDrawer({
   }
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange} direction="right">
-      <DrawerContent>
-        <DrawerHeader>
-          <DrawerTitle>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>
             {address ? "Modifier l'adresse" : "Nouvelle adresse"}
-          </DrawerTitle>
-        </DrawerHeader>
-        <div className="flex-1 overflow-y-auto p-4">
+          </ResponsiveDialogTitle>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogBody>
           <AddressForm
             key={address?.id ?? "new"}
             formId={FORM_ID}
@@ -93,18 +95,20 @@ export default function AddressDrawer({
             fieldErrors={fieldErrors}
             onSubmit={handleSubmit}
           />
-        </div>
-        <DrawerFooter>
+        </ResponsiveDialogBody>
+        <ResponsiveDialogFooter>
           <Button type="submit" form={FORM_ID} disabled={submitting}>
             {submitting ? "Enregistrement…" : "Enregistrer"}
           </Button>
-          <DrawerClose asChild>
-            <Button type="button" variant="outline">
-              Annuler
-            </Button>
-          </DrawerClose>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Annuler
+          </Button>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

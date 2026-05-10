@@ -21,9 +21,23 @@ import {
 
 const mobile = typeof window !== "undefined" && window.innerWidth <= 768;
 
-function ResponsiveDialog({ children }: { children: React.ReactNode }) {
-  return (
-    <>{mobile ? <Drawer>{children}</Drawer> : <Dialog>{children}</Dialog>}</>
+function ResponsiveDialog({
+  open,
+  onOpenChange,
+  children,
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  children: React.ReactNode;
+}) {
+  return mobile ? (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      {children}
+    </Drawer>
+  ) : (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {children}
+    </Dialog>
   );
 }
 

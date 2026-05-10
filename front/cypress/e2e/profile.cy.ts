@@ -15,12 +15,17 @@ const COUNTRIES = [
 const INITIAL_ADDRESSES = [
   {
     id: 10,
+    owner_type: "user",
+    owner_id: USER.user_id,
     name: "Principale",
     street: "12 Rue des Lilas",
     additional_street: "",
     city: "Paris",
     zip_code: "75001",
     country_id: 1,
+    email: "",
+    phone: "",
+    archived: false,
   },
 ];
 
@@ -34,7 +39,10 @@ function stubProfile(addresses = INITIAL_ADDRESSES) {
     statusCode: 200,
     body: { success: true, countries: COUNTRIES },
   }).as("getCountries");
-  cy.intercept("GET", "/api/users/me/addresses", {
+  // Addresses moved from /me/addresses to /addresses?owner_type=user&owner_id=…
+  // when the polymorphic owner model landed. Match with a glob so query-arg
+  // order doesn't matter.
+  cy.intercept("GET", "/api/users/addresses?**", {
     statusCode: 200,
     body: { success: true, addresses },
   }).as("getAddresses");
@@ -170,7 +178,7 @@ describe("Profile page", () => {
     });
 
     it("creates a new address (success)", () => {
-      cy.intercept("POST", "/api/users/me/addresses", {
+      cy.intercept("POST", "/api/users/addresses", {
         statusCode: 201,
         body: { success: true, address_id: 11 },
       }).as("createAddress");
@@ -181,7 +189,11 @@ describe("Profile page", () => {
       cy.wait("@getAddresses");
 
       cy.contains("button", "Ajouter une adresse").click();
-      cy.get("[data-slot='drawer-content']").should("be.visible");
+      cy.get("[data-slot='dialog-content']").should("be.visible");
+      // AddressForm fires /api/users/countries on mount; wait for it so the
+      // combobox is populated before we start typing.
+      cy.wait("@getCountries");
+      cy.get("input[name='name']").should("be.visible");
 
       cy.get("input[name='name']").type("Bureau");
       cy.get("input[name='street']").type("3 Rue de Rivoli");
@@ -190,10 +202,12 @@ describe("Profile page", () => {
       cy.get("input[name='country_id']").type("Bel");
       cy.contains("[data-slot='combobox-item']", "Belgique").click({ force: true });
 
-      cy.contains("[data-slot='drawer-footer'] button", "Enregistrer").click();
+      cy.contains("[data-slot='dialog-footer'] button", "Enregistrer").click();
 
       cy.wait("@createAddress").then((interception) => {
         expect(interception.request.body).to.include({
+          owner_type: "user",
+          owner_id: USER.user_id,
           name: "Bureau",
           street: "3 Rue de Rivoli",
           city: "Lyon",
@@ -202,11 +216,11 @@ describe("Profile page", () => {
         });
       });
       cy.get("[data-sonner-toaster]").should("contain", "Adresse ajoutée.");
-      cy.get("[data-slot='drawer-content']").should("not.exist");
+      cy.get("[data-slot='dialog-content']").should("not.exist");
     });
 
     it("shows inline errors on 422 when creating", () => {
-      cy.intercept("POST", "/api/users/me/addresses", {
+      cy.intercept("POST", "/api/users/addresses", {
         statusCode: 422,
         body: {
           success: false,
@@ -220,18 +234,18 @@ describe("Profile page", () => {
       cy.wait("@getAddresses");
 
       cy.contains("button", "Ajouter une adresse").click();
-      cy.contains("[data-slot='drawer-footer'] button", "Enregistrer").click();
+      cy.contains("[data-slot='dialog-footer'] button", "Enregistrer").click();
       cy.wait("@createAddressInvalid");
 
       cy.get("input[name='name']")
         .closest("[data-slot='field']")
         .find("[data-slot='field-error']")
         .should("contain", "Ce champ est requis.");
-      cy.get("[data-slot='drawer-content']").should("be.visible");
+      cy.get("[data-slot='dialog-content']").should("be.visible");
     });
 
     it("edits an existing address", () => {
-      cy.intercept("PUT", "/api/users/me/addresses/10", {
+      cy.intercept("PUT", "/api/users/addresses/10", {
         statusCode: 200,
         body: { success: true },
       }).as("updateAddress");
@@ -245,10 +259,14 @@ describe("Profile page", () => {
       cy.contains("Modifier").click();
       cy.get("input[name='city']").should("have.value", "Paris");
       cy.get("input[name='city']").clear().type("Marseille");
-      cy.contains("[data-slot='drawer-footer'] button", "Enregistrer").click();
+      cy.contains("[data-slot='dialog-footer'] button", "Enregistrer").click();
 
       cy.wait("@updateAddress").then((interception) => {
-        expect(interception.request.body).to.include({ city: "Marseille" });
+        expect(interception.request.body).to.include({
+          owner_type: "user",
+          owner_id: USER.user_id,
+          city: "Marseille",
+        });
       });
       cy.get("[data-sonner-toaster]").should(
         "contain",
@@ -257,7 +275,7 @@ describe("Profile page", () => {
     });
 
     it("cancels deletion (no API call)", () => {
-      cy.intercept("DELETE", "/api/users/me/addresses/10", () => {
+      cy.intercept("DELETE", "/api/users/addresses/10?**", () => {
         throw new Error("DELETE should not be called when canceling");
       }).as("deleteAddressCancel");
 
@@ -275,7 +293,7 @@ describe("Profile page", () => {
     });
 
     it("deletes an address (success)", () => {
-      cy.intercept("DELETE", "/api/users/me/addresses/10", {
+      cy.intercept("DELETE", "/api/users/addresses/10?**", {
         statusCode: 200,
         body: { success: true },
       }).as("deleteAddress");
@@ -290,7 +308,7 @@ describe("Profile page", () => {
 
       // Post-delete reload must return an empty list — register only now so the
       // initial GET above still resolves with INITIAL_ADDRESSES (LIFO matching).
-      cy.intercept("GET", "/api/users/me/addresses", {
+      cy.intercept("GET", "/api/users/addresses?**", {
         statusCode: 200,
         body: { success: true, addresses: [] },
       });
@@ -302,7 +320,7 @@ describe("Profile page", () => {
     });
 
     it("shows error toast on delete failure", () => {
-      cy.intercept("DELETE", "/api/users/me/addresses/10", {
+      cy.intercept("DELETE", "/api/users/addresses/10?**", {
         statusCode: 500,
         body: { success: false, message: "Échec serveur." },
       }).as("deleteAddressFail");

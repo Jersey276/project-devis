@@ -33,7 +33,7 @@ export type AddressValues = {
   country_id: number | null;
 };
 
-const EMPTY_VALUES: AddressValues = {
+export const EMPTY_ADDRESS_VALUES: AddressValues = {
   name: "",
   street: "",
   additional_street: "",
@@ -47,6 +47,7 @@ type AddressFormProps = {
   initialValues?: AddressValues;
   fieldErrors?: FieldErrors;
   onSubmit?: (values: AddressValues) => void;
+  onChange?: (values: AddressValues) => void;
 };
 
 export default function AddressForm({
@@ -54,9 +55,10 @@ export default function AddressForm({
   initialValues,
   fieldErrors,
   onSubmit,
+  onChange,
 }: AddressFormProps) {
   const [values, setValues] = useState<AddressValues>(
-    () => initialValues ?? EMPTY_VALUES,
+    () => initialValues ?? EMPTY_ADDRESS_VALUES,
   );
   const [countries, setCountries] = useState<Country[]>([]);
 
@@ -74,7 +76,11 @@ export default function AddressForm({
   }, []);
 
   function update<K extends keyof AddressValues>(key: K, value: AddressValues[K]) {
-    setValues((prev) => ({ ...prev, [key]: value }));
+    setValues((prev) => {
+      const next = { ...prev, [key]: value };
+      onChange?.(next);
+      return next;
+    });
   }
 
   const fields = (

@@ -47,9 +47,14 @@ import {
   updateLine,
   updateQuote,
 } from "@/lib/services/quotes";
-import { fieldErrorsFromBody } from "@/lib/api";
+import { listClients } from "@/lib/services/clients";
+import { listAddresses } from "@/lib/services/addresses";
+import { fieldErrorsFromBody, type FieldErrors } from "@/lib/api";
+import { useMode } from "@/lib/mode-context";
 import {
   QUOTE_STATE_LABEL,
+  type BackendAddress,
+  type BackendClient,
   type BackendQuote,
   type BackendQuoteLine,
   type BackendQuoteState,
@@ -69,7 +74,6 @@ const STEP_LABELS = [
 
 const SAVE_DEBOUNCE_MS = 600;
 const SAVED_INDICATOR_MS = 1500;
-const EMPTY_CLIENTS: string[] = [];
 
 const STATE_BADGE_VARIANT: Record<
   BackendQuoteState,
@@ -105,6 +109,7 @@ function lineDraftFromRow(row: FormItem): LineDraft {
 export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isCustomer } = useMode();
   const isCreate = !quoteId;
 
   const initialStep = useMemo(() => {
@@ -122,8 +127,11 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const [notFound, setNotFound] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [clientId, setClientId] = useState("");
+  const [addressId, setAddressId] = useState<number | null>(null);
+  const [clients, setClients] = useState<BackendClient[]>([]);
+  const [addresses, setAddresses] = useState<BackendAddress[]>([]);
   const [items, setItems] = useState<FormItem[]>([]);
-  const [nameErrors, setNameErrors] = useState<string[]>([]);
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [creating, setCreating] = useState(false);
   const [adding, setAdding] = useState(false);
   const [quoteState, setQuoteState] =
@@ -131,7 +139,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const [transitioning, setTransitioning] = useState(false);
 
   const isReadonly =
-    quoteState === "validated" || quoteState === "drop";
+    isCustomer || quoteState === "validated" || quoteState === "drop";
 
   const itemsRef = useRef(items);
   itemsRef.current = items;
@@ -161,6 +169,8 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       const fetchedLines = (body.lines ?? []) as BackendQuoteLine[];
       setProjectName(fetchedQuote.name);
       setQuoteState(fetchedQuote.state ?? "draft");
+      setClientId(fetchedQuote.client_id ?? "");
+      setAddressId(fetchedQuote.address_id ?? null);
       const sorted = [...fetchedLines].sort(
         (a, b) => a.position - b.position,
       );
@@ -171,6 +181,40 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       cancelled = true;
     };
   }, [quoteId]);
+
+  // Load clients (always — needed for create and to display in edit)
+  useEffect(() => {
+    let cancelled = false;
+    listClients().then(({ ok, body }) => {
+      if (cancelled) return;
+      if (ok && Array.isArray(body.clients)) {
+        setClients(body.clients as BackendClient[]);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Load addresses for the selected client; reset address when client changes.
+  useEffect(() => {
+    if (!clientId) {
+      setAddresses([]);
+      return;
+    }
+    let cancelled = false;
+    listAddresses({ type: "client", clientId }).then(({ ok, body }) => {
+      if (cancelled) return;
+      if (ok && Array.isArray(body.addresses)) {
+        setAddresses(body.addresses as BackendAddress[]);
+      } else {
+        setAddresses([]);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [clientId]);
 
   useEffect(() => {
     if (notFound) router.replace("/quote");
@@ -204,14 +248,14 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const handleProjectNameChange = useCallback(
     (value: string) => {
       setProjectName(value);
-      setNameErrors([]);
+      setErrors((prev) => ({ ...prev, name: [] }));
       if (!quoteId || isReadonly) return;
       if (nameTimerRef.current) clearTimeout(nameTimerRef.current);
       nameTimerRef.current = setTimeout(async () => {
         nameTimerRef.current = null;
         const current = projectNameRef.current.trim();
         if (current.length === 0) return;
-        const { ok, body } = await updateQuote(quoteId, current);
+        const { ok, body } = await updateQuote(quoteId, { name: current });
         if (!ok || !body.success) {
           toast.error(
             (body.message as string) ??
@@ -225,22 +269,36 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
 
   const handleNextFromStep1 = useCallback(async () => {
     const trimmed = projectName.trim();
+    const localErrors: FieldErrors = {};
     if (trimmed.length === 0) {
-      setNameErrors(["Ce champ est requis."]);
+      localErrors.name = ["Ce champ est requis."];
+    }
+    if (!clientId) {
+      localErrors.client_id = ["Veuillez sélectionner un client."];
+    }
+    if (!addressId) {
+      localErrors.address_id = ["Veuillez sélectionner une adresse."];
+    }
+    if (Object.keys(localErrors).length > 0) {
+      setErrors(localErrors);
       return;
     }
+
     if (isCreate) {
       setCreating(true);
       try {
-        const { ok, status, body } = await createQuote(trimmed);
+        const { ok, status, body } = await createQuote({
+          name: trimmed,
+          clientId,
+          addressId: addressId!,
+        });
         if (ok && body.success) {
           const newId = body.quote_id as string;
           router.replace(`/quote/${newId}?step=2`);
           return;
         }
         if (status === 422 && Array.isArray(body.field_errors)) {
-          const errors = fieldErrorsFromBody(body);
-          if (errors.name?.length) setNameErrors(errors.name);
+          setErrors(fieldErrorsFromBody(body));
         } else {
           toast.error(
             (body.message as string) ?? "Une erreur est survenue.",
@@ -254,7 +312,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       return;
     }
     setStep(1);
-  }, [isCreate, projectName, router]);
+  }, [addressId, clientId, isCreate, projectName, router]);
 
   // ────────────────────────────────────────────────────────────
   // Step 2 handlers
@@ -431,6 +489,46 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     [scheduleLineSave, setRow],
   );
 
+  const handleClientIdChange = useCallback(
+    (value: string) => {
+      setClientId(value);
+      setAddressId(null);
+      setErrors((prev) => ({ ...prev, client_id: [], address_id: [] }));
+      // Edit mode: persist immediately. Create mode persists on Suivant.
+      // We can't write address_id=0 here because the user must pick one for
+      // the new client; the next picker change will persist both.
+      if (!quoteId || isReadonly || !value) return;
+      const name = projectNameRef.current.trim();
+      if (name.length === 0) return;
+      void updateQuote(quoteId, { name, clientId: value }).then(({ ok, body }) => {
+        if (!ok || !body.success) {
+          toast.error(
+            (body.message as string) ?? "Échec de l'enregistrement du client.",
+          );
+        }
+      });
+    },
+    [isReadonly, quoteId],
+  );
+
+  const handleAddressIdChange = useCallback(
+    (value: number | null) => {
+      setAddressId(value);
+      setErrors((prev) => ({ ...prev, address_id: [] }));
+      if (!quoteId || isReadonly || value == null) return;
+      const name = projectNameRef.current.trim();
+      if (name.length === 0) return;
+      void updateQuote(quoteId, { name, addressId: value }).then(({ ok, body }) => {
+        if (!ok || !body.success) {
+          toast.error(
+            (body.message as string) ?? "Échec de l'enregistrement de l'adresse.",
+          );
+        }
+      });
+    },
+    [isReadonly, quoteId],
+  );
+
   // ────────────────────────────────────────────────────────────
   // Render
 
@@ -447,10 +545,12 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     );
   }
 
-  const canGoNextFromStep1 = projectName.trim().length > 0 && !creating;
+  const canGoNextFromStep1 =
+    projectName.trim().length > 0 && !!clientId && !!addressId && !creating;
 
-  const showDropButton = !isCreate && (quoteState === "draft" || quoteState === "sent");
-  const showContinueButton = !isCreate && quoteState === "drop";
+  const showDropButton =
+    !isCustomer && !isCreate && (quoteState === "draft" || quoteState === "sent");
+  const showContinueButton = !isCustomer && !isCreate && quoteState === "drop";
 
   return (
     <Card data-quote-state={quoteState}>
@@ -541,11 +641,16 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           <QuoteStepBasicInfo
             projectName={projectName}
             clientId={clientId}
+            addressId={addressId}
             isReadonly={isReadonly}
-            emptyClients={EMPTY_CLIENTS}
-            nameErrors={nameErrors}
+            clients={clients}
+            addresses={addresses}
+            nameErrors={errors.name}
+            clientErrors={errors.client_id}
+            addressErrors={errors.address_id}
             onProjectNameChange={handleProjectNameChange}
-            onClientIdChange={setClientId}
+            onClientIdChange={handleClientIdChange}
+            onAddressIdChange={handleAddressIdChange}
           />
         )}
 

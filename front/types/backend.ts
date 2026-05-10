@@ -6,6 +6,8 @@ export type BackendQuote = {
   name: string;
   archived_at: string | null;
   state: BackendQuoteState;
+  client_id: string;
+  address_id: number;
   created_at: string;
   updated_at: string;
 };
@@ -43,3 +45,33 @@ export function quoteListStatus(quote: BackendQuote): QuoteListStatus {
   const label = QUOTE_STATE_LABEL[quote.state];
   return (label ? label.toLowerCase() : "brouillon") as QuoteListStatus;
 }
+
+export type BackendClient = {
+  client_id: string;
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  company: string;
+  siren: string;
+  vat: string;
+  archived: boolean;
+};
+
+export type BackendAddressOwnerType = "user" | "client";
+
+export type BackendAddress = {
+  id: number;
+  owner_type: BackendAddressOwnerType;
+  owner_id: string;
+  name: string;
+  street: string;
+  additional_street: string;
+  city: string;
+  zip_code: string;
+  country_id: number;
+  email: string;
+  phone: string;
+  archived: boolean;
+};

@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UserInfoForm, {
   type UserProfile,
 } from "@/components/user/profile/user-info-form";
-import AddressesTable from "@/components/user/profile/addresses-table";
+import AddressesTable from "@/components/address/addresses-table";
 import ConnectionForm from "@/components/user/profile/connection-form";
 import { apiFetch } from "@/lib/api";
 
@@ -76,7 +76,7 @@ export default function ProfileContent() {
             </TabsContent>
 
             <TabsContent value="adresse" className="pt-4">
-              <AddressesTable />
+              <AddressesTable ownerType="user" ownerId={user.user_id} />
             </TabsContent>
 
             <TabsContent value="compte" className="pt-4">

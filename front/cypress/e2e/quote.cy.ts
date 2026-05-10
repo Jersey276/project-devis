@@ -1,54 +1,6 @@
+import { line, type LineFixture, quote } from "../support/fixtures";
+
 describe("Quote", () => {
-  type QuoteFixture = {
-    quote_id: string;
-    user_id: string;
-    name: string;
-    archived_at: string | null;
-    state: "draft" | "sent" | "validated" | "drop";
-    created_at: string;
-    updated_at: string;
-  };
-
-  type LineFixture = {
-    line_id: string;
-    quote_id: string;
-    type: "simple";
-    name: string;
-    quantity: string;
-    unit: string;
-    unit_price: number;
-    data: Record<string, unknown>;
-    position: number;
-  };
-
-  function quote(over: Partial<QuoteFixture> = {}): QuoteFixture {
-    return {
-      quote_id: "q-1",
-      user_id: "u-1",
-      name: "Devis Alpha",
-      archived_at: null,
-      state: "draft",
-      created_at: "2026-01-01T00:00:00Z",
-      updated_at: "2026-01-01T00:00:00Z",
-      ...over,
-    };
-  }
-
-  function line(over: Partial<LineFixture> = {}): LineFixture {
-    return {
-      line_id: "l-1",
-      quote_id: "q-1",
-      type: "simple",
-      name: "Design UI",
-      quantity: "10",
-      unit: "",
-      unit_price: 8000,
-      data: {},
-      position: 0,
-      ...over,
-    };
-  }
-
   describe("List", () => {
     it("renders quotes and maps state + archived_at to status", () => {
       cy.login();
@@ -97,8 +49,72 @@ describe("Quote", () => {
   });
 
   describe("Create", () => {
+    function stubClientsAndAddresses() {
+      cy.intercept("GET", "/api/users/clients**", {
+        statusCode: 200,
+        body: {
+          success: true,
+          clients: [
+            {
+              client_id: "c-1",
+              user_id: "u-1",
+              first_name: "Jean",
+              last_name: "Dupont",
+              email: "jean@example.com",
+              phone: "",
+              company: "Acme",
+              siren: "",
+              vat: "",
+              archived: false,
+            },
+          ],
+        },
+      }).as("listClients");
+
+      cy.intercept(
+        "GET",
+        "/api/users/addresses?owner_type=client&owner_id=c-1",
+        {
+          statusCode: 200,
+          body: {
+            success: true,
+            addresses: [
+              {
+                id: 1,
+                owner_type: "client",
+                owner_id: "c-1",
+                name: "Siège",
+                street: "10 rue de Paris",
+                additional_street: "",
+                city: "Paris",
+                zip_code: "75001",
+                country_id: 1,
+                email: "",
+                phone: "",
+                archived: false,
+              },
+            ],
+          },
+        },
+      ).as("listClientAddresses");
+    }
+
+    function fillStep1() {
+      cy.get("input[name='name']").type("Nouveau devis");
+      cy.get("input[name='client_id']").type("Jean");
+      cy.contains("[data-slot='combobox-item']", "Jean Dupont").click({
+        force: true,
+      });
+      cy.wait("@listClientAddresses");
+      cy.get("input[name='address_id']").click();
+      cy.contains("[data-slot='combobox-item']", "Siège").click({
+        force: true,
+      });
+    }
+
     it("creates a quote and redirects to step 2", () => {
       cy.login();
+      stubClientsAndAddresses();
       cy.intercept("POST", "/api/quotes", {
         statusCode: 201,
         body: { success: true, quote_id: "q-new" },
@@ -107,18 +123,26 @@ describe("Quote", () => {
         statusCode: 200,
         body: {
           success: true,
-          quote: quote({ quote_id: "q-new", name: "Nouveau devis" }),
+          quote: quote({
+            quote_id: "q-new",
+            name: "Nouveau devis",
+            client_id: "c-1",
+            address_id: 1,
+          }),
           lines: [],
         },
       }).as("getNewQuote");
 
       cy.visit("/quote/create");
-      cy.get("input[name='name']").type("Nouveau devis");
+      cy.wait("@listClients");
+      fillStep1();
       cy.contains("button", "Suivant").click();
 
       cy.wait("@createQuote").then((interception) => {
         expect(interception.request.body).to.deep.equal({
           name: "Nouveau devis",
+          client_id: "c-1",
+          address_id: 1,
         });
       });
 
@@ -130,6 +154,7 @@ describe("Quote", () => {
 
     it("surfaces field errors on 422", () => {
       cy.login();
+      stubClientsAndAddresses();
       cy.intercept("POST", "/api/quotes", {
         statusCode: 422,
         body: {
@@ -139,7 +164,8 @@ describe("Quote", () => {
       }).as("createQuoteInvalid");
 
       cy.visit("/quote/create");
-      cy.get("input[name='name']").type("X");
+      cy.wait("@listClients");
+      fillStep1();
       cy.contains("button", "Suivant").click();
       cy.wait("@createQuoteInvalid");
 
@@ -148,6 +174,17 @@ describe("Quote", () => {
         .find("[data-slot='field-error']")
         .should("contain", "Ce champ est requis.");
       cy.url().should("include", "/quote/create");
+    });
+
+    it("blocks Suivant locally when client or address is missing", () => {
+      cy.login();
+      stubClientsAndAddresses();
+
+      cy.visit("/quote/create");
+      cy.wait("@listClients");
+
+      cy.get("input[name='name']").type("Sans client");
+      cy.contains("button", "Suivant").should("be.disabled");
     });
   });
 
@@ -233,7 +270,10 @@ describe("Quote", () => {
     });
 
     it("deletes a line via DELETE /lines/:id", () => {
-      stubGet([line({ line_id: "l-1" }), line({ line_id: "l-2", position: 1 })]);
+      stubGet([
+        line({ line_id: "l-1" }),
+        line({ line_id: "l-2", position: 1 }),
+      ]);
       cy.intercept("DELETE", "/api/quotes/q-1/lines/l-2", {
         statusCode: 200,
         body: { success: true },
@@ -274,7 +314,11 @@ describe("Quote", () => {
       cy.login();
       cy.intercept("GET", "/api/quotes/q-1", {
         statusCode: 200,
-        body: { success: true, quote: quote({ state: "draft" }), lines: [line()] },
+        body: {
+          success: true,
+          quote: quote({ state: "draft" }),
+          lines: [line()],
+        },
       }).as("getQuote");
       cy.intercept("POST", "/api/quotes/q-1/drop", {
         statusCode: 200,
@@ -291,10 +335,7 @@ describe("Quote", () => {
 
       cy.wait("@dropQuote");
       cy.get("[data-quote-state='drop']").should("exist");
-      cy.get("[data-slot='quote-state-badge']").should(
-        "contain",
-        "Abandonné",
-      );
+      cy.get("[data-slot='quote-state-badge']").should("contain", "Abandonné");
       cy.get("input[name='name']").should("be.disabled");
       cy.contains("button", "Continuer").should("be.visible");
       cy.contains("button", "Abandonner").should("not.exist");
@@ -345,7 +386,11 @@ describe("Quote", () => {
       cy.login();
       cy.intercept("GET", "/api/quotes/q-1", {
         statusCode: 200,
-        body: { success: true, quote: quote({ state: "validated" }), lines: [] },
+        body: {
+          success: true,
+          quote: quote({ state: "validated" }),
+          lines: [],
+        },
       }).as("getQuote");
 
       cy.visit("/quote/q-1");

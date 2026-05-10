@@ -11,27 +11,39 @@ import {
   DataTableRowActions,
   DataTableSortableHead,
 } from "@/components/custom/data-table";
-import { TrashIcon } from "lucide-react";
-
-type Client = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-};
+import { EyeIcon, TrashIcon } from "lucide-react";
+import { toast } from "sonner";
+import { archiveClient } from "@/lib/services/clients";
+import type { BackendClient } from "@/types/backend";
 
 type ClientsTableProps = {
-  data: Client[];
+  data: BackendClient[];
+  onArchived?: () => void;
 };
 
-export function ClientsTable({ data }: ClientsTableProps) {
+export function ClientsTable({ data, onArchived }: ClientsTableProps) {
   const row_actions: DataTableRowAction[] = [
+    {
+      type: "link",
+      label: "Voir",
+      href: "/clients/{id}",
+      icon: EyeIcon,
+    },
     {
       type: "callback",
       label: "Supprimer",
       icon: TrashIcon,
-      callback: (row) => {
-        console.log("Supprimer client:", row);
+      callback: async (row) => {
+        const client = row as BackendClient;
+        const { ok, body } = await archiveClient(client.client_id);
+        if (ok && body.success) {
+          toast.success("Client supprimé.");
+          onArchived?.();
+        } else {
+          toast.error(
+            (body.message as string) ?? "Impossible de supprimer le client.",
+          );
+        }
       },
     },
   ];
@@ -39,30 +51,30 @@ export function ClientsTable({ data }: ClientsTableProps) {
   return (
     <DataTable
       datas={data}
-      sortBy="id"
+      sortBy="client_id"
       sortDirection="asc"
       row_actions={row_actions}
     >
       <DataTableHeader>
         <DataTableRow>
-          <DataTableSortableHead name="id">ID</DataTableSortableHead>
           <DataTableSortableHead name="first_name">
             Prénom
           </DataTableSortableHead>
           <DataTableSortableHead name="last_name">Nom</DataTableSortableHead>
           <DataTableSortableHead name="email">Email</DataTableSortableHead>
+          <DataTableSortableHead name="company">Société</DataTableSortableHead>
           <DataTableHead>Actions</DataTableHead>
         </DataTableRow>
       </DataTableHeader>
       <DataTableBody>
-        {data.map((client, index) => (
-          <DataTableRow key={index}>
-            <DataTableCell>{client.id}</DataTableCell>
+        {data.map((client) => (
+          <DataTableRow key={client.client_id}>
             <DataTableCell>{client.first_name}</DataTableCell>
             <DataTableCell>{client.last_name}</DataTableCell>
             <DataTableCell>{client.email}</DataTableCell>
+            <DataTableCell>{client.company}</DataTableCell>
             <DataTableCell>
-              <DataTableRowActions id={client.id} row={client} />
+              <DataTableRowActions id={client.client_id} row={client} />
             </DataTableCell>
           </DataTableRow>
         ))}
