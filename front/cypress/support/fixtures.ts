@@ -4,6 +4,8 @@ export type QuoteFixture = {
   name: string;
   archived_at: string | null;
   state: "draft" | "sent" | "validated" | "drop";
+  client_id: string;
+  address_id: number;
   created_at: string;
   updated_at: string;
 };
@@ -27,8 +29,42 @@ export function quote(over: Partial<QuoteFixture> = {}): QuoteFixture {
     name: "Devis Alpha",
     archived_at: null,
     state: "draft",
+    // Empty by default: tests that exercise client/address pickers override
+    // these explicitly. Keeping them empty means edit-mode tests don't fire an
+    // unintended /me/clients/:id/addresses request.
+    client_id: "",
+    address_id: 0,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
+    ...over,
+  };
+}
+
+export type ClientFixture = {
+  client_id: string;
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  company: string;
+  siren: string;
+  vat: string;
+  archived: boolean;
+};
+
+export function client(over: Partial<ClientFixture> = {}): ClientFixture {
+  return {
+    client_id: "c-1",
+    user_id: "u-1",
+    first_name: "Jean",
+    last_name: "Dupont",
+    email: "jean@example.com",
+    phone: "",
+    company: "Acme",
+    siren: "",
+    vat: "",
+    archived: false,
     ...over,
   };
 }

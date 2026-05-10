@@ -133,9 +133,17 @@ func TestUpdateUser_Success(t *testing.T) {
 func TestDeleteUser_Success(t *testing.T) {
 	srv, mock := setupServer(t)
 
+	mock.ExpectBegin()
+	mock.ExpectExec(`DELETE FROM addresses WHERE owner_type='client'`).
+		WithArgs("user-123").
+		WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec(`DELETE FROM addresses WHERE owner_type='user'`).
+		WithArgs("user-123").
+		WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectExec(`DELETE FROM users`).
 		WithArgs("user-123").
 		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
 
 	resp, err := srv.DeleteUser(context.Background(), &usersGrpc.DeleteUserRequest{UserId: "user-123"})
 	if err != nil {
@@ -144,14 +152,56 @@ func TestDeleteUser_Success(t *testing.T) {
 	if !resp.Success {
 		t.Fatalf("expected success, got code %d", resp.Code)
 	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
+// TestDeleteUser_DeletesClientAddresses is a regression test for the
+// cascade-ordering bug: client-owned addresses must be deleted before the
+// user row, otherwise the ON DELETE CASCADE on clients.user_id wipes the
+// client rows first and the subquery resolves to nothing.
+func TestDeleteUser_DeletesClientAddresses(t *testing.T) {
+	srv, mock := setupServer(t)
+
+	mock.ExpectBegin()
+	mock.ExpectExec(`DELETE FROM addresses WHERE owner_type='client'`).
+		WithArgs("user-123").
+		WillReturnResult(sqlmock.NewResult(0, 2))
+	mock.ExpectExec(`DELETE FROM addresses WHERE owner_type='user'`).
+		WithArgs("user-123").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(`DELETE FROM users`).
+		WithArgs("user-123").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	resp, err := srv.DeleteUser(context.Background(), &usersGrpc.DeleteUserRequest{UserId: "user-123"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatalf("expected success, got code %d", resp.Code)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
 }
 
 func TestDeleteUser_NotFound(t *testing.T) {
 	srv, mock := setupServer(t)
 
+	mock.ExpectBegin()
+	mock.ExpectExec(`DELETE FROM addresses WHERE owner_type='client'`).
+		WithArgs("ghost").
+		WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec(`DELETE FROM addresses WHERE owner_type='user'`).
+		WithArgs("ghost").
+		WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectExec(`DELETE FROM users`).
 		WithArgs("ghost").
 		WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectRollback()
 
 	resp, err := srv.DeleteUser(context.Background(), &usersGrpc.DeleteUserRequest{UserId: "ghost"})
 	if err != nil {
@@ -162,5 +212,8 @@ func TestDeleteUser_NotFound(t *testing.T) {
 	}
 	if resp.Code != actions.CodeNotFound {
 		t.Fatalf("expected CodeNotFound, got %d", resp.Code)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
 	}
 }

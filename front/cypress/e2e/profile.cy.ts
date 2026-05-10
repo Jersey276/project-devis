@@ -15,12 +15,17 @@ const COUNTRIES = [
 const INITIAL_ADDRESSES = [
   {
     id: 10,
+    owner_type: "user",
+    owner_id: USER.user_id,
     name: "Principale",
     street: "12 Rue des Lilas",
     additional_street: "",
     city: "Paris",
     zip_code: "75001",
     country_id: 1,
+    email: "",
+    phone: "",
+    archived: false,
   },
 ];
 
@@ -34,7 +39,10 @@ function stubProfile(addresses = INITIAL_ADDRESSES) {
     statusCode: 200,
     body: { success: true, countries: COUNTRIES },
   }).as("getCountries");
-  cy.intercept("GET", "/api/users/me/addresses", {
+  // Addresses moved from /me/addresses to /addresses?owner_type=user&owner_id=…
+  // when the polymorphic owner model landed. Match with a glob so query-arg
+  // order doesn't matter.
+  cy.intercept("GET", "/api/users/addresses?**", {
     statusCode: 200,
     body: { success: true, addresses },
   }).as("getAddresses");
@@ -170,7 +178,7 @@ describe("Profile page", () => {
     });
 
     it("creates a new address (success)", () => {
-      cy.intercept("POST", "/api/users/me/addresses", {
+      cy.intercept("POST", "/api/users/addresses", {
         statusCode: 201,
         body: { success: true, address_id: 11 },
       }).as("createAddress");
@@ -182,6 +190,13 @@ describe("Profile page", () => {
 
       cy.contains("button", "Ajouter une adresse").click();
       cy.get("[data-slot='drawer-content']").should("be.visible");
+      // AddressForm fetches /api/users/countries on mount. Without waiting,
+      // the late state-update from that fetch can race with Cypress typing
+      // and detach the city input from the DOM mid-type. AddressesTable also
+      // fetched countries earlier, so this is the *second* request.
+      cy.wait("@getCountries");
+      cy.wait("@getCountries");
+      cy.get("input[name='name']").should("be.visible");
 
       cy.get("input[name='name']").type("Bureau");
       cy.get("input[name='street']").type("3 Rue de Rivoli");
@@ -194,6 +209,8 @@ describe("Profile page", () => {
 
       cy.wait("@createAddress").then((interception) => {
         expect(interception.request.body).to.include({
+          owner_type: "user",
+          owner_id: USER.user_id,
           name: "Bureau",
           street: "3 Rue de Rivoli",
           city: "Lyon",
@@ -206,7 +223,7 @@ describe("Profile page", () => {
     });
 
     it("shows inline errors on 422 when creating", () => {
-      cy.intercept("POST", "/api/users/me/addresses", {
+      cy.intercept("POST", "/api/users/addresses", {
         statusCode: 422,
         body: {
           success: false,
@@ -231,7 +248,7 @@ describe("Profile page", () => {
     });
 
     it("edits an existing address", () => {
-      cy.intercept("PUT", "/api/users/me/addresses/10", {
+      cy.intercept("PUT", "/api/users/addresses/10", {
         statusCode: 200,
         body: { success: true },
       }).as("updateAddress");
@@ -248,7 +265,11 @@ describe("Profile page", () => {
       cy.contains("[data-slot='drawer-footer'] button", "Enregistrer").click();
 
       cy.wait("@updateAddress").then((interception) => {
-        expect(interception.request.body).to.include({ city: "Marseille" });
+        expect(interception.request.body).to.include({
+          owner_type: "user",
+          owner_id: USER.user_id,
+          city: "Marseille",
+        });
       });
       cy.get("[data-sonner-toaster]").should(
         "contain",
@@ -257,7 +278,7 @@ describe("Profile page", () => {
     });
 
     it("cancels deletion (no API call)", () => {
-      cy.intercept("DELETE", "/api/users/me/addresses/10", () => {
+      cy.intercept("DELETE", "/api/users/addresses/10?**", () => {
         throw new Error("DELETE should not be called when canceling");
       }).as("deleteAddressCancel");
 
@@ -275,7 +296,7 @@ describe("Profile page", () => {
     });
 
     it("deletes an address (success)", () => {
-      cy.intercept("DELETE", "/api/users/me/addresses/10", {
+      cy.intercept("DELETE", "/api/users/addresses/10?**", {
         statusCode: 200,
         body: { success: true },
       }).as("deleteAddress");
@@ -290,7 +311,7 @@ describe("Profile page", () => {
 
       // Post-delete reload must return an empty list — register only now so the
       // initial GET above still resolves with INITIAL_ADDRESSES (LIFO matching).
-      cy.intercept("GET", "/api/users/me/addresses", {
+      cy.intercept("GET", "/api/users/addresses?**", {
         statusCode: 200,
         body: { success: true, addresses: [] },
       });
@@ -302,7 +323,7 @@ describe("Profile page", () => {
     });
 
     it("shows error toast on delete failure", () => {
-      cy.intercept("DELETE", "/api/users/me/addresses/10", {
+      cy.intercept("DELETE", "/api/users/addresses/10?**", {
         statusCode: 500,
         body: { success: false, message: "Échec serveur." },
       }).as("deleteAddressFail");
