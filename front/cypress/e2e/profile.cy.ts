@@ -189,12 +189,9 @@ describe("Profile page", () => {
       cy.wait("@getAddresses");
 
       cy.contains("button", "Ajouter une adresse").click();
-      cy.get("[data-slot='drawer-content']").should("be.visible");
-      // AddressForm fetches /api/users/countries on mount. Without waiting,
-      // the late state-update from that fetch can race with Cypress typing
-      // and detach the city input from the DOM mid-type. AddressesTable also
-      // fetched countries earlier, so this is the *second* request.
-      cy.wait("@getCountries");
+      cy.get("[data-slot='dialog-content']").should("be.visible");
+      // AddressForm fires /api/users/countries on mount; wait for it so the
+      // combobox is populated before we start typing.
       cy.wait("@getCountries");
       cy.get("input[name='name']").should("be.visible");
 
@@ -205,7 +202,7 @@ describe("Profile page", () => {
       cy.get("input[name='country_id']").type("Bel");
       cy.contains("[data-slot='combobox-item']", "Belgique").click({ force: true });
 
-      cy.contains("[data-slot='drawer-footer'] button", "Enregistrer").click();
+      cy.contains("[data-slot='dialog-footer'] button", "Enregistrer").click();
 
       cy.wait("@createAddress").then((interception) => {
         expect(interception.request.body).to.include({
@@ -219,7 +216,7 @@ describe("Profile page", () => {
         });
       });
       cy.get("[data-sonner-toaster]").should("contain", "Adresse ajoutée.");
-      cy.get("[data-slot='drawer-content']").should("not.exist");
+      cy.get("[data-slot='dialog-content']").should("not.exist");
     });
 
     it("shows inline errors on 422 when creating", () => {
@@ -237,14 +234,14 @@ describe("Profile page", () => {
       cy.wait("@getAddresses");
 
       cy.contains("button", "Ajouter une adresse").click();
-      cy.contains("[data-slot='drawer-footer'] button", "Enregistrer").click();
+      cy.contains("[data-slot='dialog-footer'] button", "Enregistrer").click();
       cy.wait("@createAddressInvalid");
 
       cy.get("input[name='name']")
         .closest("[data-slot='field']")
         .find("[data-slot='field-error']")
         .should("contain", "Ce champ est requis.");
-      cy.get("[data-slot='drawer-content']").should("be.visible");
+      cy.get("[data-slot='dialog-content']").should("be.visible");
     });
 
     it("edits an existing address", () => {
@@ -262,7 +259,7 @@ describe("Profile page", () => {
       cy.contains("Modifier").click();
       cy.get("input[name='city']").should("have.value", "Paris");
       cy.get("input[name='city']").clear().type("Marseille");
-      cy.contains("[data-slot='drawer-footer'] button", "Enregistrer").click();
+      cy.contains("[data-slot='dialog-footer'] button", "Enregistrer").click();
 
       cy.wait("@updateAddress").then((interception) => {
         expect(interception.request.body).to.include({

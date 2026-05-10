@@ -23,9 +23,9 @@ import {
   type DataTableRowAction,
 } from "@/components/custom/data-table";
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import AddressDrawer, {
+import AddressDialog, {
   type ExistingAddress,
-} from "@/components/address/address-drawer";
+} from "@/components/address/address-dialog";
 import { apiFetch } from "@/lib/api";
 import { type Country } from "@/components/address/address-form";
 import {
@@ -181,7 +181,7 @@ export default function AddressesTable({
         </DataTableBody>
       </DataTable>
 
-      <AddressDrawer
+      <AddressDialog
         ownerType={ownerType}
         ownerId={ownerId}
         open={drawerOpen}

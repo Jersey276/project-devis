@@ -6,7 +6,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/custom/app-sidebar";
-import { ModeProvider } from "@/lib/mode-context";
+import { ModeProvider, type UserMode } from "@/lib/mode-context";
 
 export default async function AppLayout({
   children,
@@ -18,8 +18,13 @@ export default async function AppLayout({
   if (!token) {
     redirect("/login");
   }
+  const modeCookie = cookieStore.get("app.user-mode")?.value;
+  const initialMode: UserMode =
+    modeCookie === "customer" || modeCookie === "provider"
+      ? modeCookie
+      : "provider";
   return (
-    <ModeProvider>
+    <ModeProvider initialMode={initialMode}>
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>

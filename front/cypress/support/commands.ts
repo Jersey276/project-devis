@@ -8,9 +8,9 @@ declare global {
   namespace Cypress {
     interface Chainable {
       login(token?: string): Chainable<void>;
-      // Visits a URL with the user mode pre-seeded in localStorage so the
-      // first paint already reflects it. ModeProvider reads localStorage
-      // synchronously in its useState initializer.
+      // Visits a URL with the user mode pre-seeded as a cookie so SSR and
+      // hydration agree on the mode. The server-side layout reads
+      // `app.user-mode` and feeds it to ModeProvider as initialMode.
       visitAs(mode: UserMode, url: string): Chainable<void>;
     }
   }
@@ -47,11 +47,8 @@ Cypress.Commands.add("login", (token = "fake-token") => {
 });
 
 Cypress.Commands.add("visitAs", (mode: UserMode, url: string) => {
-  cy.visit(url, {
-    onBeforeLoad(win) {
-      win.localStorage.setItem("app.user-mode", mode);
-    },
-  });
+  cy.setCookie("app.user-mode", mode, { domain: "localhost" });
+  cy.visit(url);
 });
 
 export {};

@@ -22,35 +22,47 @@ type ModeContextValue = {
 
 const ModeContext = createContext<ModeContextValue | null>(null);
 
-function readStoredMode(): UserMode {
-  if (typeof window === "undefined") return DEFAULT_MODE;
-  const raw = window.localStorage.getItem(STORAGE_KEY);
+function parseMode(raw: string | null | undefined): UserMode {
   return raw === "customer" || raw === "provider" ? raw : DEFAULT_MODE;
 }
 
-export function ModeProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setModeState] = useState<UserMode>(readStoredMode);
+function readCookieMode(): UserMode | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${STORAGE_KEY}=([^;]*)`),
+  );
+  return match ? parseMode(decodeURIComponent(match[1])) : null;
+}
 
-  // Sync across tabs.
+function writeCookieMode(mode: UserMode) {
+  if (typeof document === "undefined") return;
+  // Persist for ~1 year. Path=/ so every route sees the same value.
+  document.cookie = `${STORAGE_KEY}=${mode}; path=/; max-age=31536000; samesite=lax`;
+}
+
+export function ModeProvider({
+  initialMode,
+  children,
+}: {
+  initialMode?: UserMode;
+  children: React.ReactNode;
+}) {
+  const [mode, setModeState] = useState<UserMode>(initialMode ?? DEFAULT_MODE);
+
+  // Reconcile with the cookie on mount in case it changed between SSR and
+  // hydration (e.g. another tab updated it). Server-supplied initialMode is
+  // the source of truth for the first paint to avoid hydration mismatches.
   useEffect(() => {
-    function onStorage(event: StorageEvent) {
-      if (event.key !== STORAGE_KEY) return;
-      const next =
-        event.newValue === "customer" || event.newValue === "provider"
-          ? event.newValue
-          : DEFAULT_MODE;
-      setModeState(next);
-    }
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    const stored = readCookieMode();
+    if (stored && stored !== mode) setModeState(stored);
+    // Intentionally run only once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setMode = useCallback((next: UserMode) => {
     setModeState((current) => {
       if (current === next) return current;
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(STORAGE_KEY, next);
-      }
+      writeCookieMode(next);
       return next;
     });
   }, []);
