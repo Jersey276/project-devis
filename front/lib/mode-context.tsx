@@ -31,8 +31,7 @@ function readStoredMode(): UserMode {
 export function ModeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setModeState] = useState<UserMode>(readStoredMode);
 
-  // Sync across tabs. setModeState already short-circuits identical values via
-  // React's bail-out, so no manual equality check is needed here.
+  // Sync across tabs.
   useEffect(() => {
     function onStorage(event: StorageEvent) {
       if (event.key !== STORAGE_KEY) return;
