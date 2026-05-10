@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,22 +25,18 @@ import {
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import AddressDrawer, {
   type ExistingAddress,
-} from "@/components/user/profile/address-drawer";
+} from "@/components/address/address-drawer";
 import { apiFetch } from "@/lib/api";
 import { type Country } from "@/components/address/address-form";
+import {
+  archiveAddress,
+  buildOwner,
+  listAddresses,
+} from "@/lib/services/addresses";
+import type { BackendAddress } from "@/types/backend";
 import { toast } from "sonner";
 
-type ApiAddress = {
-  id: number;
-  name: string;
-  street: string;
-  additional_street: string;
-  city: string;
-  zip_code: string;
-  country_id: number;
-};
-
-function formatAddress(address: ApiAddress, countries: Country[]): string {
+function formatAddress(address: BackendAddress, countries: Country[]): string {
   const country = countries.find((c) => c.id === address.country_id);
   const lines = [
     address.street,
@@ -51,28 +47,34 @@ function formatAddress(address: ApiAddress, countries: Country[]): string {
   return lines.join(", ");
 }
 
-export default function AddressesTable() {
-  const [addresses, setAddresses] = useState<ApiAddress[]>([]);
+type AddressesTableProps = {
+  ownerType: "user" | "client";
+  ownerId: string;
+};
+
+export default function AddressesTable({
+  ownerType,
+  ownerId,
+}: AddressesTableProps) {
+  const [addresses, setAddresses] = useState<BackendAddress[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<ExistingAddress | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<ApiAddress | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
+  const [pendingDelete, setPendingDelete] = useState<BackendAddress | null>(
+    null,
+  );
 
-  const reload = () => setReloadKey((k) => k + 1);
-
-  useEffect(() => {
-    let cancelled = false;
-    apiFetch("/api/users/me/addresses").then(({ ok, body }) => {
-      if (cancelled) return;
+  const reload = useCallback(() => {
+    listAddresses(buildOwner(ownerType, ownerId)).then(({ ok, body }) => {
       if (ok && Array.isArray(body.addresses)) {
-        setAddresses(body.addresses as ApiAddress[]);
+        setAddresses(body.addresses as BackendAddress[]);
       }
     });
-    return () => {
-      cancelled = true;
-    };
-  }, [reloadKey]);
+  }, [ownerType, ownerId]);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,7 +94,7 @@ export default function AddressesTable() {
     setDrawerOpen(true);
   }
 
-  function openEdit(address: ApiAddress) {
+  function openEdit(address: BackendAddress) {
     setEditing({
       id: address.id,
       name: address.name,
@@ -107,9 +109,9 @@ export default function AddressesTable() {
 
   async function confirmDelete() {
     if (!pendingDelete) return;
-    const { ok, body } = await apiFetch(
-      `/api/users/me/addresses/${pendingDelete.id}`,
-      { method: "DELETE" },
+    const { ok, body } = await archiveAddress(
+      buildOwner(ownerType, ownerId),
+      pendingDelete.id,
     );
     if (ok && body.success) {
       toast.success("Adresse supprimée.");
@@ -125,13 +127,13 @@ export default function AddressesTable() {
       type: "callback",
       label: "Modifier",
       icon: PencilIcon,
-      callback: (row) => openEdit(row as ApiAddress),
+      callback: (row) => openEdit(row as BackendAddress),
     },
     {
       type: "callback",
       label: "Supprimer",
       icon: Trash2Icon,
-      callback: (row) => setPendingDelete(row as ApiAddress),
+      callback: (row) => setPendingDelete(row as BackendAddress),
     },
   ];
 
@@ -180,6 +182,8 @@ export default function AddressesTable() {
       </DataTable>
 
       <AddressDrawer
+        ownerType={ownerType}
+        ownerId={ownerId}
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         address={editing}

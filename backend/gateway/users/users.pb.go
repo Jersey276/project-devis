@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v7.34.0
-// source: users/users.proto
+// source: users.proto
 
 package users
 
@@ -21,6 +21,57 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// OwnerType discriminates address ownership. Wire string equivalents are
+// "user" / "client".
+type OwnerType int32
+
+const (
+	OwnerType_OWNER_TYPE_UNSPECIFIED OwnerType = 0
+	OwnerType_OWNER_TYPE_USER        OwnerType = 1
+	OwnerType_OWNER_TYPE_CLIENT      OwnerType = 2
+)
+
+// Enum value maps for OwnerType.
+var (
+	OwnerType_name = map[int32]string{
+		0: "OWNER_TYPE_UNSPECIFIED",
+		1: "OWNER_TYPE_USER",
+		2: "OWNER_TYPE_CLIENT",
+	}
+	OwnerType_value = map[string]int32{
+		"OWNER_TYPE_UNSPECIFIED": 0,
+		"OWNER_TYPE_USER":        1,
+		"OWNER_TYPE_CLIENT":      2,
+	}
+)
+
+func (x OwnerType) Enum() *OwnerType {
+	p := new(OwnerType)
+	*p = x
+	return p
+}
+
+func (x OwnerType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (OwnerType) Descriptor() protoreflect.EnumDescriptor {
+	return file_users_proto_enumTypes[0].Descriptor()
+}
+
+func (OwnerType) Type() protoreflect.EnumType {
+	return &file_users_proto_enumTypes[0]
+}
+
+func (x OwnerType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use OwnerType.Descriptor instead.
+func (OwnerType) EnumDescriptor() ([]byte, []int) {
+	return file_users_proto_rawDescGZIP(), []int{0}
+}
+
 type GenericResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -31,7 +82,7 @@ type GenericResponse struct {
 
 func (x *GenericResponse) Reset() {
 	*x = GenericResponse{}
-	mi := &file_users_users_proto_msgTypes[0]
+	mi := &file_users_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -43,7 +94,7 @@ func (x *GenericResponse) String() string {
 func (*GenericResponse) ProtoMessage() {}
 
 func (x *GenericResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[0]
+	mi := &file_users_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -56,7 +107,7 @@ func (x *GenericResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenericResponse.ProtoReflect.Descriptor instead.
 func (*GenericResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{0}
+	return file_users_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *GenericResponse) GetSuccess() bool {
@@ -87,7 +138,7 @@ type User struct {
 
 func (x *User) Reset() {
 	*x = User{}
-	mi := &file_users_users_proto_msgTypes[1]
+	mi := &file_users_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -99,7 +150,7 @@ func (x *User) String() string {
 func (*User) ProtoMessage() {}
 
 func (x *User) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[1]
+	mi := &file_users_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -112,7 +163,7 @@ func (x *User) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use User.ProtoReflect.Descriptor instead.
 func (*User) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{1}
+	return file_users_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *User) GetUserId() string {
@@ -166,7 +217,7 @@ type CreateUserRequest struct {
 
 func (x *CreateUserRequest) Reset() {
 	*x = CreateUserRequest{}
-	mi := &file_users_users_proto_msgTypes[2]
+	mi := &file_users_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -178,7 +229,7 @@ func (x *CreateUserRequest) String() string {
 func (*CreateUserRequest) ProtoMessage() {}
 
 func (x *CreateUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[2]
+	mi := &file_users_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -191,7 +242,7 @@ func (x *CreateUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateUserRequest.ProtoReflect.Descriptor instead.
 func (*CreateUserRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{2}
+	return file_users_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *CreateUserRequest) GetEmail() string {
@@ -212,7 +263,7 @@ type CreateUserResponse struct {
 
 func (x *CreateUserResponse) Reset() {
 	*x = CreateUserResponse{}
-	mi := &file_users_users_proto_msgTypes[3]
+	mi := &file_users_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -224,7 +275,7 @@ func (x *CreateUserResponse) String() string {
 func (*CreateUserResponse) ProtoMessage() {}
 
 func (x *CreateUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[3]
+	mi := &file_users_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -237,7 +288,7 @@ func (x *CreateUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateUserResponse.ProtoReflect.Descriptor instead.
 func (*CreateUserResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{3}
+	return file_users_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *CreateUserResponse) GetSuccess() bool {
@@ -270,7 +321,7 @@ type GetUserRequest struct {
 
 func (x *GetUserRequest) Reset() {
 	*x = GetUserRequest{}
-	mi := &file_users_users_proto_msgTypes[4]
+	mi := &file_users_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -282,7 +333,7 @@ func (x *GetUserRequest) String() string {
 func (*GetUserRequest) ProtoMessage() {}
 
 func (x *GetUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[4]
+	mi := &file_users_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -295,7 +346,7 @@ func (x *GetUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserRequest.ProtoReflect.Descriptor instead.
 func (*GetUserRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{4}
+	return file_users_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetUserRequest) GetUserId() string {
@@ -316,7 +367,7 @@ type GetUserResponse struct {
 
 func (x *GetUserResponse) Reset() {
 	*x = GetUserResponse{}
-	mi := &file_users_users_proto_msgTypes[5]
+	mi := &file_users_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -328,7 +379,7 @@ func (x *GetUserResponse) String() string {
 func (*GetUserResponse) ProtoMessage() {}
 
 func (x *GetUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[5]
+	mi := &file_users_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -341,7 +392,7 @@ func (x *GetUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserResponse.ProtoReflect.Descriptor instead.
 func (*GetUserResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{5}
+	return file_users_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetUserResponse) GetSuccess() bool {
@@ -378,7 +429,7 @@ type UpdateUserRequest struct {
 
 func (x *UpdateUserRequest) Reset() {
 	*x = UpdateUserRequest{}
-	mi := &file_users_users_proto_msgTypes[6]
+	mi := &file_users_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -390,7 +441,7 @@ func (x *UpdateUserRequest) String() string {
 func (*UpdateUserRequest) ProtoMessage() {}
 
 func (x *UpdateUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[6]
+	mi := &file_users_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -403,7 +454,7 @@ func (x *UpdateUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserRequest.ProtoReflect.Descriptor instead.
 func (*UpdateUserRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{6}
+	return file_users_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *UpdateUserRequest) GetUserId() string {
@@ -451,7 +502,7 @@ type UpdateUserResponse struct {
 
 func (x *UpdateUserResponse) Reset() {
 	*x = UpdateUserResponse{}
-	mi := &file_users_users_proto_msgTypes[7]
+	mi := &file_users_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -463,7 +514,7 @@ func (x *UpdateUserResponse) String() string {
 func (*UpdateUserResponse) ProtoMessage() {}
 
 func (x *UpdateUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[7]
+	mi := &file_users_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -476,7 +527,7 @@ func (x *UpdateUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserResponse.ProtoReflect.Descriptor instead.
 func (*UpdateUserResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{7}
+	return file_users_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *UpdateUserResponse) GetSuccess() bool {
@@ -502,7 +553,7 @@ type DeleteUserRequest struct {
 
 func (x *DeleteUserRequest) Reset() {
 	*x = DeleteUserRequest{}
-	mi := &file_users_users_proto_msgTypes[8]
+	mi := &file_users_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -514,7 +565,7 @@ func (x *DeleteUserRequest) String() string {
 func (*DeleteUserRequest) ProtoMessage() {}
 
 func (x *DeleteUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[8]
+	mi := &file_users_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -527,7 +578,7 @@ func (x *DeleteUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteUserRequest.ProtoReflect.Descriptor instead.
 func (*DeleteUserRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{8}
+	return file_users_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *DeleteUserRequest) GetUserId() string {
@@ -537,26 +588,739 @@ func (x *DeleteUserRequest) GetUserId() string {
 	return ""
 }
 
+type Client struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	FirstName     string                 `protobuf:"bytes,3,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
+	LastName      string                 `protobuf:"bytes,4,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
+	Email         string                 `protobuf:"bytes,5,opt,name=email,proto3" json:"email,omitempty"`
+	Phone         string                 `protobuf:"bytes,6,opt,name=phone,proto3" json:"phone,omitempty"`
+	Company       string                 `protobuf:"bytes,7,opt,name=company,proto3" json:"company,omitempty"`
+	Siren         string                 `protobuf:"bytes,8,opt,name=siren,proto3" json:"siren,omitempty"`
+	Vat           string                 `protobuf:"bytes,9,opt,name=vat,proto3" json:"vat,omitempty"`
+	Archived      bool                   `protobuf:"varint,10,opt,name=archived,proto3" json:"archived,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Client) Reset() {
+	*x = Client{}
+	mi := &file_users_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Client) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Client) ProtoMessage() {}
+
+func (x *Client) ProtoReflect() protoreflect.Message {
+	mi := &file_users_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Client.ProtoReflect.Descriptor instead.
+func (*Client) Descriptor() ([]byte, []int) {
+	return file_users_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *Client) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *Client) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *Client) GetFirstName() string {
+	if x != nil {
+		return x.FirstName
+	}
+	return ""
+}
+
+func (x *Client) GetLastName() string {
+	if x != nil {
+		return x.LastName
+	}
+	return ""
+}
+
+func (x *Client) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *Client) GetPhone() string {
+	if x != nil {
+		return x.Phone
+	}
+	return ""
+}
+
+func (x *Client) GetCompany() string {
+	if x != nil {
+		return x.Company
+	}
+	return ""
+}
+
+func (x *Client) GetSiren() string {
+	if x != nil {
+		return x.Siren
+	}
+	return ""
+}
+
+func (x *Client) GetVat() string {
+	if x != nil {
+		return x.Vat
+	}
+	return ""
+}
+
+func (x *Client) GetArchived() bool {
+	if x != nil {
+		return x.Archived
+	}
+	return false
+}
+
+type CreateClientRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	FirstName     string                 `protobuf:"bytes,2,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
+	LastName      string                 `protobuf:"bytes,3,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
+	Email         string                 `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
+	Phone         string                 `protobuf:"bytes,5,opt,name=phone,proto3" json:"phone,omitempty"`
+	Company       string                 `protobuf:"bytes,6,opt,name=company,proto3" json:"company,omitempty"`
+	Siren         string                 `protobuf:"bytes,7,opt,name=siren,proto3" json:"siren,omitempty"`
+	Vat           string                 `protobuf:"bytes,8,opt,name=vat,proto3" json:"vat,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateClientRequest) Reset() {
+	*x = CreateClientRequest{}
+	mi := &file_users_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateClientRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateClientRequest) ProtoMessage() {}
+
+func (x *CreateClientRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_users_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateClientRequest.ProtoReflect.Descriptor instead.
+func (*CreateClientRequest) Descriptor() ([]byte, []int) {
+	return file_users_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *CreateClientRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *CreateClientRequest) GetFirstName() string {
+	if x != nil {
+		return x.FirstName
+	}
+	return ""
+}
+
+func (x *CreateClientRequest) GetLastName() string {
+	if x != nil {
+		return x.LastName
+	}
+	return ""
+}
+
+func (x *CreateClientRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *CreateClientRequest) GetPhone() string {
+	if x != nil {
+		return x.Phone
+	}
+	return ""
+}
+
+func (x *CreateClientRequest) GetCompany() string {
+	if x != nil {
+		return x.Company
+	}
+	return ""
+}
+
+func (x *CreateClientRequest) GetSiren() string {
+	if x != nil {
+		return x.Siren
+	}
+	return ""
+}
+
+func (x *CreateClientRequest) GetVat() string {
+	if x != nil {
+		return x.Vat
+	}
+	return ""
+}
+
+type CreateClientResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	ClientId      string                 `protobuf:"bytes,3,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateClientResponse) Reset() {
+	*x = CreateClientResponse{}
+	mi := &file_users_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateClientResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateClientResponse) ProtoMessage() {}
+
+func (x *CreateClientResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_users_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateClientResponse.ProtoReflect.Descriptor instead.
+func (*CreateClientResponse) Descriptor() ([]byte, []int) {
+	return file_users_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *CreateClientResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *CreateClientResponse) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *CreateClientResponse) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+type GetClientRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetClientRequest) Reset() {
+	*x = GetClientRequest{}
+	mi := &file_users_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetClientRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetClientRequest) ProtoMessage() {}
+
+func (x *GetClientRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_users_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetClientRequest.ProtoReflect.Descriptor instead.
+func (*GetClientRequest) Descriptor() ([]byte, []int) {
+	return file_users_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *GetClientRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *GetClientRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type GetClientResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	Client        *Client                `protobuf:"bytes,3,opt,name=client,proto3" json:"client,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetClientResponse) Reset() {
+	*x = GetClientResponse{}
+	mi := &file_users_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetClientResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetClientResponse) ProtoMessage() {}
+
+func (x *GetClientResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_users_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetClientResponse.ProtoReflect.Descriptor instead.
+func (*GetClientResponse) Descriptor() ([]byte, []int) {
+	return file_users_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *GetClientResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *GetClientResponse) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *GetClientResponse) GetClient() *Client {
+	if x != nil {
+		return x.Client
+	}
+	return nil
+}
+
+type ListClientsRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	UserId          string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	IncludeArchived bool                   `protobuf:"varint,2,opt,name=include_archived,json=includeArchived,proto3" json:"include_archived,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ListClientsRequest) Reset() {
+	*x = ListClientsRequest{}
+	mi := &file_users_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListClientsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListClientsRequest) ProtoMessage() {}
+
+func (x *ListClientsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_users_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListClientsRequest.ProtoReflect.Descriptor instead.
+func (*ListClientsRequest) Descriptor() ([]byte, []int) {
+	return file_users_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ListClientsRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *ListClientsRequest) GetIncludeArchived() bool {
+	if x != nil {
+		return x.IncludeArchived
+	}
+	return false
+}
+
+type ListClientsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	Clients       []*Client              `protobuf:"bytes,3,rep,name=clients,proto3" json:"clients,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListClientsResponse) Reset() {
+	*x = ListClientsResponse{}
+	mi := &file_users_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListClientsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListClientsResponse) ProtoMessage() {}
+
+func (x *ListClientsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_users_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListClientsResponse.ProtoReflect.Descriptor instead.
+func (*ListClientsResponse) Descriptor() ([]byte, []int) {
+	return file_users_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ListClientsResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ListClientsResponse) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *ListClientsResponse) GetClients() []*Client {
+	if x != nil {
+		return x.Clients
+	}
+	return nil
+}
+
+type UpdateClientRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	FirstName     string                 `protobuf:"bytes,3,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
+	LastName      string                 `protobuf:"bytes,4,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
+	Email         string                 `protobuf:"bytes,5,opt,name=email,proto3" json:"email,omitempty"`
+	Phone         string                 `protobuf:"bytes,6,opt,name=phone,proto3" json:"phone,omitempty"`
+	Company       string                 `protobuf:"bytes,7,opt,name=company,proto3" json:"company,omitempty"`
+	Siren         string                 `protobuf:"bytes,8,opt,name=siren,proto3" json:"siren,omitempty"`
+	Vat           string                 `protobuf:"bytes,9,opt,name=vat,proto3" json:"vat,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateClientRequest) Reset() {
+	*x = UpdateClientRequest{}
+	mi := &file_users_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateClientRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateClientRequest) ProtoMessage() {}
+
+func (x *UpdateClientRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_users_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateClientRequest.ProtoReflect.Descriptor instead.
+func (*UpdateClientRequest) Descriptor() ([]byte, []int) {
+	return file_users_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *UpdateClientRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *UpdateClientRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *UpdateClientRequest) GetFirstName() string {
+	if x != nil {
+		return x.FirstName
+	}
+	return ""
+}
+
+func (x *UpdateClientRequest) GetLastName() string {
+	if x != nil {
+		return x.LastName
+	}
+	return ""
+}
+
+func (x *UpdateClientRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *UpdateClientRequest) GetPhone() string {
+	if x != nil {
+		return x.Phone
+	}
+	return ""
+}
+
+func (x *UpdateClientRequest) GetCompany() string {
+	if x != nil {
+		return x.Company
+	}
+	return ""
+}
+
+func (x *UpdateClientRequest) GetSiren() string {
+	if x != nil {
+		return x.Siren
+	}
+	return ""
+}
+
+func (x *UpdateClientRequest) GetVat() string {
+	if x != nil {
+		return x.Vat
+	}
+	return ""
+}
+
+type UpdateClientResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateClientResponse) Reset() {
+	*x = UpdateClientResponse{}
+	mi := &file_users_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateClientResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateClientResponse) ProtoMessage() {}
+
+func (x *UpdateClientResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_users_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateClientResponse.ProtoReflect.Descriptor instead.
+func (*UpdateClientResponse) Descriptor() ([]byte, []int) {
+	return file_users_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *UpdateClientResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *UpdateClientResponse) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+type ArchiveClientRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ArchiveClientRequest) Reset() {
+	*x = ArchiveClientRequest{}
+	mi := &file_users_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ArchiveClientRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ArchiveClientRequest) ProtoMessage() {}
+
+func (x *ArchiveClientRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_users_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ArchiveClientRequest.ProtoReflect.Descriptor instead.
+func (*ArchiveClientRequest) Descriptor() ([]byte, []int) {
+	return file_users_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ArchiveClientRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *ArchiveClientRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
 type Address struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	Id               int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	UserId           string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Name             string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Street           string                 `protobuf:"bytes,4,opt,name=street,proto3" json:"street,omitempty"`
-	AdditionalStreet string                 `protobuf:"bytes,5,opt,name=additional_street,json=additionalStreet,proto3" json:"additional_street,omitempty"`
-	City             string                 `protobuf:"bytes,6,opt,name=city,proto3" json:"city,omitempty"`
-	ZipCode          string                 `protobuf:"bytes,7,opt,name=zip_code,json=zipCode,proto3" json:"zip_code,omitempty"`
-	CountryId        int32                  `protobuf:"varint,8,opt,name=country_id,json=countryId,proto3" json:"country_id,omitempty"`
-	Email            string                 `protobuf:"bytes,9,opt,name=email,proto3" json:"email,omitempty"`
-	Phone            string                 `protobuf:"bytes,10,opt,name=phone,proto3" json:"phone,omitempty"`
-	Archived         bool                   `protobuf:"varint,11,opt,name=archived,proto3" json:"archived,omitempty"`
+	OwnerType        OwnerType              `protobuf:"varint,2,opt,name=owner_type,json=ownerType,proto3,enum=users.OwnerType" json:"owner_type,omitempty"`
+	OwnerId          string                 `protobuf:"bytes,3,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
+	Name             string                 `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
+	Street           string                 `protobuf:"bytes,5,opt,name=street,proto3" json:"street,omitempty"`
+	AdditionalStreet string                 `protobuf:"bytes,6,opt,name=additional_street,json=additionalStreet,proto3" json:"additional_street,omitempty"`
+	City             string                 `protobuf:"bytes,7,opt,name=city,proto3" json:"city,omitempty"`
+	ZipCode          string                 `protobuf:"bytes,8,opt,name=zip_code,json=zipCode,proto3" json:"zip_code,omitempty"`
+	CountryId        int32                  `protobuf:"varint,9,opt,name=country_id,json=countryId,proto3" json:"country_id,omitempty"`
+	Email            string                 `protobuf:"bytes,10,opt,name=email,proto3" json:"email,omitempty"`
+	Phone            string                 `protobuf:"bytes,11,opt,name=phone,proto3" json:"phone,omitempty"`
+	Archived         bool                   `protobuf:"varint,12,opt,name=archived,proto3" json:"archived,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
 
 func (x *Address) Reset() {
 	*x = Address{}
-	mi := &file_users_users_proto_msgTypes[9]
+	mi := &file_users_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -568,7 +1332,7 @@ func (x *Address) String() string {
 func (*Address) ProtoMessage() {}
 
 func (x *Address) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[9]
+	mi := &file_users_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -581,7 +1345,7 @@ func (x *Address) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Address.ProtoReflect.Descriptor instead.
 func (*Address) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{9}
+	return file_users_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *Address) GetId() int32 {
@@ -591,9 +1355,16 @@ func (x *Address) GetId() int32 {
 	return 0
 }
 
-func (x *Address) GetUserId() string {
+func (x *Address) GetOwnerType() OwnerType {
 	if x != nil {
-		return x.UserId
+		return x.OwnerType
+	}
+	return OwnerType_OWNER_TYPE_UNSPECIFIED
+}
+
+func (x *Address) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
 	}
 	return ""
 }
@@ -663,22 +1434,24 @@ func (x *Address) GetArchived() bool {
 
 type CreateAddressRequest struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
-	UserId           string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Name             string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Street           string                 `protobuf:"bytes,3,opt,name=street,proto3" json:"street,omitempty"`
-	AdditionalStreet string                 `protobuf:"bytes,4,opt,name=additional_street,json=additionalStreet,proto3" json:"additional_street,omitempty"`
-	City             string                 `protobuf:"bytes,5,opt,name=city,proto3" json:"city,omitempty"`
-	ZipCode          string                 `protobuf:"bytes,6,opt,name=zip_code,json=zipCode,proto3" json:"zip_code,omitempty"`
-	CountryId        int32                  `protobuf:"varint,7,opt,name=country_id,json=countryId,proto3" json:"country_id,omitempty"`
-	Email            string                 `protobuf:"bytes,8,opt,name=email,proto3" json:"email,omitempty"`
-	Phone            string                 `protobuf:"bytes,9,opt,name=phone,proto3" json:"phone,omitempty"`
+	OwnerType        OwnerType              `protobuf:"varint,1,opt,name=owner_type,json=ownerType,proto3,enum=users.OwnerType" json:"owner_type,omitempty"`
+	OwnerId          string                 `protobuf:"bytes,2,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
+	Name             string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Street           string                 `protobuf:"bytes,4,opt,name=street,proto3" json:"street,omitempty"`
+	AdditionalStreet string                 `protobuf:"bytes,5,opt,name=additional_street,json=additionalStreet,proto3" json:"additional_street,omitempty"`
+	City             string                 `protobuf:"bytes,6,opt,name=city,proto3" json:"city,omitempty"`
+	ZipCode          string                 `protobuf:"bytes,7,opt,name=zip_code,json=zipCode,proto3" json:"zip_code,omitempty"`
+	CountryId        int32                  `protobuf:"varint,8,opt,name=country_id,json=countryId,proto3" json:"country_id,omitempty"`
+	Email            string                 `protobuf:"bytes,9,opt,name=email,proto3" json:"email,omitempty"`
+	Phone            string                 `protobuf:"bytes,10,opt,name=phone,proto3" json:"phone,omitempty"`
+	AuthUserId       string                 `protobuf:"bytes,11,opt,name=auth_user_id,json=authUserId,proto3" json:"auth_user_id,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
 
 func (x *CreateAddressRequest) Reset() {
 	*x = CreateAddressRequest{}
-	mi := &file_users_users_proto_msgTypes[10]
+	mi := &file_users_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -690,7 +1463,7 @@ func (x *CreateAddressRequest) String() string {
 func (*CreateAddressRequest) ProtoMessage() {}
 
 func (x *CreateAddressRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[10]
+	mi := &file_users_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -703,12 +1476,19 @@ func (x *CreateAddressRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAddressRequest.ProtoReflect.Descriptor instead.
 func (*CreateAddressRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{10}
+	return file_users_proto_rawDescGZIP(), []int{20}
 }
 
-func (x *CreateAddressRequest) GetUserId() string {
+func (x *CreateAddressRequest) GetOwnerType() OwnerType {
 	if x != nil {
-		return x.UserId
+		return x.OwnerType
+	}
+	return OwnerType_OWNER_TYPE_UNSPECIFIED
+}
+
+func (x *CreateAddressRequest) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
 	}
 	return ""
 }
@@ -769,6 +1549,13 @@ func (x *CreateAddressRequest) GetPhone() string {
 	return ""
 }
 
+func (x *CreateAddressRequest) GetAuthUserId() string {
+	if x != nil {
+		return x.AuthUserId
+	}
+	return ""
+}
+
 type CreateAddressResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -780,7 +1567,7 @@ type CreateAddressResponse struct {
 
 func (x *CreateAddressResponse) Reset() {
 	*x = CreateAddressResponse{}
-	mi := &file_users_users_proto_msgTypes[11]
+	mi := &file_users_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -792,7 +1579,7 @@ func (x *CreateAddressResponse) String() string {
 func (*CreateAddressResponse) ProtoMessage() {}
 
 func (x *CreateAddressResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[11]
+	mi := &file_users_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -805,7 +1592,7 @@ func (x *CreateAddressResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAddressResponse.ProtoReflect.Descriptor instead.
 func (*CreateAddressResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{11}
+	return file_users_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *CreateAddressResponse) GetSuccess() bool {
@@ -832,14 +1619,16 @@ func (x *CreateAddressResponse) GetAddressId() int32 {
 type GetAddressRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AddressId     int32                  `protobuf:"varint,1,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	OwnerType     OwnerType              `protobuf:"varint,2,opt,name=owner_type,json=ownerType,proto3,enum=users.OwnerType" json:"owner_type,omitempty"`
+	OwnerId       string                 `protobuf:"bytes,3,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
+	AuthUserId    string                 `protobuf:"bytes,4,opt,name=auth_user_id,json=authUserId,proto3" json:"auth_user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetAddressRequest) Reset() {
 	*x = GetAddressRequest{}
-	mi := &file_users_users_proto_msgTypes[12]
+	mi := &file_users_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -851,7 +1640,7 @@ func (x *GetAddressRequest) String() string {
 func (*GetAddressRequest) ProtoMessage() {}
 
 func (x *GetAddressRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[12]
+	mi := &file_users_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -864,7 +1653,7 @@ func (x *GetAddressRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAddressRequest.ProtoReflect.Descriptor instead.
 func (*GetAddressRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{12}
+	return file_users_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *GetAddressRequest) GetAddressId() int32 {
@@ -874,9 +1663,23 @@ func (x *GetAddressRequest) GetAddressId() int32 {
 	return 0
 }
 
-func (x *GetAddressRequest) GetUserId() string {
+func (x *GetAddressRequest) GetOwnerType() OwnerType {
 	if x != nil {
-		return x.UserId
+		return x.OwnerType
+	}
+	return OwnerType_OWNER_TYPE_UNSPECIFIED
+}
+
+func (x *GetAddressRequest) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
+func (x *GetAddressRequest) GetAuthUserId() string {
+	if x != nil {
+		return x.AuthUserId
 	}
 	return ""
 }
@@ -892,7 +1695,7 @@ type GetAddressResponse struct {
 
 func (x *GetAddressResponse) Reset() {
 	*x = GetAddressResponse{}
-	mi := &file_users_users_proto_msgTypes[13]
+	mi := &file_users_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -904,7 +1707,7 @@ func (x *GetAddressResponse) String() string {
 func (*GetAddressResponse) ProtoMessage() {}
 
 func (x *GetAddressResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[13]
+	mi := &file_users_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -917,7 +1720,7 @@ func (x *GetAddressResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAddressResponse.ProtoReflect.Descriptor instead.
 func (*GetAddressResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{13}
+	return file_users_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *GetAddressResponse) GetSuccess() bool {
@@ -943,14 +1746,16 @@ func (x *GetAddressResponse) GetAddress() *Address {
 
 type ListAddressesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	OwnerType     OwnerType              `protobuf:"varint,1,opt,name=owner_type,json=ownerType,proto3,enum=users.OwnerType" json:"owner_type,omitempty"`
+	OwnerId       string                 `protobuf:"bytes,2,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
+	AuthUserId    string                 `protobuf:"bytes,3,opt,name=auth_user_id,json=authUserId,proto3" json:"auth_user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListAddressesRequest) Reset() {
 	*x = ListAddressesRequest{}
-	mi := &file_users_users_proto_msgTypes[14]
+	mi := &file_users_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -962,7 +1767,7 @@ func (x *ListAddressesRequest) String() string {
 func (*ListAddressesRequest) ProtoMessage() {}
 
 func (x *ListAddressesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[14]
+	mi := &file_users_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -975,12 +1780,26 @@ func (x *ListAddressesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAddressesRequest.ProtoReflect.Descriptor instead.
 func (*ListAddressesRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{14}
+	return file_users_proto_rawDescGZIP(), []int{24}
 }
 
-func (x *ListAddressesRequest) GetUserId() string {
+func (x *ListAddressesRequest) GetOwnerType() OwnerType {
 	if x != nil {
-		return x.UserId
+		return x.OwnerType
+	}
+	return OwnerType_OWNER_TYPE_UNSPECIFIED
+}
+
+func (x *ListAddressesRequest) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
+func (x *ListAddressesRequest) GetAuthUserId() string {
+	if x != nil {
+		return x.AuthUserId
 	}
 	return ""
 }
@@ -996,7 +1815,7 @@ type ListAddressesResponse struct {
 
 func (x *ListAddressesResponse) Reset() {
 	*x = ListAddressesResponse{}
-	mi := &file_users_users_proto_msgTypes[15]
+	mi := &file_users_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1008,7 +1827,7 @@ func (x *ListAddressesResponse) String() string {
 func (*ListAddressesResponse) ProtoMessage() {}
 
 func (x *ListAddressesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[15]
+	mi := &file_users_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1021,7 +1840,7 @@ func (x *ListAddressesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAddressesResponse.ProtoReflect.Descriptor instead.
 func (*ListAddressesResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{15}
+	return file_users_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ListAddressesResponse) GetSuccess() bool {
@@ -1048,22 +1867,24 @@ func (x *ListAddressesResponse) GetAddresses() []*Address {
 type UpdateAddressRequest struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	AddressId        int32                  `protobuf:"varint,1,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
-	UserId           string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Name             string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Street           string                 `protobuf:"bytes,4,opt,name=street,proto3" json:"street,omitempty"`
-	AdditionalStreet string                 `protobuf:"bytes,5,opt,name=additional_street,json=additionalStreet,proto3" json:"additional_street,omitempty"`
-	City             string                 `protobuf:"bytes,6,opt,name=city,proto3" json:"city,omitempty"`
-	ZipCode          string                 `protobuf:"bytes,7,opt,name=zip_code,json=zipCode,proto3" json:"zip_code,omitempty"`
-	CountryId        int32                  `protobuf:"varint,8,opt,name=country_id,json=countryId,proto3" json:"country_id,omitempty"`
-	Email            string                 `protobuf:"bytes,9,opt,name=email,proto3" json:"email,omitempty"`
-	Phone            string                 `protobuf:"bytes,10,opt,name=phone,proto3" json:"phone,omitempty"`
+	OwnerType        OwnerType              `protobuf:"varint,2,opt,name=owner_type,json=ownerType,proto3,enum=users.OwnerType" json:"owner_type,omitempty"`
+	OwnerId          string                 `protobuf:"bytes,3,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
+	Name             string                 `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
+	Street           string                 `protobuf:"bytes,5,opt,name=street,proto3" json:"street,omitempty"`
+	AdditionalStreet string                 `protobuf:"bytes,6,opt,name=additional_street,json=additionalStreet,proto3" json:"additional_street,omitempty"`
+	City             string                 `protobuf:"bytes,7,opt,name=city,proto3" json:"city,omitempty"`
+	ZipCode          string                 `protobuf:"bytes,8,opt,name=zip_code,json=zipCode,proto3" json:"zip_code,omitempty"`
+	CountryId        int32                  `protobuf:"varint,9,opt,name=country_id,json=countryId,proto3" json:"country_id,omitempty"`
+	Email            string                 `protobuf:"bytes,10,opt,name=email,proto3" json:"email,omitempty"`
+	Phone            string                 `protobuf:"bytes,11,opt,name=phone,proto3" json:"phone,omitempty"`
+	AuthUserId       string                 `protobuf:"bytes,12,opt,name=auth_user_id,json=authUserId,proto3" json:"auth_user_id,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
 
 func (x *UpdateAddressRequest) Reset() {
 	*x = UpdateAddressRequest{}
-	mi := &file_users_users_proto_msgTypes[16]
+	mi := &file_users_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1075,7 +1896,7 @@ func (x *UpdateAddressRequest) String() string {
 func (*UpdateAddressRequest) ProtoMessage() {}
 
 func (x *UpdateAddressRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[16]
+	mi := &file_users_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1088,7 +1909,7 @@ func (x *UpdateAddressRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAddressRequest.ProtoReflect.Descriptor instead.
 func (*UpdateAddressRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{16}
+	return file_users_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *UpdateAddressRequest) GetAddressId() int32 {
@@ -1098,9 +1919,16 @@ func (x *UpdateAddressRequest) GetAddressId() int32 {
 	return 0
 }
 
-func (x *UpdateAddressRequest) GetUserId() string {
+func (x *UpdateAddressRequest) GetOwnerType() OwnerType {
 	if x != nil {
-		return x.UserId
+		return x.OwnerType
+	}
+	return OwnerType_OWNER_TYPE_UNSPECIFIED
+}
+
+func (x *UpdateAddressRequest) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
 	}
 	return ""
 }
@@ -1161,6 +1989,13 @@ func (x *UpdateAddressRequest) GetPhone() string {
 	return ""
 }
 
+func (x *UpdateAddressRequest) GetAuthUserId() string {
+	if x != nil {
+		return x.AuthUserId
+	}
+	return ""
+}
+
 type UpdateAddressResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -1171,7 +2006,7 @@ type UpdateAddressResponse struct {
 
 func (x *UpdateAddressResponse) Reset() {
 	*x = UpdateAddressResponse{}
-	mi := &file_users_users_proto_msgTypes[17]
+	mi := &file_users_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1183,7 +2018,7 @@ func (x *UpdateAddressResponse) String() string {
 func (*UpdateAddressResponse) ProtoMessage() {}
 
 func (x *UpdateAddressResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[17]
+	mi := &file_users_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1196,7 +2031,7 @@ func (x *UpdateAddressResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAddressResponse.ProtoReflect.Descriptor instead.
 func (*UpdateAddressResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{17}
+	return file_users_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *UpdateAddressResponse) GetSuccess() bool {
@@ -1216,14 +2051,16 @@ func (x *UpdateAddressResponse) GetCode() int32 {
 type ArchiveAddressRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AddressId     int32                  `protobuf:"varint,1,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	OwnerType     OwnerType              `protobuf:"varint,2,opt,name=owner_type,json=ownerType,proto3,enum=users.OwnerType" json:"owner_type,omitempty"`
+	OwnerId       string                 `protobuf:"bytes,3,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
+	AuthUserId    string                 `protobuf:"bytes,4,opt,name=auth_user_id,json=authUserId,proto3" json:"auth_user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ArchiveAddressRequest) Reset() {
 	*x = ArchiveAddressRequest{}
-	mi := &file_users_users_proto_msgTypes[18]
+	mi := &file_users_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1235,7 +2072,7 @@ func (x *ArchiveAddressRequest) String() string {
 func (*ArchiveAddressRequest) ProtoMessage() {}
 
 func (x *ArchiveAddressRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[18]
+	mi := &file_users_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1248,7 +2085,7 @@ func (x *ArchiveAddressRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveAddressRequest.ProtoReflect.Descriptor instead.
 func (*ArchiveAddressRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{18}
+	return file_users_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ArchiveAddressRequest) GetAddressId() int32 {
@@ -1258,9 +2095,23 @@ func (x *ArchiveAddressRequest) GetAddressId() int32 {
 	return 0
 }
 
-func (x *ArchiveAddressRequest) GetUserId() string {
+func (x *ArchiveAddressRequest) GetOwnerType() OwnerType {
 	if x != nil {
-		return x.UserId
+		return x.OwnerType
+	}
+	return OwnerType_OWNER_TYPE_UNSPECIFIED
+}
+
+func (x *ArchiveAddressRequest) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
+func (x *ArchiveAddressRequest) GetAuthUserId() string {
+	if x != nil {
+		return x.AuthUserId
 	}
 	return ""
 }
@@ -1276,7 +2127,7 @@ type Country struct {
 
 func (x *Country) Reset() {
 	*x = Country{}
-	mi := &file_users_users_proto_msgTypes[19]
+	mi := &file_users_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1288,7 +2139,7 @@ func (x *Country) String() string {
 func (*Country) ProtoMessage() {}
 
 func (x *Country) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[19]
+	mi := &file_users_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1301,7 +2152,7 @@ func (x *Country) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Country.ProtoReflect.Descriptor instead.
 func (*Country) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{19}
+	return file_users_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *Country) GetId() int32 {
@@ -1335,7 +2186,7 @@ type CreateCountryRequest struct {
 
 func (x *CreateCountryRequest) Reset() {
 	*x = CreateCountryRequest{}
-	mi := &file_users_users_proto_msgTypes[20]
+	mi := &file_users_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1347,7 +2198,7 @@ func (x *CreateCountryRequest) String() string {
 func (*CreateCountryRequest) ProtoMessage() {}
 
 func (x *CreateCountryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[20]
+	mi := &file_users_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1360,7 +2211,7 @@ func (x *CreateCountryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateCountryRequest.ProtoReflect.Descriptor instead.
 func (*CreateCountryRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{20}
+	return file_users_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *CreateCountryRequest) GetCode() string {
@@ -1388,7 +2239,7 @@ type CreateCountryResponse struct {
 
 func (x *CreateCountryResponse) Reset() {
 	*x = CreateCountryResponse{}
-	mi := &file_users_users_proto_msgTypes[21]
+	mi := &file_users_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1400,7 +2251,7 @@ func (x *CreateCountryResponse) String() string {
 func (*CreateCountryResponse) ProtoMessage() {}
 
 func (x *CreateCountryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[21]
+	mi := &file_users_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1413,7 +2264,7 @@ func (x *CreateCountryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateCountryResponse.ProtoReflect.Descriptor instead.
 func (*CreateCountryResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{21}
+	return file_users_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *CreateCountryResponse) GetSuccess() bool {
@@ -1446,7 +2297,7 @@ type GetCountryRequest struct {
 
 func (x *GetCountryRequest) Reset() {
 	*x = GetCountryRequest{}
-	mi := &file_users_users_proto_msgTypes[22]
+	mi := &file_users_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1458,7 +2309,7 @@ func (x *GetCountryRequest) String() string {
 func (*GetCountryRequest) ProtoMessage() {}
 
 func (x *GetCountryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[22]
+	mi := &file_users_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1471,7 +2322,7 @@ func (x *GetCountryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCountryRequest.ProtoReflect.Descriptor instead.
 func (*GetCountryRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{22}
+	return file_users_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *GetCountryRequest) GetCountryId() int32 {
@@ -1492,7 +2343,7 @@ type GetCountryResponse struct {
 
 func (x *GetCountryResponse) Reset() {
 	*x = GetCountryResponse{}
-	mi := &file_users_users_proto_msgTypes[23]
+	mi := &file_users_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1504,7 +2355,7 @@ func (x *GetCountryResponse) String() string {
 func (*GetCountryResponse) ProtoMessage() {}
 
 func (x *GetCountryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[23]
+	mi := &file_users_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1517,7 +2368,7 @@ func (x *GetCountryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCountryResponse.ProtoReflect.Descriptor instead.
 func (*GetCountryResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{23}
+	return file_users_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *GetCountryResponse) GetSuccess() bool {
@@ -1549,7 +2400,7 @@ type ListCountriesRequest struct {
 
 func (x *ListCountriesRequest) Reset() {
 	*x = ListCountriesRequest{}
-	mi := &file_users_users_proto_msgTypes[24]
+	mi := &file_users_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1561,7 +2412,7 @@ func (x *ListCountriesRequest) String() string {
 func (*ListCountriesRequest) ProtoMessage() {}
 
 func (x *ListCountriesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[24]
+	mi := &file_users_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1574,7 +2425,7 @@ func (x *ListCountriesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCountriesRequest.ProtoReflect.Descriptor instead.
 func (*ListCountriesRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{24}
+	return file_users_proto_rawDescGZIP(), []int{34}
 }
 
 type ListCountriesResponse struct {
@@ -1588,7 +2439,7 @@ type ListCountriesResponse struct {
 
 func (x *ListCountriesResponse) Reset() {
 	*x = ListCountriesResponse{}
-	mi := &file_users_users_proto_msgTypes[25]
+	mi := &file_users_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1600,7 +2451,7 @@ func (x *ListCountriesResponse) String() string {
 func (*ListCountriesResponse) ProtoMessage() {}
 
 func (x *ListCountriesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[25]
+	mi := &file_users_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1613,7 +2464,7 @@ func (x *ListCountriesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCountriesResponse.ProtoReflect.Descriptor instead.
 func (*ListCountriesResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{25}
+	return file_users_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ListCountriesResponse) GetSuccess() bool {
@@ -1648,7 +2499,7 @@ type UpdateCountryRequest struct {
 
 func (x *UpdateCountryRequest) Reset() {
 	*x = UpdateCountryRequest{}
-	mi := &file_users_users_proto_msgTypes[26]
+	mi := &file_users_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1660,7 +2511,7 @@ func (x *UpdateCountryRequest) String() string {
 func (*UpdateCountryRequest) ProtoMessage() {}
 
 func (x *UpdateCountryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[26]
+	mi := &file_users_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1673,7 +2524,7 @@ func (x *UpdateCountryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateCountryRequest.ProtoReflect.Descriptor instead.
 func (*UpdateCountryRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{26}
+	return file_users_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *UpdateCountryRequest) GetCountryId() int32 {
@@ -1707,7 +2558,7 @@ type UpdateCountryResponse struct {
 
 func (x *UpdateCountryResponse) Reset() {
 	*x = UpdateCountryResponse{}
-	mi := &file_users_users_proto_msgTypes[27]
+	mi := &file_users_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1719,7 +2570,7 @@ func (x *UpdateCountryResponse) String() string {
 func (*UpdateCountryResponse) ProtoMessage() {}
 
 func (x *UpdateCountryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[27]
+	mi := &file_users_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1732,7 +2583,7 @@ func (x *UpdateCountryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateCountryResponse.ProtoReflect.Descriptor instead.
 func (*UpdateCountryResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{27}
+	return file_users_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *UpdateCountryResponse) GetSuccess() bool {
@@ -1758,7 +2609,7 @@ type DeleteCountryRequest struct {
 
 func (x *DeleteCountryRequest) Reset() {
 	*x = DeleteCountryRequest{}
-	mi := &file_users_users_proto_msgTypes[28]
+	mi := &file_users_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1770,7 +2621,7 @@ func (x *DeleteCountryRequest) String() string {
 func (*DeleteCountryRequest) ProtoMessage() {}
 
 func (x *DeleteCountryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[28]
+	mi := &file_users_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1783,7 +2634,7 @@ func (x *DeleteCountryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCountryRequest.ProtoReflect.Descriptor instead.
 func (*DeleteCountryRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{28}
+	return file_users_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *DeleteCountryRequest) GetCountryId() int32 {
@@ -1805,7 +2656,7 @@ type CountryGroup struct {
 
 func (x *CountryGroup) Reset() {
 	*x = CountryGroup{}
-	mi := &file_users_users_proto_msgTypes[29]
+	mi := &file_users_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1817,7 +2668,7 @@ func (x *CountryGroup) String() string {
 func (*CountryGroup) ProtoMessage() {}
 
 func (x *CountryGroup) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[29]
+	mi := &file_users_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1830,7 +2681,7 @@ func (x *CountryGroup) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CountryGroup.ProtoReflect.Descriptor instead.
 func (*CountryGroup) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{29}
+	return file_users_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *CountryGroup) GetId() int32 {
@@ -1870,7 +2721,7 @@ type CreateCountryGroupRequest struct {
 
 func (x *CreateCountryGroupRequest) Reset() {
 	*x = CreateCountryGroupRequest{}
-	mi := &file_users_users_proto_msgTypes[30]
+	mi := &file_users_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1882,7 +2733,7 @@ func (x *CreateCountryGroupRequest) String() string {
 func (*CreateCountryGroupRequest) ProtoMessage() {}
 
 func (x *CreateCountryGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[30]
+	mi := &file_users_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1895,7 +2746,7 @@ func (x *CreateCountryGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateCountryGroupRequest.ProtoReflect.Descriptor instead.
 func (*CreateCountryGroupRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{30}
+	return file_users_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *CreateCountryGroupRequest) GetName() string {
@@ -1916,7 +2767,7 @@ type CreateCountryGroupResponse struct {
 
 func (x *CreateCountryGroupResponse) Reset() {
 	*x = CreateCountryGroupResponse{}
-	mi := &file_users_users_proto_msgTypes[31]
+	mi := &file_users_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1928,7 +2779,7 @@ func (x *CreateCountryGroupResponse) String() string {
 func (*CreateCountryGroupResponse) ProtoMessage() {}
 
 func (x *CreateCountryGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[31]
+	mi := &file_users_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1941,7 +2792,7 @@ func (x *CreateCountryGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateCountryGroupResponse.ProtoReflect.Descriptor instead.
 func (*CreateCountryGroupResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{31}
+	return file_users_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *CreateCountryGroupResponse) GetSuccess() bool {
@@ -1974,7 +2825,7 @@ type GetCountryGroupRequest struct {
 
 func (x *GetCountryGroupRequest) Reset() {
 	*x = GetCountryGroupRequest{}
-	mi := &file_users_users_proto_msgTypes[32]
+	mi := &file_users_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1986,7 +2837,7 @@ func (x *GetCountryGroupRequest) String() string {
 func (*GetCountryGroupRequest) ProtoMessage() {}
 
 func (x *GetCountryGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[32]
+	mi := &file_users_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1999,7 +2850,7 @@ func (x *GetCountryGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCountryGroupRequest.ProtoReflect.Descriptor instead.
 func (*GetCountryGroupRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{32}
+	return file_users_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *GetCountryGroupRequest) GetCountryGroupId() int32 {
@@ -2020,7 +2871,7 @@ type GetCountryGroupResponse struct {
 
 func (x *GetCountryGroupResponse) Reset() {
 	*x = GetCountryGroupResponse{}
-	mi := &file_users_users_proto_msgTypes[33]
+	mi := &file_users_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2032,7 +2883,7 @@ func (x *GetCountryGroupResponse) String() string {
 func (*GetCountryGroupResponse) ProtoMessage() {}
 
 func (x *GetCountryGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[33]
+	mi := &file_users_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2045,7 +2896,7 @@ func (x *GetCountryGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCountryGroupResponse.ProtoReflect.Descriptor instead.
 func (*GetCountryGroupResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{33}
+	return file_users_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *GetCountryGroupResponse) GetSuccess() bool {
@@ -2077,7 +2928,7 @@ type ListCountryGroupsRequest struct {
 
 func (x *ListCountryGroupsRequest) Reset() {
 	*x = ListCountryGroupsRequest{}
-	mi := &file_users_users_proto_msgTypes[34]
+	mi := &file_users_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2089,7 +2940,7 @@ func (x *ListCountryGroupsRequest) String() string {
 func (*ListCountryGroupsRequest) ProtoMessage() {}
 
 func (x *ListCountryGroupsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[34]
+	mi := &file_users_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2102,7 +2953,7 @@ func (x *ListCountryGroupsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCountryGroupsRequest.ProtoReflect.Descriptor instead.
 func (*ListCountryGroupsRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{34}
+	return file_users_proto_rawDescGZIP(), []int{44}
 }
 
 type ListCountryGroupsResponse struct {
@@ -2116,7 +2967,7 @@ type ListCountryGroupsResponse struct {
 
 func (x *ListCountryGroupsResponse) Reset() {
 	*x = ListCountryGroupsResponse{}
-	mi := &file_users_users_proto_msgTypes[35]
+	mi := &file_users_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2128,7 +2979,7 @@ func (x *ListCountryGroupsResponse) String() string {
 func (*ListCountryGroupsResponse) ProtoMessage() {}
 
 func (x *ListCountryGroupsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[35]
+	mi := &file_users_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2141,7 +2992,7 @@ func (x *ListCountryGroupsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCountryGroupsResponse.ProtoReflect.Descriptor instead.
 func (*ListCountryGroupsResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{35}
+	return file_users_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *ListCountryGroupsResponse) GetSuccess() bool {
@@ -2175,7 +3026,7 @@ type UpdateCountryGroupRequest struct {
 
 func (x *UpdateCountryGroupRequest) Reset() {
 	*x = UpdateCountryGroupRequest{}
-	mi := &file_users_users_proto_msgTypes[36]
+	mi := &file_users_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2187,7 +3038,7 @@ func (x *UpdateCountryGroupRequest) String() string {
 func (*UpdateCountryGroupRequest) ProtoMessage() {}
 
 func (x *UpdateCountryGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[36]
+	mi := &file_users_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2200,7 +3051,7 @@ func (x *UpdateCountryGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateCountryGroupRequest.ProtoReflect.Descriptor instead.
 func (*UpdateCountryGroupRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{36}
+	return file_users_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *UpdateCountryGroupRequest) GetCountryGroupId() int32 {
@@ -2227,7 +3078,7 @@ type UpdateCountryGroupResponse struct {
 
 func (x *UpdateCountryGroupResponse) Reset() {
 	*x = UpdateCountryGroupResponse{}
-	mi := &file_users_users_proto_msgTypes[37]
+	mi := &file_users_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2239,7 +3090,7 @@ func (x *UpdateCountryGroupResponse) String() string {
 func (*UpdateCountryGroupResponse) ProtoMessage() {}
 
 func (x *UpdateCountryGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[37]
+	mi := &file_users_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2252,7 +3103,7 @@ func (x *UpdateCountryGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateCountryGroupResponse.ProtoReflect.Descriptor instead.
 func (*UpdateCountryGroupResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{37}
+	return file_users_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *UpdateCountryGroupResponse) GetSuccess() bool {
@@ -2278,7 +3129,7 @@ type DeleteCountryGroupRequest struct {
 
 func (x *DeleteCountryGroupRequest) Reset() {
 	*x = DeleteCountryGroupRequest{}
-	mi := &file_users_users_proto_msgTypes[38]
+	mi := &file_users_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2290,7 +3141,7 @@ func (x *DeleteCountryGroupRequest) String() string {
 func (*DeleteCountryGroupRequest) ProtoMessage() {}
 
 func (x *DeleteCountryGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[38]
+	mi := &file_users_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2303,7 +3154,7 @@ func (x *DeleteCountryGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCountryGroupRequest.ProtoReflect.Descriptor instead.
 func (*DeleteCountryGroupRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{38}
+	return file_users_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *DeleteCountryGroupRequest) GetCountryGroupId() int32 {
@@ -2323,7 +3174,7 @@ type AttachCountryRequest struct {
 
 func (x *AttachCountryRequest) Reset() {
 	*x = AttachCountryRequest{}
-	mi := &file_users_users_proto_msgTypes[39]
+	mi := &file_users_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2335,7 +3186,7 @@ func (x *AttachCountryRequest) String() string {
 func (*AttachCountryRequest) ProtoMessage() {}
 
 func (x *AttachCountryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[39]
+	mi := &file_users_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2348,7 +3199,7 @@ func (x *AttachCountryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AttachCountryRequest.ProtoReflect.Descriptor instead.
 func (*AttachCountryRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{39}
+	return file_users_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *AttachCountryRequest) GetCountryGroupId() int32 {
@@ -2375,7 +3226,7 @@ type DetachCountryRequest struct {
 
 func (x *DetachCountryRequest) Reset() {
 	*x = DetachCountryRequest{}
-	mi := &file_users_users_proto_msgTypes[40]
+	mi := &file_users_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2387,7 +3238,7 @@ func (x *DetachCountryRequest) String() string {
 func (*DetachCountryRequest) ProtoMessage() {}
 
 func (x *DetachCountryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[40]
+	mi := &file_users_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2400,7 +3251,7 @@ func (x *DetachCountryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DetachCountryRequest.ProtoReflect.Descriptor instead.
 func (*DetachCountryRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{40}
+	return file_users_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *DetachCountryRequest) GetCountryGroupId() int32 {
@@ -2429,7 +3280,7 @@ type Tax struct {
 
 func (x *Tax) Reset() {
 	*x = Tax{}
-	mi := &file_users_users_proto_msgTypes[41]
+	mi := &file_users_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2441,7 +3292,7 @@ func (x *Tax) String() string {
 func (*Tax) ProtoMessage() {}
 
 func (x *Tax) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[41]
+	mi := &file_users_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2454,7 +3305,7 @@ func (x *Tax) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Tax.ProtoReflect.Descriptor instead.
 func (*Tax) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{41}
+	return file_users_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *Tax) GetId() int32 {
@@ -2496,7 +3347,7 @@ type CreateTaxRequest struct {
 
 func (x *CreateTaxRequest) Reset() {
 	*x = CreateTaxRequest{}
-	mi := &file_users_users_proto_msgTypes[42]
+	mi := &file_users_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2508,7 +3359,7 @@ func (x *CreateTaxRequest) String() string {
 func (*CreateTaxRequest) ProtoMessage() {}
 
 func (x *CreateTaxRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[42]
+	mi := &file_users_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2521,7 +3372,7 @@ func (x *CreateTaxRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTaxRequest.ProtoReflect.Descriptor instead.
 func (*CreateTaxRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{42}
+	return file_users_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *CreateTaxRequest) GetName() string {
@@ -2556,7 +3407,7 @@ type CreateTaxResponse struct {
 
 func (x *CreateTaxResponse) Reset() {
 	*x = CreateTaxResponse{}
-	mi := &file_users_users_proto_msgTypes[43]
+	mi := &file_users_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2568,7 +3419,7 @@ func (x *CreateTaxResponse) String() string {
 func (*CreateTaxResponse) ProtoMessage() {}
 
 func (x *CreateTaxResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[43]
+	mi := &file_users_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2581,7 +3432,7 @@ func (x *CreateTaxResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTaxResponse.ProtoReflect.Descriptor instead.
 func (*CreateTaxResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{43}
+	return file_users_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *CreateTaxResponse) GetSuccess() bool {
@@ -2614,7 +3465,7 @@ type GetTaxRequest struct {
 
 func (x *GetTaxRequest) Reset() {
 	*x = GetTaxRequest{}
-	mi := &file_users_users_proto_msgTypes[44]
+	mi := &file_users_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2626,7 +3477,7 @@ func (x *GetTaxRequest) String() string {
 func (*GetTaxRequest) ProtoMessage() {}
 
 func (x *GetTaxRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[44]
+	mi := &file_users_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2639,7 +3490,7 @@ func (x *GetTaxRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTaxRequest.ProtoReflect.Descriptor instead.
 func (*GetTaxRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{44}
+	return file_users_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *GetTaxRequest) GetTaxId() int32 {
@@ -2660,7 +3511,7 @@ type GetTaxResponse struct {
 
 func (x *GetTaxResponse) Reset() {
 	*x = GetTaxResponse{}
-	mi := &file_users_users_proto_msgTypes[45]
+	mi := &file_users_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2672,7 +3523,7 @@ func (x *GetTaxResponse) String() string {
 func (*GetTaxResponse) ProtoMessage() {}
 
 func (x *GetTaxResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[45]
+	mi := &file_users_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2685,7 +3536,7 @@ func (x *GetTaxResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTaxResponse.ProtoReflect.Descriptor instead.
 func (*GetTaxResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{45}
+	return file_users_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *GetTaxResponse) GetSuccess() bool {
@@ -2718,7 +3569,7 @@ type ListTaxesRequest struct {
 
 func (x *ListTaxesRequest) Reset() {
 	*x = ListTaxesRequest{}
-	mi := &file_users_users_proto_msgTypes[46]
+	mi := &file_users_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2730,7 +3581,7 @@ func (x *ListTaxesRequest) String() string {
 func (*ListTaxesRequest) ProtoMessage() {}
 
 func (x *ListTaxesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[46]
+	mi := &file_users_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2743,7 +3594,7 @@ func (x *ListTaxesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTaxesRequest.ProtoReflect.Descriptor instead.
 func (*ListTaxesRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{46}
+	return file_users_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *ListTaxesRequest) GetCountryGroupId() int32 {
@@ -2764,7 +3615,7 @@ type ListTaxesResponse struct {
 
 func (x *ListTaxesResponse) Reset() {
 	*x = ListTaxesResponse{}
-	mi := &file_users_users_proto_msgTypes[47]
+	mi := &file_users_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2776,7 +3627,7 @@ func (x *ListTaxesResponse) String() string {
 func (*ListTaxesResponse) ProtoMessage() {}
 
 func (x *ListTaxesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[47]
+	mi := &file_users_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2789,7 +3640,7 @@ func (x *ListTaxesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTaxesResponse.ProtoReflect.Descriptor instead.
 func (*ListTaxesResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{47}
+	return file_users_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *ListTaxesResponse) GetSuccess() bool {
@@ -2824,7 +3675,7 @@ type UpdateTaxRequest struct {
 
 func (x *UpdateTaxRequest) Reset() {
 	*x = UpdateTaxRequest{}
-	mi := &file_users_users_proto_msgTypes[48]
+	mi := &file_users_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2836,7 +3687,7 @@ func (x *UpdateTaxRequest) String() string {
 func (*UpdateTaxRequest) ProtoMessage() {}
 
 func (x *UpdateTaxRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[48]
+	mi := &file_users_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2849,7 +3700,7 @@ func (x *UpdateTaxRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTaxRequest.ProtoReflect.Descriptor instead.
 func (*UpdateTaxRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{48}
+	return file_users_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *UpdateTaxRequest) GetTaxId() int32 {
@@ -2883,7 +3734,7 @@ type UpdateTaxResponse struct {
 
 func (x *UpdateTaxResponse) Reset() {
 	*x = UpdateTaxResponse{}
-	mi := &file_users_users_proto_msgTypes[49]
+	mi := &file_users_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2895,7 +3746,7 @@ func (x *UpdateTaxResponse) String() string {
 func (*UpdateTaxResponse) ProtoMessage() {}
 
 func (x *UpdateTaxResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[49]
+	mi := &file_users_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2908,7 +3759,7 @@ func (x *UpdateTaxResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTaxResponse.ProtoReflect.Descriptor instead.
 func (*UpdateTaxResponse) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{49}
+	return file_users_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *UpdateTaxResponse) GetSuccess() bool {
@@ -2934,7 +3785,7 @@ type DeleteTaxRequest struct {
 
 func (x *DeleteTaxRequest) Reset() {
 	*x = DeleteTaxRequest{}
-	mi := &file_users_users_proto_msgTypes[50]
+	mi := &file_users_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2946,7 +3797,7 @@ func (x *DeleteTaxRequest) String() string {
 func (*DeleteTaxRequest) ProtoMessage() {}
 
 func (x *DeleteTaxRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_users_proto_msgTypes[50]
+	mi := &file_users_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2959,7 +3810,7 @@ func (x *DeleteTaxRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTaxRequest.ProtoReflect.Descriptor instead.
 func (*DeleteTaxRequest) Descriptor() ([]byte, []int) {
-	return file_users_users_proto_rawDescGZIP(), []int{50}
+	return file_users_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *DeleteTaxRequest) GetTaxId() int32 {
@@ -2969,11 +3820,11 @@ func (x *DeleteTaxRequest) GetTaxId() int32 {
 	return 0
 }
 
-var File_users_users_proto protoreflect.FileDescriptor
+var File_users_proto protoreflect.FileDescriptor
 
-const file_users_users_proto_rawDesc = "" +
+const file_users_proto_rawDesc = "" +
 	"\n" +
-	"\x11users/users.proto\x12\x05users\"?\n" +
+	"\vusers.proto\x12\x05users\"?\n" +
 	"\x0fGenericResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\"\x8d\x01\n" +
@@ -3006,10 +3857,85 @@ const file_users_users_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\",\n" +
 	"\x11DeleteUserRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"\xa1\x02\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"\x84\x02\n" +
+	"\x06Client\x12\x1b\n" +
+	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1d\n" +
+	"\n" +
+	"first_name\x18\x03 \x01(\tR\tfirstName\x12\x1b\n" +
+	"\tlast_name\x18\x04 \x01(\tR\blastName\x12\x14\n" +
+	"\x05email\x18\x05 \x01(\tR\x05email\x12\x14\n" +
+	"\x05phone\x18\x06 \x01(\tR\x05phone\x12\x18\n" +
+	"\acompany\x18\a \x01(\tR\acompany\x12\x14\n" +
+	"\x05siren\x18\b \x01(\tR\x05siren\x12\x10\n" +
+	"\x03vat\x18\t \x01(\tR\x03vat\x12\x1a\n" +
+	"\barchived\x18\n" +
+	" \x01(\bR\barchived\"\xd8\x01\n" +
+	"\x13CreateClientRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1d\n" +
+	"\n" +
+	"first_name\x18\x02 \x01(\tR\tfirstName\x12\x1b\n" +
+	"\tlast_name\x18\x03 \x01(\tR\blastName\x12\x14\n" +
+	"\x05email\x18\x04 \x01(\tR\x05email\x12\x14\n" +
+	"\x05phone\x18\x05 \x01(\tR\x05phone\x12\x18\n" +
+	"\acompany\x18\x06 \x01(\tR\acompany\x12\x14\n" +
+	"\x05siren\x18\a \x01(\tR\x05siren\x12\x10\n" +
+	"\x03vat\x18\b \x01(\tR\x03vat\"a\n" +
+	"\x14CreateClientResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x1b\n" +
+	"\tclient_id\x18\x03 \x01(\tR\bclientId\"H\n" +
+	"\x10GetClientRequest\x12\x1b\n" +
+	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"h\n" +
+	"\x11GetClientResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x12%\n" +
+	"\x06client\x18\x03 \x01(\v2\r.users.ClientR\x06client\"X\n" +
+	"\x12ListClientsRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12)\n" +
+	"\x10include_archived\x18\x02 \x01(\bR\x0fincludeArchived\"l\n" +
+	"\x13ListClientsResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x12'\n" +
+	"\aclients\x18\x03 \x03(\v2\r.users.ClientR\aclients\"\xf5\x01\n" +
+	"\x13UpdateClientRequest\x12\x1b\n" +
+	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1d\n" +
+	"\n" +
+	"first_name\x18\x03 \x01(\tR\tfirstName\x12\x1b\n" +
+	"\tlast_name\x18\x04 \x01(\tR\blastName\x12\x14\n" +
+	"\x05email\x18\x05 \x01(\tR\x05email\x12\x14\n" +
+	"\x05phone\x18\x06 \x01(\tR\x05phone\x12\x18\n" +
+	"\acompany\x18\a \x01(\tR\acompany\x12\x14\n" +
+	"\x05siren\x18\b \x01(\tR\x05siren\x12\x10\n" +
+	"\x03vat\x18\t \x01(\tR\x03vat\"D\n" +
+	"\x14UpdateClientResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\"L\n" +
+	"\x14ArchiveClientRequest\x12\x1b\n" +
+	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xd4\x02\n" +
 	"\aAddress\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12/\n" +
+	"\n" +
+	"owner_type\x18\x02 \x01(\x0e2\x10.users.OwnerTypeR\townerType\x12\x19\n" +
+	"\bowner_id\x18\x03 \x01(\tR\aownerId\x12\x12\n" +
+	"\x04name\x18\x04 \x01(\tR\x04name\x12\x16\n" +
+	"\x06street\x18\x05 \x01(\tR\x06street\x12+\n" +
+	"\x11additional_street\x18\x06 \x01(\tR\x10additionalStreet\x12\x12\n" +
+	"\x04city\x18\a \x01(\tR\x04city\x12\x19\n" +
+	"\bzip_code\x18\b \x01(\tR\azipCode\x12\x1d\n" +
+	"\n" +
+	"country_id\x18\t \x01(\x05R\tcountryId\x12\x14\n" +
+	"\x05email\x18\n" +
+	" \x01(\tR\x05email\x12\x14\n" +
+	"\x05phone\x18\v \x01(\tR\x05phone\x12\x1a\n" +
+	"\barchived\x18\f \x01(\bR\barchived\"\xd7\x02\n" +
+	"\x14CreateAddressRequest\x12/\n" +
+	"\n" +
+	"owner_type\x18\x01 \x01(\x0e2\x10.users.OwnerTypeR\townerType\x12\x19\n" +
+	"\bowner_id\x18\x02 \x01(\tR\aownerId\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x16\n" +
 	"\x06street\x18\x04 \x01(\tR\x06street\x12+\n" +
 	"\x11additional_street\x18\x05 \x01(\tR\x10additionalStreet\x12\x12\n" +
@@ -3019,59 +3945,65 @@ const file_users_users_proto_rawDesc = "" +
 	"country_id\x18\b \x01(\x05R\tcountryId\x12\x14\n" +
 	"\x05email\x18\t \x01(\tR\x05email\x12\x14\n" +
 	"\x05phone\x18\n" +
-	" \x01(\tR\x05phone\x12\x1a\n" +
-	"\barchived\x18\v \x01(\bR\barchived\"\x82\x02\n" +
-	"\x14CreateAddressRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
-	"\x06street\x18\x03 \x01(\tR\x06street\x12+\n" +
-	"\x11additional_street\x18\x04 \x01(\tR\x10additionalStreet\x12\x12\n" +
-	"\x04city\x18\x05 \x01(\tR\x04city\x12\x19\n" +
-	"\bzip_code\x18\x06 \x01(\tR\azipCode\x12\x1d\n" +
-	"\n" +
-	"country_id\x18\a \x01(\x05R\tcountryId\x12\x14\n" +
-	"\x05email\x18\b \x01(\tR\x05email\x12\x14\n" +
-	"\x05phone\x18\t \x01(\tR\x05phone\"d\n" +
+	" \x01(\tR\x05phone\x12 \n" +
+	"\fauth_user_id\x18\v \x01(\tR\n" +
+	"authUserId\"d\n" +
 	"\x15CreateAddressResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x1d\n" +
 	"\n" +
-	"address_id\x18\x03 \x01(\x05R\taddressId\"K\n" +
+	"address_id\x18\x03 \x01(\x05R\taddressId\"\xa0\x01\n" +
 	"\x11GetAddressRequest\x12\x1d\n" +
 	"\n" +
-	"address_id\x18\x01 \x01(\x05R\taddressId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"l\n" +
+	"address_id\x18\x01 \x01(\x05R\taddressId\x12/\n" +
+	"\n" +
+	"owner_type\x18\x02 \x01(\x0e2\x10.users.OwnerTypeR\townerType\x12\x19\n" +
+	"\bowner_id\x18\x03 \x01(\tR\aownerId\x12 \n" +
+	"\fauth_user_id\x18\x04 \x01(\tR\n" +
+	"authUserId\"l\n" +
 	"\x12GetAddressResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12(\n" +
-	"\aaddress\x18\x03 \x01(\v2\x0e.users.AddressR\aaddress\"/\n" +
-	"\x14ListAddressesRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"s\n" +
+	"\aaddress\x18\x03 \x01(\v2\x0e.users.AddressR\aaddress\"\x84\x01\n" +
+	"\x14ListAddressesRequest\x12/\n" +
+	"\n" +
+	"owner_type\x18\x01 \x01(\x0e2\x10.users.OwnerTypeR\townerType\x12\x19\n" +
+	"\bowner_id\x18\x02 \x01(\tR\aownerId\x12 \n" +
+	"\fauth_user_id\x18\x03 \x01(\tR\n" +
+	"authUserId\"s\n" +
 	"\x15ListAddressesResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12,\n" +
-	"\taddresses\x18\x03 \x03(\v2\x0e.users.AddressR\taddresses\"\xa1\x02\n" +
+	"\taddresses\x18\x03 \x03(\v2\x0e.users.AddressR\taddresses\"\xf6\x02\n" +
 	"\x14UpdateAddressRequest\x12\x1d\n" +
 	"\n" +
-	"address_id\x18\x01 \x01(\x05R\taddressId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\x12\x16\n" +
-	"\x06street\x18\x04 \x01(\tR\x06street\x12+\n" +
-	"\x11additional_street\x18\x05 \x01(\tR\x10additionalStreet\x12\x12\n" +
-	"\x04city\x18\x06 \x01(\tR\x04city\x12\x19\n" +
-	"\bzip_code\x18\a \x01(\tR\azipCode\x12\x1d\n" +
+	"address_id\x18\x01 \x01(\x05R\taddressId\x12/\n" +
 	"\n" +
-	"country_id\x18\b \x01(\x05R\tcountryId\x12\x14\n" +
-	"\x05email\x18\t \x01(\tR\x05email\x12\x14\n" +
-	"\x05phone\x18\n" +
-	" \x01(\tR\x05phone\"E\n" +
+	"owner_type\x18\x02 \x01(\x0e2\x10.users.OwnerTypeR\townerType\x12\x19\n" +
+	"\bowner_id\x18\x03 \x01(\tR\aownerId\x12\x12\n" +
+	"\x04name\x18\x04 \x01(\tR\x04name\x12\x16\n" +
+	"\x06street\x18\x05 \x01(\tR\x06street\x12+\n" +
+	"\x11additional_street\x18\x06 \x01(\tR\x10additionalStreet\x12\x12\n" +
+	"\x04city\x18\a \x01(\tR\x04city\x12\x19\n" +
+	"\bzip_code\x18\b \x01(\tR\azipCode\x12\x1d\n" +
+	"\n" +
+	"country_id\x18\t \x01(\x05R\tcountryId\x12\x14\n" +
+	"\x05email\x18\n" +
+	" \x01(\tR\x05email\x12\x14\n" +
+	"\x05phone\x18\v \x01(\tR\x05phone\x12 \n" +
+	"\fauth_user_id\x18\f \x01(\tR\n" +
+	"authUserId\"E\n" +
 	"\x15UpdateAddressResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\x05R\x04code\"O\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\"\xa4\x01\n" +
 	"\x15ArchiveAddressRequest\x12\x1d\n" +
 	"\n" +
-	"address_id\x18\x01 \x01(\x05R\taddressId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"A\n" +
+	"address_id\x18\x01 \x01(\x05R\taddressId\x12/\n" +
+	"\n" +
+	"owner_type\x18\x02 \x01(\x0e2\x10.users.OwnerTypeR\townerType\x12\x19\n" +
+	"\bowner_id\x18\x03 \x01(\tR\aownerId\x12 \n" +
+	"\fauth_user_id\x18\x04 \x01(\tR\n" +
+	"authUserId\"A\n" +
 	"\aCountry\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12\x12\n" +
@@ -3181,7 +4113,11 @@ const file_users_users_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\")\n" +
 	"\x10DeleteTaxRequest\x12\x15\n" +
-	"\x06tax_id\x18\x01 \x01(\x05R\x05taxId2\xda\x0e\n" +
+	"\x06tax_id\x18\x01 \x01(\x05R\x05taxId*S\n" +
+	"\tOwnerType\x12\x1a\n" +
+	"\x16OWNER_TYPE_UNSPECIFIED\x10\x00\x12\x13\n" +
+	"\x0fOWNER_TYPE_USER\x10\x01\x12\x15\n" +
+	"\x11OWNER_TYPE_CLIENT\x10\x022\xb8\x11\n" +
 	"\vUserService\x12A\n" +
 	"\n" +
 	"CreateUser\x12\x18.users.CreateUserRequest\x1a\x19.users.CreateUserResponse\x128\n" +
@@ -3189,7 +4125,12 @@ const file_users_users_proto_rawDesc = "" +
 	"\n" +
 	"UpdateUser\x12\x18.users.UpdateUserRequest\x1a\x19.users.UpdateUserResponse\x12>\n" +
 	"\n" +
-	"DeleteUser\x12\x18.users.DeleteUserRequest\x1a\x16.users.GenericResponse\x12J\n" +
+	"DeleteUser\x12\x18.users.DeleteUserRequest\x1a\x16.users.GenericResponse\x12G\n" +
+	"\fCreateClient\x12\x1a.users.CreateClientRequest\x1a\x1b.users.CreateClientResponse\x12>\n" +
+	"\tGetClient\x12\x17.users.GetClientRequest\x1a\x18.users.GetClientResponse\x12D\n" +
+	"\vListClients\x12\x19.users.ListClientsRequest\x1a\x1a.users.ListClientsResponse\x12G\n" +
+	"\fUpdateClient\x12\x1a.users.UpdateClientRequest\x1a\x1b.users.UpdateClientResponse\x12D\n" +
+	"\rArchiveClient\x12\x1b.users.ArchiveClientRequest\x1a\x16.users.GenericResponse\x12J\n" +
 	"\rCreateAddress\x12\x1b.users.CreateAddressRequest\x1a\x1c.users.CreateAddressResponse\x12A\n" +
 	"\n" +
 	"GetAddress\x12\x18.users.GetAddressRequest\x1a\x19.users.GetAddressResponse\x12J\n" +
@@ -3216,162 +4157,193 @@ const file_users_users_proto_rawDesc = "" +
 	"\tDeleteTax\x12\x17.users.DeleteTaxRequest\x1a\x16.users.GenericResponseB\x0fZ\rgateway/usersb\x06proto3"
 
 var (
-	file_users_users_proto_rawDescOnce sync.Once
-	file_users_users_proto_rawDescData []byte
+	file_users_proto_rawDescOnce sync.Once
+	file_users_proto_rawDescData []byte
 )
 
-func file_users_users_proto_rawDescGZIP() []byte {
-	file_users_users_proto_rawDescOnce.Do(func() {
-		file_users_users_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_users_users_proto_rawDesc), len(file_users_users_proto_rawDesc)))
+func file_users_proto_rawDescGZIP() []byte {
+	file_users_proto_rawDescOnce.Do(func() {
+		file_users_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_users_proto_rawDesc), len(file_users_proto_rawDesc)))
 	})
-	return file_users_users_proto_rawDescData
+	return file_users_proto_rawDescData
 }
 
-var file_users_users_proto_msgTypes = make([]protoimpl.MessageInfo, 51)
-var file_users_users_proto_goTypes = []any{
-	(*GenericResponse)(nil),            // 0: users.GenericResponse
-	(*User)(nil),                       // 1: users.User
-	(*CreateUserRequest)(nil),          // 2: users.CreateUserRequest
-	(*CreateUserResponse)(nil),         // 3: users.CreateUserResponse
-	(*GetUserRequest)(nil),             // 4: users.GetUserRequest
-	(*GetUserResponse)(nil),            // 5: users.GetUserResponse
-	(*UpdateUserRequest)(nil),          // 6: users.UpdateUserRequest
-	(*UpdateUserResponse)(nil),         // 7: users.UpdateUserResponse
-	(*DeleteUserRequest)(nil),          // 8: users.DeleteUserRequest
-	(*Address)(nil),                    // 9: users.Address
-	(*CreateAddressRequest)(nil),       // 10: users.CreateAddressRequest
-	(*CreateAddressResponse)(nil),      // 11: users.CreateAddressResponse
-	(*GetAddressRequest)(nil),          // 12: users.GetAddressRequest
-	(*GetAddressResponse)(nil),         // 13: users.GetAddressResponse
-	(*ListAddressesRequest)(nil),       // 14: users.ListAddressesRequest
-	(*ListAddressesResponse)(nil),      // 15: users.ListAddressesResponse
-	(*UpdateAddressRequest)(nil),       // 16: users.UpdateAddressRequest
-	(*UpdateAddressResponse)(nil),      // 17: users.UpdateAddressResponse
-	(*ArchiveAddressRequest)(nil),      // 18: users.ArchiveAddressRequest
-	(*Country)(nil),                    // 19: users.Country
-	(*CreateCountryRequest)(nil),       // 20: users.CreateCountryRequest
-	(*CreateCountryResponse)(nil),      // 21: users.CreateCountryResponse
-	(*GetCountryRequest)(nil),          // 22: users.GetCountryRequest
-	(*GetCountryResponse)(nil),         // 23: users.GetCountryResponse
-	(*ListCountriesRequest)(nil),       // 24: users.ListCountriesRequest
-	(*ListCountriesResponse)(nil),      // 25: users.ListCountriesResponse
-	(*UpdateCountryRequest)(nil),       // 26: users.UpdateCountryRequest
-	(*UpdateCountryResponse)(nil),      // 27: users.UpdateCountryResponse
-	(*DeleteCountryRequest)(nil),       // 28: users.DeleteCountryRequest
-	(*CountryGroup)(nil),               // 29: users.CountryGroup
-	(*CreateCountryGroupRequest)(nil),  // 30: users.CreateCountryGroupRequest
-	(*CreateCountryGroupResponse)(nil), // 31: users.CreateCountryGroupResponse
-	(*GetCountryGroupRequest)(nil),     // 32: users.GetCountryGroupRequest
-	(*GetCountryGroupResponse)(nil),    // 33: users.GetCountryGroupResponse
-	(*ListCountryGroupsRequest)(nil),   // 34: users.ListCountryGroupsRequest
-	(*ListCountryGroupsResponse)(nil),  // 35: users.ListCountryGroupsResponse
-	(*UpdateCountryGroupRequest)(nil),  // 36: users.UpdateCountryGroupRequest
-	(*UpdateCountryGroupResponse)(nil), // 37: users.UpdateCountryGroupResponse
-	(*DeleteCountryGroupRequest)(nil),  // 38: users.DeleteCountryGroupRequest
-	(*AttachCountryRequest)(nil),       // 39: users.AttachCountryRequest
-	(*DetachCountryRequest)(nil),       // 40: users.DetachCountryRequest
-	(*Tax)(nil),                        // 41: users.Tax
-	(*CreateTaxRequest)(nil),           // 42: users.CreateTaxRequest
-	(*CreateTaxResponse)(nil),          // 43: users.CreateTaxResponse
-	(*GetTaxRequest)(nil),              // 44: users.GetTaxRequest
-	(*GetTaxResponse)(nil),             // 45: users.GetTaxResponse
-	(*ListTaxesRequest)(nil),           // 46: users.ListTaxesRequest
-	(*ListTaxesResponse)(nil),          // 47: users.ListTaxesResponse
-	(*UpdateTaxRequest)(nil),           // 48: users.UpdateTaxRequest
-	(*UpdateTaxResponse)(nil),          // 49: users.UpdateTaxResponse
-	(*DeleteTaxRequest)(nil),           // 50: users.DeleteTaxRequest
+var file_users_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_users_proto_msgTypes = make([]protoimpl.MessageInfo, 61)
+var file_users_proto_goTypes = []any{
+	(OwnerType)(0),                     // 0: users.OwnerType
+	(*GenericResponse)(nil),            // 1: users.GenericResponse
+	(*User)(nil),                       // 2: users.User
+	(*CreateUserRequest)(nil),          // 3: users.CreateUserRequest
+	(*CreateUserResponse)(nil),         // 4: users.CreateUserResponse
+	(*GetUserRequest)(nil),             // 5: users.GetUserRequest
+	(*GetUserResponse)(nil),            // 6: users.GetUserResponse
+	(*UpdateUserRequest)(nil),          // 7: users.UpdateUserRequest
+	(*UpdateUserResponse)(nil),         // 8: users.UpdateUserResponse
+	(*DeleteUserRequest)(nil),          // 9: users.DeleteUserRequest
+	(*Client)(nil),                     // 10: users.Client
+	(*CreateClientRequest)(nil),        // 11: users.CreateClientRequest
+	(*CreateClientResponse)(nil),       // 12: users.CreateClientResponse
+	(*GetClientRequest)(nil),           // 13: users.GetClientRequest
+	(*GetClientResponse)(nil),          // 14: users.GetClientResponse
+	(*ListClientsRequest)(nil),         // 15: users.ListClientsRequest
+	(*ListClientsResponse)(nil),        // 16: users.ListClientsResponse
+	(*UpdateClientRequest)(nil),        // 17: users.UpdateClientRequest
+	(*UpdateClientResponse)(nil),       // 18: users.UpdateClientResponse
+	(*ArchiveClientRequest)(nil),       // 19: users.ArchiveClientRequest
+	(*Address)(nil),                    // 20: users.Address
+	(*CreateAddressRequest)(nil),       // 21: users.CreateAddressRequest
+	(*CreateAddressResponse)(nil),      // 22: users.CreateAddressResponse
+	(*GetAddressRequest)(nil),          // 23: users.GetAddressRequest
+	(*GetAddressResponse)(nil),         // 24: users.GetAddressResponse
+	(*ListAddressesRequest)(nil),       // 25: users.ListAddressesRequest
+	(*ListAddressesResponse)(nil),      // 26: users.ListAddressesResponse
+	(*UpdateAddressRequest)(nil),       // 27: users.UpdateAddressRequest
+	(*UpdateAddressResponse)(nil),      // 28: users.UpdateAddressResponse
+	(*ArchiveAddressRequest)(nil),      // 29: users.ArchiveAddressRequest
+	(*Country)(nil),                    // 30: users.Country
+	(*CreateCountryRequest)(nil),       // 31: users.CreateCountryRequest
+	(*CreateCountryResponse)(nil),      // 32: users.CreateCountryResponse
+	(*GetCountryRequest)(nil),          // 33: users.GetCountryRequest
+	(*GetCountryResponse)(nil),         // 34: users.GetCountryResponse
+	(*ListCountriesRequest)(nil),       // 35: users.ListCountriesRequest
+	(*ListCountriesResponse)(nil),      // 36: users.ListCountriesResponse
+	(*UpdateCountryRequest)(nil),       // 37: users.UpdateCountryRequest
+	(*UpdateCountryResponse)(nil),      // 38: users.UpdateCountryResponse
+	(*DeleteCountryRequest)(nil),       // 39: users.DeleteCountryRequest
+	(*CountryGroup)(nil),               // 40: users.CountryGroup
+	(*CreateCountryGroupRequest)(nil),  // 41: users.CreateCountryGroupRequest
+	(*CreateCountryGroupResponse)(nil), // 42: users.CreateCountryGroupResponse
+	(*GetCountryGroupRequest)(nil),     // 43: users.GetCountryGroupRequest
+	(*GetCountryGroupResponse)(nil),    // 44: users.GetCountryGroupResponse
+	(*ListCountryGroupsRequest)(nil),   // 45: users.ListCountryGroupsRequest
+	(*ListCountryGroupsResponse)(nil),  // 46: users.ListCountryGroupsResponse
+	(*UpdateCountryGroupRequest)(nil),  // 47: users.UpdateCountryGroupRequest
+	(*UpdateCountryGroupResponse)(nil), // 48: users.UpdateCountryGroupResponse
+	(*DeleteCountryGroupRequest)(nil),  // 49: users.DeleteCountryGroupRequest
+	(*AttachCountryRequest)(nil),       // 50: users.AttachCountryRequest
+	(*DetachCountryRequest)(nil),       // 51: users.DetachCountryRequest
+	(*Tax)(nil),                        // 52: users.Tax
+	(*CreateTaxRequest)(nil),           // 53: users.CreateTaxRequest
+	(*CreateTaxResponse)(nil),          // 54: users.CreateTaxResponse
+	(*GetTaxRequest)(nil),              // 55: users.GetTaxRequest
+	(*GetTaxResponse)(nil),             // 56: users.GetTaxResponse
+	(*ListTaxesRequest)(nil),           // 57: users.ListTaxesRequest
+	(*ListTaxesResponse)(nil),          // 58: users.ListTaxesResponse
+	(*UpdateTaxRequest)(nil),           // 59: users.UpdateTaxRequest
+	(*UpdateTaxResponse)(nil),          // 60: users.UpdateTaxResponse
+	(*DeleteTaxRequest)(nil),           // 61: users.DeleteTaxRequest
 }
-var file_users_users_proto_depIdxs = []int32{
-	1,  // 0: users.GetUserResponse.user:type_name -> users.User
-	9,  // 1: users.GetAddressResponse.address:type_name -> users.Address
-	9,  // 2: users.ListAddressesResponse.addresses:type_name -> users.Address
-	19, // 3: users.GetCountryResponse.country:type_name -> users.Country
-	19, // 4: users.ListCountriesResponse.countries:type_name -> users.Country
-	19, // 5: users.CountryGroup.countries:type_name -> users.Country
-	41, // 6: users.CountryGroup.taxes:type_name -> users.Tax
-	29, // 7: users.GetCountryGroupResponse.country_group:type_name -> users.CountryGroup
-	29, // 8: users.ListCountryGroupsResponse.country_groups:type_name -> users.CountryGroup
-	41, // 9: users.GetTaxResponse.tax:type_name -> users.Tax
-	41, // 10: users.ListTaxesResponse.taxes:type_name -> users.Tax
-	2,  // 11: users.UserService.CreateUser:input_type -> users.CreateUserRequest
-	4,  // 12: users.UserService.GetUser:input_type -> users.GetUserRequest
-	6,  // 13: users.UserService.UpdateUser:input_type -> users.UpdateUserRequest
-	8,  // 14: users.UserService.DeleteUser:input_type -> users.DeleteUserRequest
-	10, // 15: users.UserService.CreateAddress:input_type -> users.CreateAddressRequest
-	12, // 16: users.UserService.GetAddress:input_type -> users.GetAddressRequest
-	14, // 17: users.UserService.ListAddresses:input_type -> users.ListAddressesRequest
-	16, // 18: users.UserService.UpdateAddress:input_type -> users.UpdateAddressRequest
-	18, // 19: users.UserService.ArchiveAddress:input_type -> users.ArchiveAddressRequest
-	20, // 20: users.UserService.CreateCountry:input_type -> users.CreateCountryRequest
-	22, // 21: users.UserService.GetCountry:input_type -> users.GetCountryRequest
-	24, // 22: users.UserService.ListCountries:input_type -> users.ListCountriesRequest
-	26, // 23: users.UserService.UpdateCountry:input_type -> users.UpdateCountryRequest
-	28, // 24: users.UserService.DeleteCountry:input_type -> users.DeleteCountryRequest
-	30, // 25: users.UserService.CreateCountryGroup:input_type -> users.CreateCountryGroupRequest
-	32, // 26: users.UserService.GetCountryGroup:input_type -> users.GetCountryGroupRequest
-	34, // 27: users.UserService.ListCountryGroups:input_type -> users.ListCountryGroupsRequest
-	36, // 28: users.UserService.UpdateCountryGroup:input_type -> users.UpdateCountryGroupRequest
-	38, // 29: users.UserService.DeleteCountryGroup:input_type -> users.DeleteCountryGroupRequest
-	39, // 30: users.UserService.AttachCountry:input_type -> users.AttachCountryRequest
-	40, // 31: users.UserService.DetachCountry:input_type -> users.DetachCountryRequest
-	42, // 32: users.UserService.CreateTax:input_type -> users.CreateTaxRequest
-	44, // 33: users.UserService.GetTax:input_type -> users.GetTaxRequest
-	46, // 34: users.UserService.ListTaxes:input_type -> users.ListTaxesRequest
-	48, // 35: users.UserService.UpdateTax:input_type -> users.UpdateTaxRequest
-	50, // 36: users.UserService.DeleteTax:input_type -> users.DeleteTaxRequest
-	3,  // 37: users.UserService.CreateUser:output_type -> users.CreateUserResponse
-	5,  // 38: users.UserService.GetUser:output_type -> users.GetUserResponse
-	7,  // 39: users.UserService.UpdateUser:output_type -> users.UpdateUserResponse
-	0,  // 40: users.UserService.DeleteUser:output_type -> users.GenericResponse
-	11, // 41: users.UserService.CreateAddress:output_type -> users.CreateAddressResponse
-	13, // 42: users.UserService.GetAddress:output_type -> users.GetAddressResponse
-	15, // 43: users.UserService.ListAddresses:output_type -> users.ListAddressesResponse
-	17, // 44: users.UserService.UpdateAddress:output_type -> users.UpdateAddressResponse
-	0,  // 45: users.UserService.ArchiveAddress:output_type -> users.GenericResponse
-	21, // 46: users.UserService.CreateCountry:output_type -> users.CreateCountryResponse
-	23, // 47: users.UserService.GetCountry:output_type -> users.GetCountryResponse
-	25, // 48: users.UserService.ListCountries:output_type -> users.ListCountriesResponse
-	27, // 49: users.UserService.UpdateCountry:output_type -> users.UpdateCountryResponse
-	0,  // 50: users.UserService.DeleteCountry:output_type -> users.GenericResponse
-	31, // 51: users.UserService.CreateCountryGroup:output_type -> users.CreateCountryGroupResponse
-	33, // 52: users.UserService.GetCountryGroup:output_type -> users.GetCountryGroupResponse
-	35, // 53: users.UserService.ListCountryGroups:output_type -> users.ListCountryGroupsResponse
-	37, // 54: users.UserService.UpdateCountryGroup:output_type -> users.UpdateCountryGroupResponse
-	0,  // 55: users.UserService.DeleteCountryGroup:output_type -> users.GenericResponse
-	0,  // 56: users.UserService.AttachCountry:output_type -> users.GenericResponse
-	0,  // 57: users.UserService.DetachCountry:output_type -> users.GenericResponse
-	43, // 58: users.UserService.CreateTax:output_type -> users.CreateTaxResponse
-	45, // 59: users.UserService.GetTax:output_type -> users.GetTaxResponse
-	47, // 60: users.UserService.ListTaxes:output_type -> users.ListTaxesResponse
-	49, // 61: users.UserService.UpdateTax:output_type -> users.UpdateTaxResponse
-	0,  // 62: users.UserService.DeleteTax:output_type -> users.GenericResponse
-	37, // [37:63] is the sub-list for method output_type
-	11, // [11:37] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+var file_users_proto_depIdxs = []int32{
+	2,  // 0: users.GetUserResponse.user:type_name -> users.User
+	10, // 1: users.GetClientResponse.client:type_name -> users.Client
+	10, // 2: users.ListClientsResponse.clients:type_name -> users.Client
+	0,  // 3: users.Address.owner_type:type_name -> users.OwnerType
+	0,  // 4: users.CreateAddressRequest.owner_type:type_name -> users.OwnerType
+	0,  // 5: users.GetAddressRequest.owner_type:type_name -> users.OwnerType
+	20, // 6: users.GetAddressResponse.address:type_name -> users.Address
+	0,  // 7: users.ListAddressesRequest.owner_type:type_name -> users.OwnerType
+	20, // 8: users.ListAddressesResponse.addresses:type_name -> users.Address
+	0,  // 9: users.UpdateAddressRequest.owner_type:type_name -> users.OwnerType
+	0,  // 10: users.ArchiveAddressRequest.owner_type:type_name -> users.OwnerType
+	30, // 11: users.GetCountryResponse.country:type_name -> users.Country
+	30, // 12: users.ListCountriesResponse.countries:type_name -> users.Country
+	30, // 13: users.CountryGroup.countries:type_name -> users.Country
+	52, // 14: users.CountryGroup.taxes:type_name -> users.Tax
+	40, // 15: users.GetCountryGroupResponse.country_group:type_name -> users.CountryGroup
+	40, // 16: users.ListCountryGroupsResponse.country_groups:type_name -> users.CountryGroup
+	52, // 17: users.GetTaxResponse.tax:type_name -> users.Tax
+	52, // 18: users.ListTaxesResponse.taxes:type_name -> users.Tax
+	3,  // 19: users.UserService.CreateUser:input_type -> users.CreateUserRequest
+	5,  // 20: users.UserService.GetUser:input_type -> users.GetUserRequest
+	7,  // 21: users.UserService.UpdateUser:input_type -> users.UpdateUserRequest
+	9,  // 22: users.UserService.DeleteUser:input_type -> users.DeleteUserRequest
+	11, // 23: users.UserService.CreateClient:input_type -> users.CreateClientRequest
+	13, // 24: users.UserService.GetClient:input_type -> users.GetClientRequest
+	15, // 25: users.UserService.ListClients:input_type -> users.ListClientsRequest
+	17, // 26: users.UserService.UpdateClient:input_type -> users.UpdateClientRequest
+	19, // 27: users.UserService.ArchiveClient:input_type -> users.ArchiveClientRequest
+	21, // 28: users.UserService.CreateAddress:input_type -> users.CreateAddressRequest
+	23, // 29: users.UserService.GetAddress:input_type -> users.GetAddressRequest
+	25, // 30: users.UserService.ListAddresses:input_type -> users.ListAddressesRequest
+	27, // 31: users.UserService.UpdateAddress:input_type -> users.UpdateAddressRequest
+	29, // 32: users.UserService.ArchiveAddress:input_type -> users.ArchiveAddressRequest
+	31, // 33: users.UserService.CreateCountry:input_type -> users.CreateCountryRequest
+	33, // 34: users.UserService.GetCountry:input_type -> users.GetCountryRequest
+	35, // 35: users.UserService.ListCountries:input_type -> users.ListCountriesRequest
+	37, // 36: users.UserService.UpdateCountry:input_type -> users.UpdateCountryRequest
+	39, // 37: users.UserService.DeleteCountry:input_type -> users.DeleteCountryRequest
+	41, // 38: users.UserService.CreateCountryGroup:input_type -> users.CreateCountryGroupRequest
+	43, // 39: users.UserService.GetCountryGroup:input_type -> users.GetCountryGroupRequest
+	45, // 40: users.UserService.ListCountryGroups:input_type -> users.ListCountryGroupsRequest
+	47, // 41: users.UserService.UpdateCountryGroup:input_type -> users.UpdateCountryGroupRequest
+	49, // 42: users.UserService.DeleteCountryGroup:input_type -> users.DeleteCountryGroupRequest
+	50, // 43: users.UserService.AttachCountry:input_type -> users.AttachCountryRequest
+	51, // 44: users.UserService.DetachCountry:input_type -> users.DetachCountryRequest
+	53, // 45: users.UserService.CreateTax:input_type -> users.CreateTaxRequest
+	55, // 46: users.UserService.GetTax:input_type -> users.GetTaxRequest
+	57, // 47: users.UserService.ListTaxes:input_type -> users.ListTaxesRequest
+	59, // 48: users.UserService.UpdateTax:input_type -> users.UpdateTaxRequest
+	61, // 49: users.UserService.DeleteTax:input_type -> users.DeleteTaxRequest
+	4,  // 50: users.UserService.CreateUser:output_type -> users.CreateUserResponse
+	6,  // 51: users.UserService.GetUser:output_type -> users.GetUserResponse
+	8,  // 52: users.UserService.UpdateUser:output_type -> users.UpdateUserResponse
+	1,  // 53: users.UserService.DeleteUser:output_type -> users.GenericResponse
+	12, // 54: users.UserService.CreateClient:output_type -> users.CreateClientResponse
+	14, // 55: users.UserService.GetClient:output_type -> users.GetClientResponse
+	16, // 56: users.UserService.ListClients:output_type -> users.ListClientsResponse
+	18, // 57: users.UserService.UpdateClient:output_type -> users.UpdateClientResponse
+	1,  // 58: users.UserService.ArchiveClient:output_type -> users.GenericResponse
+	22, // 59: users.UserService.CreateAddress:output_type -> users.CreateAddressResponse
+	24, // 60: users.UserService.GetAddress:output_type -> users.GetAddressResponse
+	26, // 61: users.UserService.ListAddresses:output_type -> users.ListAddressesResponse
+	28, // 62: users.UserService.UpdateAddress:output_type -> users.UpdateAddressResponse
+	1,  // 63: users.UserService.ArchiveAddress:output_type -> users.GenericResponse
+	32, // 64: users.UserService.CreateCountry:output_type -> users.CreateCountryResponse
+	34, // 65: users.UserService.GetCountry:output_type -> users.GetCountryResponse
+	36, // 66: users.UserService.ListCountries:output_type -> users.ListCountriesResponse
+	38, // 67: users.UserService.UpdateCountry:output_type -> users.UpdateCountryResponse
+	1,  // 68: users.UserService.DeleteCountry:output_type -> users.GenericResponse
+	42, // 69: users.UserService.CreateCountryGroup:output_type -> users.CreateCountryGroupResponse
+	44, // 70: users.UserService.GetCountryGroup:output_type -> users.GetCountryGroupResponse
+	46, // 71: users.UserService.ListCountryGroups:output_type -> users.ListCountryGroupsResponse
+	48, // 72: users.UserService.UpdateCountryGroup:output_type -> users.UpdateCountryGroupResponse
+	1,  // 73: users.UserService.DeleteCountryGroup:output_type -> users.GenericResponse
+	1,  // 74: users.UserService.AttachCountry:output_type -> users.GenericResponse
+	1,  // 75: users.UserService.DetachCountry:output_type -> users.GenericResponse
+	54, // 76: users.UserService.CreateTax:output_type -> users.CreateTaxResponse
+	56, // 77: users.UserService.GetTax:output_type -> users.GetTaxResponse
+	58, // 78: users.UserService.ListTaxes:output_type -> users.ListTaxesResponse
+	60, // 79: users.UserService.UpdateTax:output_type -> users.UpdateTaxResponse
+	1,  // 80: users.UserService.DeleteTax:output_type -> users.GenericResponse
+	50, // [50:81] is the sub-list for method output_type
+	19, // [19:50] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
-func init() { file_users_users_proto_init() }
-func file_users_users_proto_init() {
-	if File_users_users_proto != nil {
+func init() { file_users_proto_init() }
+func file_users_proto_init() {
+	if File_users_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_users_users_proto_rawDesc), len(file_users_users_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   51,
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_users_proto_rawDesc), len(file_users_proto_rawDesc)),
+			NumEnums:      1,
+			NumMessages:   61,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_users_users_proto_goTypes,
-		DependencyIndexes: file_users_users_proto_depIdxs,
-		MessageInfos:      file_users_users_proto_msgTypes,
+		GoTypes:           file_users_proto_goTypes,
+		DependencyIndexes: file_users_proto_depIdxs,
+		EnumInfos:         file_users_proto_enumTypes,
+		MessageInfos:      file_users_proto_msgTypes,
 	}.Build()
-	File_users_users_proto = out.File
-	file_users_users_proto_goTypes = nil
-	file_users_users_proto_depIdxs = nil
+	File_users_proto = out.File
+	file_users_proto_goTypes = nil
+	file_users_proto_depIdxs = nil
 }

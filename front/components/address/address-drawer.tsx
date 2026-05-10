@@ -13,16 +13,19 @@ import {
 import AddressForm, {
   type AddressValues,
 } from "@/components/address/address-form";
+import { fieldErrorsFromBody, FieldErrors } from "@/lib/api";
 import {
-  apiFetch,
-  fieldErrorsFromBody,
-  FieldErrors,
-} from "@/lib/api";
+  buildOwner,
+  createAddress,
+  updateAddress,
+} from "@/lib/services/addresses";
 import { toast } from "sonner";
 
 export type ExistingAddress = AddressValues & { id: number };
 
 type AddressDrawerProps = {
+  ownerType: "user" | "client";
+  ownerId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   address?: ExistingAddress | null;
@@ -32,6 +35,8 @@ type AddressDrawerProps = {
 const FORM_ID = "address-form";
 
 export default function AddressDrawer({
+  ownerType,
+  ownerId,
   open,
   onOpenChange,
   address,
@@ -51,14 +56,11 @@ export default function AddressDrawer({
     setFieldErrors({});
     setSubmitting(true);
     const isEdit = address?.id != null;
-    const path = isEdit
-      ? `/api/users/me/addresses/${address!.id}`
-      : "/api/users/me/addresses";
     try {
-      const { ok, status, body } = await apiFetch(path, {
-        method: isEdit ? "PUT" : "POST",
-        body: JSON.stringify(values),
-      });
+      const owner = buildOwner(ownerType, ownerId);
+      const { ok, status, body } = isEdit
+        ? await updateAddress(owner, address!.id, values)
+        : await createAddress(owner, values);
       if (ok && body.success) {
         toast.success(isEdit ? "Adresse mise à jour." : "Adresse ajoutée.");
         onSaved();

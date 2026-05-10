@@ -59,12 +59,19 @@ func UserRoutes(r *gin.RouterGroup) {
 	me.PUT("", func(c *gin.Context) { UpdateMe(c, client) })
 	me.DELETE("", func(c *gin.Context) { DeleteMe(c, client) })
 
-	addr := me.Group("/addresses")
-	addr.GET("", func(c *gin.Context) { ListAddresses(c, client) })
-	addr.POST("", func(c *gin.Context) { CreateAddress(c, client) })
-	addr.GET("/:id", func(c *gin.Context) { GetAddress(c, client) })
-	addr.PUT("/:id", func(c *gin.Context) { UpdateAddress(c, client) })
-	addr.DELETE("/:id", func(c *gin.Context) { ArchiveAddress(c, client) })
+	clients := r.Group("/clients")
+	clients.GET("", func(c *gin.Context) { ListClients(c, client) })
+	clients.POST("", func(c *gin.Context) { CreateClient(c, client) })
+	clients.GET("/:clientId", func(c *gin.Context) { GetClient(c, client) })
+	clients.PUT("/:clientId", func(c *gin.Context) { UpdateClient(c, client) })
+	clients.DELETE("/:clientId", func(c *gin.Context) { ArchiveClient(c, client) })
+
+	addresses := r.Group("/addresses")
+	addresses.GET("", func(c *gin.Context) { ListAddresses(c, client) })
+	addresses.POST("", func(c *gin.Context) { CreateAddress(c, client) })
+	addresses.GET("/:id", func(c *gin.Context) { GetAddress(c, client) })
+	addresses.PUT("/:id", func(c *gin.Context) { UpdateAddress(c, client) })
+	addresses.DELETE("/:id", func(c *gin.Context) { ArchiveAddress(c, client) })
 
 	countries := r.Group("/countries")
 	countries.GET("", func(c *gin.Context) { ListCountries(c, client) })
@@ -160,44 +167,52 @@ func DeleteMe(c *gin.Context, client users.UserServiceClient) {
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
-func ListAddresses(c *gin.Context, client users.UserServiceClient) {
-	resp, err := client.ListAddresses(c.Request.Context(), &users.ListAddressesRequest{UserId: userIDFromCtx(c)})
-	if err != nil {
-		usersUnavailable(c)
-		return
-	}
-	if !resp.Success {
-		usersError(c, resp.Code)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "addresses": resp.Addresses})
+type addressInput struct {
+	OwnerType        string `json:"owner_type" binding:"required"`
+	OwnerID          string `json:"owner_id" binding:"required"`
+	Name             string `json:"name" binding:"required"`
+	Street           string `json:"street" binding:"required"`
+	AdditionalStreet string `json:"additional_street"`
+	City             string `json:"city" binding:"required"`
+	ZipCode          string `json:"zip_code" binding:"required"`
+	CountryID        int32  `json:"country_id" binding:"required"`
+	Email            string `json:"email"`
+	Phone            string `json:"phone"`
 }
 
-func CreateAddress(c *gin.Context, client users.UserServiceClient) {
-	var input struct {
-		Name             string `json:"name" binding:"required"`
-		Street           string `json:"street" binding:"required"`
-		AdditionalStreet string `json:"additional_street"`
-		City             string `json:"city" binding:"required"`
-		ZipCode          string `json:"zip_code" binding:"required"`
-		CountryID        int32  `json:"country_id" binding:"required"`
-		Email            string `json:"email"`
-		Phone            string `json:"phone"`
+func parseOwnerType(s string) (users.OwnerType, bool) {
+	switch s {
+	case "user":
+		return users.OwnerType_OWNER_TYPE_USER, true
+	case "client":
+		return users.OwnerType_OWNER_TYPE_CLIENT, true
+	default:
+		return users.OwnerType_OWNER_TYPE_UNSPECIFIED, false
 	}
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+}
+
+// ownerTypeToString is the inverse of parseOwnerType for response marshalling.
+func ownerTypeToString(t users.OwnerType) string {
+	switch t {
+	case users.OwnerType_OWNER_TYPE_USER:
+		return "user"
+	case users.OwnerType_OWNER_TYPE_CLIENT:
+		return "client"
+	default:
+		return ""
+	}
+}
+
+func ListAddresses(c *gin.Context, client users.UserServiceClient) {
+	ownerType, ok := parseOwnerType(c.Query("owner_type"))
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "owner_type invalide."})
 		return
 	}
-	resp, err := client.CreateAddress(c.Request.Context(), &users.CreateAddressRequest{
-		UserId:           userIDFromCtx(c),
-		Name:             input.Name,
-		Street:           input.Street,
-		AdditionalStreet: input.AdditionalStreet,
-		City:             input.City,
-		ZipCode:          input.ZipCode,
-		CountryId:        input.CountryID,
-		Email:            input.Email,
-		Phone:            input.Phone,
+	resp, err := client.ListAddresses(c.Request.Context(), &users.ListAddressesRequest{
+		OwnerType:  ownerType,
+		OwnerId:    c.Query("owner_id"),
+		AuthUserId: userIDFromCtx(c),
 	})
 	if err != nil {
 		usersUnavailable(c)
@@ -207,17 +222,27 @@ func CreateAddress(c *gin.Context, client users.UserServiceClient) {
 		usersError(c, resp.Code)
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"success": true, "address_id": resp.AddressId})
+	c.JSON(http.StatusOK, gin.H{
+		"success":   true,
+		"addresses": marshalAddresses(resp.Addresses),
+	})
 }
 
 func GetAddress(c *gin.Context, client users.UserServiceClient) {
+	ownerType, ok := parseOwnerType(c.Query("owner_type"))
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "owner_type invalide."})
+		return
+	}
 	id, ok := paramInt32(c, "id")
 	if !ok {
 		return
 	}
 	resp, err := client.GetAddress(c.Request.Context(), &users.GetAddressRequest{
-		AddressId: id,
-		UserId:    userIDFromCtx(c),
+		AddressId:  id,
+		OwnerType:  ownerType,
+		OwnerId:    c.Query("owner_id"),
+		AuthUserId: userIDFromCtx(c),
 	})
 	if err != nil {
 		usersUnavailable(c)
@@ -227,39 +252,27 @@ func GetAddress(c *gin.Context, client users.UserServiceClient) {
 		usersError(c, resp.Code)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "address": resp.Address})
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"address": marshalAddress(resp.Address),
+	})
 }
 
-func UpdateAddress(c *gin.Context, client users.UserServiceClient) {
+func ArchiveAddress(c *gin.Context, client users.UserServiceClient) {
+	ownerType, ok := parseOwnerType(c.Query("owner_type"))
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "owner_type invalide."})
+		return
+	}
 	id, ok := paramInt32(c, "id")
 	if !ok {
 		return
 	}
-	var input struct {
-		Name             string `json:"name"`
-		Street           string `json:"street"`
-		AdditionalStreet string `json:"additional_street"`
-		City             string `json:"city"`
-		ZipCode          string `json:"zip_code"`
-		CountryID        int32  `json:"country_id"`
-		Email            string `json:"email"`
-		Phone            string `json:"phone"`
-	}
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
-		return
-	}
-	resp, err := client.UpdateAddress(c.Request.Context(), &users.UpdateAddressRequest{
-		AddressId:        id,
-		UserId:           userIDFromCtx(c),
-		Name:             input.Name,
-		Street:           input.Street,
-		AdditionalStreet: input.AdditionalStreet,
-		City:             input.City,
-		ZipCode:          input.ZipCode,
-		CountryId:        input.CountryID,
-		Email:            input.Email,
-		Phone:            input.Phone,
+	resp, err := client.ArchiveAddress(c.Request.Context(), &users.ArchiveAddressRequest{
+		AddressId:  id,
+		OwnerType:  ownerType,
+		OwnerId:    c.Query("owner_id"),
+		AuthUserId: userIDFromCtx(c),
 	})
 	if err != nil {
 		usersUnavailable(c)
@@ -272,14 +285,220 @@ func UpdateAddress(c *gin.Context, client users.UserServiceClient) {
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
-func ArchiveAddress(c *gin.Context, client users.UserServiceClient) {
+func CreateAddress(c *gin.Context, client users.UserServiceClient) {
+	var input addressInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+	ownerType, ok := parseOwnerType(input.OwnerType)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "owner_type invalide."})
+		return
+	}
+	resp, err := client.CreateAddress(c.Request.Context(), &users.CreateAddressRequest{
+		OwnerType:        ownerType,
+		OwnerId:          input.OwnerID,
+		Name:             input.Name,
+		Street:           input.Street,
+		AdditionalStreet: input.AdditionalStreet,
+		City:             input.City,
+		ZipCode:          input.ZipCode,
+		CountryId:        input.CountryID,
+		Email:            input.Email,
+		Phone:            input.Phone,
+		AuthUserId:       userIDFromCtx(c),
+	})
+	if err != nil {
+		usersUnavailable(c)
+		return
+	}
+	if !resp.Success {
+		usersError(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"success": true, "address_id": resp.AddressId})
+}
+
+func UpdateAddress(c *gin.Context, client users.UserServiceClient) {
 	id, ok := paramInt32(c, "id")
 	if !ok {
 		return
 	}
-	resp, err := client.ArchiveAddress(c.Request.Context(), &users.ArchiveAddressRequest{
-		AddressId: id,
+	var input addressInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+	ownerType, ok := parseOwnerType(input.OwnerType)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "owner_type invalide."})
+		return
+	}
+	resp, err := client.UpdateAddress(c.Request.Context(), &users.UpdateAddressRequest{
+		AddressId:        id,
+		OwnerType:        ownerType,
+		OwnerId:          input.OwnerID,
+		Name:             input.Name,
+		Street:           input.Street,
+		AdditionalStreet: input.AdditionalStreet,
+		City:             input.City,
+		ZipCode:          input.ZipCode,
+		CountryId:        input.CountryID,
+		Email:            input.Email,
+		Phone:            input.Phone,
+		AuthUserId:       userIDFromCtx(c),
+	})
+	if err != nil {
+		usersUnavailable(c)
+		return
+	}
+	if !resp.Success {
+		usersError(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// marshalAddress flattens a proto Address for JSON responses, mapping the
+// OwnerType enum back to its wire-string form.
+func marshalAddress(a *users.Address) gin.H {
+	if a == nil {
+		return nil
+	}
+	return gin.H{
+		"id":                a.Id,
+		"owner_type":        ownerTypeToString(a.OwnerType),
+		"owner_id":          a.OwnerId,
+		"name":              a.Name,
+		"street":            a.Street,
+		"additional_street": a.AdditionalStreet,
+		"city":              a.City,
+		"zip_code":          a.ZipCode,
+		"country_id":        a.CountryId,
+		"email":             a.Email,
+		"phone":             a.Phone,
+		"archived":          a.Archived,
+	}
+}
+
+func marshalAddresses(in []*users.Address) []gin.H {
+	out := make([]gin.H, 0, len(in))
+	for _, a := range in {
+		out = append(out, marshalAddress(a))
+	}
+	return out
+}
+
+// ─── Client handlers ─────────────────────────────────────────────────────────
+
+// clientInput is shared by POST and PUT. The PUT handler (UpdateClient) treats
+// this as a full-replace payload: optional fields not sent in the JSON arrive
+// as "" and clear the corresponding DB column. Callers must send the full set
+// — omitting a field will silently null it. See client.Update action for the
+// SQL-side contract.
+type clientInput struct {
+	FirstName string `json:"first_name" binding:"required"`
+	LastName  string `json:"last_name" binding:"required"`
+	Email     string `json:"email"`
+	Phone     string `json:"phone"`
+	Company   string `json:"company"`
+	Siren     string `json:"siren"`
+	Vat       string `json:"vat"`
+}
+
+func ListClients(c *gin.Context, client users.UserServiceClient) {
+	includeArchived := c.Query("archived") == "true"
+	resp, err := client.ListClients(c.Request.Context(), &users.ListClientsRequest{
+		UserId:          userIDFromCtx(c),
+		IncludeArchived: includeArchived,
+	})
+	if err != nil {
+		usersUnavailable(c)
+		return
+	}
+	if !resp.Success {
+		usersError(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "clients": resp.Clients})
+}
+
+func CreateClient(c *gin.Context, client users.UserServiceClient) {
+	var input clientInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+	resp, err := client.CreateClient(c.Request.Context(), &users.CreateClientRequest{
 		UserId:    userIDFromCtx(c),
+		FirstName: input.FirstName,
+		LastName:  input.LastName,
+		Email:     input.Email,
+		Phone:     input.Phone,
+		Company:   input.Company,
+		Siren:     input.Siren,
+		Vat:       input.Vat,
+	})
+	if err != nil {
+		usersUnavailable(c)
+		return
+	}
+	if !resp.Success {
+		usersError(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"success": true, "client_id": resp.ClientId})
+}
+
+func GetClient(c *gin.Context, client users.UserServiceClient) {
+	resp, err := client.GetClient(c.Request.Context(), &users.GetClientRequest{
+		ClientId: c.Param("clientId"),
+		UserId:   userIDFromCtx(c),
+	})
+	if err != nil {
+		usersUnavailable(c)
+		return
+	}
+	if !resp.Success {
+		usersError(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "client": resp.Client})
+}
+
+func UpdateClient(c *gin.Context, client users.UserServiceClient) {
+	var input clientInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+	resp, err := client.UpdateClient(c.Request.Context(), &users.UpdateClientRequest{
+		ClientId:  c.Param("clientId"),
+		UserId:    userIDFromCtx(c),
+		FirstName: input.FirstName,
+		LastName:  input.LastName,
+		Email:     input.Email,
+		Phone:     input.Phone,
+		Company:   input.Company,
+		Siren:     input.Siren,
+		Vat:       input.Vat,
+	})
+	if err != nil {
+		usersUnavailable(c)
+		return
+	}
+	if !resp.Success {
+		usersError(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func ArchiveClient(c *gin.Context, client users.UserServiceClient) {
+	resp, err := client.ArchiveClient(c.Request.Context(), &users.ArchiveClientRequest{
+		ClientId: c.Param("clientId"),
+		UserId:   userIDFromCtx(c),
 	})
 	if err != nil {
 		usersUnavailable(c)
