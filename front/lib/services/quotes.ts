@@ -34,10 +34,22 @@ export async function listQuotes(): Promise<ApiResult> {
   return apiFetch("/api/quotes");
 }
 
-export async function createQuote(name: string): Promise<ApiResult> {
+export type CreateQuotePayload = {
+  name: string;
+  clientId: string;
+  addressId: number;
+};
+
+export async function createQuote(
+  payload: CreateQuotePayload,
+): Promise<ApiResult> {
   return apiFetch("/api/quotes", {
     method: "POST",
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({
+      name: payload.name,
+      client_id: payload.clientId,
+      address_id: payload.addressId,
+    }),
   });
 }
 
@@ -45,13 +57,22 @@ export async function getQuote(quoteId: string): Promise<ApiResult> {
   return apiFetch(`/api/quotes/${encodeURIComponent(quoteId)}`);
 }
 
+export type UpdateQuotePayload = {
+  name: string;
+  clientId?: string;
+  addressId?: number;
+};
+
 export async function updateQuote(
   quoteId: string,
-  name: string,
+  payload: UpdateQuotePayload,
 ): Promise<ApiResult> {
+  const body: Record<string, unknown> = { name: payload.name };
+  if (payload.clientId !== undefined) body.client_id = payload.clientId;
+  if (payload.addressId !== undefined) body.address_id = payload.addressId;
   return apiFetch(`/api/quotes/${encodeURIComponent(quoteId)}`, {
     method: "PUT",
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(body),
   });
 }
 
