@@ -19,6 +19,7 @@ import {
   type QuoteListStatus,
   quoteListStatus,
 } from "@/types/backend";
+import { PencilIcon } from "lucide-react";
 
 type QuoteListItem = {
   id: string;
@@ -35,6 +36,7 @@ export default function QuoteListTable() {
       {
         type: "link",
         label: isCustomer ? "Voir" : "Voir/Modifier",
+        icon: PencilIcon,
         href: "/quote/{id}",
       },
     ],

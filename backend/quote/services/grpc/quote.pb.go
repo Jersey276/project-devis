@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v7.34.0
-// source: services/grpc/quote.proto
+// source: quote.proto
 
 package grpc
 
@@ -60,11 +60,11 @@ func (x QuoteState) String() string {
 }
 
 func (QuoteState) Descriptor() protoreflect.EnumDescriptor {
-	return file_services_grpc_quote_proto_enumTypes[0].Descriptor()
+	return file_quote_proto_enumTypes[0].Descriptor()
 }
 
 func (QuoteState) Type() protoreflect.EnumType {
-	return &file_services_grpc_quote_proto_enumTypes[0]
+	return &file_quote_proto_enumTypes[0]
 }
 
 func (x QuoteState) Number() protoreflect.EnumNumber {
@@ -73,7 +73,7 @@ func (x QuoteState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use QuoteState.Descriptor instead.
 func (QuoteState) EnumDescriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{0}
+	return file_quote_proto_rawDescGZIP(), []int{0}
 }
 
 type GenericResponse struct {
@@ -86,7 +86,7 @@ type GenericResponse struct {
 
 func (x *GenericResponse) Reset() {
 	*x = GenericResponse{}
-	mi := &file_services_grpc_quote_proto_msgTypes[0]
+	mi := &file_quote_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -98,7 +98,7 @@ func (x *GenericResponse) String() string {
 func (*GenericResponse) ProtoMessage() {}
 
 func (x *GenericResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[0]
+	mi := &file_quote_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -111,7 +111,7 @@ func (x *GenericResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenericResponse.ProtoReflect.Descriptor instead.
 func (*GenericResponse) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{0}
+	return file_quote_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *GenericResponse) GetSuccess() bool {
@@ -135,13 +135,15 @@ type Quote struct {
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	Archived      bool                   `protobuf:"varint,4,opt,name=archived,proto3" json:"archived,omitempty"`
 	State         QuoteState             `protobuf:"varint,5,opt,name=state,proto3,enum=quote.QuoteState" json:"state,omitempty"`
+	ClientId      string                 `protobuf:"bytes,6,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	AddressId     int32                  `protobuf:"varint,7,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Quote) Reset() {
 	*x = Quote{}
-	mi := &file_services_grpc_quote_proto_msgTypes[1]
+	mi := &file_quote_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -153,7 +155,7 @@ func (x *Quote) String() string {
 func (*Quote) ProtoMessage() {}
 
 func (x *Quote) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[1]
+	mi := &file_quote_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -166,7 +168,7 @@ func (x *Quote) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Quote.ProtoReflect.Descriptor instead.
 func (*Quote) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{1}
+	return file_quote_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Quote) GetQuoteId() string {
@@ -204,17 +206,33 @@ func (x *Quote) GetState() QuoteState {
 	return QuoteState_QUOTE_STATE_UNSPECIFIED
 }
 
+func (x *Quote) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *Quote) GetAddressId() int32 {
+	if x != nil {
+		return x.AddressId
+	}
+	return 0
+}
+
 type CreateQuoteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	ClientId      string                 `protobuf:"bytes,3,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	AddressId     int32                  `protobuf:"varint,4,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateQuoteRequest) Reset() {
 	*x = CreateQuoteRequest{}
-	mi := &file_services_grpc_quote_proto_msgTypes[2]
+	mi := &file_quote_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -226,7 +244,7 @@ func (x *CreateQuoteRequest) String() string {
 func (*CreateQuoteRequest) ProtoMessage() {}
 
 func (x *CreateQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[2]
+	mi := &file_quote_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -239,7 +257,7 @@ func (x *CreateQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateQuoteRequest.ProtoReflect.Descriptor instead.
 func (*CreateQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{2}
+	return file_quote_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *CreateQuoteRequest) GetUserId() string {
@@ -256,6 +274,20 @@ func (x *CreateQuoteRequest) GetName() string {
 	return ""
 }
 
+func (x *CreateQuoteRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *CreateQuoteRequest) GetAddressId() int32 {
+	if x != nil {
+		return x.AddressId
+	}
+	return 0
+}
+
 type CreateQuoteResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -267,7 +299,7 @@ type CreateQuoteResponse struct {
 
 func (x *CreateQuoteResponse) Reset() {
 	*x = CreateQuoteResponse{}
-	mi := &file_services_grpc_quote_proto_msgTypes[3]
+	mi := &file_quote_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -279,7 +311,7 @@ func (x *CreateQuoteResponse) String() string {
 func (*CreateQuoteResponse) ProtoMessage() {}
 
 func (x *CreateQuoteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[3]
+	mi := &file_quote_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -292,7 +324,7 @@ func (x *CreateQuoteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateQuoteResponse.ProtoReflect.Descriptor instead.
 func (*CreateQuoteResponse) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{3}
+	return file_quote_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *CreateQuoteResponse) GetSuccess() bool {
@@ -326,7 +358,7 @@ type GetQuoteRequest struct {
 
 func (x *GetQuoteRequest) Reset() {
 	*x = GetQuoteRequest{}
-	mi := &file_services_grpc_quote_proto_msgTypes[4]
+	mi := &file_quote_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -338,7 +370,7 @@ func (x *GetQuoteRequest) String() string {
 func (*GetQuoteRequest) ProtoMessage() {}
 
 func (x *GetQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[4]
+	mi := &file_quote_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -351,7 +383,7 @@ func (x *GetQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetQuoteRequest.ProtoReflect.Descriptor instead.
 func (*GetQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{4}
+	return file_quote_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetQuoteRequest) GetQuoteId() string {
@@ -380,7 +412,7 @@ type GetQuoteResponse struct {
 
 func (x *GetQuoteResponse) Reset() {
 	*x = GetQuoteResponse{}
-	mi := &file_services_grpc_quote_proto_msgTypes[5]
+	mi := &file_quote_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -392,7 +424,7 @@ func (x *GetQuoteResponse) String() string {
 func (*GetQuoteResponse) ProtoMessage() {}
 
 func (x *GetQuoteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[5]
+	mi := &file_quote_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -405,7 +437,7 @@ func (x *GetQuoteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetQuoteResponse.ProtoReflect.Descriptor instead.
 func (*GetQuoteResponse) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{5}
+	return file_quote_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetQuoteResponse) GetSuccess() bool {
@@ -446,7 +478,7 @@ type ListQuotesRequest struct {
 
 func (x *ListQuotesRequest) Reset() {
 	*x = ListQuotesRequest{}
-	mi := &file_services_grpc_quote_proto_msgTypes[6]
+	mi := &file_quote_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -458,7 +490,7 @@ func (x *ListQuotesRequest) String() string {
 func (*ListQuotesRequest) ProtoMessage() {}
 
 func (x *ListQuotesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[6]
+	mi := &file_quote_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -471,7 +503,7 @@ func (x *ListQuotesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListQuotesRequest.ProtoReflect.Descriptor instead.
 func (*ListQuotesRequest) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{6}
+	return file_quote_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListQuotesRequest) GetUserId() string {
@@ -499,7 +531,7 @@ type ListQuotesResponse struct {
 
 func (x *ListQuotesResponse) Reset() {
 	*x = ListQuotesResponse{}
-	mi := &file_services_grpc_quote_proto_msgTypes[7]
+	mi := &file_quote_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -511,7 +543,7 @@ func (x *ListQuotesResponse) String() string {
 func (*ListQuotesResponse) ProtoMessage() {}
 
 func (x *ListQuotesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[7]
+	mi := &file_quote_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -524,7 +556,7 @@ func (x *ListQuotesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListQuotesResponse.ProtoReflect.Descriptor instead.
 func (*ListQuotesResponse) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{7}
+	return file_quote_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ListQuotesResponse) GetSuccess() bool {
@@ -553,13 +585,15 @@ type UpdateQuoteRequest struct {
 	QuoteId       string                 `protobuf:"bytes,1,opt,name=quote_id,json=quoteId,proto3" json:"quote_id,omitempty"`
 	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	ClientId      string                 `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	AddressId     int32                  `protobuf:"varint,5,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpdateQuoteRequest) Reset() {
 	*x = UpdateQuoteRequest{}
-	mi := &file_services_grpc_quote_proto_msgTypes[8]
+	mi := &file_quote_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -571,7 +605,7 @@ func (x *UpdateQuoteRequest) String() string {
 func (*UpdateQuoteRequest) ProtoMessage() {}
 
 func (x *UpdateQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[8]
+	mi := &file_quote_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -584,7 +618,7 @@ func (x *UpdateQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateQuoteRequest.ProtoReflect.Descriptor instead.
 func (*UpdateQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{8}
+	return file_quote_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UpdateQuoteRequest) GetQuoteId() string {
@@ -608,6 +642,20 @@ func (x *UpdateQuoteRequest) GetName() string {
 	return ""
 }
 
+func (x *UpdateQuoteRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *UpdateQuoteRequest) GetAddressId() int32 {
+	if x != nil {
+		return x.AddressId
+	}
+	return 0
+}
+
 type UpdateQuoteResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -618,7 +666,7 @@ type UpdateQuoteResponse struct {
 
 func (x *UpdateQuoteResponse) Reset() {
 	*x = UpdateQuoteResponse{}
-	mi := &file_services_grpc_quote_proto_msgTypes[9]
+	mi := &file_quote_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -630,7 +678,7 @@ func (x *UpdateQuoteResponse) String() string {
 func (*UpdateQuoteResponse) ProtoMessage() {}
 
 func (x *UpdateQuoteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[9]
+	mi := &file_quote_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -643,7 +691,7 @@ func (x *UpdateQuoteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateQuoteResponse.ProtoReflect.Descriptor instead.
 func (*UpdateQuoteResponse) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{9}
+	return file_quote_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *UpdateQuoteResponse) GetSuccess() bool {
@@ -670,7 +718,7 @@ type DeleteQuoteRequest struct {
 
 func (x *DeleteQuoteRequest) Reset() {
 	*x = DeleteQuoteRequest{}
-	mi := &file_services_grpc_quote_proto_msgTypes[10]
+	mi := &file_quote_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -682,7 +730,7 @@ func (x *DeleteQuoteRequest) String() string {
 func (*DeleteQuoteRequest) ProtoMessage() {}
 
 func (x *DeleteQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[10]
+	mi := &file_quote_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -695,7 +743,7 @@ func (x *DeleteQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteQuoteRequest.ProtoReflect.Descriptor instead.
 func (*DeleteQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{10}
+	return file_quote_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *DeleteQuoteRequest) GetQuoteId() string {
@@ -722,7 +770,7 @@ type ArchiveQuoteRequest struct {
 
 func (x *ArchiveQuoteRequest) Reset() {
 	*x = ArchiveQuoteRequest{}
-	mi := &file_services_grpc_quote_proto_msgTypes[11]
+	mi := &file_quote_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -734,7 +782,7 @@ func (x *ArchiveQuoteRequest) String() string {
 func (*ArchiveQuoteRequest) ProtoMessage() {}
 
 func (x *ArchiveQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[11]
+	mi := &file_quote_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -747,7 +795,7 @@ func (x *ArchiveQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveQuoteRequest.ProtoReflect.Descriptor instead.
 func (*ArchiveQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{11}
+	return file_quote_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ArchiveQuoteRequest) GetQuoteId() string {
@@ -774,7 +822,7 @@ type RestoreQuoteRequest struct {
 
 func (x *RestoreQuoteRequest) Reset() {
 	*x = RestoreQuoteRequest{}
-	mi := &file_services_grpc_quote_proto_msgTypes[12]
+	mi := &file_quote_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -786,7 +834,7 @@ func (x *RestoreQuoteRequest) String() string {
 func (*RestoreQuoteRequest) ProtoMessage() {}
 
 func (x *RestoreQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[12]
+	mi := &file_quote_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -799,7 +847,7 @@ func (x *RestoreQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestoreQuoteRequest.ProtoReflect.Descriptor instead.
 func (*RestoreQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{12}
+	return file_quote_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *RestoreQuoteRequest) GetQuoteId() string {
@@ -825,7 +873,7 @@ type TrashQuotesRequest struct {
 
 func (x *TrashQuotesRequest) Reset() {
 	*x = TrashQuotesRequest{}
-	mi := &file_services_grpc_quote_proto_msgTypes[13]
+	mi := &file_quote_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -837,7 +885,7 @@ func (x *TrashQuotesRequest) String() string {
 func (*TrashQuotesRequest) ProtoMessage() {}
 
 func (x *TrashQuotesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[13]
+	mi := &file_quote_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -850,7 +898,7 @@ func (x *TrashQuotesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrashQuotesRequest.ProtoReflect.Descriptor instead.
 func (*TrashQuotesRequest) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{13}
+	return file_quote_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *TrashQuotesRequest) GetUserId() string {
@@ -870,7 +918,7 @@ type DropQuoteRequest struct {
 
 func (x *DropQuoteRequest) Reset() {
 	*x = DropQuoteRequest{}
-	mi := &file_services_grpc_quote_proto_msgTypes[14]
+	mi := &file_quote_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -882,7 +930,7 @@ func (x *DropQuoteRequest) String() string {
 func (*DropQuoteRequest) ProtoMessage() {}
 
 func (x *DropQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[14]
+	mi := &file_quote_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -895,7 +943,7 @@ func (x *DropQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DropQuoteRequest.ProtoReflect.Descriptor instead.
 func (*DropQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{14}
+	return file_quote_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *DropQuoteRequest) GetQuoteId() string {
@@ -922,7 +970,7 @@ type ContinueQuoteRequest struct {
 
 func (x *ContinueQuoteRequest) Reset() {
 	*x = ContinueQuoteRequest{}
-	mi := &file_services_grpc_quote_proto_msgTypes[15]
+	mi := &file_quote_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -934,7 +982,7 @@ func (x *ContinueQuoteRequest) String() string {
 func (*ContinueQuoteRequest) ProtoMessage() {}
 
 func (x *ContinueQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[15]
+	mi := &file_quote_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -947,7 +995,7 @@ func (x *ContinueQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContinueQuoteRequest.ProtoReflect.Descriptor instead.
 func (*ContinueQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{15}
+	return file_quote_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ContinueQuoteRequest) GetQuoteId() string {
@@ -981,7 +1029,7 @@ type QuoteLine struct {
 
 func (x *QuoteLine) Reset() {
 	*x = QuoteLine{}
-	mi := &file_services_grpc_quote_proto_msgTypes[16]
+	mi := &file_quote_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -993,7 +1041,7 @@ func (x *QuoteLine) String() string {
 func (*QuoteLine) ProtoMessage() {}
 
 func (x *QuoteLine) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[16]
+	mi := &file_quote_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1006,7 +1054,7 @@ func (x *QuoteLine) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QuoteLine.ProtoReflect.Descriptor instead.
 func (*QuoteLine) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{16}
+	return file_quote_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *QuoteLine) GetLineId() string {
@@ -1089,7 +1137,7 @@ type CreateQuoteLineRequest struct {
 
 func (x *CreateQuoteLineRequest) Reset() {
 	*x = CreateQuoteLineRequest{}
-	mi := &file_services_grpc_quote_proto_msgTypes[17]
+	mi := &file_quote_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1101,7 +1149,7 @@ func (x *CreateQuoteLineRequest) String() string {
 func (*CreateQuoteLineRequest) ProtoMessage() {}
 
 func (x *CreateQuoteLineRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[17]
+	mi := &file_quote_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1114,7 +1162,7 @@ func (x *CreateQuoteLineRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateQuoteLineRequest.ProtoReflect.Descriptor instead.
 func (*CreateQuoteLineRequest) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{17}
+	return file_quote_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *CreateQuoteLineRequest) GetQuoteId() string {
@@ -1191,7 +1239,7 @@ type CreateQuoteLineResponse struct {
 
 func (x *CreateQuoteLineResponse) Reset() {
 	*x = CreateQuoteLineResponse{}
-	mi := &file_services_grpc_quote_proto_msgTypes[18]
+	mi := &file_quote_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1203,7 +1251,7 @@ func (x *CreateQuoteLineResponse) String() string {
 func (*CreateQuoteLineResponse) ProtoMessage() {}
 
 func (x *CreateQuoteLineResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[18]
+	mi := &file_quote_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1216,7 +1264,7 @@ func (x *CreateQuoteLineResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateQuoteLineResponse.ProtoReflect.Descriptor instead.
 func (*CreateQuoteLineResponse) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{18}
+	return file_quote_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *CreateQuoteLineResponse) GetSuccess() bool {
@@ -1250,7 +1298,7 @@ type GetQuoteLineRequest struct {
 
 func (x *GetQuoteLineRequest) Reset() {
 	*x = GetQuoteLineRequest{}
-	mi := &file_services_grpc_quote_proto_msgTypes[19]
+	mi := &file_quote_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1262,7 +1310,7 @@ func (x *GetQuoteLineRequest) String() string {
 func (*GetQuoteLineRequest) ProtoMessage() {}
 
 func (x *GetQuoteLineRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[19]
+	mi := &file_quote_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1275,7 +1323,7 @@ func (x *GetQuoteLineRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetQuoteLineRequest.ProtoReflect.Descriptor instead.
 func (*GetQuoteLineRequest) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{19}
+	return file_quote_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GetQuoteLineRequest) GetLineId() string {
@@ -1303,7 +1351,7 @@ type GetQuoteLineResponse struct {
 
 func (x *GetQuoteLineResponse) Reset() {
 	*x = GetQuoteLineResponse{}
-	mi := &file_services_grpc_quote_proto_msgTypes[20]
+	mi := &file_quote_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1315,7 +1363,7 @@ func (x *GetQuoteLineResponse) String() string {
 func (*GetQuoteLineResponse) ProtoMessage() {}
 
 func (x *GetQuoteLineResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[20]
+	mi := &file_quote_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1328,7 +1376,7 @@ func (x *GetQuoteLineResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetQuoteLineResponse.ProtoReflect.Descriptor instead.
 func (*GetQuoteLineResponse) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{20}
+	return file_quote_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *GetQuoteLineResponse) GetSuccess() bool {
@@ -1362,7 +1410,7 @@ type ListQuoteLinesRequest struct {
 
 func (x *ListQuoteLinesRequest) Reset() {
 	*x = ListQuoteLinesRequest{}
-	mi := &file_services_grpc_quote_proto_msgTypes[21]
+	mi := &file_quote_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1374,7 +1422,7 @@ func (x *ListQuoteLinesRequest) String() string {
 func (*ListQuoteLinesRequest) ProtoMessage() {}
 
 func (x *ListQuoteLinesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[21]
+	mi := &file_quote_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1387,7 +1435,7 @@ func (x *ListQuoteLinesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListQuoteLinesRequest.ProtoReflect.Descriptor instead.
 func (*ListQuoteLinesRequest) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{21}
+	return file_quote_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ListQuoteLinesRequest) GetQuoteId() string {
@@ -1415,7 +1463,7 @@ type ListQuoteLinesResponse struct {
 
 func (x *ListQuoteLinesResponse) Reset() {
 	*x = ListQuoteLinesResponse{}
-	mi := &file_services_grpc_quote_proto_msgTypes[22]
+	mi := &file_quote_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1427,7 +1475,7 @@ func (x *ListQuoteLinesResponse) String() string {
 func (*ListQuoteLinesResponse) ProtoMessage() {}
 
 func (x *ListQuoteLinesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[22]
+	mi := &file_quote_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1440,7 +1488,7 @@ func (x *ListQuoteLinesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListQuoteLinesResponse.ProtoReflect.Descriptor instead.
 func (*ListQuoteLinesResponse) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{22}
+	return file_quote_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ListQuoteLinesResponse) GetSuccess() bool {
@@ -1481,7 +1529,7 @@ type UpdateQuoteLineRequest struct {
 
 func (x *UpdateQuoteLineRequest) Reset() {
 	*x = UpdateQuoteLineRequest{}
-	mi := &file_services_grpc_quote_proto_msgTypes[23]
+	mi := &file_quote_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1493,7 +1541,7 @@ func (x *UpdateQuoteLineRequest) String() string {
 func (*UpdateQuoteLineRequest) ProtoMessage() {}
 
 func (x *UpdateQuoteLineRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[23]
+	mi := &file_quote_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1506,7 +1554,7 @@ func (x *UpdateQuoteLineRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateQuoteLineRequest.ProtoReflect.Descriptor instead.
 func (*UpdateQuoteLineRequest) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{23}
+	return file_quote_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *UpdateQuoteLineRequest) GetLineId() string {
@@ -1582,7 +1630,7 @@ type UpdateQuoteLineResponse struct {
 
 func (x *UpdateQuoteLineResponse) Reset() {
 	*x = UpdateQuoteLineResponse{}
-	mi := &file_services_grpc_quote_proto_msgTypes[24]
+	mi := &file_quote_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1594,7 +1642,7 @@ func (x *UpdateQuoteLineResponse) String() string {
 func (*UpdateQuoteLineResponse) ProtoMessage() {}
 
 func (x *UpdateQuoteLineResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[24]
+	mi := &file_quote_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1607,7 +1655,7 @@ func (x *UpdateQuoteLineResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateQuoteLineResponse.ProtoReflect.Descriptor instead.
 func (*UpdateQuoteLineResponse) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{24}
+	return file_quote_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *UpdateQuoteLineResponse) GetSuccess() bool {
@@ -1634,7 +1682,7 @@ type DeleteQuoteLineRequest struct {
 
 func (x *DeleteQuoteLineRequest) Reset() {
 	*x = DeleteQuoteLineRequest{}
-	mi := &file_services_grpc_quote_proto_msgTypes[25]
+	mi := &file_quote_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1646,7 +1694,7 @@ func (x *DeleteQuoteLineRequest) String() string {
 func (*DeleteQuoteLineRequest) ProtoMessage() {}
 
 func (x *DeleteQuoteLineRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_quote_proto_msgTypes[25]
+	mi := &file_quote_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1659,7 +1707,7 @@ func (x *DeleteQuoteLineRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteQuoteLineRequest.ProtoReflect.Descriptor instead.
 func (*DeleteQuoteLineRequest) Descriptor() ([]byte, []int) {
-	return file_services_grpc_quote_proto_rawDescGZIP(), []int{25}
+	return file_quote_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *DeleteQuoteLineRequest) GetLineId() string {
@@ -1676,23 +1724,29 @@ func (x *DeleteQuoteLineRequest) GetUserId() string {
 	return ""
 }
 
-var File_services_grpc_quote_proto protoreflect.FileDescriptor
+var File_quote_proto protoreflect.FileDescriptor
 
-const file_services_grpc_quote_proto_rawDesc = "" +
+const file_quote_proto_rawDesc = "" +
 	"\n" +
-	"\x19services/grpc/quote.proto\x12\x05quote\"?\n" +
+	"\vquote.proto\x12\x05quote\"?\n" +
 	"\x0fGenericResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\x05R\x04code\"\x94\x01\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\"\xd0\x01\n" +
 	"\x05Quote\x12\x19\n" +
 	"\bquote_id\x18\x01 \x01(\tR\aquoteId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1a\n" +
 	"\barchived\x18\x04 \x01(\bR\barchived\x12'\n" +
-	"\x05state\x18\x05 \x01(\x0e2\x11.quote.QuoteStateR\x05state\"A\n" +
+	"\x05state\x18\x05 \x01(\x0e2\x11.quote.QuoteStateR\x05state\x12\x1b\n" +
+	"\tclient_id\x18\x06 \x01(\tR\bclientId\x12\x1d\n" +
+	"\n" +
+	"address_id\x18\a \x01(\x05R\taddressId\"}\n" +
 	"\x12CreateQuoteRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\"^\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1b\n" +
+	"\tclient_id\x18\x03 \x01(\tR\bclientId\x12\x1d\n" +
+	"\n" +
+	"address_id\x18\x04 \x01(\x05R\taddressId\"^\n" +
 	"\x13CreateQuoteResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x19\n" +
@@ -1711,11 +1765,14 @@ const file_services_grpc_quote_proto_rawDesc = "" +
 	"\x12ListQuotesResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12$\n" +
-	"\x06quotes\x18\x03 \x03(\v2\f.quote.QuoteR\x06quotes\"\\\n" +
+	"\x06quotes\x18\x03 \x03(\v2\f.quote.QuoteR\x06quotes\"\x98\x01\n" +
 	"\x12UpdateQuoteRequest\x12\x19\n" +
 	"\bquote_id\x18\x01 \x01(\tR\aquoteId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\"C\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1b\n" +
+	"\tclient_id\x18\x04 \x01(\tR\bclientId\x12\x1d\n" +
+	"\n" +
+	"address_id\x18\x05 \x01(\x05R\taddressId\"C\n" +
 	"\x13UpdateQuoteResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\"H\n" +
@@ -1819,20 +1876,20 @@ const file_services_grpc_quote_proto_rawDesc = "" +
 	"\x0fDeleteQuoteLine\x12\x1d.quote.DeleteQuoteLineRequest\x1a\x16.quote.GenericResponseB#Z!project-devis-quote/services/grpcb\x06proto3"
 
 var (
-	file_services_grpc_quote_proto_rawDescOnce sync.Once
-	file_services_grpc_quote_proto_rawDescData []byte
+	file_quote_proto_rawDescOnce sync.Once
+	file_quote_proto_rawDescData []byte
 )
 
-func file_services_grpc_quote_proto_rawDescGZIP() []byte {
-	file_services_grpc_quote_proto_rawDescOnce.Do(func() {
-		file_services_grpc_quote_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_services_grpc_quote_proto_rawDesc), len(file_services_grpc_quote_proto_rawDesc)))
+func file_quote_proto_rawDescGZIP() []byte {
+	file_quote_proto_rawDescOnce.Do(func() {
+		file_quote_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_quote_proto_rawDesc), len(file_quote_proto_rawDesc)))
 	})
-	return file_services_grpc_quote_proto_rawDescData
+	return file_quote_proto_rawDescData
 }
 
-var file_services_grpc_quote_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_services_grpc_quote_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
-var file_services_grpc_quote_proto_goTypes = []any{
+var file_quote_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_quote_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_quote_proto_goTypes = []any{
 	(QuoteState)(0),                 // 0: quote.QuoteState
 	(*GenericResponse)(nil),         // 1: quote.GenericResponse
 	(*Quote)(nil),                   // 2: quote.Quote
@@ -1861,7 +1918,7 @@ var file_services_grpc_quote_proto_goTypes = []any{
 	(*UpdateQuoteLineResponse)(nil), // 25: quote.UpdateQuoteLineResponse
 	(*DeleteQuoteLineRequest)(nil),  // 26: quote.DeleteQuoteLineRequest
 }
-var file_services_grpc_quote_proto_depIdxs = []int32{
+var file_quote_proto_depIdxs = []int32{
 	0,  // 0: quote.Quote.state:type_name -> quote.QuoteState
 	2,  // 1: quote.GetQuoteResponse.quote:type_name -> quote.Quote
 	17, // 2: quote.GetQuoteResponse.lines:type_name -> quote.QuoteLine
@@ -1905,27 +1962,27 @@ var file_services_grpc_quote_proto_depIdxs = []int32{
 	0,  // [0:6] is the sub-list for field type_name
 }
 
-func init() { file_services_grpc_quote_proto_init() }
-func file_services_grpc_quote_proto_init() {
-	if File_services_grpc_quote_proto != nil {
+func init() { file_quote_proto_init() }
+func file_quote_proto_init() {
+	if File_quote_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_services_grpc_quote_proto_rawDesc), len(file_services_grpc_quote_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_quote_proto_rawDesc), len(file_quote_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_services_grpc_quote_proto_goTypes,
-		DependencyIndexes: file_services_grpc_quote_proto_depIdxs,
-		EnumInfos:         file_services_grpc_quote_proto_enumTypes,
-		MessageInfos:      file_services_grpc_quote_proto_msgTypes,
+		GoTypes:           file_quote_proto_goTypes,
+		DependencyIndexes: file_quote_proto_depIdxs,
+		EnumInfos:         file_quote_proto_enumTypes,
+		MessageInfos:      file_quote_proto_msgTypes,
 	}.Build()
-	File_services_grpc_quote_proto = out.File
-	file_services_grpc_quote_proto_goTypes = nil
-	file_services_grpc_quote_proto_depIdxs = nil
+	File_quote_proto = out.File
+	file_quote_proto_goTypes = nil
+	file_quote_proto_depIdxs = nil
 }
