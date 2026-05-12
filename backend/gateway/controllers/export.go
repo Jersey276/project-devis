@@ -16,9 +16,10 @@ import (
 )
 
 const (
-	ExportCodeNotFound      int32 = 3001
-	ExportCodeInternalError int32 = 3003
-	ExportCodeInvalidInput  int32 = 3004
+	ExportCodeNotFound          int32 = 3001
+	ExportCodeInternalError     int32 = 3003
+	ExportCodeInvalidInput      int32 = 3004
+	ExportCodeDependencyMissing int32 = 3005
 
 	// 8 MiB — generous headroom for realistic quote PDFs (typical: 50 KiB–1 MiB).
 	// If we start embedding heavy media we'll switch to server-streaming gRPC
@@ -28,9 +29,10 @@ const (
 
 var exportErrors = &serviceErrors{
 	codes: map[int32]codeMapping{
-		ExportCodeNotFound:      {http.StatusNotFound, "Devis introuvable."},
-		ExportCodeInvalidInput:  {http.StatusBadRequest, "Requête invalide."},
-		ExportCodeInternalError: {http.StatusInternalServerError, "Une erreur interne est survenue."},
+		ExportCodeNotFound:          {http.StatusNotFound, "Devis introuvable."},
+		ExportCodeInvalidInput:      {http.StatusBadRequest, "Requête invalide."},
+		ExportCodeInternalError:     {http.StatusInternalServerError, "Une erreur interne est survenue."},
+		ExportCodeDependencyMissing: {http.StatusUnprocessableEntity, "Le devis fait référence à un client ou une adresse introuvable."},
 	},
 	unavailableMessage: "Service export indisponible.",
 }

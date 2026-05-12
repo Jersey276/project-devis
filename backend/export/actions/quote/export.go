@@ -11,7 +11,6 @@ import (
 
 	"project-devis-export/actions/codes"
 	"project-devis-export/quote"
-	"project-devis-export/services/gotenberg"
 	exportGrpc "project-devis-export/services/grpc"
 	"project-devis-export/users"
 )
@@ -24,8 +23,14 @@ const (
 	upstreamInvalidInput int32 = 1003
 )
 
+// pdfConverter is the slice of *gotenberg.Client we depend on; defined here so
+// tests can substitute an in-memory implementation.
+type pdfConverter interface {
+	Convert(ctx context.Context, html []byte) ([]byte, error)
+}
+
 func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServiceClient,
-	gt *gotenberg.Client, req *exportGrpc.ExportQuoteRequest) (*exportGrpc.ExportQuoteResponse, error) {
+	gt pdfConverter, req *exportGrpc.ExportQuoteRequest) (*exportGrpc.ExportQuoteResponse, error) {
 
 	if req.QuoteId == "" || req.UserId == "" {
 		return fail(codes.InvalidInput), nil
@@ -34,13 +39,13 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 	// Phase 1: GetQuote, GetUser, and the user's address list have no
 	// inter-dependency, so we fan them out together.
 	var (
-		qResp    *quote.GetQuoteResponse
-		user     *users.User
-		userAddr *users.Address
-		firstUpstream atomic.Int32 // first soft (resp.Success=false) code, mapped to local
+		qResp         *quote.GetQuoteResponse
+		user          *users.User
+		userAddr      *users.Address
+		firstUpstream atomic.Int32 // first non-zero local code recorded by a goroutine
 	)
-	recordUpstream := func(c int32) {
-		firstUpstream.CompareAndSwap(0, mapUpstreamCode(c))
+	recordCode := func(local int32) {
+		firstUpstream.CompareAndSwap(0, local)
 	}
 
 	g, gctx := errgroup.WithContext(ctx)
@@ -51,7 +56,7 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 			return err
 		}
 		if !resp.Success || resp.Quote == nil {
-			recordUpstream(resp.Code)
+			recordCode(mapQuoteCode(resp.Code))
 			return fmt.Errorf("get quote: upstream %d", resp.Code)
 		}
 		qResp = resp
@@ -64,7 +69,9 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 			return err
 		}
 		if !resp.Success || resp.User == nil {
-			recordUpstream(resp.Code)
+			// The auth middleware already resolved this user; missing here means
+			// upstream data inconsistency, not a 404 we should leak to clients.
+			recordCode(codes.InternalError)
 			return fmt.Errorf("get user: upstream %d", resp.Code)
 		}
 		user = resp.User
@@ -81,7 +88,7 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 			return err
 		}
 		if !resp.Success {
-			recordUpstream(resp.Code)
+			recordCode(codes.InternalError)
 			return fmt.Errorf("list user addresses: upstream %d", resp.Code)
 		}
 		if len(resp.Addresses) > 0 {
@@ -113,7 +120,7 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 			return err
 		}
 		if !resp.Success || resp.Client == nil {
-			recordUpstream(resp.Code)
+			recordCode(mapDependencyCode(resp.Code))
 			return fmt.Errorf("get client: upstream %d", resp.Code)
 		}
 		client = resp.Client
@@ -131,7 +138,7 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 			return err
 		}
 		if !resp.Success || resp.Address == nil {
-			recordUpstream(resp.Code)
+			recordCode(mapDependencyCode(resp.Code))
 			return fmt.Errorf("get address: upstream %d", resp.Code)
 		}
 		clientAddr = resp.Address
@@ -203,10 +210,26 @@ func fail(code int32) *exportGrpc.ExportQuoteResponse {
 	return &exportGrpc.ExportQuoteResponse{Success: false, Code: code}
 }
 
-func mapUpstreamCode(c int32) int32 {
+// mapQuoteCode translates an upstream quote-service code into the local code
+// for the requested quote itself (NotFound means "no such quote").
+func mapQuoteCode(c int32) int32 {
 	switch c {
 	case upstreamNotFound:
 		return codes.NotFound
+	case upstreamInvalidInput:
+		return codes.InvalidInput
+	default:
+		return codes.InternalError
+	}
+}
+
+// mapDependencyCode translates an upstream users-service code raised for a
+// referenced entity (client/address). NotFound here means a *dependency* is
+// missing — distinct from the quote being missing.
+func mapDependencyCode(c int32) int32 {
+	switch c {
+	case upstreamNotFound:
+		return codes.DependencyMissing
 	case upstreamInvalidInput:
 		return codes.InvalidInput
 	default:

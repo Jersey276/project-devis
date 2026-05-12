@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"project-devis-export/quote"
-	"project-devis-export/services/gotenberg"
 	"project-devis-export/templates"
 	"project-devis-export/users"
 )
@@ -50,7 +49,7 @@ type lineView struct {
 	Total     string
 }
 
-func Render(ctx context.Context, gt *gotenberg.Client, in renderInput) ([]byte, error) {
+func Render(ctx context.Context, gt pdfConverter, in renderInput) ([]byte, error) {
 	vm := buildViewModel(in)
 
 	var html bytes.Buffer

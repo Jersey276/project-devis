@@ -97,6 +97,10 @@ services:
       - "gotenberg"
       - "--chromium-disable-javascript=true"
       - "--api-timeout=30s"
+      # SSRF mitigation: Chromium renders user-supplied URLs (e.g. logo_url) so
+      # we block private/loopback/metadata ranges. Anything that resolves into
+      # the cluster network or 169.254.169.254 (cloud metadata) is rejected.
+      - "--chromium-deny-list=^https?://(localhost|127\\.|10\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)"
 
   postgres:
     build:
