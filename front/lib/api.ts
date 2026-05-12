@@ -56,11 +56,34 @@ function attemptRefresh(): Promise<boolean> {
   return refreshPromise;
 }
 
-function redirectToLogin(): ApiResult {
+function redirectToLogin() {
   if (typeof window !== "undefined") {
     window.location.href = "/login";
   }
-  return { ok: false, status: 401, body: { success: false } };
+}
+
+// Runs `doFetch`, retries once after a successful /api/auth/refresh on a 401,
+// and triggers a redirect to /login when refresh fails. Returns null when the
+// caller should bail (redirect was triggered). When `skipRefresh` is true, the
+// 401 is returned verbatim — used by auth endpoints that handle 401 themselves.
+export async function fetchWithRefresh(
+  doFetch: () => Promise<Response>,
+  opts: { skipRefresh?: boolean } = {},
+): Promise<Response | null> {
+  let res = await doFetch();
+  if (res.status !== 401 || opts.skipRefresh) return res;
+
+  const refreshed = await attemptRefresh();
+  if (!refreshed) {
+    redirectToLogin();
+    return null;
+  }
+  res = await doFetch();
+  if (res.status === 401) {
+    redirectToLogin();
+    return null;
+  }
+  return res;
 }
 
 export async function apiFetch(
@@ -78,14 +101,10 @@ export async function apiFetch(
       },
     });
 
-  let response = await doFetch();
-
-  if (response.status === 401 && !REFRESH_SKIP_PATHS.has(path)) {
-    const refreshed = await attemptRefresh();
-    if (!refreshed) return redirectToLogin();
-    response = await doFetch();
-    if (response.status === 401) return redirectToLogin();
-  }
+  const response = await fetchWithRefresh(doFetch, {
+    skipRefresh: REFRESH_SKIP_PATHS.has(path),
+  });
+  if (!response) return { ok: false, status: 401, body: { success: false } };
 
   let body: ApiBody;
   try {

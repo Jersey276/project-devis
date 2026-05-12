@@ -15,9 +15,9 @@ func Get(ctx context.Context, db *sql.DB, req *usersGrpc.GetUserRequest) (*users
 
 	var u usersGrpc.User
 	err := db.QueryRowContext(ctx,
-		"SELECT user_id, email, COALESCE(phone,''), COALESCE(company,''), COALESCE(siren,''), COALESCE(vat,'') FROM users WHERE user_id = $1",
+		"SELECT user_id, email, COALESCE(phone,''), COALESCE(company,''), COALESCE(siren,''), COALESCE(vat,''), COALESCE(logo_url,'') FROM users WHERE user_id = $1",
 		req.UserId,
-	).Scan(&u.UserId, &u.Email, &u.Phone, &u.Company, &u.Siren, &u.Vat)
+	).Scan(&u.UserId, &u.Email, &u.Phone, &u.Company, &u.Siren, &u.Vat, &u.LogoUrl)
 	if err == sql.ErrNoRows {
 		return &usersGrpc.GetUserResponse{Success: false, Code: codes.NotFound}, nil
 	}

@@ -31,12 +31,14 @@ services:
       AUTH_SERVICE_ADDRESS: devis-auth:50051
       USER_SERVICE_ADDRESS: devis-user:50052
       QUOTE_SERVICE_ADDRESS: devis-quote:50053
+      EXPORT_SERVICE_ADDRESS: devis-export:50054
     ports:
       - "8080:8080"
     depends_on:
       - devis-auth
       - devis-user
       - devis-quote
+      - devis-export
 
   devis-auth:
     <<: *db-service
@@ -71,6 +73,30 @@ services:
       <<: *db-env
       DB_USER: devis-quote
       DB_NAME: quote
+
+  devis-export:
+    <<: *service-defaults
+    build:
+      <<: *service-build
+      args:
+        SERVICE_NAME: export
+    environment:
+      TZ: Europe/Paris
+      QUOTE_SERVICE_ADDRESS: devis-quote:50053
+      USER_SERVICE_ADDRESS: devis-user:50052
+      GOTENBERG_ADDRESS: http://gotenberg:3000
+    depends_on:
+      - devis-quote
+      - devis-user
+      - gotenberg
+
+  gotenberg:
+    <<: *service-defaults
+    image: gotenberg/gotenberg:8
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--api-timeout=30s"
 
   postgres:
     build:

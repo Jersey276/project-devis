@@ -30,7 +30,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Loader2Icon } from "lucide-react";
+import { DownloadIcon, Loader2Icon } from "lucide-react";
 import QuoteStepBasicInfo from "@/components/quote/steps/quote-step-basic-info";
 import QuoteStepItems, {
   type QuoteItemRow as RenderedRow,
@@ -47,6 +47,7 @@ import {
   updateLine,
   updateQuote,
 } from "@/lib/services/quotes";
+import { exportQuotePdf } from "@/lib/services/export";
 import { listClients } from "@/lib/services/clients";
 import { listAddresses } from "@/lib/services/addresses";
 import { fieldErrorsFromBody, type FieldErrors } from "@/lib/api";
@@ -137,6 +138,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const [quoteState, setQuoteState] =
     useState<BackendQuoteState>("draft");
   const [transitioning, setTransitioning] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const isReadonly =
     isCustomer || quoteState === "validated" || quoteState === "drop";
@@ -573,6 +575,27 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
               : "Modification du devis."}
           </CardDescription>
         </div>
+        {!isCreate && quoteId && (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isExporting}
+            onClick={async () => {
+              setIsExporting(true);
+              try {
+                await exportQuotePdf(quoteId);
+              } catch (err) {
+                console.error("export quote pdf failed", err);
+                toast.error("Échec de l'export.");
+              } finally {
+                setIsExporting(false);
+              }
+            }}
+          >
+            <DownloadIcon className="size-4" />
+            Exporter
+          </Button>
+        )}
         {showDropButton && (
           <AlertDialog>
             <AlertDialogTrigger asChild>

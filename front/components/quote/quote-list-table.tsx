@@ -13,13 +13,15 @@ import {
   DataTableSortableHead,
 } from "@/components/custom/data-table";
 import { listQuotes } from "@/lib/services/quotes";
+import { exportQuotePdf } from "@/lib/services/export";
 import { useMode } from "@/lib/mode-context";
 import {
   type BackendQuote,
   type QuoteListStatus,
   quoteListStatus,
 } from "@/types/backend";
-import { PencilIcon } from "lucide-react";
+import { DownloadIcon, PencilIcon } from "lucide-react";
+import { toast } from "sonner";
 
 type QuoteListItem = {
   id: string;
@@ -38,6 +40,19 @@ export default function QuoteListTable() {
         label: isCustomer ? "Voir" : "Voir/Modifier",
         icon: PencilIcon,
         href: "/quote/{id}",
+      },
+      {
+        type: "callback",
+        label: "Exporter PDF",
+        icon: DownloadIcon,
+        hidden: isCustomer,
+        callback: (row) => {
+          const id = (row as { id: string }).id;
+          exportQuotePdf(id).catch((err) => {
+            console.error("export quote pdf failed", err);
+            toast.error("Échec de l'export.");
+          });
+        },
       },
     ],
     [isCustomer],

@@ -3,6 +3,7 @@ package controllers
 import (
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 
@@ -103,6 +104,19 @@ func userIDFromCtx(c *gin.Context) string {
 	return s
 }
 
+// Rejects javascript:, data:, file:, etc. — defense in depth against
+// injecting an unsafe value into the PDF template's <img src>.
+func validHTTPURL(s string) bool {
+	if s == "" {
+		return true
+	}
+	u, err := url.ParseRequestURI(s)
+	if err != nil {
+		return false
+	}
+	return (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
+}
+
 func paramInt32(c *gin.Context, name string) (int32, bool) {
 	v, err := strconv.ParseInt(c.Param(name), 10, 32)
 	if err != nil {
@@ -131,9 +145,14 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 		Company string `json:"company"`
 		Siren   string `json:"siren"`
 		Vat     string `json:"vat"`
+		LogoURL string `json:"logo_url"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+	if !validHTTPURL(input.LogoURL) {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "URL du logo invalide."})
 		return
 	}
 	resp, err := client.UpdateUser(c.Request.Context(), &users.UpdateUserRequest{
@@ -142,6 +161,7 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 		Company: input.Company,
 		Siren:   input.Siren,
 		Vat:     input.Vat,
+		LogoUrl: input.LogoURL,
 	})
 	if err != nil {
 		usersUnavailable(c)
