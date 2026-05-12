@@ -16,20 +16,17 @@ export async function downloadBlob(
   const filename = parseContentDispositionFilename(cd) ?? fallbackFilename;
 
   const url = URL.createObjectURL(blob);
-  try {
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  } finally {
-    URL.revokeObjectURL(url);
-  }
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // Defer the revoke: Safari/older Firefox start the download asynchronously
+  // and a same-tick revoke can cancel it.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// Prefer RFC 5987 `filename*=UTF-8''…` over the legacy ASCII-only `filename=`,
-// so accented quote names survive the round-trip.
 function parseContentDispositionFilename(header: string): string | null {
   const ext = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(header);
   if (ext) {

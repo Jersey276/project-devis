@@ -49,26 +49,17 @@ func clearAuthCookies(c *gin.Context) {
 	c.SetCookie(authcookie.RefreshName, "", -1, "/", "", cookieSecure, true)
 }
 
-// Maps auth service error codes to HTTP status codes and user-facing messages.
-var authErrorMap = map[int32]struct {
-	Status  int
-	Message string
-}{
-	CodeUserAlreadyExists:   {http.StatusConflict, "Un compte avec cette adresse email existe déjà."},
-	CodeUserNotFound:        {http.StatusNotFound, "Aucun compte trouvé avec cette adresse email."},
-	CodeInvalidCredentials:  {http.StatusUnauthorized, "Adresse email ou mot de passe incorrect."},
-	CodeInvalidRefreshToken: {http.StatusUnauthorized, "Session expirée, veuillez vous reconnecter."},
-	CodeUserServiceError:    {http.StatusBadGateway, "Erreur lors de la création du compte, veuillez réessayer."},
-	CodeInternalError:       {http.StatusInternalServerError, "Une erreur interne est survenue."},
-	CodeNotImplemented:      {http.StatusNotImplemented, "Cette fonctionnalité n'est pas encore disponible."},
-}
-
-func authError(c *gin.Context, code int32) {
-	if mapped, ok := authErrorMap[code]; ok {
-		c.JSON(mapped.Status, gin.H{"success": false, "message": mapped.Message, "code": code})
-	} else {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Une erreur inconnue est survenue.", "code": code})
-	}
+var authErrors = &serviceErrors{
+	codes: map[int32]codeMapping{
+		CodeUserAlreadyExists:   {http.StatusConflict, "Un compte avec cette adresse email existe déjà."},
+		CodeUserNotFound:        {http.StatusNotFound, "Aucun compte trouvé avec cette adresse email."},
+		CodeInvalidCredentials:  {http.StatusUnauthorized, "Adresse email ou mot de passe incorrect."},
+		CodeInvalidRefreshToken: {http.StatusUnauthorized, "Session expirée, veuillez vous reconnecter."},
+		CodeUserServiceError:    {http.StatusBadGateway, "Erreur lors de la création du compte, veuillez réessayer."},
+		CodeInternalError:       {http.StatusInternalServerError, "Une erreur interne est survenue."},
+		CodeNotImplemented:      {http.StatusNotImplemented, "Cette fonctionnalité n'est pas encore disponible."},
+	},
+	unavailableMessage: "Service d'authentification indisponible.",
 }
 
 func AuthRoutes(r *gin.RouterGroup) *gin.RouterGroup {
@@ -114,7 +105,7 @@ func Register(c *gin.Context, client auth.AuthServiceClient) {
 		Password: input.Password,
 	})
 	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"success": false, "message": "Service d'authentification indisponible.", "code": "SERVICE_UNAVAILABLE"})
+		authErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
@@ -126,7 +117,7 @@ func Register(c *gin.Context, client auth.AuthServiceClient) {
 			})
 			return
 		}
-		authError(c, resp.Code)
+		authErrors.reply(c, resp.Code)
 		return
 	}
 
@@ -152,11 +143,11 @@ func Login(c *gin.Context, client auth.AuthServiceClient) {
 		RememberMe: input.RememberMe,
 	})
 	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"success": false, "message": "Service d'authentification indisponible.", "code": "SERVICE_UNAVAILABLE"})
+		authErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		authError(c, resp.GetCode())
+		authErrors.reply(c, resp.GetCode())
 		return
 	}
 
@@ -191,12 +182,12 @@ func RefreshToken(c *gin.Context, client auth.AuthServiceClient) {
 		RefreshToken: input.RefreshToken,
 	})
 	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"success": false, "message": "Service d'authentification indisponible.", "code": "SERVICE_UNAVAILABLE"})
+		authErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
 		clearAuthCookies(c)
-		authError(c, resp.GetCode())
+		authErrors.reply(c, resp.GetCode())
 		return
 	}
 
@@ -232,11 +223,11 @@ func Logout(c *gin.Context, client auth.AuthServiceClient) {
 		RefreshToken: input.RefreshToken,
 	})
 	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"success": false, "message": "Service d'authentification indisponible.", "code": "SERVICE_UNAVAILABLE"})
+		authErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		authError(c, resp.Code)
+		authErrors.reply(c, resp.Code)
 		return
 	}
 
@@ -257,11 +248,11 @@ func ResetPassword(c *gin.Context, client auth.AuthServiceClient) {
 		Email: input.Email,
 	})
 	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"success": false, "message": "Service d'authentification indisponible.", "code": "SERVICE_UNAVAILABLE"})
+		authErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		authError(c, resp.Code)
+		authErrors.reply(c, resp.Code)
 		return
 	}
 
@@ -285,11 +276,11 @@ func UpdatePassword(c *gin.Context, client auth.AuthServiceClient) {
 		NewPassword: input.NewPassword,
 	})
 	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"success": false, "message": "Service d'authentification indisponible.", "code": "SERVICE_UNAVAILABLE"})
+		authErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		authError(c, resp.Code)
+		authErrors.reply(c, resp.Code)
 		return
 	}
 
@@ -311,11 +302,11 @@ func VerifyEmail(c *gin.Context, client auth.AuthServiceClient) {
 		Token: input.Token,
 	})
 	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"success": false, "message": "Service d'authentification indisponible.", "code": "SERVICE_UNAVAILABLE"})
+		authErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		authError(c, resp.Code)
+		authErrors.reply(c, resp.Code)
 		return
 	}
 

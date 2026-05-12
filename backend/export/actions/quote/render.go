@@ -14,39 +14,32 @@ import (
 	"project-devis-export/users"
 )
 
-// quoteTpl is parsed once at package init. html/template is used (not
-// text/template) so every {{.Foo}} interpolation is auto-escaped, which
-// shields us from injection via quote names, client names, etc.
 var quoteTpl = template.Must(template.New("quote.html").Parse(string(templates.QuoteHTML)))
 
-// viewModel is the shape consumed by quote.html. It's intentionally flat — no
-// proto types, no formatting helpers in the template — so the template stays
-// readable and so a future templating system (premium templates) gets a clean
-// contract to bind against.
+type renderInput struct {
+	Quote         *quote.Quote
+	Lines         []*quote.QuoteLine
+	User          *users.User
+	UserAddress   *users.Address
+	Client        *users.Client
+	ClientAddress *users.Address
+}
+
 type viewModel struct {
-	ShortID                  string
-	Quote                    quoteView
-	Sender                   senderView
-	Recipient                recipientView
-	Lines                    []lineView
-	TotalHT                  string
-	SenderSignatureLabel     string
-	RecipientSignatureLabel  string
+	ShortID                 string
+	QuoteName               string
+	Sender                  partyView
+	Recipient               partyView
+	Lines                   []lineView
+	TotalHT                 string
+	SenderSignatureLabel    string
+	RecipientSignatureLabel string
 }
 
-type quoteView struct {
-	Name string
-}
-
-type senderView struct {
+type partyView struct {
 	LogoURL string
-	Company string
+	Title   string
 	Lines   []string
-}
-
-type recipientView struct {
-	Name  string
-	Lines []string
 }
 
 type lineView struct {
@@ -57,12 +50,8 @@ type lineView struct {
 	Total     string
 }
 
-func Render(ctx context.Context, gt *gotenberg.Client,
-	q *quote.Quote, lines []*quote.QuoteLine,
-	u *users.User, ua *users.Address,
-	c *users.Client, ca *users.Address) ([]byte, error) {
-
-	vm := buildViewModel(q, lines, u, ua, c, ca)
+func Render(ctx context.Context, gt *gotenberg.Client, in renderInput) ([]byte, error) {
+	vm := buildViewModel(in)
 
 	var html bytes.Buffer
 	if err := quoteTpl.Execute(&html, vm); err != nil {
@@ -71,13 +60,10 @@ func Render(ctx context.Context, gt *gotenberg.Client,
 	return gt.Convert(ctx, html.Bytes())
 }
 
-func buildViewModel(q *quote.Quote, lines []*quote.QuoteLine,
-	u *users.User, ua *users.Address,
-	c *users.Client, ca *users.Address) viewModel {
-
+func buildViewModel(in renderInput) viewModel {
 	totalCents := int64(0)
-	lineViews := make([]lineView, 0, len(lines))
-	for _, l := range lines {
+	lineViews := make([]lineView, 0, len(in.Lines))
+	for _, l := range in.Lines {
 		qty := parseQuantity(l.Quantity)
 		lineTotal := int64(qty * float64(l.UnitPrice))
 		totalCents += lineTotal
@@ -91,22 +77,22 @@ func buildViewModel(q *quote.Quote, lines []*quote.QuoteLine,
 	}
 
 	return viewModel{
-		ShortID:                 shortID(q.QuoteId),
-		Quote:                   quoteView{Name: q.Name},
-		Sender:                  buildSender(u, ua),
-		Recipient:               buildRecipient(c, ca),
+		ShortID:                 shortID(in.Quote.QuoteId),
+		QuoteName:               in.Quote.Name,
+		Sender:                  buildSender(in.User, in.UserAddress),
+		Recipient:               buildRecipient(in.Client, in.ClientAddress),
 		Lines:                   lineViews,
 		TotalHT:                 formatCents(totalCents),
-		SenderSignatureLabel:    senderSignatureLabel(u),
-		RecipientSignatureLabel: recipientSignatureLabel(c),
+		SenderSignatureLabel:    senderSignatureLabel(in.User),
+		RecipientSignatureLabel: recipientSignatureLabel(in.Client),
 	}
 }
 
-func buildSender(u *users.User, a *users.Address) senderView {
-	v := senderView{}
+func buildSender(u *users.User, a *users.Address) partyView {
+	v := partyView{}
 	if u != nil {
 		v.LogoURL = u.LogoUrl
-		v.Company = u.Company
+		v.Title = u.Company
 	}
 	v.Lines = appendAddressLines(v.Lines, a)
 	if u != nil {
@@ -126,10 +112,10 @@ func buildSender(u *users.User, a *users.Address) senderView {
 	return v
 }
 
-func buildRecipient(c *users.Client, a *users.Address) recipientView {
-	v := recipientView{}
+func buildRecipient(c *users.Client, a *users.Address) partyView {
+	v := partyView{}
 	if c != nil {
-		v.Name = strings.TrimSpace(c.FirstName + " " + c.LastName)
+		v.Title = strings.TrimSpace(c.FirstName + " " + c.LastName)
 		if c.Company != "" {
 			v.Lines = append(v.Lines, c.Company)
 		}

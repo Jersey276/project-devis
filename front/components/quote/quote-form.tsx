@@ -408,6 +408,19 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     }
   }, [quoteId, transitioning]);
 
+  const handleExport = useCallback(async () => {
+    if (!quoteId || isExporting) return;
+    setIsExporting(true);
+    try {
+      await exportQuotePdf(quoteId);
+    } catch (err) {
+      console.error("export quote pdf failed", err);
+      toast.error("Échec de l'export.");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [quoteId, isExporting]);
+
   const handleAddItem = useCallback(async () => {
     if (!quoteId || adding) return;
     setAdding(true);
@@ -575,22 +588,12 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
               : "Modification du devis."}
           </CardDescription>
         </div>
-        {!isCreate && quoteId && (
+        {!isCreate && (
           <Button
             type="button"
             variant="outline"
             disabled={isExporting}
-            onClick={async () => {
-              setIsExporting(true);
-              try {
-                await exportQuotePdf(quoteId);
-              } catch (err) {
-                console.error("export quote pdf failed", err);
-                toast.error("Échec de l'export.");
-              } finally {
-                setIsExporting(false);
-              }
-            }}
+            onClick={handleExport}
           >
             <DownloadIcon className="size-4" />
             Exporter

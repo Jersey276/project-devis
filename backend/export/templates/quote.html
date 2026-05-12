@@ -38,17 +38,17 @@
   <section class="parties">
     <div class="party left">
       {{if .Sender.LogoURL}}<img class="logo" src="{{.Sender.LogoURL}}" alt="">{{end}}
-      {{if .Sender.Company}}<div class="name">{{.Sender.Company}}</div>{{end}}
+      {{if .Sender.Title}}<div class="name">{{.Sender.Title}}</div>{{end}}
       {{range .Sender.Lines}}<div class="row">{{.}}</div>{{end}}
     </div>
     <div class="party right">
-      {{if .Recipient.Name}}<div class="name">{{.Recipient.Name}}</div>{{end}}
+      {{if .Recipient.Title}}<div class="name">{{.Recipient.Title}}</div>{{end}}
       {{range .Recipient.Lines}}<div class="row">{{.}}</div>{{end}}
     </div>
   </section>
 
   <h1 class="quote-title">Devis #{{.ShortID}}</h1>
-  <div class="quote-name">{{.Quote.Name}}</div>
+  <div class="quote-name">{{.QuoteName}}</div>
 
   <table class="lines">
     <thead>

@@ -17,31 +17,22 @@ import (
 
 const (
 	ExportCodeNotFound      int32 = 3001
-	ExportCodeForbidden     int32 = 3002
 	ExportCodeInternalError int32 = 3003
 	ExportCodeInvalidInput  int32 = 3004
+
+	// 8 MiB — generous headroom for realistic quote PDFs (typical: 50 KiB–1 MiB).
+	// If we start embedding heavy media we'll switch to server-streaming gRPC
+	// rather than raise this further. Mirrored in backend/export/main.go.
+	maxExportMessageBytes = 8 * 1024 * 1024
 )
 
-var exportErrorMap = map[int32]struct {
-	Status  int
-	Message string
-}{
-	ExportCodeNotFound:      {http.StatusNotFound, "Devis introuvable."},
-	ExportCodeForbidden:     {http.StatusForbidden, "Accès refusé."},
-	ExportCodeInvalidInput:  {http.StatusBadRequest, "Requête invalide."},
-	ExportCodeInternalError: {http.StatusInternalServerError, "Une erreur interne est survenue."},
-}
-
-func exportError(c *gin.Context, code int32) {
-	if mapped, ok := exportErrorMap[code]; ok {
-		c.JSON(mapped.Status, gin.H{"success": false, "message": mapped.Message, "code": code})
-	} else {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Une erreur inconnue est survenue.", "code": code})
-	}
-}
-
-func exportUnavailable(c *gin.Context) {
-	c.JSON(http.StatusBadGateway, gin.H{"success": false, "message": "Service export indisponible."})
+var exportErrors = &serviceErrors{
+	codes: map[int32]codeMapping{
+		ExportCodeNotFound:      {http.StatusNotFound, "Devis introuvable."},
+		ExportCodeInvalidInput:  {http.StatusBadRequest, "Requête invalide."},
+		ExportCodeInternalError: {http.StatusInternalServerError, "Une erreur interne est survenue."},
+	},
+	unavailableMessage: "Service export indisponible.",
 }
 
 // ExportRoutes wires the /export API group against the export gRPC service.
@@ -50,7 +41,13 @@ func ExportRoutes(r *gin.RouterGroup) {
 	if address == "" {
 		address = "localhost:50054"
 	}
-	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(address,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(maxExportMessageBytes),
+			grpc.MaxCallSendMsgSize(maxExportMessageBytes),
+		),
+	)
 	if err != nil {
 		log.Fatalf("Failed to connect to export gRPC server: %v", err)
 	}
@@ -65,20 +62,20 @@ func ExportQuote(c *gin.Context, client export.ExportServiceClient) {
 		UserId:  userIDFromCtx(c),
 	})
 	if err != nil {
-		exportUnavailable(c)
+		exportErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		exportError(c, resp.Code)
+		exportErrors.reply(c, resp.Code)
 		return
 	}
 	c.Header("Content-Disposition", contentDispositionAttachment(resp.Filename))
 	c.Data(http.StatusOK, "application/pdf", resp.Pdf)
 }
 
-// contentDispositionAttachment builds a header value compatible with both
-// legacy clients (filename="…" with non-ASCII stripped) and modern browsers
-// (filename*=UTF-8'' with percent-encoded UTF-8) per RFC 5987 / 6266.
+// Emits both the legacy `filename="…"` (non-ASCII stripped) and the
+// `filename*=UTF-8''` form (RFC 5987 / 6266) so accented filenames round-trip
+// through older clients without being mangled.
 func contentDispositionAttachment(filename string) string {
 	ascii := stripNonASCII(filename)
 	if ascii == "" {

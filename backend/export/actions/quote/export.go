@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"unicode"
 
 	"golang.org/x/sync/errgroup"
@@ -19,9 +20,8 @@ import (
 // backend/users/actions/codes/codes.go). Mirrored here so we don't import
 // across services.
 const (
-	upstreamNotFound      int32 = 1001
-	upstreamInvalidInput  int32 = 1003
-	upstreamInternalError int32 = 2001
+	upstreamNotFound     int32 = 1001
+	upstreamInvalidInput int32 = 1003
 )
 
 func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServiceClient,
@@ -31,40 +31,46 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 		return fail(codes.InvalidInput), nil
 	}
 
-	qResp, err := qc.GetQuote(ctx, &quote.GetQuoteRequest{QuoteId: req.QuoteId, UserId: req.UserId})
-	if err != nil {
-		return fail(codes.InternalError), err
-	}
-	if !qResp.Success || qResp.Quote == nil {
-		return fail(mapUpstreamCode(qResp.Code)), nil
-	}
-
-	q := qResp.Quote
-	lines := qResp.Lines
-
+	// Phase 1: GetQuote, GetUser, and the user's address list have no
+	// inter-dependency, so we fan them out together.
 	var (
-		user        *users.User
-		userAddr    *users.Address
-		client      *users.Client
-		clientAddr  *users.Address
+		qResp    *quote.GetQuoteResponse
+		user     *users.User
+		userAddr *users.Address
+		firstUpstream atomic.Int32 // first soft (resp.Success=false) code, mapped to local
 	)
+	recordUpstream := func(c int32) {
+		firstUpstream.CompareAndSwap(0, mapUpstreamCode(c))
+	}
 
 	g, gctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
+		resp, err := qc.GetQuote(gctx, &quote.GetQuoteRequest{QuoteId: req.QuoteId, UserId: req.UserId})
+		if err != nil {
+			return err
+		}
+		if !resp.Success || resp.Quote == nil {
+			recordUpstream(resp.Code)
+			return fmt.Errorf("get quote: upstream %d", resp.Code)
+		}
+		qResp = resp
+		return nil
+	})
+
+	g.Go(func() error {
 		resp, err := uc.GetUser(gctx, &users.GetUserRequest{UserId: req.UserId})
 		if err != nil {
-			return fmt.Errorf("get user: %w", err)
+			return err
 		}
 		if !resp.Success || resp.User == nil {
-			return fmt.Errorf("get user: upstream code %d", resp.Code)
+			recordUpstream(resp.Code)
+			return fmt.Errorf("get user: upstream %d", resp.Code)
 		}
 		user = resp.User
 		return nil
 	})
 
-	// Sender address: first address (lowest id) owned by the authenticated user.
-	// Optional — render falls back gracefully if the user has no address yet.
 	g.Go(func() error {
 		resp, err := uc.ListAddresses(gctx, &users.ListAddressesRequest{
 			OwnerType:  users.OwnerType_OWNER_TYPE_USER,
@@ -72,10 +78,11 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 			AuthUserId: req.UserId,
 		})
 		if err != nil {
-			return fmt.Errorf("list user addresses: %w", err)
+			return err
 		}
 		if !resp.Success {
-			return fmt.Errorf("list user addresses: upstream code %d", resp.Code)
+			recordUpstream(resp.Code)
+			return fmt.Errorf("list user addresses: upstream %d", resp.Code)
 		}
 		if len(resp.Addresses) > 0 {
 			userAddr = resp.Addresses[0]
@@ -83,42 +90,71 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 		return nil
 	})
 
-	g.Go(func() error {
-		resp, err := uc.GetClient(gctx, &users.GetClientRequest{ClientId: q.ClientId, UserId: req.UserId})
+	if err := g.Wait(); err != nil {
+		if code := firstUpstream.Load(); code != 0 {
+			return fail(code), nil
+		}
+		return nil, err
+	}
+
+	// Phase 2: GetClient and GetAddress both need ClientId from the quote.
+	q := qResp.Quote
+	lines := qResp.Lines
+	var (
+		client     *users.Client
+		clientAddr *users.Address
+	)
+
+	g2, g2ctx := errgroup.WithContext(ctx)
+
+	g2.Go(func() error {
+		resp, err := uc.GetClient(g2ctx, &users.GetClientRequest{ClientId: q.ClientId, UserId: req.UserId})
 		if err != nil {
-			return fmt.Errorf("get client: %w", err)
+			return err
 		}
 		if !resp.Success || resp.Client == nil {
-			return fmt.Errorf("get client: upstream code %d", resp.Code)
+			recordUpstream(resp.Code)
+			return fmt.Errorf("get client: upstream %d", resp.Code)
 		}
 		client = resp.Client
 		return nil
 	})
 
-	g.Go(func() error {
-		resp, err := uc.GetAddress(gctx, &users.GetAddressRequest{
+	g2.Go(func() error {
+		resp, err := uc.GetAddress(g2ctx, &users.GetAddressRequest{
 			AddressId:  q.AddressId,
 			OwnerType:  users.OwnerType_OWNER_TYPE_CLIENT,
 			OwnerId:    q.ClientId,
 			AuthUserId: req.UserId,
 		})
 		if err != nil {
-			return fmt.Errorf("get address: %w", err)
+			return err
 		}
 		if !resp.Success || resp.Address == nil {
-			return fmt.Errorf("get address: upstream code %d", resp.Code)
+			recordUpstream(resp.Code)
+			return fmt.Errorf("get address: upstream %d", resp.Code)
 		}
 		clientAddr = resp.Address
 		return nil
 	})
 
-	if err := g.Wait(); err != nil {
-		return fail(codes.InternalError), err
+	if err := g2.Wait(); err != nil {
+		if code := firstUpstream.Load(); code != 0 {
+			return fail(code), nil
+		}
+		return nil, err
 	}
 
-	pdfBytes, err := Render(ctx, gt, q, lines, user, userAddr, client, clientAddr)
+	pdfBytes, err := Render(ctx, gt, renderInput{
+		Quote:         q,
+		Lines:         lines,
+		User:          user,
+		UserAddress:   userAddr,
+		Client:        client,
+		ClientAddress: clientAddr,
+	})
 	if err != nil {
-		return fail(codes.InternalError), err
+		return nil, err
 	}
 
 	return &exportGrpc.ExportQuoteResponse{
@@ -137,8 +173,6 @@ func buildFilename(q *quote.Quote) string {
 	return fmt.Sprintf("devis-%s.pdf", slug)
 }
 
-// Output is UTF-8; callers must encode it for the transport
-// (Content-Disposition uses RFC 5987 filename*).
 func slugify(s string) string {
 	s = strings.TrimSpace(s)
 	if s == "" {

@@ -23,29 +23,17 @@ const (
 	QuoteCodeInternalError   int32 = 2001
 )
 
-var quoteErrorMap = map[int32]struct {
-	Status  int
-	Message string
-}{
-	QuoteCodeNotFound:        {http.StatusNotFound, "Devis introuvable."},
-	QuoteCodeAlreadyExists:   {http.StatusConflict, "Cette ressource existe déjà."},
-	QuoteCodeInvalidInput:    {http.StatusBadRequest, "Données invalides."},
-	QuoteCodeInvalidLineType: {http.StatusBadRequest, "Type de ligne invalide."},
-	QuoteCodeInvalidLineData: {http.StatusBadRequest, "Données de ligne invalides."},
-	QuoteCodeFinalized:       {http.StatusConflict, "Ce devis est finalisé et ne peut plus être modifié."},
-	QuoteCodeInternalError:   {http.StatusInternalServerError, "Une erreur interne est survenue."},
-}
-
-func quoteError(c *gin.Context, code int32) {
-	if mapped, ok := quoteErrorMap[code]; ok {
-		c.JSON(mapped.Status, gin.H{"success": false, "message": mapped.Message, "code": code})
-	} else {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Une erreur inconnue est survenue.", "code": code})
-	}
-}
-
-func quoteUnavailable(c *gin.Context) {
-	c.JSON(http.StatusBadGateway, gin.H{"success": false, "message": "Service devis indisponible."})
+var quoteErrors = &serviceErrors{
+	codes: map[int32]codeMapping{
+		QuoteCodeNotFound:        {http.StatusNotFound, "Devis introuvable."},
+		QuoteCodeAlreadyExists:   {http.StatusConflict, "Cette ressource existe déjà."},
+		QuoteCodeInvalidInput:    {http.StatusBadRequest, "Données invalides."},
+		QuoteCodeInvalidLineType: {http.StatusBadRequest, "Type de ligne invalide."},
+		QuoteCodeInvalidLineData: {http.StatusBadRequest, "Données de ligne invalides."},
+		QuoteCodeFinalized:       {http.StatusConflict, "Ce devis est finalisé et ne peut plus être modifié."},
+		QuoteCodeInternalError:   {http.StatusInternalServerError, "Une erreur interne est survenue."},
+	},
+	unavailableMessage: "Service devis indisponible.",
 }
 
 // QuotesRoutes wires the /quotes API group against the quote gRPC service.
@@ -92,11 +80,11 @@ func ListQuotes(c *gin.Context, client quote.QuoteServiceClient) {
 		IncludeArchived: includeArchived,
 	})
 	if err != nil {
-		quoteUnavailable(c)
+		quoteErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		quoteError(c, resp.Code)
+		quoteErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "quotes": marshalQuotes(resp.Quotes)})
@@ -119,11 +107,11 @@ func CreateQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		AddressId: input.AddressID,
 	})
 	if err != nil {
-		quoteUnavailable(c)
+		quoteErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		quoteError(c, resp.Code)
+		quoteErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "quote_id": resp.QuoteId})
@@ -135,11 +123,11 @@ func GetQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		UserId:  userIDFromCtx(c),
 	})
 	if err != nil {
-		quoteUnavailable(c)
+		quoteErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		quoteError(c, resp.Code)
+		quoteErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
@@ -167,11 +155,11 @@ func UpdateQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		AddressId: input.AddressID,
 	})
 	if err != nil {
-		quoteUnavailable(c)
+		quoteErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		quoteError(c, resp.Code)
+		quoteErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -183,11 +171,11 @@ func DeleteQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		UserId:  userIDFromCtx(c),
 	})
 	if err != nil {
-		quoteUnavailable(c)
+		quoteErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		quoteError(c, resp.Code)
+		quoteErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -199,11 +187,11 @@ func ArchiveQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		UserId:  userIDFromCtx(c),
 	})
 	if err != nil {
-		quoteUnavailable(c)
+		quoteErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		quoteError(c, resp.Code)
+		quoteErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -215,11 +203,11 @@ func RestoreQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		UserId:  userIDFromCtx(c),
 	})
 	if err != nil {
-		quoteUnavailable(c)
+		quoteErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		quoteError(c, resp.Code)
+		quoteErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -230,11 +218,11 @@ func TrashQuotes(c *gin.Context, client quote.QuoteServiceClient) {
 		UserId: userIDFromCtx(c),
 	})
 	if err != nil {
-		quoteUnavailable(c)
+		quoteErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		quoteError(c, resp.Code)
+		quoteErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -246,11 +234,11 @@ func DropQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		UserId:  userIDFromCtx(c),
 	})
 	if err != nil {
-		quoteUnavailable(c)
+		quoteErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		quoteError(c, resp.Code)
+		quoteErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -262,11 +250,11 @@ func ContinueQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		UserId:  userIDFromCtx(c),
 	})
 	if err != nil {
-		quoteUnavailable(c)
+		quoteErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		quoteError(c, resp.Code)
+		quoteErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -297,11 +285,11 @@ func ListQuoteLines(c *gin.Context, client quote.QuoteServiceClient) {
 		UserId:  userIDFromCtx(c),
 	})
 	if err != nil {
-		quoteUnavailable(c)
+		quoteErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		quoteError(c, resp.Code)
+		quoteErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "lines": marshalLines(resp.Lines)})
@@ -325,11 +313,11 @@ func CreateQuoteLine(c *gin.Context, client quote.QuoteServiceClient) {
 		Position:  input.Position,
 	})
 	if err != nil {
-		quoteUnavailable(c)
+		quoteErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		quoteError(c, resp.Code)
+		quoteErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "line_id": resp.LineId})
@@ -341,11 +329,11 @@ func GetQuoteLine(c *gin.Context, client quote.QuoteServiceClient) {
 		UserId: userIDFromCtx(c),
 	})
 	if err != nil {
-		quoteUnavailable(c)
+		quoteErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		quoteError(c, resp.Code)
+		quoteErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "line": marshalLine(resp.Line)})
@@ -369,11 +357,11 @@ func UpdateQuoteLine(c *gin.Context, client quote.QuoteServiceClient) {
 		Position:  input.Position,
 	})
 	if err != nil {
-		quoteUnavailable(c)
+		quoteErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		quoteError(c, resp.Code)
+		quoteErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -385,11 +373,11 @@ func DeleteQuoteLine(c *gin.Context, client quote.QuoteServiceClient) {
 		UserId: userIDFromCtx(c),
 	})
 	if err != nil {
-		quoteUnavailable(c)
+		quoteErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		quoteError(c, resp.Code)
+		quoteErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})

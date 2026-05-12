@@ -13,15 +13,22 @@ import (
 	"time"
 )
 
+// maxPDFBytes caps the PDF we'll read from Gotenberg; mirrors the gRPC
+// message cap so we can't accept something the next hop will reject.
+const maxPDFBytes = 8 * 1024 * 1024
+
 type Client struct {
 	addr       string
 	httpClient *http.Client
 }
 
+// New: timeout is set just above Gotenberg's own --api-timeout (30s in
+// docker-compose) so Gotenberg's structured error response wins the race
+// instead of a generic Go context-deadline.
 func New(addr string) *Client {
 	return &Client{
 		addr:       addr,
-		httpClient: &http.Client{Timeout: 30 * time.Second},
+		httpClient: &http.Client{Timeout: 45 * time.Second},
 	}
 }
 
@@ -66,5 +73,12 @@ func (c *Client) Convert(ctx context.Context, html []byte) ([]byte, error) {
 		return nil, fmt.Errorf("gotenberg %d: %s", resp.StatusCode, bytes.TrimSpace(excerpt))
 	}
 
-	return io.ReadAll(resp.Body)
+	pdf, err := io.ReadAll(io.LimitReader(resp.Body, maxPDFBytes+1))
+	if err != nil {
+		return nil, fmt.Errorf("gotenberg: read body: %w", err)
+	}
+	if len(pdf) > maxPDFBytes {
+		return nil, fmt.Errorf("gotenberg: PDF exceeds %d bytes", maxPDFBytes)
+	}
+	return pdf, nil
 }
