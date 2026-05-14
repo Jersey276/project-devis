@@ -139,6 +139,7 @@ type LoginResponse struct {
 	Token         *string                `protobuf:"bytes,2,opt,name=token,proto3,oneof" json:"token,omitempty"`
 	Code          *int32                 `protobuf:"varint,3,opt,name=code,proto3,oneof" json:"code,omitempty"`
 	RefreshToken  *string                `protobuf:"bytes,4,opt,name=refresh_token,json=refreshToken,proto3,oneof" json:"refresh_token,omitempty"`
+	RememberMe    *bool                  `protobuf:"varint,5,opt,name=remember_me,json=rememberMe,proto3,oneof" json:"remember_me,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -199,6 +200,13 @@ func (x *LoginResponse) GetRefreshToken() string {
 		return *x.RefreshToken
 	}
 	return ""
+}
+
+func (x *LoginResponse) GetRememberMe() bool {
+	if x != nil && x.RememberMe != nil {
+		return *x.RememberMe
+	}
+	return false
 }
 
 type UpdatePasswordRequest struct {
@@ -621,15 +629,18 @@ const file_auth_auth_proto_rawDesc = "" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x1f\n" +
 	"\vremember_me\x18\x03 \x01(\bR\n" +
-	"rememberMe\"\xac\x01\n" +
+	"rememberMe\"\xe2\x01\n" +
 	"\rLoginResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x19\n" +
 	"\x05token\x18\x02 \x01(\tH\x00R\x05token\x88\x01\x01\x12\x17\n" +
 	"\x04code\x18\x03 \x01(\x05H\x01R\x04code\x88\x01\x01\x12(\n" +
-	"\rrefresh_token\x18\x04 \x01(\tH\x02R\frefreshToken\x88\x01\x01B\b\n" +
+	"\rrefresh_token\x18\x04 \x01(\tH\x02R\frefreshToken\x88\x01\x01\x12$\n" +
+	"\vremember_me\x18\x05 \x01(\bH\x03R\n" +
+	"rememberMe\x88\x01\x01B\b\n" +
 	"\x06_tokenB\a\n" +
 	"\x05_codeB\x10\n" +
-	"\x0e_refresh_token\"s\n" +
+	"\x0e_refresh_tokenB\x0e\n" +
+	"\f_remember_me\"s\n" +
 	"\x15UpdatePasswordRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12!\n" +
 	"\fold_password\x18\x02 \x01(\tR\voldPassword\x12!\n" +

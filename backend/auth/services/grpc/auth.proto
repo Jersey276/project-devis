@@ -41,6 +41,7 @@ message LoginResponse {
     optional string token = 2;
     optional int32 code = 3;
     optional string refresh_token = 4;
+    optional bool remember_me = 5;
 }
 
 message UpdatePasswordRequest {

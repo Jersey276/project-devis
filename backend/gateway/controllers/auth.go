@@ -191,7 +191,7 @@ func RefreshToken(c *gin.Context, client auth.AuthServiceClient) {
 		return
 	}
 
-	setAuthCookies(c, resp.GetToken(), resp.GetRefreshToken(), false)
+	setAuthCookies(c, resp.GetToken(), resp.GetRefreshToken(), resp.GetRememberMe())
 
 	c.JSON(http.StatusOK, gin.H{
 		"success":       true,
