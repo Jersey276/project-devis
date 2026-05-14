@@ -3,6 +3,7 @@ package controllers
 import (
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 
@@ -21,26 +22,14 @@ const (
 	UsersCodeInternalError int32 = 2001
 )
 
-var usersErrorMap = map[int32]struct {
-	Status  int
-	Message string
-}{
-	UsersCodeNotFound:      {http.StatusNotFound, "Ressource introuvable."},
-	UsersCodeAlreadyExists: {http.StatusConflict, "Cette ressource existe déjà."},
-	UsersCodeInvalidInput:  {http.StatusBadRequest, "Données invalides."},
-	UsersCodeInternalError: {http.StatusInternalServerError, "Une erreur interne est survenue."},
-}
-
-func usersError(c *gin.Context, code int32) {
-	if mapped, ok := usersErrorMap[code]; ok {
-		c.JSON(mapped.Status, gin.H{"success": false, "message": mapped.Message, "code": code})
-	} else {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Une erreur inconnue est survenue.", "code": code})
-	}
-}
-
-func usersUnavailable(c *gin.Context) {
-	c.JSON(http.StatusBadGateway, gin.H{"success": false, "message": "Service utilisateurs indisponible."})
+var usersErrors = &serviceErrors{
+	codes: map[int32]codeMapping{
+		UsersCodeNotFound:      {http.StatusNotFound, "Ressource introuvable."},
+		UsersCodeAlreadyExists: {http.StatusConflict, "Cette ressource existe déjà."},
+		UsersCodeInvalidInput:  {http.StatusBadRequest, "Données invalides."},
+		UsersCodeInternalError: {http.StatusInternalServerError, "Une erreur interne est survenue."},
+	},
+	unavailableMessage: "Service utilisateurs indisponible.",
 }
 
 func UserRoutes(r *gin.RouterGroup) {
@@ -103,6 +92,19 @@ func userIDFromCtx(c *gin.Context) string {
 	return s
 }
 
+// Rejects javascript:, data:, file:, etc. — defense in depth against
+// injecting an unsafe value into the PDF template's <img src>.
+func validHTTPURL(s string) bool {
+	if s == "" {
+		return true
+	}
+	u, err := url.ParseRequestURI(s)
+	if err != nil {
+		return false
+	}
+	return (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
+}
+
 func paramInt32(c *gin.Context, name string) (int32, bool) {
 	v, err := strconv.ParseInt(c.Param(name), 10, 32)
 	if err != nil {
@@ -115,11 +117,11 @@ func paramInt32(c *gin.Context, name string) (int32, bool) {
 func GetMe(c *gin.Context, client users.UserServiceClient) {
 	resp, err := client.GetUser(c.Request.Context(), &users.GetUserRequest{UserId: userIDFromCtx(c)})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "user": resp.User})
@@ -131,9 +133,14 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 		Company string `json:"company"`
 		Siren   string `json:"siren"`
 		Vat     string `json:"vat"`
+		LogoURL string `json:"logo_url"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+	if !validHTTPURL(input.LogoURL) {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "URL du logo invalide."})
 		return
 	}
 	resp, err := client.UpdateUser(c.Request.Context(), &users.UpdateUserRequest{
@@ -142,13 +149,14 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 		Company: input.Company,
 		Siren:   input.Siren,
 		Vat:     input.Vat,
+		LogoUrl: input.LogoURL,
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -157,11 +165,11 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 func DeleteMe(c *gin.Context, client users.UserServiceClient) {
 	resp, err := client.DeleteUser(c.Request.Context(), &users.DeleteUserRequest{UserId: userIDFromCtx(c)})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -215,11 +223,11 @@ func ListAddresses(c *gin.Context, client users.UserServiceClient) {
 		AuthUserId: userIDFromCtx(c),
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
@@ -245,11 +253,11 @@ func GetAddress(c *gin.Context, client users.UserServiceClient) {
 		AuthUserId: userIDFromCtx(c),
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
@@ -275,11 +283,11 @@ func ArchiveAddress(c *gin.Context, client users.UserServiceClient) {
 		AuthUserId: userIDFromCtx(c),
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -310,11 +318,11 @@ func CreateAddress(c *gin.Context, client users.UserServiceClient) {
 		AuthUserId:       userIDFromCtx(c),
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "address_id": resp.AddressId})
@@ -350,11 +358,11 @@ func UpdateAddress(c *gin.Context, client users.UserServiceClient) {
 		AuthUserId:       userIDFromCtx(c),
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -414,11 +422,11 @@ func ListClients(c *gin.Context, client users.UserServiceClient) {
 		IncludeArchived: includeArchived,
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "clients": resp.Clients})
@@ -441,11 +449,11 @@ func CreateClient(c *gin.Context, client users.UserServiceClient) {
 		Vat:       input.Vat,
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "client_id": resp.ClientId})
@@ -457,11 +465,11 @@ func GetClient(c *gin.Context, client users.UserServiceClient) {
 		UserId:   userIDFromCtx(c),
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "client": resp.Client})
@@ -485,11 +493,11 @@ func UpdateClient(c *gin.Context, client users.UserServiceClient) {
 		Vat:       input.Vat,
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -501,11 +509,11 @@ func ArchiveClient(c *gin.Context, client users.UserServiceClient) {
 		UserId:   userIDFromCtx(c),
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -514,11 +522,11 @@ func ArchiveClient(c *gin.Context, client users.UserServiceClient) {
 func ListCountries(c *gin.Context, client users.UserServiceClient) {
 	resp, err := client.ListCountries(c.Request.Context(), &users.ListCountriesRequest{})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "countries": resp.Countries})
@@ -538,11 +546,11 @@ func CreateCountry(c *gin.Context, client users.UserServiceClient) {
 		Name: input.Name,
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "country_id": resp.CountryId})
@@ -555,11 +563,11 @@ func GetCountry(c *gin.Context, client users.UserServiceClient) {
 	}
 	resp, err := client.GetCountry(c.Request.Context(), &users.GetCountryRequest{CountryId: id})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "country": resp.Country})
@@ -584,11 +592,11 @@ func UpdateCountry(c *gin.Context, client users.UserServiceClient) {
 		Name:      input.Name,
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -601,11 +609,11 @@ func DeleteCountry(c *gin.Context, client users.UserServiceClient) {
 	}
 	resp, err := client.DeleteCountry(c.Request.Context(), &users.DeleteCountryRequest{CountryId: id})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -614,11 +622,11 @@ func DeleteCountry(c *gin.Context, client users.UserServiceClient) {
 func ListCountryGroups(c *gin.Context, client users.UserServiceClient) {
 	resp, err := client.ListCountryGroups(c.Request.Context(), &users.ListCountryGroupsRequest{})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "country_groups": resp.CountryGroups})
@@ -634,11 +642,11 @@ func CreateCountryGroup(c *gin.Context, client users.UserServiceClient) {
 	}
 	resp, err := client.CreateCountryGroup(c.Request.Context(), &users.CreateCountryGroupRequest{Name: input.Name})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "country_group_id": resp.CountryGroupId})
@@ -651,11 +659,11 @@ func GetCountryGroup(c *gin.Context, client users.UserServiceClient) {
 	}
 	resp, err := client.GetCountryGroup(c.Request.Context(), &users.GetCountryGroupRequest{CountryGroupId: id})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "country_group": resp.CountryGroup})
@@ -678,11 +686,11 @@ func UpdateCountryGroup(c *gin.Context, client users.UserServiceClient) {
 		Name:           input.Name,
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -695,11 +703,11 @@ func DeleteCountryGroup(c *gin.Context, client users.UserServiceClient) {
 	}
 	resp, err := client.DeleteCountryGroup(c.Request.Context(), &users.DeleteCountryGroupRequest{CountryGroupId: id})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -719,11 +727,11 @@ func AttachCountry(c *gin.Context, client users.UserServiceClient) {
 		CountryId:      countryID,
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -743,11 +751,11 @@ func DetachCountry(c *gin.Context, client users.UserServiceClient) {
 		CountryId:      countryID,
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -765,11 +773,11 @@ func ListTaxes(c *gin.Context, client users.UserServiceClient) {
 	}
 	resp, err := client.ListTaxes(c.Request.Context(), &users.ListTaxesRequest{CountryGroupId: groupID})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "taxes": resp.Taxes})
@@ -791,11 +799,11 @@ func CreateTax(c *gin.Context, client users.UserServiceClient) {
 		CountryGroupId: input.CountryGroupID,
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "tax_id": resp.TaxId})
@@ -808,11 +816,11 @@ func GetTax(c *gin.Context, client users.UserServiceClient) {
 	}
 	resp, err := client.GetTax(c.Request.Context(), &users.GetTaxRequest{TaxId: id})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "tax": resp.Tax})
@@ -837,11 +845,11 @@ func UpdateTax(c *gin.Context, client users.UserServiceClient) {
 		Rate:  input.Rate,
 	})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -854,11 +862,11 @@ func DeleteTax(c *gin.Context, client users.UserServiceClient) {
 	}
 	resp, err := client.DeleteTax(c.Request.Context(), &users.DeleteTaxRequest{TaxId: id})
 	if err != nil {
-		usersUnavailable(c)
+		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
-		usersError(c, resp.Code)
+		usersErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})

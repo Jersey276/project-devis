@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package export;
+
+option go_package = "gateway/export";
+
+service ExportService {
+    rpc ExportQuote(ExportQuoteRequest) returns (ExportQuoteResponse);
+}
+
+message ExportQuoteRequest {
+    string quote_id = 1;
+    string user_id  = 2;
+}
+
+message ExportQuoteResponse {
+    bool   success  = 1;
+    int32  code     = 2;
+    bytes  pdf      = 3;
+    string filename = 4;
+}

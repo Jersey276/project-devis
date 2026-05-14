@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Devis #{{.ShortID}}</title>
+<style>
+  @page { size: A4; margin: 15mm; }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 9pt; color: #111; margin: 0; }
+
+  .parties { display: flex; gap: 10mm; margin-bottom: 8mm; }
+  .party { flex: 1; }
+  .party.right { text-align: right; }
+  .party .name { font-weight: 700; font-size: 12pt; margin-bottom: 1mm; }
+  .party .logo { display: block; max-height: 18mm; max-width: 60mm; margin-bottom: 2mm; }
+  .party .row { line-height: 1.35; }
+
+  .quote-title { font-size: 16pt; font-weight: 700; margin: 4mm 0 1mm; }
+  .quote-name  { font-size: 11pt; margin: 0 0 6mm; }
+
+  table.lines { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.lines th, table.lines td { border: 1px solid #444; padding: 1.5mm 2mm; }
+  table.lines th { background: #e6e6e6; font-weight: 700; }
+  table.lines th.qty, table.lines th.unit, table.lines td.qty, table.lines td.unit { text-align: center; }
+  table.lines th.price, table.lines th.total, table.lines td.price, table.lines td.total { text-align: right; white-space: nowrap; }
+  table.lines tr { page-break-inside: avoid; }
+  table.lines thead { display: table-header-group; }
+
+  .total-row { margin-top: 4mm; text-align: right; font-weight: 700; font-size: 11pt; }
+  .total-row .amount { display: inline-block; min-width: 40mm; border: 1px solid #444; padding: 1.5mm 2mm; margin-left: 2mm; }
+
+  .signatures { display: flex; gap: 10mm; margin-top: 15mm; page-break-inside: avoid; }
+  .signature  { flex: 1; }
+  .signature .caption { margin-bottom: 1mm; font-size: 9pt; }
+  .signature .box     { height: 40mm; }
+</style>
+</head>
+<body>
+  <section class="parties">
+    <div class="party left">
+      {{if .Sender.LogoURL}}<img class="logo" src="{{.Sender.LogoURL}}" alt="">{{end}}
+      {{if .Sender.Title}}<div class="name">{{.Sender.Title}}</div>{{end}}
+      {{range .Sender.Lines}}<div class="row">{{.}}</div>{{end}}
+    </div>
+    <div class="party right">
+      {{if .Recipient.Title}}<div class="name">{{.Recipient.Title}}</div>{{end}}
+      {{range .Recipient.Lines}}<div class="row">{{.}}</div>{{end}}
+    </div>
+  </section>
+
+  <h1 class="quote-title">Devis #{{.ShortID}}</h1>
+  <div class="quote-name">{{.QuoteName}}</div>
+
+  <table class="lines">
+    <thead>
+      <tr>
+        <th class="name">Désignation</th>
+        <th class="qty">Qté</th>
+        <th class="unit">Unité</th>
+        <th class="price">PU HT</th>
+        <th class="total">Total HT</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .Lines}}
+      <tr>
+        <td class="name">{{.Name}}</td>
+        <td class="qty">{{.Quantity}}</td>
+        <td class="unit">{{.Unit}}</td>
+        <td class="price">{{.UnitPrice}}</td>
+        <td class="total">{{.Total}}</td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+
+  <div class="total-row">Total HT <span class="amount">{{.TotalHT}}</span></div>
+
+  <section class="signatures">
+    <div class="signature">
+      <div class="caption">{{.SenderSignatureLabel}}</div>
+      <div class="box"></div>
+    </div>
+    <div class="signature">
+      <div class="caption">{{.RecipientSignatureLabel}}</div>
+      <div class="box"></div>
+    </div>
+  </section>
+</body>
+</html>

@@ -30,6 +30,10 @@ func setupRouter() *gin.Engine {
 	quotes.Use(middleware.AuthRequired())
 	controllers.QuotesRoutes(quotes)
 
+	exportGrp := api.Group("/export")
+	exportGrp.Use(middleware.AuthRequired())
+	controllers.ExportRoutes(exportGrp)
+
 	// controllers.ProjectRoutes(api.Group("/project"))
 	// controllers.PaymentRoutes(api.Group("/payments"))
 

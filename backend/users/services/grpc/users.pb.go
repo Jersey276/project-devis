@@ -132,6 +132,7 @@ type User struct {
 	Company       string                 `protobuf:"bytes,4,opt,name=company,proto3" json:"company,omitempty"`
 	Siren         string                 `protobuf:"bytes,5,opt,name=siren,proto3" json:"siren,omitempty"`
 	Vat           string                 `protobuf:"bytes,6,opt,name=vat,proto3" json:"vat,omitempty"`
+	LogoUrl       string                 `protobuf:"bytes,7,opt,name=logo_url,json=logoUrl,proto3" json:"logo_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -204,6 +205,13 @@ func (x *User) GetSiren() string {
 func (x *User) GetVat() string {
 	if x != nil {
 		return x.Vat
+	}
+	return ""
+}
+
+func (x *User) GetLogoUrl() string {
+	if x != nil {
+		return x.LogoUrl
 	}
 	return ""
 }
@@ -426,6 +434,7 @@ type UpdateUserRequest struct {
 	Company       string                 `protobuf:"bytes,3,opt,name=company,proto3" json:"company,omitempty"`
 	Siren         string                 `protobuf:"bytes,4,opt,name=siren,proto3" json:"siren,omitempty"`
 	Vat           string                 `protobuf:"bytes,5,opt,name=vat,proto3" json:"vat,omitempty"`
+	LogoUrl       string                 `protobuf:"bytes,6,opt,name=logo_url,json=logoUrl,proto3" json:"logo_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -491,6 +500,13 @@ func (x *UpdateUserRequest) GetSiren() string {
 func (x *UpdateUserRequest) GetVat() string {
 	if x != nil {
 		return x.Vat
+	}
+	return ""
+}
+
+func (x *UpdateUserRequest) GetLogoUrl() string {
+	if x != nil {
+		return x.LogoUrl
 	}
 	return ""
 }
@@ -3832,14 +3848,15 @@ const file_users_proto_rawDesc = "" +
 	"\vusers.proto\x12\x05users\"?\n" +
 	"\x0fGenericResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\x05R\x04code\"\x8d\x01\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\"\xa8\x01\n" +
 	"\x04User\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x14\n" +
 	"\x05phone\x18\x03 \x01(\tR\x05phone\x12\x18\n" +
 	"\acompany\x18\x04 \x01(\tR\acompany\x12\x14\n" +
 	"\x05siren\x18\x05 \x01(\tR\x05siren\x12\x10\n" +
-	"\x03vat\x18\x06 \x01(\tR\x03vat\")\n" +
+	"\x03vat\x18\x06 \x01(\tR\x03vat\x12\x19\n" +
+	"\blogo_url\x18\a \x01(\tR\alogoUrl\")\n" +
 	"\x11CreateUserRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\"[\n" +
 	"\x12CreateUserResponse\x12\x18\n" +
@@ -3851,13 +3868,14 @@ const file_users_proto_rawDesc = "" +
 	"\x0fGetUserResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x1f\n" +
-	"\x04user\x18\x03 \x01(\v2\v.users.UserR\x04user\"\x84\x01\n" +
+	"\x04user\x18\x03 \x01(\v2\v.users.UserR\x04user\"\x9f\x01\n" +
 	"\x11UpdateUserRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05phone\x18\x02 \x01(\tR\x05phone\x12\x18\n" +
 	"\acompany\x18\x03 \x01(\tR\acompany\x12\x14\n" +
 	"\x05siren\x18\x04 \x01(\tR\x05siren\x12\x10\n" +
-	"\x03vat\x18\x05 \x01(\tR\x03vat\"B\n" +
+	"\x03vat\x18\x05 \x01(\tR\x03vat\x12\x19\n" +
+	"\blogo_url\x18\x06 \x01(\tR\alogoUrl\"B\n" +
 	"\x12UpdateUserResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\",\n" +
