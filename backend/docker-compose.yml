@@ -97,10 +97,14 @@ services:
       - "gotenberg"
       - "--chromium-disable-javascript=true"
       - "--api-timeout=30s"
-      # SSRF mitigation: Chromium renders user-supplied URLs (e.g. logo_url) so
-      # we block private/loopback/metadata ranges. Anything that resolves into
-      # the cluster network or 169.254.169.254 (cloud metadata) is rejected.
-      - "--chromium-deny-list=^https?://(localhost|127\\.|10\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)"
+      # SSRF mitigation. Blocks user-supplied URLs (logo_url) from reaching:
+      #   IPv4: localhost, 0.0.0.0, 127/8, 10/8, 192.168/16, 169.254/16
+      #         (cloud metadata incl. 169.254.169.254), 172.16-31/12
+      #   IPv6: [::1] loopback, [fc..|fd..] ULA (fc00::/7), [fe8.|fe9.|fea.|feb.]
+      #         link-local (fe80::/10).
+      # Chromium canonicalizes IPv6 to the short form before matching, so these
+      # bracketed patterns also cover the equivalent expanded representations.
+      - "--chromium-deny-list=^https?://(localhost|0\\.0\\.0\\.0|127\\.|10\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|\\[::1\\]|\\[[fF][cdCD]|\\[[fF][eE][89aAbB])"
 
   postgres:
     build:
