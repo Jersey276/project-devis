@@ -32,8 +32,8 @@ func GenerateRefreshToken(ctx context.Context, db *sql.DB, userID string, rememb
 	expiresAt := time.Now().Add(expiry)
 
 	_, err := db.ExecContext(ctx,
-		"INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)",
-		userID, hash, expiresAt,
+		"INSERT INTO refresh_tokens (user_id, token_hash, expires_at, remember_me) VALUES ($1, $2, $3, $4)",
+		userID, hash, expiresAt, rememberMe,
 	)
 	if err != nil {
 		return "", err
@@ -42,29 +42,30 @@ func GenerateRefreshToken(ctx context.Context, db *sql.DB, userID string, rememb
 	return raw, nil
 }
 
-func ValidateRefreshToken(ctx context.Context, db *sql.DB, rawToken string) (string, error) {
+func ValidateRefreshToken(ctx context.Context, db *sql.DB, rawToken string) (string, bool, error) {
 	hash := hashToken(rawToken)
 
 	var userID string
 	var expiresAt time.Time
+	var rememberMe bool
 	err := db.QueryRowContext(ctx,
-		"SELECT user_id, expires_at FROM refresh_tokens WHERE token_hash = $1",
+		"SELECT user_id, expires_at, remember_me FROM refresh_tokens WHERE token_hash = $1",
 		hash,
-	).Scan(&userID, &expiresAt)
+	).Scan(&userID, &expiresAt, &rememberMe)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "", ErrRefreshTokenNotFound
+			return "", false, ErrRefreshTokenNotFound
 		}
-		return "", err
+		return "", false, err
 	}
 
 	if time.Now().After(expiresAt) {
 		// Clean up expired token
 		_, _ = db.ExecContext(ctx, "DELETE FROM refresh_tokens WHERE token_hash = $1", hash)
-		return "", ErrRefreshTokenExpired
+		return "", false, ErrRefreshTokenExpired
 	}
 
-	return userID, nil
+	return userID, rememberMe, nil
 }
 
 func DeleteRefreshToken(ctx context.Context, db *sql.DB, rawToken string) error {

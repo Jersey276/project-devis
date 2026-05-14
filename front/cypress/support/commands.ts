@@ -1,5 +1,7 @@
 /// <reference types="cypress" />
 
+import { AUTH_TOKEN_COOKIE } from "../../lib/auth-constants";
+
 type UserMode = "provider" | "customer";
 
 declare global {
@@ -12,12 +14,13 @@ declare global {
       // hydration agree on the mode. The server-side layout reads
       // `app.user-mode` and feeds it to ModeProvider as initialMode.
       visitAs(mode: UserMode, url: string): Chainable<void>;
+      fillLoginForm(email: string, password: string): Chainable<void>;
     }
   }
 }
 
 Cypress.Commands.add("login", (token = "fake-token") => {
-  cy.setCookie("auth-token", token, { domain: "localhost" });
+  cy.setCookie(AUTH_TOKEN_COOKIE, token, { domain: "localhost" });
   // Default-stub the auth-sensitive endpoints so an unstubbed call never
   // bubbles up as a 401 → /api/auth/refresh failure → window.location = /login
   // inside apiFetch. Individual tests can override these intercepts.
@@ -49,6 +52,12 @@ Cypress.Commands.add("login", (token = "fake-token") => {
 Cypress.Commands.add("visitAs", (mode: UserMode, url: string) => {
   cy.setCookie("app.user-mode", mode, { domain: "localhost" });
   cy.visit(url);
+});
+
+Cypress.Commands.add("fillLoginForm", (email: string, password: string) => {
+  cy.get("input[name='email']").type(email);
+  cy.get("input[name='password']").type(password);
+  cy.get("button[type='submit']").click();
 });
 
 export {};

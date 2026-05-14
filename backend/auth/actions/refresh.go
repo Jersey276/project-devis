@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Server) RefreshToken(ctx context.Context, req *authGrpc.RefreshTokenRequest) (*authGrpc.LoginResponse, error) {
-	userID, err := services.ValidateRefreshToken(ctx, s.db, req.RefreshToken)
+	userID, rememberMe, err := services.ValidateRefreshToken(ctx, s.db, req.RefreshToken)
 	if err != nil {
 		code := CodeInvalidRefreshToken
 		return &authGrpc.LoginResponse{Success: false, Code: &code}, nil
@@ -30,8 +30,8 @@ func (s *Server) RefreshToken(ctx context.Context, req *authGrpc.RefreshTokenReq
 		return &authGrpc.LoginResponse{Success: false, Code: &code}, err
 	}
 
-	// Generate new refresh token with same duration (default 7 days, no remember_me context)
-	newRefreshToken, err := services.GenerateRefreshToken(ctx, s.db, userID, false)
+	// Preserve the original remember_me choice so cookie TTL stays consistent across rotations.
+	newRefreshToken, err := services.GenerateRefreshToken(ctx, s.db, userID, rememberMe)
 	if err != nil {
 		code := CodeInternalError
 		return &authGrpc.LoginResponse{Success: false, Code: &code}, err
@@ -41,5 +41,6 @@ func (s *Server) RefreshToken(ctx context.Context, req *authGrpc.RefreshTokenReq
 		Success:      true,
 		Token:        &accessToken,
 		RefreshToken: &newRefreshToken,
+		RememberMe:   &rememberMe,
 	}, nil
 }

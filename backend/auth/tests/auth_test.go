@@ -259,9 +259,8 @@ func TestLogin_Success(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"email", "password", "user_id"}).
 			AddRow("user@example.com", hashedPassword, "user-789"))
 
-	// INSERT refresh token
 	mock.ExpectExec(`INSERT INTO refresh_tokens`).
-		WithArgs("user-789", sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs("user-789", sqlmock.AnyArg(), sqlmock.AnyArg(), false).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.Login(context.Background(), &authGrpc.LoginRequest{
@@ -344,7 +343,7 @@ func TestLogin_RememberMe(t *testing.T) {
 			AddRow("user@example.com", hashedPassword, "user-789"))
 
 	mock.ExpectExec(`INSERT INTO refresh_tokens`).
-		WithArgs("user-789", sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs("user-789", sqlmock.AnyArg(), sqlmock.AnyArg(), true).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.Login(context.Background(), &authGrpc.LoginRequest{
@@ -371,10 +370,10 @@ func TestRefreshToken_Success(t *testing.T) {
 
 	fakeTokenHash := sqlmock.AnyArg()
 
-	mock.ExpectQuery(`SELECT user_id, expires_at FROM refresh_tokens WHERE token_hash = \$1`).
+	mock.ExpectQuery(`SELECT user_id, expires_at, remember_me FROM refresh_tokens WHERE token_hash = \$1`).
 		WithArgs(fakeTokenHash).
-		WillReturnRows(sqlmock.NewRows([]string{"user_id", "expires_at"}).
-			AddRow("user-789", time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)))
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "expires_at", "remember_me"}).
+			AddRow("user-789", time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC), true))
 
 	mock.ExpectQuery(`SELECT email FROM auth WHERE user_id = \$1`).
 		WithArgs("user-789").
@@ -385,7 +384,7 @@ func TestRefreshToken_Success(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	mock.ExpectExec(`INSERT INTO refresh_tokens`).
-		WithArgs("user-789", sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs("user-789", sqlmock.AnyArg(), sqlmock.AnyArg(), true).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.RefreshToken(context.Background(), &authGrpc.RefreshTokenRequest{
@@ -409,9 +408,9 @@ func TestRefreshToken_InvalidToken(t *testing.T) {
 	mockUser := &MockUserClient{}
 	srv, mock := setupServer(t, mockUser)
 
-	mock.ExpectQuery(`SELECT user_id, expires_at FROM refresh_tokens WHERE token_hash = \$1`).
+	mock.ExpectQuery(`SELECT user_id, expires_at, remember_me FROM refresh_tokens WHERE token_hash = \$1`).
 		WithArgs(sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"user_id", "expires_at"}))
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "expires_at", "remember_me"}))
 
 	resp, err := srv.RefreshToken(context.Background(), &authGrpc.RefreshTokenRequest{
 		RefreshToken: "invalid-token",
