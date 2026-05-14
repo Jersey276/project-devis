@@ -1,0 +1,4 @@
+# Environment files (live on the prod server, never in git)
+.env
+.env.local
+.env.*.local

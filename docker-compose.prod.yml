@@ -22,7 +22,7 @@ x-db-service: &db-service
 services:
   front:
     <<: *service-defaults
-    image: ${IMAGE_PREFIX}-front:latest
+    image: ${IMAGE_PREFIX}/front:${IMAGE_TAG:-latest}
     environment:
       <<: *common-env
       APP_ENV: production
@@ -30,10 +30,15 @@ services:
       - "3000:3000"
     depends_on:
       - devis-gateway
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   devis-gateway:
     <<: *service-defaults
-    image: ${IMAGE_PREFIX}-gateway:latest
+    image: ${IMAGE_PREFIX}/gateway:${IMAGE_TAG:-latest}
     environment:
       <<: *common-env
       AUTH_SERVICE_ADDRESS: devis-auth:50051
@@ -50,7 +55,7 @@ services:
 
   devis-auth:
     <<: *db-service
-    image: ${IMAGE_PREFIX}-auth:latest
+    image: ${IMAGE_PREFIX}/auth:${IMAGE_TAG:-latest}
     environment:
       <<: *db-env
       DB_USER: devis-auth
@@ -59,7 +64,7 @@ services:
 
   devis-user:
     <<: *db-service
-    image: ${IMAGE_PREFIX}-users:latest
+    image: ${IMAGE_PREFIX}/users:${IMAGE_TAG:-latest}
     environment:
       <<: *db-env
       DB_USER: devis-users
@@ -67,7 +72,7 @@ services:
 
   devis-quote:
     <<: *db-service
-    image: ${IMAGE_PREFIX}-quote:latest
+    image: ${IMAGE_PREFIX}/quote:${IMAGE_TAG:-latest}
     environment:
       <<: *db-env
       DB_USER: devis-quote
@@ -75,7 +80,7 @@ services:
 
   devis-export:
     <<: *service-defaults
-    image: ${IMAGE_PREFIX}-export:latest
+    image: ${IMAGE_PREFIX}/export:${IMAGE_TAG:-latest}
     environment:
       <<: *common-env
       QUOTE_SERVICE_ADDRESS: devis-quote:50053
