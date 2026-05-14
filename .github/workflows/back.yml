@@ -33,6 +33,8 @@ jobs:
               - "backend/users/**"
             quote:
               - "backend/quote/**"
+            gateway:
+              - "backend/gateway/**"
   ci:
     needs: check-changes
     if: needs.check-changes.outputs.services != '[]'
