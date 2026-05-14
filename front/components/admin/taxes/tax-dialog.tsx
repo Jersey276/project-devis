@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -52,6 +53,8 @@ export default function TaxDialog({
   groups,
   onSaved,
 }: TaxDialogProps) {
+  const t = useTranslations("admin.taxes.dialog");
+  const tCommon = useTranslations("common");
   const isEdit = tax != null;
   const [name, setName] = useState(tax?.name ?? "");
   const [rate, setRate] = useState(tax?.rate ?? "");
@@ -78,7 +81,9 @@ export default function TaxDialog({
         body: JSON.stringify(payload),
       });
       if (ok && body.success) {
-        toast.success(isEdit ? "Taxe mise à jour." : "Taxe ajoutée.");
+        toast.success(
+          isEdit ? t("updateSuccessToast") : t("createSuccessToast"),
+        );
         onSaved();
         onOpenChange(false);
         return;
@@ -87,9 +92,9 @@ export default function TaxDialog({
         setFieldErrors(fieldErrorsFromBody(body));
         return;
       }
-      toast.error(body.message ?? "Une erreur est survenue.");
+      toast.error(body.message ?? tCommon("errors.generic"));
     } catch {
-      toast.error("Une erreur est survenue.");
+      toast.error(tCommon("errors.generic"));
     } finally {
       setSubmitting(false);
     }
@@ -103,18 +108,18 @@ export default function TaxDialog({
       <DialogContent className="p-6 sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? "Modifier la taxe" : "Nouvelle taxe"}
+            {isEdit ? t("editTitle") : t("createTitle")}
           </DialogTitle>
         </DialogHeader>
 
         <form id={FORM_ID} className="grid gap-4" onSubmit={handleSubmit} noValidate>
           <FieldGroup>
             <Field data-invalid={!!fieldErrors.name?.length}>
-              <FieldLabel htmlFor="tax_name">Nom</FieldLabel>
+              <FieldLabel htmlFor="tax_name">{t("nameLabel")}</FieldLabel>
               <Input
                 id="tax_name"
                 name="name"
-                placeholder="TVA 20%"
+                placeholder={t("namePlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 aria-invalid={!!fieldErrors.name?.length}
@@ -123,11 +128,11 @@ export default function TaxDialog({
             </Field>
 
             <Field data-invalid={!!fieldErrors.rate?.length}>
-              <FieldLabel htmlFor="tax_rate">Taux (%)</FieldLabel>
+              <FieldLabel htmlFor="tax_rate">{t("rateLabel")}</FieldLabel>
               <Input
                 id="tax_rate"
                 name="rate"
-                placeholder="20.00"
+                placeholder={t("ratePlaceholder")}
                 value={rate}
                 onChange={(e) => setRate(e.target.value)}
                 aria-invalid={!!fieldErrors.rate?.length}
@@ -137,7 +142,7 @@ export default function TaxDialog({
 
             <Field data-invalid={!!fieldErrors.country_group_id?.length}>
               <FieldLabel htmlFor="tax_country_group">
-                Groupe de pays
+                {t("groupLabel")}
               </FieldLabel>
               <Combobox
                 items={groups}
@@ -151,12 +156,12 @@ export default function TaxDialog({
                 <ComboboxInput
                   id="tax_country_group"
                   name="country_group_id"
-                  placeholder="Sélectionner un groupe"
+                  placeholder={t("groupPlaceholder")}
                   disabled={isEdit}
                   aria-invalid={!!fieldErrors.country_group_id?.length}
                 />
                 <ComboboxContent>
-                  <ComboboxEmpty>Aucun groupe disponible.</ComboboxEmpty>
+                  <ComboboxEmpty>{t("groupEmpty")}</ComboboxEmpty>
                   <ComboboxList>
                     {(group: CountryGroup) => (
                       <ComboboxItem key={group.id} value={group}>
@@ -186,11 +191,11 @@ export default function TaxDialog({
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline">
-              Annuler
+              {tCommon("actions.cancel")}
             </Button>
           </DialogClose>
           <Button type="submit" form={FORM_ID} disabled={submitting}>
-            {submitting ? "Enregistrement…" : "Enregistrer"}
+            {submitting ? tCommon("actions.saving") : tCommon("actions.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

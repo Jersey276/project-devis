@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -23,6 +24,8 @@ type ConnectionFormProps = {
 };
 
 export default function ConnectionForm({ email }: ConnectionFormProps) {
+  const t = useTranslations("profile.connection");
+  const tCommon = useTranslations("common");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -42,7 +45,7 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
     setConfirmError(null);
 
     if (newPassword !== confirmPassword) {
-      setConfirmError("Les mots de passe ne correspondent pas.");
+      setConfirmError(t("confirmMismatch"));
       return;
     }
 
@@ -60,7 +63,7 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
         },
       );
       if (ok && body.success) {
-        toast.success("Mot de passe mis à jour.");
+        toast.success(t("successToast"));
         reset();
         return;
       }
@@ -68,9 +71,9 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
         setFieldErrors(fieldErrorsFromBody(body));
         return;
       }
-      toast.error(body.message ?? "Une erreur est survenue.");
+      toast.error(body.message ?? tCommon("errors.generic"));
     } catch {
-      toast.error("Une erreur est survenue.");
+      toast.error(tCommon("errors.generic"));
     } finally {
       setSubmitting(false);
     }
@@ -84,7 +87,7 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
     >
       <FieldGroup>
         <Field>
-          <FieldLabel htmlFor="connection_email">Adresse mail</FieldLabel>
+          <FieldLabel htmlFor="connection_email">{t("emailLabel")}</FieldLabel>
           <Input
             id="connection_email"
             name="email"
@@ -93,13 +96,11 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
             readOnly
             aria-readonly
           />
-          <FieldDescription>
-            Le changement d&apos;adresse email n&apos;est pas encore disponible.
-          </FieldDescription>
+          <FieldDescription>{t("emailHint")}</FieldDescription>
         </Field>
 
         <Field data-invalid={!!fieldErrors.old_password?.length}>
-          <FieldLabel htmlFor="old_password">Mot de passe actuel</FieldLabel>
+          <FieldLabel htmlFor="old_password">{t("oldPasswordLabel")}</FieldLabel>
           <Input
             id="old_password"
             name="old_password"
@@ -113,7 +114,7 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
         </Field>
 
         <Field data-invalid={!!fieldErrors.new_password?.length}>
-          <FieldLabel htmlFor="new_password">Nouveau mot de passe</FieldLabel>
+          <FieldLabel htmlFor="new_password">{t("newPasswordLabel")}</FieldLabel>
           <Input
             id="new_password"
             name="new_password"
@@ -124,11 +125,11 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
             aria-invalid={!!fieldErrors.new_password?.length}
           />
           <FieldError errors={toErrorProps(fieldErrors.new_password)} />
-          <FieldDescription>8 caractères minimum.</FieldDescription>
+          <FieldDescription>{t("newPasswordHint")}</FieldDescription>
         </Field>
 
         <Field data-invalid={!!confirmError}>
-          <FieldLabel htmlFor="confirm_password">Confirmation</FieldLabel>
+          <FieldLabel htmlFor="confirm_password">{t("confirmPasswordLabel")}</FieldLabel>
           <Input
             id="confirm_password"
             name="confirm_password"
@@ -146,7 +147,7 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
 
       <div className="flex justify-end">
         <Button type="submit" disabled={submitting}>
-          {submitting ? "Enregistrement…" : "Mettre à jour le mot de passe"}
+          {submitting ? tCommon("actions.saving") : t("submit")}
         </Button>
       </div>
     </form>

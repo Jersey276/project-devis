@@ -1,0 +1,447 @@
+{
+  "common": {
+    "actions": {
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "delete": "Supprimer",
+      "edit": "Modifier",
+      "loading": "Chargement…",
+      "close": "Fermer"
+    },
+    "errors": {
+      "generic": "Une erreur est survenue."
+    },
+    "datePicker": {
+      "placeholder": "Choisir une date"
+    }
+  },
+  "metadata": {
+    "title": "Devis",
+    "description": "Outil de génération de devis"
+  },
+  "nav": {
+    "appGroupLabel": "Application",
+    "quote": "Devis",
+    "invoices": "Factures",
+    "clients": "Clients",
+    "countries": "Pays",
+    "taxes": "Taxes",
+    "test": "Test"
+  },
+  "breadcrumb": {},
+  "dashboard": {
+    "title": "Tableau de bord",
+    "welcome": "Bienvenue sur votre tableau de bord."
+  },
+  "auth": {
+    "login": {
+      "title": "Connexion à votre compte",
+      "description": "Saisissez votre email pour vous connecter à votre compte.",
+      "emailLabel": "Email",
+      "passwordLabel": "Mot de passe",
+      "forgotLink": "Mot de passe oublié ?",
+      "submit": "Se connecter",
+      "googleSubmit": "Se connecter avec Google",
+      "signupPrompt": "Pas encore de compte ?",
+      "signupLink": "Créer un compte",
+      "successToast": "Connexion réussie.",
+      "failureToast": "Échec de la connexion. Vérifiez vos identifiants et réessayez."
+    },
+    "register": {
+      "title": "Créer un compte",
+      "description": "Saisissez vos informations ci-dessous pour créer votre compte.",
+      "emailLabel": "Email",
+      "emailHint": "Nous l'utiliserons pour vous contacter. Votre email ne sera jamais partagé.",
+      "passwordLabel": "Mot de passe",
+      "passwordHint": "Au moins 8 caractères.",
+      "confirmPasswordLabel": "Confirmer le mot de passe",
+      "confirmPasswordHint": "Veuillez confirmer votre mot de passe.",
+      "confirmMismatch": "Les mots de passe ne correspondent pas.",
+      "submit": "Créer le compte",
+      "googleSubmit": "S'inscrire avec Google",
+      "loginPrompt": "Déjà un compte ?",
+      "loginLink": "Se connecter",
+      "termsPrefix": "En cliquant sur continuer, vous acceptez nos",
+      "termsLink": "Conditions d'utilisation",
+      "termsJoiner": "et notre",
+      "privacyLink": "Politique de confidentialité",
+      "successToast": "Inscription réussie. Veuillez vous connecter.",
+      "failureToast": "Échec de l'inscription. Veuillez réessayer.",
+      "validation": {
+        "required": "Ce champ est obligatoire.",
+        "invalidFormat": "Format invalide.",
+        "tooShort": "Trop court (8 caractères minimum).",
+        "emailInUse": "Cette adresse email est déjà utilisée.",
+        "unknown": "Erreur de validation ({code})."
+      }
+    },
+    "forgetPassword": {
+      "title": "Mot de passe oublié"
+    },
+    "invite": {}
+  },
+  "quote": {
+    "list": {
+      "title": "Devis",
+      "newButton": "Nouveau devis",
+      "columns": {
+        "id": "ID",
+        "project": "Projet",
+        "status": "Statut",
+        "actions": "Actions"
+      },
+      "actions": {
+        "view": "Voir",
+        "viewEdit": "Voir/Modifier",
+        "exportPdf": "Exporter PDF"
+      },
+      "exportFailedToast": "Échec de l'export.",
+      "empty": "Aucun devis pour le moment."
+    },
+    "form": {
+      "createTitle": "Création d'un devis",
+      "editTitlePlaceholder": "Devis {name}",
+      "createDescription": "Complète les étapes pour générer un nouveau devis.",
+      "editDescription": "Modification du devis.",
+      "notFoundToast": "Devis introuvable.",
+      "exportButton": "Exporter",
+      "exportFailedToast": "Échec de l'export.",
+      "dropButton": "Abandonner",
+      "dropDialog": {
+        "title": "Abandonner ce devis ?",
+        "description": "Le devis ne pourra plus être modifié. Vous pourrez le réactiver via le bouton Continuer.",
+        "confirm": "Confirmer"
+      },
+      "dropFailedToast": "Impossible d'abandonner le devis.",
+      "continueButton": "Continuer",
+      "continueFailedToast": "Impossible de réactiver le devis.",
+      "stepLabel": "Étape {n} · {label}",
+      "prev": "Précédent",
+      "next": "Suivant",
+      "creating": "Création…",
+      "finish": "Terminer",
+      "errors": {
+        "requiredField": "Ce champ est requis.",
+        "selectClient": "Veuillez sélectionner un client.",
+        "selectAddress": "Veuillez sélectionner une adresse.",
+        "nameSaveFailedToast": "Échec de l'enregistrement du nom.",
+        "clientSaveFailedToast": "Échec de l'enregistrement du client.",
+        "addressSaveFailedToast": "Échec de l'enregistrement de l'adresse.",
+        "lineSaveFailedToast": "Échec d'enregistrement de la ligne.",
+        "lineAddFailedToast": "Impossible d'ajouter la ligne.",
+        "lineRemoveFailedToast": "Impossible de supprimer la ligne."
+      }
+    },
+    "steps": {
+      "basicInfo": {
+        "label": "Informations de base",
+        "nameLabel": "Nom du projet",
+        "namePlaceholder": "Ex: Refonte site vitrine",
+        "clientLabel": "Client associé",
+        "clientPlaceholderEmpty": "Aucun client disponible",
+        "clientPlaceholder": "Sélectionner un client",
+        "clientEmpty": "Aucun client trouvé.",
+        "addressLabel": "Adresse",
+        "addressPlaceholderNoClient": "Sélectionner d'abord un client",
+        "addressPlaceholderEmpty": "Aucune adresse pour ce client",
+        "addressPlaceholder": "Sélectionner une adresse",
+        "addressEmpty": "Aucune adresse trouvée."
+      },
+      "items": {
+        "label": "Éléments du devis",
+        "description": "Description",
+        "quantity": "Quantité",
+        "unitPrice": "Prix unitaire",
+        "lineTotal": "Total ligne",
+        "state": "État",
+        "action": "Action",
+        "lineNamePlaceholder": "Prestation",
+        "deleteAria": "Supprimer la ligne",
+        "addAria": "Ajouter une ligne",
+        "totalAmount": "Montant total: {amount} €",
+        "savingAria": "Enregistrement en cours",
+        "savedAria": "Enregistré",
+        "errorAria": "Échec d'enregistrement"
+      },
+      "summary": {
+        "label": "Résumé"
+      }
+    },
+    "breadcrumb": {
+      "list": "Devis",
+      "create": "Nouveau devis",
+      "detail": "Détail du devis"
+    }
+  },
+  "status": {
+    "quote": {
+      "draft": "Brouillon",
+      "sent": "Envoyé",
+      "validated": "Validé",
+      "drop": "Abandonné",
+      "archived": "Archivé"
+    }
+  },
+  "client": {
+    "list": {
+      "title": "Clients",
+      "newButton": "Nouveau client",
+      "columns": {
+        "firstName": "Prénom",
+        "lastName": "Nom",
+        "email": "Email",
+        "company": "Société",
+        "actions": "Actions"
+      },
+      "actions": {
+        "view": "Voir"
+      },
+      "loadFailedToast": "Impossible de charger les clients.",
+      "deleteSuccessToast": "Client supprimé.",
+      "deleteFailedToast": "Impossible de supprimer le client."
+    },
+    "form": {
+      "firstNameLabel": "Prénom",
+      "lastNameLabel": "Nom",
+      "emailLabel": "Adresse mail",
+      "phoneLabel": "Téléphone",
+      "companyLabel": "Société",
+      "sirenLabel": "SIREN",
+      "vatLabel": "TVA",
+      "mainAddressLabel": "Adresse principale",
+      "placeholders": {
+        "firstName": "Jean",
+        "lastName": "Dupont",
+        "email": "jean.dupont@email.com",
+        "phone": "06 12 34 56 78",
+        "company": "Acme SARL",
+        "siren": "123 456 789",
+        "vat": "FR12345678901"
+      }
+    },
+    "create": {
+      "title": "Créer un compte client",
+      "description": "Créez un compte de base avec les informations principales.",
+      "submit": "Créer le compte client",
+      "submitting": "Création…",
+      "successToast": "Client créé.",
+      "createFailedToast": "Impossible de créer le client.",
+      "addressFailedToast": "Client créé, mais l'adresse n'a pas pu être enregistrée. Vous pouvez l'ajouter depuis la fiche client.",
+      "addressDefaultName": "Adresse principale"
+    },
+    "edit": {
+      "title": "Modifier le client",
+      "description": "Mettez à jour les informations principales du client.",
+      "successToast": "Client mis à jour.",
+      "failedToast": "Impossible de mettre à jour le client.",
+      "notFoundToast": "Client introuvable."
+    },
+    "detail": {
+      "title": "Profil client",
+      "idLabel": "ID:",
+      "badge": "Client",
+      "deleteDialog": {
+        "title": "Supprimer ce client ?",
+        "description": "Cette action est irréversible. Les adresses associées resteront dans la base."
+      },
+      "notFoundToast": "Client introuvable.",
+      "deleteSuccessToast": "Client supprimé.",
+      "deleteFailedToast": "Impossible de supprimer le client.",
+      "infoTitle": "Informations",
+      "info": {
+        "firstName": "Prénom:",
+        "lastName": "Nom:",
+        "email": "Email:",
+        "phone": "Téléphone:",
+        "company": "Société:",
+        "siren": "SIREN:",
+        "vat": "TVA:"
+      },
+      "addressesTitle": "Adresses"
+    }
+  },
+  "address": {
+    "form": {
+      "nameLabel": "Nom",
+      "namePlaceholder": "Adresse principale",
+      "streetLabel": "Adresse",
+      "streetPlaceholder": "12 Rue des Lilas",
+      "additionalStreetLabel": "Complément",
+      "additionalStreetPlaceholder": "Bâtiment B, 3ème étage",
+      "cityLabel": "Ville",
+      "cityPlaceholder": "Paris",
+      "zipCodeLabel": "Code postal",
+      "zipCodePlaceholder": "75001",
+      "countryLabel": "Pays",
+      "countryPlaceholder": "Sélectionner un pays",
+      "countryEmpty": "Aucun pays trouvé."
+    },
+    "dialog": {
+      "editTitle": "Modifier l'adresse",
+      "createTitle": "Nouvelle adresse",
+      "createSuccessToast": "Adresse ajoutée.",
+      "updateSuccessToast": "Adresse mise à jour."
+    },
+    "list": {
+      "columns": {
+        "address": "Adresse"
+      },
+      "actionsLabel": "Actions",
+      "addButton": "Ajouter une adresse",
+      "deleteSuccessToast": "Adresse supprimée.",
+      "empty": "Aucune adresse pour le moment.",
+      "deleteDialog": {
+        "title": "Supprimer cette adresse ?",
+        "description": "Cette action est irréversible. L'adresse sera retirée de votre liste."
+      }
+    }
+  },
+  "invoice": {
+    "list": {
+      "title": "Factures",
+      "placeholder": "Page des factures"
+    },
+    "detail": {
+      "title": "Détail de la facture {id}"
+    }
+  },
+  "admin": {
+    "countries": {
+      "tabs": {
+        "countries": "Pays",
+        "groups": "Groupes de pays"
+      },
+      "title": "Pays",
+      "newButton": "Nouveau pays",
+      "columns": {
+        "id": "ID",
+        "code": "Code",
+        "name": "Nom"
+      },
+      "actionsLabel": "Actions",
+      "empty": "Aucun pays pour le moment.",
+      "deleteDialog": {
+        "title": "Supprimer ce pays ?",
+        "description": "Cette action est irréversible."
+      },
+      "deleteSuccessToast": "Pays supprimé.",
+      "dialog": {
+        "editTitle": "Modifier le pays",
+        "createTitle": "Nouveau pays",
+        "codeLabel": "Code",
+        "codePlaceholder": "FR",
+        "nameLabel": "Nom",
+        "namePlaceholder": "France",
+        "createSuccessToast": "Pays ajouté.",
+        "updateSuccessToast": "Pays mis à jour."
+      }
+    },
+    "countryGroups": {
+      "title": "Groupes de pays",
+      "newButton": "Nouveau groupe",
+      "columns": {
+        "id": "ID",
+        "name": "Nom",
+        "members": "Pays membres"
+      },
+      "membersEmptyDash": "—",
+      "actionsLabel": "Actions",
+      "empty": "Aucun groupe pour le moment.",
+      "deleteDialog": {
+        "title": "Supprimer ce groupe ?",
+        "description": "Cette action est irréversible."
+      },
+      "deleteSuccessToast": "Groupe supprimé.",
+      "dialog": {
+        "editTitle": "Modifier le groupe",
+        "createTitle": "Nouveau groupe",
+        "nameLabel": "Nom",
+        "namePlaceholder": "Union européenne",
+        "createSuccessToast": "Groupe ajouté.",
+        "updateSuccessToast": "Groupe mis à jour.",
+        "membersTitle": "Pays membres",
+        "membersEmpty": "Aucun pays dans ce groupe.",
+        "removeAria": "Retirer {name}",
+        "attachLabel": "Ajouter un pays",
+        "attachPlaceholder": "Sélectionner un pays",
+        "attachEmpty": "Aucun pays disponible.",
+        "attachButton": "Ajouter",
+        "attachSuccessToast": "Pays ajouté au groupe.",
+        "detachSuccessToast": "Pays retiré du groupe."
+      }
+    },
+    "taxes": {
+      "title": "Taxes",
+      "newButton": "Nouvelle taxe",
+      "columns": {
+        "id": "ID",
+        "name": "Nom",
+        "rate": "Taux",
+        "group": "Groupe"
+      },
+      "rateValue": "{rate} %",
+      "unknownGroup": "#{id}",
+      "actionsLabel": "Actions",
+      "empty": "Aucune taxe pour le moment.",
+      "deleteDialog": {
+        "title": "Supprimer cette taxe ?",
+        "description": "Cette action est irréversible."
+      },
+      "deleteSuccessToast": "Taxe supprimée.",
+      "dialog": {
+        "editTitle": "Modifier la taxe",
+        "createTitle": "Nouvelle taxe",
+        "nameLabel": "Nom",
+        "namePlaceholder": "TVA 20%",
+        "rateLabel": "Taux (%)",
+        "ratePlaceholder": "20.00",
+        "groupLabel": "Groupe de pays",
+        "groupPlaceholder": "Sélectionner un groupe",
+        "groupEmpty": "Aucun groupe disponible.",
+        "createSuccessToast": "Taxe ajoutée.",
+        "updateSuccessToast": "Taxe mise à jour."
+      }
+    }
+  },
+  "profile": {
+    "title": "Mon profil",
+    "badge": "Mon compte",
+    "loadingFull": "Chargement de votre profil…",
+    "tabs": {
+      "information": "Information",
+      "addresses": "Adresses",
+      "connection": "Connexion"
+    },
+    "userInfo": {
+      "emailLabel": "Email",
+      "emailHint": "L'adresse email se modifie depuis l'onglet Connexion.",
+      "phoneLabel": "Téléphone",
+      "companyLabel": "Société",
+      "sirenLabel": "SIREN",
+      "vatLabel": "N° de TVA",
+      "successToast": "Informations mises à jour."
+    },
+    "connection": {
+      "emailLabel": "Adresse mail",
+      "emailHint": "Le changement d'adresse email n'est pas encore disponible.",
+      "oldPasswordLabel": "Mot de passe actuel",
+      "newPasswordLabel": "Nouveau mot de passe",
+      "newPasswordHint": "8 caractères minimum.",
+      "confirmPasswordLabel": "Confirmation",
+      "confirmMismatch": "Les mots de passe ne correspondent pas.",
+      "submit": "Mettre à jour le mot de passe",
+      "successToast": "Mot de passe mis à jour."
+    }
+  },
+  "user": {
+    "menu": {
+      "profile": "Profil",
+      "addresses": "Adresses",
+      "logout": "Déconnexion",
+      "logoutSuccess": "Déconnexion réussie.",
+      "logoutFailure": "La déconnexion a échoué."
+    }
+  },
+  "errors": {}
+}

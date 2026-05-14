@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -22,6 +23,8 @@ const PROFILE_TABS = ["information", "adresse", "compte"] as const;
 type ProfileTab = (typeof PROFILE_TABS)[number];
 
 export default function ProfileContent() {
+  const t = useTranslations("profile");
+  const tCommon = useTranslations("common");
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const requestedTab = useSearchParams().get("tab");
@@ -49,26 +52,26 @@ export default function ProfileContent() {
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">
-            <CardTitle>Mon profil</CardTitle>
+            <CardTitle>{t("title")}</CardTitle>
             <CardDescription>
-              {user?.email ?? (loading ? "Chargement…" : "")}
+              {user?.email ?? (loading ? tCommon("actions.loading") : "")}
             </CardDescription>
           </div>
-          <Badge variant="outline">Mon compte</Badge>
+          <Badge variant="outline">{t("badge")}</Badge>
         </div>
       </CardHeader>
 
       <CardContent>
         {loading || !user ? (
           <p className="text-muted-foreground text-sm">
-            Chargement de votre profil…
+            {t("loadingFull")}
           </p>
         ) : (
           <Tabs defaultValue={defaultTab}>
             <TabsList>
-              <TabsTrigger value="information">Information</TabsTrigger>
-              <TabsTrigger value="adresse">Adresses</TabsTrigger>
-              <TabsTrigger value="compte">Connexion</TabsTrigger>
+              <TabsTrigger value="information">{t("tabs.information")}</TabsTrigger>
+              <TabsTrigger value="adresse">{t("tabs.addresses")}</TabsTrigger>
+              <TabsTrigger value="compte">{t("tabs.connection")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="information" className="pt-4">

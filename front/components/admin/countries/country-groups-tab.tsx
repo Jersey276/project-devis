@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,15 +30,17 @@ import { toast } from "sonner";
 import CountryGroupDialog from "./country-group-dialog";
 import { type CountryGroup } from "@/components/admin/types";
 
-function formatMembers(group: CountryGroup): string {
+function formatMembers(group: CountryGroup, dash: string): string {
   const list = group.countries ?? [];
-  if (list.length === 0) return "—";
+  if (list.length === 0) return dash;
   const names = list.map((c) => c.name);
   if (names.length <= 3) return names.join(", ");
   return `${names.slice(0, 3).join(", ")} (+${names.length - 3})`;
 }
 
 export default function CountryGroupsTab() {
+  const t = useTranslations("admin.countryGroups");
+  const tCommon = useTranslations("common");
   const [groups, setGroups] = useState<CountryGroup[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<CountryGroup | null>(null);
@@ -76,10 +79,10 @@ export default function CountryGroupsTab() {
       { method: "DELETE" },
     );
     if (ok && body.success) {
-      toast.success("Groupe supprimé.");
+      toast.success(t("deleteSuccessToast"));
       reload();
     } else {
-      toast.error(body.message ?? "Une erreur est survenue.");
+      toast.error(body.message ?? tCommon("errors.generic"));
     }
     setPendingDelete(null);
   }
@@ -87,13 +90,13 @@ export default function CountryGroupsTab() {
   const rowActions: DataTableRowAction[] = [
     {
       type: "callback",
-      label: "Modifier",
+      label: tCommon("actions.edit"),
       icon: PencilIcon,
       callback: (row) => openEdit(row as CountryGroup),
     },
     {
       type: "callback",
-      label: "Supprimer",
+      label: tCommon("actions.delete"),
       icon: Trash2Icon,
       callback: (row) => setPendingDelete(row as CountryGroup),
     },
@@ -104,18 +107,18 @@ export default function CountryGroupsTab() {
       <div className="flex justify-end">
         <Button type="button" onClick={openCreate}>
           <PlusIcon />
-          Nouveau groupe
+          {t("newButton")}
         </Button>
       </div>
 
       <DataTable datas={groups} row_actions={rowActions} sortBy="id">
         <DataTableHeader>
           <DataTableRow>
-            <DataTableSortableHead name="id">ID</DataTableSortableHead>
-            <DataTableSortableHead name="name">Nom</DataTableSortableHead>
-            <DataTableHead>Pays membres</DataTableHead>
+            <DataTableSortableHead name="id">{t("columns.id")}</DataTableSortableHead>
+            <DataTableSortableHead name="name">{t("columns.name")}</DataTableSortableHead>
+            <DataTableHead>{t("columns.members")}</DataTableHead>
             <DataTableHead>
-              <span className="sr-only">Actions</span>
+              <span className="sr-only">{t("actionsLabel")}</span>
             </DataTableHead>
           </DataTableRow>
         </DataTableHeader>
@@ -123,7 +126,7 @@ export default function CountryGroupsTab() {
           {groups.length === 0 ? (
             <DataTableRow>
               <DataTableCell className="text-muted-foreground">
-                Aucun groupe pour le moment.
+                {t("empty")}
               </DataTableCell>
               <DataTableCell> </DataTableCell>
               <DataTableCell> </DataTableCell>
@@ -135,7 +138,7 @@ export default function CountryGroupsTab() {
                 <DataTableCell>{group.id}</DataTableCell>
                 <DataTableCell>{group.name}</DataTableCell>
                 <DataTableCell className="text-muted-foreground">
-                  {formatMembers(group)}
+                  {formatMembers(group, t("membersEmptyDash"))}
                 </DataTableCell>
                 <DataTableCell className="w-12 text-right">
                   <DataTableRowActions id={group.id} row={group} />
@@ -162,15 +165,15 @@ export default function CountryGroupsTab() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce groupe ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible.
+              {t("deleteDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction variant="destructive" onClick={confirmDelete}>
-              Supprimer
+              {tCommon("actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

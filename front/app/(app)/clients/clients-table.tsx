@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   DataTable,
   DataTableBody,
@@ -22,26 +23,28 @@ type ClientsTableProps = {
 };
 
 export function ClientsTable({ data, onArchived }: ClientsTableProps) {
+  const t = useTranslations("client.list");
+  const tCommon = useTranslations("common");
   const row_actions: DataTableRowAction[] = [
     {
       type: "link",
-      label: "Voir",
+      label: t("actions.view"),
       href: "/clients/{id}",
       icon: EyeIcon,
     },
     {
       type: "callback",
-      label: "Supprimer",
+      label: tCommon("actions.delete"),
       icon: TrashIcon,
       callback: async (row) => {
         const client = row as BackendClient;
         const { ok, body } = await archiveClient(client.client_id);
         if (ok && body.success) {
-          toast.success("Client supprimé.");
+          toast.success(t("deleteSuccessToast"));
           onArchived?.();
         } else {
           toast.error(
-            (body.message as string) ?? "Impossible de supprimer le client.",
+            (body.message as string) ?? t("deleteFailedToast"),
           );
         }
       },
@@ -58,12 +61,12 @@ export function ClientsTable({ data, onArchived }: ClientsTableProps) {
       <DataTableHeader>
         <DataTableRow>
           <DataTableSortableHead name="first_name">
-            Prénom
+            {t("columns.firstName")}
           </DataTableSortableHead>
-          <DataTableSortableHead name="last_name">Nom</DataTableSortableHead>
-          <DataTableSortableHead name="email">Email</DataTableSortableHead>
-          <DataTableSortableHead name="company">Société</DataTableSortableHead>
-          <DataTableHead>Actions</DataTableHead>
+          <DataTableSortableHead name="last_name">{t("columns.lastName")}</DataTableSortableHead>
+          <DataTableSortableHead name="email">{t("columns.email")}</DataTableSortableHead>
+          <DataTableSortableHead name="company">{t("columns.company")}</DataTableSortableHead>
+          <DataTableHead>{t("columns.actions")}</DataTableHead>
         </DataTableRow>
       </DataTableHeader>
       <DataTableBody>

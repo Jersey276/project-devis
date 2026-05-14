@@ -39,24 +39,11 @@ export type BackendTax = {
   superseded_by?: number;
 };
 
-export const QUOTE_STATE_LABEL: Record<BackendQuoteState, string> = {
-  draft: "Brouillon",
-  sent: "Envoyé",
-  validated: "Validé",
-  drop: "Abandonné",
-};
+export type QuoteListState = BackendQuoteState | "archived";
 
-export type QuoteListStatus =
-  | "brouillon"
-  | "envoyé"
-  | "validé"
-  | "abandonné"
-  | "archivé";
-
-export function quoteListStatus(quote: BackendQuote): QuoteListStatus {
-  if (quote.archived_at) return "archivé";
-  const label = QUOTE_STATE_LABEL[quote.state];
-  return (label ? label.toLowerCase() : "brouillon") as QuoteListStatus;
+export function quoteListState(quote: BackendQuote): QuoteListState {
+  if (quote.archived_at) return "archived";
+  return quote.state ?? "draft";
 }
 
 export type BackendClient = {

@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -58,14 +61,22 @@ type QuoteStepItemsProps = {
   onAddItem: () => void;
 };
 
-function SaveIndicator({ status }: { status: LineSaveStatus }) {
+type IndicatorLabels = { saving: string; saved: string; error: string };
+
+function SaveIndicator({
+  status,
+  labels,
+}: {
+  status: LineSaveStatus;
+  labels: IndicatorLabels;
+}) {
   if (status === "saving") {
     return (
       <span
         data-slot="line-save-indicator"
         data-status="saving"
         className="text-muted-foreground inline-flex items-center"
-        aria-label="Enregistrement en cours"
+        aria-label={labels.saving}
       >
         <Loader2Icon className="size-4 animate-spin" />
       </span>
@@ -77,7 +88,7 @@ function SaveIndicator({ status }: { status: LineSaveStatus }) {
         data-slot="line-save-indicator"
         data-status="saved"
         className="inline-flex items-center text-emerald-600"
-        aria-label="Enregistré"
+        aria-label={labels.saved}
       >
         <CheckIcon className="size-4" />
       </span>
@@ -89,7 +100,7 @@ function SaveIndicator({ status }: { status: LineSaveStatus }) {
         data-slot="line-save-indicator"
         data-status="error"
         className="text-destructive inline-flex items-center"
-        aria-label="Échec d'enregistrement"
+        aria-label={labels.error}
       >
         <TriangleAlertIcon className="size-4" />
       </span>
@@ -127,18 +138,24 @@ export default function QuoteStepItems({
 }: QuoteStepItemsProps) {
   const selectableTaxes = availableTaxes.filter((t) => !t.superseded_at);
   const taxesDisabled = selectableTaxes.length === 0;
+  const t = useTranslations("quote.steps.items");
+  const indicatorLabels: IndicatorLabels = {
+    saving: t("savingAria"),
+    saved: t("savedAria"),
+    error: t("errorAria"),
+  };
   return (
     <div className="space-y-4">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Description</TableHead>
-            <TableHead>Quantité</TableHead>
-            <TableHead>Prix unitaire</TableHead>
-            <TableHead>TVA</TableHead>
-            <TableHead>Total ligne</TableHead>
-            <TableHead className="w-12">État</TableHead>
-            <TableHead className="w-24">Action</TableHead>
+            <TableHead>{t("description")}</TableHead>
+            <TableHead>{t("quantity")}</TableHead>
+            <TableHead>{t("unitPrice")}</TableHead>
+            <TableHead>{t("tax")}</TableHead>
+            <TableHead>{t("lineTotal")}</TableHead>
+            <TableHead className="w-12">{t("state")}</TableHead>
+            <TableHead className="w-24">{t("action")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -157,7 +174,7 @@ export default function QuoteStepItems({
                       onNameChange(item.lineId, event.target.value)
                     }
                     disabled={isReadonly}
-                    placeholder="Prestation"
+                    placeholder={t("lineNamePlaceholder")}
                   />
                 </TableCell>
                 <TableCell>
@@ -218,7 +235,7 @@ export default function QuoteStepItems({
                 </TableCell>
                 <TableCell>{lineTotal.toFixed(2)} €</TableCell>
                 <TableCell>
-                  <SaveIndicator status={item.saveStatus} />
+                  <SaveIndicator status={item.saveStatus} labels={indicatorLabels} />
                 </TableCell>
                 <TableCell>
                   {!isReadonly && (
@@ -227,7 +244,7 @@ export default function QuoteStepItems({
                       variant="ghost"
                       onClick={() => onRemoveItem(item.lineId)}
                       disabled={items.length <= 1}
-                      aria-label="Supprimer la ligne"
+                      aria-label={t("deleteAria")}
                     >
                       <Trash2Icon className="size-4" />
                     </Button>
@@ -246,7 +263,7 @@ export default function QuoteStepItems({
           className="h-auto w-full p-0"
           onClick={onAddItem}
           disabled={isAdding}
-          aria-label="Ajouter une ligne"
+          aria-label={t("addAria")}
         >
           <Skeleton className="flex h-14 w-full items-center justify-center">
             {isAdding ? (
@@ -284,6 +301,8 @@ export default function QuoteStepItems({
               <span data-slot="total-ttc">{totals.ttc.toFixed(2)} €</span>
             </div>
           )}
+        <div className="rounded-md border px-4 py-2 text-sm font-medium">
+          {t("totalAmount", { amount: totalAmount.toFixed(2) })}
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +31,8 @@ import CountryDialog from "./country-dialog";
 import { type Country } from "@/components/address/address-form";
 
 export default function CountriesTab() {
+  const t = useTranslations("admin.countries");
+  const tCommon = useTranslations("common");
   const [countries, setCountries] = useState<Country[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Country | null>(null);
@@ -68,10 +71,10 @@ export default function CountriesTab() {
       { method: "DELETE" },
     );
     if (ok && body.success) {
-      toast.success("Pays supprimé.");
+      toast.success(t("deleteSuccessToast"));
       reload();
     } else {
-      toast.error(body.message ?? "Une erreur est survenue.");
+      toast.error(body.message ?? tCommon("errors.generic"));
     }
     setPendingDelete(null);
   }
@@ -79,13 +82,13 @@ export default function CountriesTab() {
   const rowActions: DataTableRowAction[] = [
     {
       type: "callback",
-      label: "Modifier",
+      label: tCommon("actions.edit"),
       icon: PencilIcon,
       callback: (row) => openEdit(row as Country),
     },
     {
       type: "callback",
-      label: "Supprimer",
+      label: tCommon("actions.delete"),
       icon: Trash2Icon,
       callback: (row) => setPendingDelete(row as Country),
     },
@@ -96,18 +99,18 @@ export default function CountriesTab() {
       <div className="flex justify-end">
         <Button type="button" onClick={openCreate}>
           <PlusIcon />
-          Nouveau pays
+          {t("newButton")}
         </Button>
       </div>
 
       <DataTable datas={countries} row_actions={rowActions} sortBy="id">
         <DataTableHeader>
           <DataTableRow>
-            <DataTableSortableHead name="id">ID</DataTableSortableHead>
-            <DataTableSortableHead name="code">Code</DataTableSortableHead>
-            <DataTableSortableHead name="name">Nom</DataTableSortableHead>
+            <DataTableSortableHead name="id">{t("columns.id")}</DataTableSortableHead>
+            <DataTableSortableHead name="code">{t("columns.code")}</DataTableSortableHead>
+            <DataTableSortableHead name="name">{t("columns.name")}</DataTableSortableHead>
             <DataTableHead>
-              <span className="sr-only">Actions</span>
+              <span className="sr-only">{t("actionsLabel")}</span>
             </DataTableHead>
           </DataTableRow>
         </DataTableHeader>
@@ -115,7 +118,7 @@ export default function CountriesTab() {
           {countries.length === 0 ? (
             <DataTableRow>
               <DataTableCell className="text-muted-foreground">
-                Aucun pays pour le moment.
+                {t("empty")}
               </DataTableCell>
               <DataTableCell> </DataTableCell>
               <DataTableCell> </DataTableCell>
@@ -152,15 +155,15 @@ export default function CountriesTab() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce pays ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible.
+              {t("deleteDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction variant="destructive" onClick={confirmDelete}>
-              Supprimer
+              {tCommon("actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

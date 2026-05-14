@@ -1,13 +1,8 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   Card,
@@ -54,7 +49,6 @@ import { listAvailableTaxesForUser } from "@/lib/services/taxes";
 import { fieldErrorsFromBody, type FieldErrors } from "@/lib/api";
 import { useMode } from "@/lib/mode-context";
 import {
-  QUOTE_STATE_LABEL,
   type BackendAddress,
   type BackendClient,
   type BackendQuote,
@@ -69,11 +63,7 @@ type QuoteFormProps = {
   quoteId?: string;
 };
 
-const STEP_LABELS = [
-  "Informations de base",
-  "Éléments du devis",
-  "Résumé",
-] as const;
+const STEP_KEYS = ["basicInfo", "items", "summary"] as const;
 
 const SAVE_DEBOUNCE_MS = 600;
 const SAVED_INDICATOR_MS = 1500;
@@ -115,6 +105,10 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isCustomer } = useMode();
+  const t = useTranslations("quote.form");
+  const tSteps = useTranslations("quote.steps");
+  const tStatus = useTranslations("status.quote");
+  const tCommon = useTranslations("common");
   const isCreate = !quoteId;
 
   const initialStep = useMemo(() => {
@@ -140,8 +134,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [creating, setCreating] = useState(false);
   const [adding, setAdding] = useState(false);
-  const [quoteState, setQuoteState] =
-    useState<BackendQuoteState>("draft");
+  const [quoteState, setQuoteState] = useState<BackendQuoteState>("draft");
   const [transitioning, setTransitioning] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -169,7 +162,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       if (cancelled) return;
       if (!ok || !body.success) {
         setNotFound(true);
-        toast.error((body.message as string) ?? "Devis introuvable.");
+        toast.error((body.message as string) ?? t("notFoundToast"));
         return;
       }
       const fetchedQuote = body.quote as BackendQuote;
@@ -178,16 +171,14 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       setQuoteState(fetchedQuote.state ?? "draft");
       setClientId(fetchedQuote.client_id ?? "");
       setAddressId(fetchedQuote.address_id ?? null);
-      const sorted = [...fetchedLines].sort(
-        (a, b) => a.position - b.position,
-      );
+      const sorted = [...fetchedLines].sort((a, b) => a.position - b.position);
       setItems(sorted.map(rowFromBackendLine));
       setLoading(false);
     });
     return () => {
       cancelled = true;
     };
-  }, [quoteId]);
+  }, [quoteId, t]);
 
   // Load clients (always — needed for create and to display in edit)
   useEffect(() => {
@@ -216,7 +207,8 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   // next render, triggering a re-fetch that returns only currents and
   // erases the orphan from availableTaxes. Cycle would oscillate.
   const currentTaxIds = useMemo(
-    () => new Set(availableTaxes.filter((t) => !t.superseded_at).map((t) => t.id)),
+    () =>
+      new Set(availableTaxes.filter((t) => !t.superseded_at).map((t) => t.id)),
     [availableTaxes],
   );
   const includeTaxIds = useMemo(() => {
@@ -274,9 +266,9 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     const lineTimers = lineTimersRef.current;
     const savedTimers = savedIndicatorTimersRef.current;
     return () => {
-      for (const t of lineTimers.values()) clearTimeout(t);
+      for (const timer of lineTimers.values()) clearTimeout(timer);
       lineTimers.clear();
-      for (const t of savedTimers.values()) clearTimeout(t);
+      for (const timer of savedTimers.values()) clearTimeout(timer);
       savedTimers.clear();
       if (nameTimerRef.current) clearTimeout(nameTimerRef.current);
     };
@@ -333,26 +325,25 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         const { ok, body } = await updateQuote(quoteId, { name: current });
         if (!ok || !body.success) {
           toast.error(
-            (body.message as string) ??
-              "Échec de l'enregistrement du nom.",
+            (body.message as string) ?? t("errors.nameSaveFailedToast"),
           );
         }
       }, SAVE_DEBOUNCE_MS);
     },
-    [isReadonly, quoteId],
+    [isReadonly, quoteId, t],
   );
 
   const handleNextFromStep1 = useCallback(async () => {
     const trimmed = projectName.trim();
     const localErrors: FieldErrors = {};
     if (trimmed.length === 0) {
-      localErrors.name = ["Ce champ est requis."];
+      localErrors.name = [t("errors.requiredField")];
     }
     if (!clientId) {
-      localErrors.client_id = ["Veuillez sélectionner un client."];
+      localErrors.client_id = [t("errors.selectClient")];
     }
     if (!addressId) {
-      localErrors.address_id = ["Veuillez sélectionner une adresse."];
+      localErrors.address_id = [t("errors.selectAddress")];
     }
     if (Object.keys(localErrors).length > 0) {
       setErrors(localErrors);
@@ -375,33 +366,26 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         if (status === 422 && Array.isArray(body.field_errors)) {
           setErrors(fieldErrorsFromBody(body));
         } else {
-          toast.error(
-            (body.message as string) ?? "Une erreur est survenue.",
-          );
+          toast.error((body.message as string) ?? tCommon("errors.generic"));
         }
       } catch {
-        toast.error("Une erreur est survenue.");
+        toast.error(tCommon("errors.generic"));
       } finally {
         setCreating(false);
       }
       return;
     }
     setStep(1);
-  }, [addressId, clientId, isCreate, projectName, router]);
+  }, [addressId, clientId, isCreate, projectName, router, t, tCommon]);
 
   // ────────────────────────────────────────────────────────────
   // Step 2 handlers
 
-  const setRow = useCallback(
-    (lineId: string, patch: Partial<FormItem>) => {
-      setItems((prev) =>
-        prev.map((row) =>
-          row.lineId === lineId ? { ...row, ...patch } : row,
-        ),
-      );
-    },
-    [],
-  );
+  const setRow = useCallback((lineId: string, patch: Partial<FormItem>) => {
+    setItems((prev) =>
+      prev.map((row) => (row.lineId === lineId ? { ...row, ...patch } : row)),
+    );
+  }, []);
 
   const scheduleLineSave = useCallback(
     (lineId: string) => {
@@ -428,23 +412,22 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         );
         if (ok && body.success) {
           setRow(lineId, { saveStatus: "saved" });
-          const t = setTimeout(() => {
+          const savedTimer = setTimeout(() => {
             savedIndicatorTimersRef.current.delete(lineId);
             setRow(lineId, { saveStatus: "idle" });
           }, SAVED_INDICATOR_MS);
-          savedIndicatorTimersRef.current.set(lineId, t);
+          savedIndicatorTimersRef.current.set(lineId, savedTimer);
         } else {
           setRow(lineId, { saveStatus: "error" });
           toast.error(
-            (body.message as string) ??
-              "Échec d'enregistrement de la ligne.",
+            (body.message as string) ?? t("errors.lineSaveFailedToast"),
           );
         }
       }, SAVE_DEBOUNCE_MS);
 
       lineTimersRef.current.set(lineId, timer);
     },
-    [isReadonly, quoteId, setRow],
+    [isReadonly, quoteId, setRow, t],
   );
 
   const handleDrop = useCallback(async () => {
@@ -455,14 +438,12 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       if (ok && body.success) {
         setQuoteState("drop");
       } else {
-        toast.error(
-          (body.message as string) ?? "Impossible d'abandonner le devis.",
-        );
+        toast.error((body.message as string) ?? t("dropFailedToast"));
       }
     } finally {
       setTransitioning(false);
     }
-  }, [quoteId, transitioning]);
+  }, [quoteId, transitioning, t]);
 
   const handleContinue = useCallback(async () => {
     if (!quoteId || transitioning) return;
@@ -472,14 +453,12 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       if (ok && body.success) {
         setQuoteState("draft");
       } else {
-        toast.error(
-          (body.message as string) ?? "Impossible de réactiver le devis.",
-        );
+        toast.error((body.message as string) ?? t("continueFailedToast"));
       }
     } finally {
       setTransitioning(false);
     }
-  }, [quoteId, transitioning]);
+  }, [quoteId, transitioning, t]);
 
   const handleExport = useCallback(async () => {
     if (!quoteId || isExporting) return;
@@ -488,11 +467,11 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       await exportQuotePdf(quoteId);
     } catch (err) {
       console.error("export quote pdf failed", err);
-      toast.error("Échec de l'export.");
+      toast.error(t("exportFailedToast"));
     } finally {
       setIsExporting(false);
     }
-  }, [quoteId, isExporting]);
+  }, [quoteId, isExporting, t]);
 
   const handleAddItem = useCallback(async () => {
     if (!quoteId || adding) return;
@@ -522,22 +501,20 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           },
         ]);
       } else {
-        toast.error(
-          (body.message as string) ?? "Impossible d'ajouter la ligne.",
-        );
+        toast.error((body.message as string) ?? t("errors.lineAddFailedToast"));
       }
     } finally {
       setAdding(false);
     }
-  }, [adding, quoteId, defaultTaxId]);
+  }, [adding, quoteId, defaultTaxId, t]);
 
   const handleRemoveItem = useCallback(
     async (lineId: string) => {
       if (!quoteId) return;
       if (itemsRef.current.length <= 1) return;
-      const t = lineTimersRef.current.get(lineId);
-      if (t) {
-        clearTimeout(t);
+      const timer = lineTimersRef.current.get(lineId);
+      if (timer) {
+        clearTimeout(timer);
         lineTimersRef.current.delete(lineId);
       }
       const previous = itemsRef.current;
@@ -545,12 +522,12 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       const { ok, body } = await deleteLine(quoteId, lineId);
       if (!ok || !body.success) {
         toast.error(
-          (body.message as string) ?? "Impossible de supprimer la ligne.",
+          (body.message as string) ?? t("errors.lineRemoveFailedToast"),
         );
         setItems(previous);
       }
     },
-    [quoteId],
+    [quoteId, t],
   );
 
   const handleNameChange = useCallback(
@@ -598,15 +575,17 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       if (!quoteId || isReadonly || !value) return;
       const name = projectNameRef.current.trim();
       if (name.length === 0) return;
-      void updateQuote(quoteId, { name, clientId: value }).then(({ ok, body }) => {
-        if (!ok || !body.success) {
-          toast.error(
-            (body.message as string) ?? "Échec de l'enregistrement du client.",
-          );
-        }
-      });
+      void updateQuote(quoteId, { name, clientId: value }).then(
+        ({ ok, body }) => {
+          if (!ok || !body.success) {
+            toast.error(
+              (body.message as string) ?? t("errors.clientSaveFailedToast"),
+            );
+          }
+        },
+      );
     },
-    [isReadonly, quoteId],
+    [isReadonly, quoteId, t],
   );
 
   const handleAddressIdChange = useCallback(
@@ -616,15 +595,17 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       if (!quoteId || isReadonly || value == null) return;
       const name = projectNameRef.current.trim();
       if (name.length === 0) return;
-      void updateQuote(quoteId, { name, addressId: value }).then(({ ok, body }) => {
-        if (!ok || !body.success) {
-          toast.error(
-            (body.message as string) ?? "Échec de l'enregistrement de l'adresse.",
-          );
-        }
-      });
+      void updateQuote(quoteId, { name, addressId: value }).then(
+        ({ ok, body }) => {
+          if (!ok || !body.success) {
+            toast.error(
+              (body.message as string) ?? t("errors.addressSaveFailedToast"),
+            );
+          }
+        },
+      );
     },
-    [isReadonly, quoteId],
+    [isReadonly, quoteId, t],
   );
 
   // ────────────────────────────────────────────────────────────
@@ -647,7 +628,9 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     projectName.trim().length > 0 && !!clientId && !!addressId && !creating;
 
   const showDropButton =
-    !isCustomer && !isCreate && (quoteState === "draft" || quoteState === "sent");
+    !isCustomer &&
+    !isCreate &&
+    (quoteState === "draft" || quoteState === "sent");
   const showContinueButton = !isCustomer && !isCreate && quoteState === "drop";
 
   return (
@@ -655,20 +638,20 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div className="space-y-1.5">
           <CardTitle className="flex items-center gap-2">
-            {isCreate ? "Création d'un devis" : `Devis ${projectName || "…"}`}
+            {isCreate
+              ? t("createTitle")
+              : t("editTitlePlaceholder", { name: projectName || "…" })}
             {!isCreate && (
               <Badge
                 data-slot="quote-state-badge"
                 variant={STATE_BADGE_VARIANT[quoteState]}
               >
-                {QUOTE_STATE_LABEL[quoteState]}
+                {tStatus(quoteState)}
               </Badge>
             )}
           </CardTitle>
           <CardDescription>
-            {isCreate
-              ? "Complète les étapes pour générer un nouveau devis."
-              : "Modification du devis."}
+            {isCreate ? t("createDescription") : t("editDescription")}
           </CardDescription>
         </div>
         {!isCreate && (
@@ -679,7 +662,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             onClick={handleExport}
           >
             <DownloadIcon className="size-4" />
-            Exporter
+            {t("exportButton")}
           </Button>
         )}
         {showDropButton && (
@@ -690,24 +673,22 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
                 variant="destructive"
                 disabled={transitioning}
               >
-                Abandonner
+                {t("dropButton")}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Abandonner ce devis ?</AlertDialogTitle>
+                <AlertDialogTitle>{t("dropDialog.title")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Le devis ne pourra plus être modifié. Vous pourrez le
-                  réactiver via le bouton Continuer.
+                  {t("dropDialog.description")}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                <AlertDialogAction
-                  variant="destructive"
-                  onClick={handleDrop}
-                >
-                  Confirmer
+                <AlertDialogCancel>
+                  {tCommon("actions.cancel")}
+                </AlertDialogCancel>
+                <AlertDialogAction variant="destructive" onClick={handleDrop}>
+                  {t("dropDialog.confirm")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -719,16 +700,16 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             onClick={handleContinue}
             disabled={transitioning}
           >
-            Continuer
+            {t("continueButton")}
           </Button>
         )}
       </CardHeader>
 
       <CardContent className="space-y-6">
         <div className="grid gap-2 sm:grid-cols-3">
-          {STEP_LABELS.map((label, index) => (
+          {STEP_KEYS.map((key, index) => (
             <Button
-              key={label}
+              key={key}
               type="button"
               variant="ghost"
               data-step-tab={index}
@@ -741,7 +722,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
               }}
               disabled={isCreate}
             >
-              Étape {index + 1} · {label}
+              {t("stepLabel", { n: index + 1, label: tSteps(`${key}.label`) })}
             </Button>
           ))}
         </div>
@@ -790,7 +771,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           onClick={() => setStep((s) => Math.max(0, s - 1))}
           disabled={step === 0}
         >
-          Précédent
+          {t("prev")}
         </Button>
 
         <div className="flex gap-2">
@@ -800,16 +781,16 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
               onClick={handleNextFromStep1}
               disabled={!canGoNextFromStep1}
             >
-              {creating ? "Création…" : "Suivant"}
+              {creating ? t("creating") : t("next")}
             </Button>
-          ) : step < STEP_LABELS.length - 1 ? (
+          ) : step < STEP_KEYS.length - 1 ? (
             <Button
               type="button"
               onClick={() =>
-                setStep((s) => Math.min(STEP_LABELS.length - 1, s + 1))
+                setStep((s) => Math.min(STEP_KEYS.length - 1, s + 1))
               }
             >
-              Suivant
+              {t("next")}
             </Button>
           ) : (
             <Button
@@ -817,7 +798,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
               variant="outline"
               onClick={() => router.push("/quote")}
             >
-              Terminer
+              {t("finish")}
             </Button>
           )}
         </div>

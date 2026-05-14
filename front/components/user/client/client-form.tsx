@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import {
   Field,
@@ -44,6 +45,8 @@ export default function ClientForm({
   onAddressChange,
   addressErrors,
 }: ClientFormProps) {
+  const t = useTranslations("client.form");
+
   function update<K extends keyof ClientFormValues>(
     key: K,
     value: ClientFormValues[K],
@@ -56,11 +59,11 @@ export default function ClientForm({
       <FieldGroup>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field data-invalid={!!fieldErrors?.first_name?.length}>
-            <FieldLabel htmlFor="first_name">Prénom</FieldLabel>
+            <FieldLabel htmlFor="first_name">{t("firstNameLabel")}</FieldLabel>
             <Input
               id="first_name"
               name="first_name"
-              placeholder="Jean"
+              placeholder={t("placeholders.firstName")}
               value={client.first_name}
               onChange={(e) => update("first_name", e.target.value)}
               aria-invalid={!!fieldErrors?.first_name?.length}
@@ -69,11 +72,11 @@ export default function ClientForm({
           </Field>
 
           <Field data-invalid={!!fieldErrors?.last_name?.length}>
-            <FieldLabel htmlFor="last_name">Nom</FieldLabel>
+            <FieldLabel htmlFor="last_name">{t("lastNameLabel")}</FieldLabel>
             <Input
               id="last_name"
               name="last_name"
-              placeholder="Dupont"
+              placeholder={t("placeholders.lastName")}
               value={client.last_name}
               onChange={(e) => update("last_name", e.target.value)}
               aria-invalid={!!fieldErrors?.last_name?.length}
@@ -84,12 +87,12 @@ export default function ClientForm({
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field data-invalid={!!fieldErrors?.email?.length}>
-            <FieldLabel htmlFor="client_email">Adresse mail</FieldLabel>
+            <FieldLabel htmlFor="client_email">{t("emailLabel")}</FieldLabel>
             <Input
               id="client_email"
               name="email"
               type="email"
-              placeholder="jean.dupont@email.com"
+              placeholder={t("placeholders.email")}
               value={client.email}
               onChange={(e) => update("email", e.target.value)}
               aria-invalid={!!fieldErrors?.email?.length}
@@ -98,11 +101,11 @@ export default function ClientForm({
           </Field>
 
           <Field data-invalid={!!fieldErrors?.phone?.length}>
-            <FieldLabel htmlFor="client_phone">Téléphone</FieldLabel>
+            <FieldLabel htmlFor="client_phone">{t("phoneLabel")}</FieldLabel>
             <Input
               id="client_phone"
               name="phone"
-              placeholder="06 12 34 56 78"
+              placeholder={t("placeholders.phone")}
               value={client.phone}
               onChange={(e) => update("phone", e.target.value)}
               aria-invalid={!!fieldErrors?.phone?.length}
@@ -113,11 +116,11 @@ export default function ClientForm({
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Field data-invalid={!!fieldErrors?.company?.length}>
-            <FieldLabel htmlFor="client_company">Société</FieldLabel>
+            <FieldLabel htmlFor="client_company">{t("companyLabel")}</FieldLabel>
             <Input
               id="client_company"
               name="company"
-              placeholder="Acme SARL"
+              placeholder={t("placeholders.company")}
               value={client.company}
               onChange={(e) => update("company", e.target.value)}
               aria-invalid={!!fieldErrors?.company?.length}
@@ -126,11 +129,11 @@ export default function ClientForm({
           </Field>
 
           <Field data-invalid={!!fieldErrors?.siren?.length}>
-            <FieldLabel htmlFor="client_siren">SIREN</FieldLabel>
+            <FieldLabel htmlFor="client_siren">{t("sirenLabel")}</FieldLabel>
             <Input
               id="client_siren"
               name="siren"
-              placeholder="123 456 789"
+              placeholder={t("placeholders.siren")}
               value={client.siren}
               onChange={(e) => update("siren", e.target.value)}
               aria-invalid={!!fieldErrors?.siren?.length}
@@ -139,11 +142,11 @@ export default function ClientForm({
           </Field>
 
           <Field data-invalid={!!fieldErrors?.vat?.length}>
-            <FieldLabel htmlFor="client_vat">TVA</FieldLabel>
+            <FieldLabel htmlFor="client_vat">{t("vatLabel")}</FieldLabel>
             <Input
               id="client_vat"
               name="vat"
-              placeholder="FR12345678901"
+              placeholder={t("placeholders.vat")}
               value={client.vat}
               onChange={(e) => update("vat", e.target.value)}
               aria-invalid={!!fieldErrors?.vat?.length}
@@ -155,7 +158,7 @@ export default function ClientForm({
 
       {address && onAddressChange && (
         <div className="grid gap-3 rounded-lg border p-4">
-          <h3 className="text-sm font-medium">Adresse principale</h3>
+          <h3 className="text-sm font-medium">{t("mainAddressLabel")}</h3>
           <AddressForm
             initialValues={address}
             onChange={onAddressChange}

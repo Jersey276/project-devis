@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import {
   Field,
   FieldError,
@@ -44,6 +47,7 @@ export default function QuoteStepBasicInfo({
   onClientIdChange,
   onAddressIdChange,
 }: QuoteStepBasicInfoProps) {
+  const t = useTranslations("quote.steps.basicInfo");
   const hasNameError = !!nameErrors?.length;
   const hasClientError = !!clientErrors?.length;
   const hasAddressError = !!addressErrors?.length;
@@ -56,16 +60,27 @@ export default function QuoteStepBasicInfo({
       ? addresses.find((a) => a.id === addressId) ?? null
       : null;
 
+  const clientPlaceholder =
+    clients.length === 0
+      ? t("clientPlaceholderEmpty")
+      : t("clientPlaceholder");
+
+  const addressPlaceholder = !clientId
+    ? t("addressPlaceholderNoClient")
+    : addresses.length === 0
+      ? t("addressPlaceholderEmpty")
+      : t("addressPlaceholder");
+
   return (
     <div className="grid gap-4 md:max-w-xl">
       <Field data-invalid={hasNameError}>
-        <FieldLabel htmlFor="project-name">Nom du projet</FieldLabel>
+        <FieldLabel htmlFor="project-name">{t("nameLabel")}</FieldLabel>
         <Input
           id="project-name"
           name="name"
           value={projectName}
           onChange={(event) => onProjectNameChange(event.target.value)}
-          placeholder="Ex: Refonte site vitrine"
+          placeholder={t("namePlaceholder")}
           disabled={isReadonly}
           aria-invalid={hasNameError}
         />
@@ -73,7 +88,7 @@ export default function QuoteStepBasicInfo({
       </Field>
 
       <Field data-invalid={hasClientError}>
-        <FieldLabel htmlFor="client-picker">Client associé</FieldLabel>
+        <FieldLabel htmlFor="client-picker">{t("clientLabel")}</FieldLabel>
         <Combobox
           items={clients}
           value={selectedClient}
@@ -87,16 +102,12 @@ export default function QuoteStepBasicInfo({
           <ComboboxInput
             id="client-picker"
             name="client_id"
-            placeholder={
-              clients.length === 0
-                ? "Aucun client disponible"
-                : "Sélectionner un client"
-            }
+            placeholder={clientPlaceholder}
             disabled={isReadonly || clients.length === 0}
             aria-invalid={hasClientError}
           />
           <ComboboxContent>
-            <ComboboxEmpty>Aucun client trouvé.</ComboboxEmpty>
+            <ComboboxEmpty>{t("clientEmpty")}</ComboboxEmpty>
             <ComboboxList>
               {(client: BackendClient) => (
                 <ComboboxItem key={client.client_id} value={client}>
@@ -111,7 +122,7 @@ export default function QuoteStepBasicInfo({
       </Field>
 
       <Field data-invalid={hasAddressError}>
-        <FieldLabel htmlFor="address-picker">Adresse</FieldLabel>
+        <FieldLabel htmlFor="address-picker">{t("addressLabel")}</FieldLabel>
         <Combobox
           items={addresses}
           value={selectedAddress}
@@ -125,18 +136,12 @@ export default function QuoteStepBasicInfo({
           <ComboboxInput
             id="address-picker"
             name="address_id"
-            placeholder={
-              !clientId
-                ? "Sélectionner d'abord un client"
-                : addresses.length === 0
-                  ? "Aucune adresse pour ce client"
-                  : "Sélectionner une adresse"
-            }
+            placeholder={addressPlaceholder}
             disabled={isReadonly || !clientId || addresses.length === 0}
             aria-invalid={hasAddressError}
           />
           <ComboboxContent>
-            <ComboboxEmpty>Aucune adresse trouvée.</ComboboxEmpty>
+            <ComboboxEmpty>{t("addressEmpty")}</ComboboxEmpty>
             <ComboboxList>
               {(address: BackendAddress) => (
                 <ComboboxItem key={address.id} value={address}>

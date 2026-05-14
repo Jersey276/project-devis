@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -41,6 +42,8 @@ export default function CountryDialog({
   country,
   onSaved,
 }: CountryDialogProps) {
+  const t = useTranslations("admin.countries.dialog");
+  const tCommon = useTranslations("common");
   const isEdit = country != null;
   const [code, setCode] = useState(country?.code ?? "");
   const [name, setName] = useState(country?.name ?? "");
@@ -60,7 +63,9 @@ export default function CountryDialog({
         body: JSON.stringify({ code, name }),
       });
       if (ok && body.success) {
-        toast.success(isEdit ? "Pays mis à jour." : "Pays ajouté.");
+        toast.success(
+          isEdit ? t("updateSuccessToast") : t("createSuccessToast"),
+        );
         onSaved();
         onOpenChange(false);
         return;
@@ -69,9 +74,9 @@ export default function CountryDialog({
         setFieldErrors(fieldErrorsFromBody(body));
         return;
       }
-      toast.error(body.message ?? "Une erreur est survenue.");
+      toast.error(body.message ?? tCommon("errors.generic"));
     } catch {
-      toast.error("Une erreur est survenue.");
+      toast.error(tCommon("errors.generic"));
     } finally {
       setSubmitting(false);
     }
@@ -82,18 +87,18 @@ export default function CountryDialog({
       <DialogContent className="p-6">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? "Modifier le pays" : "Nouveau pays"}
+            {isEdit ? t("editTitle") : t("createTitle")}
           </DialogTitle>
         </DialogHeader>
 
         <form id={FORM_ID} className="grid gap-4" onSubmit={handleSubmit} noValidate>
           <FieldGroup>
             <Field data-invalid={!!fieldErrors.code?.length}>
-              <FieldLabel htmlFor="country_code">Code</FieldLabel>
+              <FieldLabel htmlFor="country_code">{t("codeLabel")}</FieldLabel>
               <Input
                 id="country_code"
                 name="code"
-                placeholder="FR"
+                placeholder={t("codePlaceholder")}
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 aria-invalid={!!fieldErrors.code?.length}
@@ -102,11 +107,11 @@ export default function CountryDialog({
             </Field>
 
             <Field data-invalid={!!fieldErrors.name?.length}>
-              <FieldLabel htmlFor="country_name">Nom</FieldLabel>
+              <FieldLabel htmlFor="country_name">{t("nameLabel")}</FieldLabel>
               <Input
                 id="country_name"
                 name="name"
-                placeholder="France"
+                placeholder={t("namePlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 aria-invalid={!!fieldErrors.name?.length}
@@ -119,11 +124,11 @@ export default function CountryDialog({
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline">
-              Annuler
+              {tCommon("actions.cancel")}
             </Button>
           </DialogClose>
           <Button type="submit" form={FORM_ID} disabled={submitting}>
-            {submitting ? "Enregistrement…" : "Enregistrer"}
+            {submitting ? tCommon("actions.saving") : tCommon("actions.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   ResponsiveDialog,
@@ -42,6 +43,8 @@ export default function AddressDialog({
   address,
   onSaved,
 }: AddressDialogProps) {
+  const t = useTranslations("address.dialog");
+  const tCommon = useTranslations("common");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -62,7 +65,9 @@ export default function AddressDialog({
         ? await updateAddress(owner, address!.id, values)
         : await createAddress(owner, values);
       if (ok && body.success) {
-        toast.success(isEdit ? "Adresse mise à jour." : "Adresse ajoutée.");
+        toast.success(
+          isEdit ? t("updateSuccessToast") : t("createSuccessToast"),
+        );
         onSaved();
         onOpenChange(false);
         return;
@@ -71,9 +76,9 @@ export default function AddressDialog({
         setFieldErrors(fieldErrorsFromBody(body));
         return;
       }
-      toast.error(body.message ?? "Une erreur est survenue.");
+      toast.error(body.message ?? tCommon("errors.generic"));
     } catch {
-      toast.error("Une erreur est survenue.");
+      toast.error(tCommon("errors.generic"));
     } finally {
       setSubmitting(false);
     }
@@ -84,7 +89,7 @@ export default function AddressDialog({
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>
-            {address ? "Modifier l'adresse" : "Nouvelle adresse"}
+            {address ? t("editTitle") : t("createTitle")}
           </ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
         <ResponsiveDialogBody>
@@ -98,14 +103,14 @@ export default function AddressDialog({
         </ResponsiveDialogBody>
         <ResponsiveDialogFooter>
           <Button type="submit" form={FORM_ID} disabled={submitting}>
-            {submitting ? "Enregistrement…" : "Enregistrer"}
+            {submitting ? tCommon("actions.saving") : tCommon("actions.save")}
           </Button>
           <Button
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
-            Annuler
+            {tCommon("actions.cancel")}
           </Button>
         </ResponsiveDialogFooter>
       </ResponsiveDialogContent>
