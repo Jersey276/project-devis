@@ -1,5 +1,6 @@
 "use client";
 import { FormEvent } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,6 +25,7 @@ import { toast } from "sonner";
 function submitLoginForm(
   router: ReturnType<typeof useRouter>,
   next: string,
+  messages: { success: string; failure: string },
 ) {
   return async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -42,18 +44,14 @@ function submitLoginForm(
     })
       .then(async (response) => {
         if (response.ok) {
-          toast.success("Login successful!");
+          toast.success(messages.success);
           router.replace(next);
         } else {
-          toast.error(
-            "Login failed. Please check your credentials and try again.",
-          );
+          toast.error(messages.failure);
         }
       })
       .catch(() => {
-        toast.error(
-          "Login failed. Please check your credentials and try again.",
-        );
+        toast.error(messages.failure);
       });
   };
 }
@@ -64,20 +62,24 @@ export default function LoginForm({
 }: React.HTMLAttributes<HTMLDivElement>) {
   const router = useRouter();
   const next = safeNextPath(useSearchParams().get(NEXT_PARAM));
+  const t = useTranslations("auth.login");
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>Login to your account</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
+          <CardTitle>{t("title")}</CardTitle>
+          <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={submitLoginForm(router, next)}>
+          <form
+            onSubmit={submitLoginForm(router, next, {
+              success: t("successToast"),
+              failure: t("failureToast"),
+            })}
+          >
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <FieldLabel htmlFor="email">{t("emailLabel")}</FieldLabel>
                 <Input
                   id="email"
                   type="email"
@@ -88,12 +90,14 @@ export default function LoginForm({
               </Field>
               <Field>
                 <div className="flex items-center">
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
+                  <FieldLabel htmlFor="password">
+                    {t("passwordLabel")}
+                  </FieldLabel>
                   <a
                     href="#"
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                   >
-                    Forgot your password?
+                    {t("forgotLink")}
                   </a>
                 </div>
                 <Input id="password" type="password" name="password" required />
@@ -102,17 +106,17 @@ export default function LoginForm({
                 <div className="flex items-center gap-2">
                   <Checkbox id="remember_me" name="remember_me" />
                   <FieldLabel htmlFor="remember_me" className="font-normal">
-                    Se souvenir de moi
+                    {t("rememberMeLabel")}
                   </FieldLabel>
                 </div>
               </Field>
               <Field>
-                <Button type="submit">Login</Button>
+                <Button type="submit">{t("submit")}</Button>
                 <Button variant="outline" type="button">
-                  Login with Google
+                  {t("googleSubmit")}
                 </Button>
                 <FieldDescription className="text-center">
-                  Don&apos;t have an account? <a href="/register">Sign up</a>
+                  {t("signupPrompt")} <a href="/register">{t("signupLink")}</a>
                 </FieldDescription>
               </Field>
             </FieldGroup>
