@@ -399,6 +399,10 @@ message Tax {
     string rate = 3;
     int32 country_group_id = 4;
     bool is_default = 5;
+    int32 original_tax_id = 6; // 0 if this row is the original
+    int32 version = 7;
+    string superseded_at = 8; // ISO8601, "" if current
+    int32 superseded_by = 9; // 0 if not replaced
 }
 
 message CreateTaxRequest {
@@ -430,6 +434,7 @@ message ListTaxesRequest {
 
 message ListTaxesForUserRequest {
     string user_id = 1;
+    repeated int32 include_ids = 2;
 }
 
 message ListTaxesResponse {
@@ -448,6 +453,7 @@ message UpdateTaxRequest {
 message UpdateTaxResponse {
     bool success = 1;
     int32 code = 2;
+    int32 tax_id = 3; // id of the current version after update (may be a new row)
 }
 
 message DeleteTaxRequest {

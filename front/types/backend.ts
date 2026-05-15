@@ -33,6 +33,10 @@ export type BackendTax = {
   rate: string;
   country_group_id: number;
   is_default: boolean;
+  original_tax_id?: number;
+  version?: number;
+  superseded_at?: string;
+  superseded_by?: number;
 };
 
 export const QUOTE_STATE_LABEL: Record<BackendQuoteState, string> = {

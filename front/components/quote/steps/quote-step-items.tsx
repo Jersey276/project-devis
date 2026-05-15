@@ -107,7 +107,8 @@ function SaveIndicator({ status }: { status: LineSaveStatus }) {
 }
 
 function taxLabel(t: BackendTax): string {
-  return `${t.name} (${t.rate}%)`;
+  const base = `${t.name} (${t.rate}%)`;
+  return t.superseded_at ? `${base} — version archivée` : base;
 }
 
 export default function QuoteStepItems({
@@ -124,7 +125,10 @@ export default function QuoteStepItems({
   onRemoveItem,
   onAddItem,
 }: QuoteStepItemsProps) {
-  const taxesDisabled = availableTaxes.length === 0;
+  // Superseded taxes still appear via taxById (so an old line can render
+  // its snapshot label) but must NOT be selectable for new picks.
+  const selectableTaxes = availableTaxes.filter((t) => !t.superseded_at);
+  const taxesDisabled = selectableTaxes.length === 0;
   return (
     <div className="space-y-4">
       <Table>
@@ -188,7 +192,7 @@ export default function QuoteStepItems({
                 </TableCell>
                 <TableCell data-slot="line-tax-cell">
                   <Combobox
-                    items={availableTaxes}
+                    items={selectableTaxes}
                     value={selectedTax}
                     onValueChange={(t: BackendTax | null) =>
                       onTaxChange(item.lineId, t ? t.id : null)

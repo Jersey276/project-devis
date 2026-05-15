@@ -82,7 +82,7 @@ func fetchAllCountries(ctx context.Context, db *sql.DB, groupIDs []int32) (map[i
 
 func fetchAllTaxes(ctx context.Context, db *sql.DB, groupIDs []int32) (map[int32][]*usersGrpc.Tax, error) {
 	rows, err := db.QueryContext(ctx,
-		"SELECT "+tax.Columns+" FROM taxes WHERE country_group_id = ANY($1) ORDER BY name",
+		"SELECT "+tax.Columns+" FROM taxes WHERE country_group_id = ANY($1) AND superseded_at IS NULL ORDER BY name",
 		pq.Array(groupIDs),
 	)
 	if err != nil {

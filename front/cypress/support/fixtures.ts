@@ -29,6 +29,10 @@ export type TaxFixture = {
   rate: string;
   country_group_id: number;
   is_default: boolean;
+  original_tax_id?: number;
+  version?: number;
+  superseded_at?: string;
+  superseded_by?: number;
 };
 
 export function tax(over: Partial<TaxFixture> = {}): TaxFixture {
@@ -38,6 +42,7 @@ export function tax(over: Partial<TaxFixture> = {}): TaxFixture {
     rate: "20.00",
     country_group_id: 10,
     is_default: true,
+    version: 1,
     ...over,
   };
 }

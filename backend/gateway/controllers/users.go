@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 
 	"gateway/middleware"
 	users "gateway/users"
@@ -790,7 +791,27 @@ func ListTaxesForUser(c *gin.Context, client users.UserServiceClient) {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Non authentifié."})
 		return
 	}
-	resp, err := client.ListTaxesForUser(c.Request.Context(), &users.ListTaxesForUserRequest{UserId: userID})
+
+	var includeIDs []int32
+	if raw := c.Query("include_ids"); raw != "" {
+		for _, part := range strings.Split(raw, ",") {
+			part = strings.TrimSpace(part)
+			if part == "" {
+				continue
+			}
+			v, err := strconv.ParseInt(part, 10, 32)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Paramètre include_ids invalide."})
+				return
+			}
+			includeIDs = append(includeIDs, int32(v))
+		}
+	}
+
+	resp, err := client.ListTaxesForUser(c.Request.Context(), &users.ListTaxesForUserRequest{
+		UserId:     userID,
+		IncludeIds: includeIDs,
+	})
 	if err != nil {
 		usersErrors.unavailable(c)
 		return
@@ -875,9 +896,14 @@ func UpdateTax(c *gin.Context, client users.UserServiceClient) {
 		usersErrors.reply(c, resp.Code)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true})
+	// tax_id may differ from the request id if the update created a new
+	// version (the previous row is now superseded). Frontend uses it to
+	// refresh local state.
+	c.JSON(http.StatusOK, gin.H{"success": true, "tax_id": resp.TaxId})
 }
 
+// DeleteTax retires the tax (sets superseded_at). The row is preserved so
+// existing quote_lines keep their snapshot. UI surfaces this as "Retirer".
 func DeleteTax(c *gin.Context, client users.UserServiceClient) {
 	id, ok := paramInt32(c, "id")
 	if !ok {

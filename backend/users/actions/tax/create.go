@@ -25,10 +25,7 @@ func Create(ctx context.Context, db *sql.DB, req *usersGrpc.CreateTaxRequest) (*
 	defer tx.Rollback()
 
 	if req.IsDefault {
-		if _, err := tx.ExecContext(ctx,
-			"UPDATE taxes SET is_default=FALSE WHERE country_group_id=$1 AND is_default=TRUE",
-			req.CountryGroupId,
-		); err != nil {
+		if err := clearDefaultInGroup(ctx, tx, req.CountryGroupId, 0); err != nil {
 			return &usersGrpc.CreateTaxResponse{Success: false, Code: codes.InternalError}, err
 		}
 	}

@@ -11,6 +11,7 @@ describe("Taxes page", () => {
       rate: "20.00",
       country_group_id: 10,
       is_default: false,
+      version: 1,
     },
   ];
 
@@ -179,42 +180,42 @@ describe("Taxes page", () => {
     });
   });
 
-  describe("Delete", () => {
+  describe("Retire", () => {
     beforeEach(() => stubTaxesPage());
 
-    it("deletes a tax (success)", () => {
+    it("retires a tax (success)", () => {
       cy.intercept("DELETE", "/api/users/taxes/100", {
         statusCode: 200,
         body: { success: true },
-      }).as("deleteTax");
+      }).as("retireTax");
 
       cy.visit("/taxes");
       cy.wait("@getTaxes");
       cy.wait("@getCountryGroups");
 
       cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
-      cy.contains("Supprimer").click();
-      cy.contains("[data-slot='alert-dialog-action']", "Supprimer").click();
+      cy.contains("Retirer").click();
+      cy.contains("[data-slot='alert-dialog-action']", "Retirer").click();
 
-      cy.wait("@deleteTax");
-      cy.get("[data-sonner-toaster]").should("contain", "Taxe supprimée.");
+      cy.wait("@retireTax");
+      cy.get("[data-sonner-toaster]").should("contain", "Taxe retirée.");
     });
 
-    it("shows error toast on delete failure", () => {
+    it("shows error toast on retire failure", () => {
       cy.intercept("DELETE", "/api/users/taxes/100", {
         statusCode: 500,
         body: { success: false, message: "Échec serveur." },
-      }).as("deleteTaxFail");
+      }).as("retireTaxFail");
 
       cy.visit("/taxes");
       cy.wait("@getTaxes");
       cy.wait("@getCountryGroups");
 
       cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
-      cy.contains("Supprimer").click();
-      cy.contains("[data-slot='alert-dialog-action']", "Supprimer").click();
+      cy.contains("Retirer").click();
+      cy.contains("[data-slot='alert-dialog-action']", "Retirer").click();
 
-      cy.wait("@deleteTaxFail");
+      cy.wait("@retireTaxFail");
       cy.get("[data-sonner-toaster]").should("contain", "Échec serveur.");
       cy.contains("td", "TVA 20").should("be.visible");
     });

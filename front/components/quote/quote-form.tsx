@@ -204,10 +204,33 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   }, []);
 
   // Load taxes available for the current user (resolved from their first
-  // address). Empty when the user has no address or no taxes apply.
+  // address). Existing lines may reference superseded taxes (the tax was
+  // edited or retired after the quote was created); we forward those ids
+  // as include_ids so the combobox can still render the historical label.
+  // Gated on `loading` so we don't fire twice in edit mode (once before
+  // getQuote resolves, once after items populate).
+  //
+  // The orphan list is filtered against the *current* (non-superseded)
+  // taxes already loaded — never against ALL availableTaxes. Filtering
+  // against the full set would drop the orphan from include_ids on the
+  // next render, triggering a re-fetch that returns only currents and
+  // erases the orphan from availableTaxes. Cycle would oscillate.
+  const currentTaxIds = useMemo(
+    () => new Set(availableTaxes.filter((t) => !t.superseded_at).map((t) => t.id)),
+    [availableTaxes],
+  );
+  const includeTaxIds = useMemo(() => {
+    const ids = items
+      .map((i) => i.taxId)
+      .filter((id): id is number => id != null && !currentTaxIds.has(id));
+    return [...new Set(ids)].sort((a, b) => a - b);
+  }, [items, currentTaxIds]);
+  const includeTaxIdsKey = includeTaxIds.join(",");
+
   useEffect(() => {
+    if (loading) return;
     let cancelled = false;
-    listAvailableTaxesForUser().then(({ ok, body }) => {
+    listAvailableTaxesForUser(includeTaxIds).then(({ ok, body }) => {
       if (cancelled) return;
       if (ok && Array.isArray(body.taxes)) {
         setAvailableTaxes(body.taxes as BackendTax[]);
@@ -218,7 +241,9 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     return () => {
       cancelled = true;
     };
-  }, []);
+    // includeTaxIds is reference-unstable; key it via the joined string.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, includeTaxIdsKey]);
 
   // Load addresses for the selected client; reset address when client changes.
   useEffect(() => {

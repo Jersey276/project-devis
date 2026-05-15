@@ -14,12 +14,12 @@ func List(ctx context.Context, db *sql.DB, req *usersGrpc.ListTaxesRequest) (*us
 
 	if req.CountryGroupId != 0 {
 		rows, err = db.QueryContext(ctx,
-			"SELECT "+Columns+" FROM taxes WHERE country_group_id=$1 ORDER BY name",
+			"SELECT "+Columns+" FROM taxes WHERE country_group_id=$1 AND superseded_at IS NULL ORDER BY name",
 			req.CountryGroupId,
 		)
 	} else {
 		rows, err = db.QueryContext(ctx,
-			"SELECT "+Columns+" FROM taxes ORDER BY name",
+			"SELECT "+Columns+" FROM taxes WHERE superseded_at IS NULL ORDER BY name",
 		)
 	}
 	if err != nil {

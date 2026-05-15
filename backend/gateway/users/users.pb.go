@@ -3291,6 +3291,10 @@ type Tax struct {
 	Rate           string                 `protobuf:"bytes,3,opt,name=rate,proto3" json:"rate,omitempty"`
 	CountryGroupId int32                  `protobuf:"varint,4,opt,name=country_group_id,json=countryGroupId,proto3" json:"country_group_id,omitempty"`
 	IsDefault      bool                   `protobuf:"varint,5,opt,name=is_default,json=isDefault,proto3" json:"is_default,omitempty"`
+	OriginalTaxId  int32                  `protobuf:"varint,6,opt,name=original_tax_id,json=originalTaxId,proto3" json:"original_tax_id,omitempty"` // 0 if this row is the original
+	Version        int32                  `protobuf:"varint,7,opt,name=version,proto3" json:"version,omitempty"`
+	SupersededAt   string                 `protobuf:"bytes,8,opt,name=superseded_at,json=supersededAt,proto3" json:"superseded_at,omitempty"`  // ISO8601, "" if current
+	SupersededBy   int32                  `protobuf:"varint,9,opt,name=superseded_by,json=supersededBy,proto3" json:"superseded_by,omitempty"` // 0 if not replaced
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -3358,6 +3362,34 @@ func (x *Tax) GetIsDefault() bool {
 		return x.IsDefault
 	}
 	return false
+}
+
+func (x *Tax) GetOriginalTaxId() int32 {
+	if x != nil {
+		return x.OriginalTaxId
+	}
+	return 0
+}
+
+func (x *Tax) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *Tax) GetSupersededAt() string {
+	if x != nil {
+		return x.SupersededAt
+	}
+	return ""
+}
+
+func (x *Tax) GetSupersededBy() int32 {
+	if x != nil {
+		return x.SupersededBy
+	}
+	return 0
 }
 
 type CreateTaxRequest struct {
@@ -3639,6 +3671,7 @@ func (x *ListTaxesRequest) GetCountryGroupId() int32 {
 type ListTaxesForUserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	IncludeIds    []int32                `protobuf:"varint,2,rep,packed,name=include_ids,json=includeIds,proto3" json:"include_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3678,6 +3711,13 @@ func (x *ListTaxesForUserRequest) GetUserId() string {
 		return x.UserId
 	}
 	return ""
+}
+
+func (x *ListTaxesForUserRequest) GetIncludeIds() []int32 {
+	if x != nil {
+		return x.IncludeIds
+	}
+	return nil
 }
 
 type ListTaxesResponse struct {
@@ -3812,6 +3852,7 @@ type UpdateTaxResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	TaxId         int32                  `protobuf:"varint,3,opt,name=tax_id,json=taxId,proto3" json:"tax_id,omitempty"` // id of the current version after update (may be a new row)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3856,6 +3897,13 @@ func (x *UpdateTaxResponse) GetSuccess() bool {
 func (x *UpdateTaxResponse) GetCode() int32 {
 	if x != nil {
 		return x.Code
+	}
+	return 0
+}
+
+func (x *UpdateTaxResponse) GetTaxId() int32 {
+	if x != nil {
+		return x.TaxId
 	}
 	return 0
 }
@@ -4163,14 +4211,18 @@ const file_users_proto_rawDesc = "" +
 	"\x14DetachCountryRequest\x12(\n" +
 	"\x10country_group_id\x18\x01 \x01(\x05R\x0ecountryGroupId\x12\x1d\n" +
 	"\n" +
-	"country_id\x18\x02 \x01(\x05R\tcountryId\"\x86\x01\n" +
+	"country_id\x18\x02 \x01(\x05R\tcountryId\"\x92\x02\n" +
 	"\x03Tax\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
 	"\x04rate\x18\x03 \x01(\tR\x04rate\x12(\n" +
 	"\x10country_group_id\x18\x04 \x01(\x05R\x0ecountryGroupId\x12\x1d\n" +
 	"\n" +
-	"is_default\x18\x05 \x01(\bR\tisDefault\"\x83\x01\n" +
+	"is_default\x18\x05 \x01(\bR\tisDefault\x12&\n" +
+	"\x0foriginal_tax_id\x18\x06 \x01(\x05R\roriginalTaxId\x12\x18\n" +
+	"\aversion\x18\a \x01(\x05R\aversion\x12#\n" +
+	"\rsuperseded_at\x18\b \x01(\tR\fsupersededAt\x12#\n" +
+	"\rsuperseded_by\x18\t \x01(\x05R\fsupersededBy\"\x83\x01\n" +
 	"\x10CreateTaxRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04rate\x18\x02 \x01(\tR\x04rate\x12(\n" +
@@ -4189,9 +4241,11 @@ const file_users_proto_rawDesc = "" +
 	"\x03tax\x18\x03 \x01(\v2\n" +
 	".users.TaxR\x03tax\"<\n" +
 	"\x10ListTaxesRequest\x12(\n" +
-	"\x10country_group_id\x18\x01 \x01(\x05R\x0ecountryGroupId\"2\n" +
+	"\x10country_group_id\x18\x01 \x01(\x05R\x0ecountryGroupId\"S\n" +
 	"\x17ListTaxesForUserRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"c\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1f\n" +
+	"\vinclude_ids\x18\x02 \x03(\x05R\n" +
+	"includeIds\"c\n" +
 	"\x11ListTaxesResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12 \n" +
@@ -4202,10 +4256,11 @@ const file_users_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
 	"\x04rate\x18\x03 \x01(\tR\x04rate\x12\x1d\n" +
 	"\n" +
-	"is_default\x18\x04 \x01(\bR\tisDefault\"A\n" +
+	"is_default\x18\x04 \x01(\bR\tisDefault\"X\n" +
 	"\x11UpdateTaxResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\x05R\x04code\")\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x15\n" +
+	"\x06tax_id\x18\x03 \x01(\x05R\x05taxId\")\n" +
 	"\x10DeleteTaxRequest\x12\x15\n" +
 	"\x06tax_id\x18\x01 \x01(\x05R\x05taxId*S\n" +
 	"\tOwnerType\x12\x1a\n" +

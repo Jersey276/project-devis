@@ -7,7 +7,7 @@ import {
 } from "../support/fixtures";
 
 function stubAvailableTaxes(taxes: TaxFixture[] = []) {
-  cy.intercept("GET", "/api/users/taxes/available", {
+  cy.intercept("GET", "/api/users/taxes/available**", {
     statusCode: 200,
     body: { success: true, taxes },
   }).as("listAvailableTaxes");
@@ -377,6 +377,39 @@ describe("Quote", () => {
 
       cy.get("[data-slot='total-ht']").should("contain", "800.00");
       cy.get("[data-slot='total-tax-line'][data-tax-id='100']").should(
+        "contain",
+        "160.00",
+      );
+      cy.get("[data-slot='total-ttc']").should("contain", "960.00");
+    });
+
+    it("forwards orphan tax_ids to /available so superseded snapshots render", () => {
+      // Line references the previous version (id=99, superseded). The
+      // current version (id=100) is in the live list; the backend returns
+      // both because the frontend forwarded include_ids=99.
+      stubGet(
+        [line({ tax_id: 99 })],
+        [
+          tax({ id: 100, name: "TVA 21", rate: "21.00", is_default: true, version: 2 }),
+          tax({
+            id: 99,
+            name: "TVA 20",
+            rate: "20.00",
+            is_default: false,
+            version: 1,
+            superseded_at: "2026-04-01T00:00:00Z",
+            superseded_by: 100,
+          }),
+        ],
+      );
+      cy.visit("/quote/q-1?step=2");
+      cy.wait("@getQuote");
+      cy.wait("@listAvailableTaxes").then((interception) => {
+        expect(interception.request.url).to.include("include_ids=99");
+      });
+
+      // Breakdown uses the snapshot (20%, not the current 21%).
+      cy.get("[data-slot='total-tax-line'][data-tax-id='99']").should(
         "contain",
         "160.00",
       );
