@@ -6,9 +6,4 @@ export type CountryGroup = {
   countries?: Country[];
 };
 
-export type Tax = {
-  id: number;
-  name: string;
-  rate: string;
-  country_group_id: number;
-};
+export type { BackendTax as Tax } from "@/types/backend";

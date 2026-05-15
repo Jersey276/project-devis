@@ -1,0 +1,1 @@
+ALTER TABLE quote_lines DROP COLUMN IF EXISTS tax_id;

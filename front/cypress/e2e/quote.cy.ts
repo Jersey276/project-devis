@@ -1,4 +1,17 @@
-import { line, type LineFixture, quote } from "../support/fixtures";
+import {
+  line,
+  type LineFixture,
+  quote,
+  tax,
+  type TaxFixture,
+} from "../support/fixtures";
+
+function stubAvailableTaxes(taxes: TaxFixture[] = []) {
+  cy.intercept("GET", "/api/users/taxes/available", {
+    statusCode: 200,
+    body: { success: true, taxes },
+  }).as("listAvailableTaxes");
+}
 
 describe("Quote", () => {
   describe("List", () => {
@@ -49,6 +62,8 @@ describe("Quote", () => {
   });
 
   describe("Create", () => {
+    beforeEach(() => stubAvailableTaxes());
+
     function stubClientsAndAddresses() {
       cy.intercept("GET", "/api/users/clients**", {
         statusCode: 200,
@@ -189,8 +204,9 @@ describe("Quote", () => {
   });
 
   describe("Step 2 — lines", () => {
-    function stubGet(lines: LineFixture[]) {
+    function stubGet(lines: LineFixture[], taxes: TaxFixture[] = []) {
       cy.login();
+      stubAvailableTaxes(taxes);
       cy.intercept("GET", "/api/quotes/q-1", {
         statusCode: 200,
         body: { success: true, quote: quote(), lines },
@@ -232,6 +248,7 @@ describe("Quote", () => {
           unit_price: 0,
           data: {},
           position: 1,
+          tax_id: 0,
         });
       });
       cy.get("[data-line-id='l-2']").should("exist");
@@ -309,7 +326,67 @@ describe("Quote", () => {
     });
   });
 
+  describe("Step 2 — taxes", () => {
+    function stubGet(lines: LineFixture[], taxes: TaxFixture[] = []) {
+      cy.login();
+      stubAvailableTaxes(taxes);
+      cy.intercept("GET", "/api/quotes/q-1", {
+        statusCode: 200,
+        body: { success: true, quote: quote(), lines },
+      }).as("getQuote");
+    }
+
+    it("disables the tax select and hides TTC when no tax is available", () => {
+      stubGet([line()]);
+      cy.visit("/quote/q-1?step=2");
+      cy.wait("@getQuote");
+      cy.wait("@listAvailableTaxes");
+
+      cy.get("[data-line-id='l-1'] [data-slot='line-tax-cell'] input")
+        .should("be.disabled");
+      cy.get("[data-slot='total-ht']").should("contain", "800.00");
+      cy.get("[data-slot='total-ttc']").should("not.exist");
+      cy.get("[data-slot='total-tax-line']").should("not.exist");
+    });
+
+    it("preselects the default tax on a newly added line", () => {
+      stubGet([line()], [tax({ id: 100, is_default: true })]);
+      cy.intercept("POST", "/api/quotes/q-1/lines", {
+        statusCode: 201,
+        body: { success: true, line_id: "l-2" },
+      }).as("createLine");
+
+      cy.visit("/quote/q-1?step=2");
+      cy.wait("@getQuote");
+      cy.wait("@listAvailableTaxes");
+      cy.get("[aria-label='Ajouter une ligne']").click();
+
+      cy.wait("@createLine").then((interception) => {
+        expect(interception.request.body).to.include({ tax_id: 100 });
+      });
+    });
+
+    it("shows tax breakdown and TTC when a line uses a tax", () => {
+      stubGet(
+        [line({ tax_id: 100 })],
+        [tax({ id: 100, name: "TVA 20", rate: "20.00", is_default: true })],
+      );
+      cy.visit("/quote/q-1?step=2");
+      cy.wait("@getQuote");
+      cy.wait("@listAvailableTaxes");
+
+      cy.get("[data-slot='total-ht']").should("contain", "800.00");
+      cy.get("[data-slot='total-tax-line'][data-tax-id='100']").should(
+        "contain",
+        "160.00",
+      );
+      cy.get("[data-slot='total-ttc']").should("contain", "960.00");
+    });
+  });
+
   describe("Drop / Continue", () => {
+    beforeEach(() => stubAvailableTaxes());
+
     it("drops a draft quote with confirmation and switches form to readonly", () => {
       cy.login();
       cy.intercept("GET", "/api/quotes/q-1", {

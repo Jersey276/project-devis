@@ -17,6 +17,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Combobox,
   ComboboxContent,
@@ -57,6 +58,7 @@ export default function TaxDialog({
   const [groupId, setGroupId] = useState<number | null>(
     tax?.country_group_id ?? null,
   );
+  const [isDefault, setIsDefault] = useState<boolean>(tax?.is_default ?? false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -68,8 +70,8 @@ export default function TaxDialog({
       ? `/api/users/taxes/${tax!.id}`
       : "/api/users/taxes";
     const payload = isEdit
-      ? { name, rate }
-      : { name, rate, country_group_id: groupId };
+      ? { name, rate, is_default: isDefault }
+      : { name, rate, country_group_id: groupId, is_default: isDefault };
     try {
       const { ok, status, body } = await apiFetch(path, {
         method: isEdit ? "PUT" : "POST",
@@ -165,6 +167,18 @@ export default function TaxDialog({
                 </ComboboxContent>
               </Combobox>
               <FieldError errors={toErrorProps(fieldErrors.country_group_id)} />
+            </Field>
+
+            <Field>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  id="tax_is_default"
+                  name="is_default"
+                  checked={isDefault}
+                  onCheckedChange={(v) => setIsDefault(v === true)}
+                />
+                Taxe par défaut du groupe
+              </label>
             </Field>
           </FieldGroup>
         </form>

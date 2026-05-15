@@ -20,7 +20,27 @@ export type LineFixture = {
   unit_price: number;
   data: Record<string, unknown>;
   position: number;
+  tax_id: number | null;
 };
+
+export type TaxFixture = {
+  id: number;
+  name: string;
+  rate: string;
+  country_group_id: number;
+  is_default: boolean;
+};
+
+export function tax(over: Partial<TaxFixture> = {}): TaxFixture {
+  return {
+    id: 100,
+    name: "TVA 20",
+    rate: "20.00",
+    country_group_id: 10,
+    is_default: true,
+    ...over,
+  };
+}
 
 export function quote(over: Partial<QuoteFixture> = {}): QuoteFixture {
   return {
@@ -80,6 +100,7 @@ export function line(over: Partial<LineFixture> = {}): LineFixture {
     unit_price: 8000,
     data: {},
     position: 0,
+    tax_id: null,
     ...over,
   };
 }

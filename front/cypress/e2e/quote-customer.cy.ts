@@ -69,6 +69,10 @@ describe("Quote — customer mode", () => {
   describe("Detail", () => {
     it("renders the form read-only and hides drop/continue actions", () => {
       cy.login();
+      cy.intercept("GET", "/api/users/taxes/available", {
+        statusCode: 200,
+        body: { success: true, taxes: [] },
+      }).as("listAvailableTaxes");
       cy.intercept("GET", "/api/quotes/q-1", {
         statusCode: 200,
         body: { success: true, quote: quote(), lines: [line()] },

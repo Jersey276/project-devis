@@ -5,7 +5,13 @@ describe("Taxes page", () => {
   ];
 
   const TAXES = [
-    { id: 100, name: "TVA 20", rate: "20.00", country_group_id: 10 },
+    {
+      id: 100,
+      name: "TVA 20",
+      rate: "20.00",
+      country_group_id: 10,
+      is_default: false,
+    },
   ];
 
   function stubTaxesPage(opts?: {
@@ -65,6 +71,7 @@ describe("Taxes page", () => {
           name: "TVA réduite",
           rate: "5.50",
           country_group_id: 11,
+          is_default: false,
         });
       });
       cy.get("[data-sonner-toaster]").should("contain", "Taxe ajoutée.");
@@ -101,6 +108,40 @@ describe("Taxes page", () => {
     });
   });
 
+  describe("Default toggle", () => {
+    beforeEach(() => stubTaxesPage());
+
+    it("sends is_default=true when the checkbox is ticked", () => {
+      cy.intercept("POST", "/api/users/taxes", {
+        statusCode: 201,
+        body: { success: true, tax_id: 102 },
+      }).as("createTaxDefault");
+
+      cy.visit("/taxes");
+      cy.wait("@getTaxes");
+      cy.wait("@getCountryGroups");
+
+      cy.contains("button", "Nouvelle taxe").click();
+      cy.get("input[name='name']").type("TVA défaut");
+      cy.get("input[name='rate']").type("20.00");
+      cy.get("input[name='country_group_id']").type("Union");
+      cy.contains("[data-slot='combobox-item']", "Union européenne").click({
+        force: true,
+      });
+      cy.get("button#tax_is_default").click();
+      cy.contains("[data-slot='dialog-content'] button", "Enregistrer").click();
+
+      cy.wait("@createTaxDefault").then((interception) => {
+        expect(interception.request.body).to.deep.equal({
+          name: "TVA défaut",
+          rate: "20.00",
+          country_group_id: 10,
+          is_default: true,
+        });
+      });
+    });
+  });
+
   describe("Edit", () => {
     beforeEach(() => stubTaxesPage());
 
@@ -128,6 +169,7 @@ describe("Taxes page", () => {
         expect(interception.request.body).to.deep.equal({
           name: "TVA 20",
           rate: "21.00",
+          is_default: false,
         });
         expect(interception.request.body).not.to.have.property(
           "country_group_id",

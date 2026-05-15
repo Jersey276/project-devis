@@ -37,10 +37,11 @@ func Update(ctx context.Context, db *sql.DB, req *quoteGrpc.UpdateQuoteLineReque
 	res, err := db.ExecContext(ctx,
 		`UPDATE quote_lines
 		 SET type=$1, name=$2, quantity=$3::DECIMAL, unit=$4, unit_price=$5, data=$6::jsonb,
-		     position=$7, updated_at=NOW()
-		 WHERE line_id=$8`,
+		     position=$7, tax_id=$8, updated_at=NOW()
+		 WHERE line_id=$9`,
 		req.Type, req.Name, req.Quantity, sqlutil.NullableStr(req.Unit),
 		req.UnitPrice, cleanData, req.Position,
+		sqlutil.NullableInt32(req.TaxId),
 		req.LineId,
 	)
 	if err != nil {

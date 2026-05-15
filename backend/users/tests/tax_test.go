@@ -13,9 +13,11 @@ import (
 func TestCreateTax_Success(t *testing.T) {
 	srv, mock := setupServer(t)
 
+	mock.ExpectBegin()
 	mock.ExpectQuery(`INSERT INTO taxes`).
-		WithArgs("TVA", "20.00", int32(1)).
+		WithArgs("TVA", "20.00", int32(1), false).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+	mock.ExpectCommit()
 
 	resp, err := srv.CreateTax(context.Background(), &usersGrpc.CreateTaxRequest{
 		Name:           "TVA",
@@ -30,6 +32,35 @@ func TestCreateTax_Success(t *testing.T) {
 	}
 	if resp.TaxId != 1 {
 		t.Fatalf("expected tax_id 1, got %d", resp.TaxId)
+	}
+}
+
+func TestCreateTax_DefaultClearsSiblings(t *testing.T) {
+	srv, mock := setupServer(t)
+
+	mock.ExpectBegin()
+	mock.ExpectExec(`UPDATE taxes SET is_default=FALSE`).
+		WithArgs(int32(1)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectQuery(`INSERT INTO taxes`).
+		WithArgs("TVA", "20.00", int32(1), true).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(2))
+	mock.ExpectCommit()
+
+	resp, err := srv.CreateTax(context.Background(), &usersGrpc.CreateTaxRequest{
+		Name:           "TVA",
+		Rate:           "20.00",
+		CountryGroupId: 1,
+		IsDefault:      true,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatalf("expected success, got code %d", resp.Code)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
 	}
 }
 
@@ -78,8 +109,8 @@ func TestGetTax_Success(t *testing.T) {
 
 	mock.ExpectQuery(`SELECT id, name, rate`).
 		WithArgs(int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "rate", "country_group_id"}).
-			AddRow(1, "TVA", "20.00", 1))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "rate", "country_group_id", "is_default"}).
+			AddRow(1, "TVA", "20.00", 1, false))
 
 	resp, err := srv.GetTax(context.Background(), &usersGrpc.GetTaxRequest{TaxId: 1})
 	if err != nil {
@@ -101,7 +132,7 @@ func TestGetTax_NotFound(t *testing.T) {
 
 	mock.ExpectQuery(`SELECT id, name, rate`).
 		WithArgs(int32(999)).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "rate", "country_group_id"}))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "rate", "country_group_id", "is_default"}))
 
 	resp, err := srv.GetTax(context.Background(), &usersGrpc.GetTaxRequest{TaxId: 999})
 	if err != nil {

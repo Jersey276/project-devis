@@ -13,11 +13,10 @@ func Get(ctx context.Context, db *sql.DB, req *usersGrpc.GetTaxRequest) (*usersG
 		return &usersGrpc.GetTaxResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 
-	var t usersGrpc.Tax
-	err := db.QueryRowContext(ctx,
-		"SELECT id, name, rate::TEXT, country_group_id FROM taxes WHERE id=$1",
+	t, err := ScanRow(db.QueryRowContext(ctx,
+		"SELECT "+Columns+" FROM taxes WHERE id=$1",
 		req.TaxId,
-	).Scan(&t.Id, &t.Name, &t.Rate, &t.CountryGroupId)
+	))
 	if err == sql.ErrNoRows {
 		return &usersGrpc.GetTaxResponse{Success: false, Code: codes.NotFound}, nil
 	}
@@ -25,5 +24,5 @@ func Get(ctx context.Context, db *sql.DB, req *usersGrpc.GetTaxRequest) (*usersG
 		return &usersGrpc.GetTaxResponse{Success: false, Code: codes.InternalError}, err
 	}
 
-	return &usersGrpc.GetTaxResponse{Success: true, Code: codes.Success, Tax: &t}, nil
+	return &usersGrpc.GetTaxResponse{Success: true, Code: codes.Success, Tax: t}, nil
 }

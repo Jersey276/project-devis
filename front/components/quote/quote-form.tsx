@@ -50,6 +50,7 @@ import {
 import { exportQuotePdf } from "@/lib/services/export";
 import { listClients } from "@/lib/services/clients";
 import { listAddresses } from "@/lib/services/addresses";
+import { listAvailableTaxesForUser } from "@/lib/services/taxes";
 import { fieldErrorsFromBody, type FieldErrors } from "@/lib/api";
 import { useMode } from "@/lib/mode-context";
 import {
@@ -59,6 +60,7 @@ import {
   type BackendQuote,
   type BackendQuoteLine,
   type BackendQuoteState,
+  type BackendTax,
 } from "@/types/backend";
 
 type FormItem = RenderedRow & { position: number };
@@ -93,6 +95,7 @@ function rowFromBackendLine(line: BackendQuoteLine): FormItem {
     quantity: Number(line.quantity),
     unitPriceEuros: line.unit_price / 100,
     position: line.position,
+    taxId: line.tax_id ?? null,
     saveStatus: "idle",
   };
 }
@@ -104,6 +107,7 @@ function lineDraftFromRow(row: FormItem): LineDraft {
     quantity: row.quantity,
     unitPriceEuros: row.unitPriceEuros,
     position: row.position,
+    taxId: row.taxId,
   };
 }
 
@@ -132,6 +136,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const [clients, setClients] = useState<BackendClient[]>([]);
   const [addresses, setAddresses] = useState<BackendAddress[]>([]);
   const [items, setItems] = useState<FormItem[]>([]);
+  const [availableTaxes, setAvailableTaxes] = useState<BackendTax[]>([]);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [creating, setCreating] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -198,6 +203,23 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     };
   }, []);
 
+  // Load taxes available for the current user (resolved from their first
+  // address). Empty when the user has no address or no taxes apply.
+  useEffect(() => {
+    let cancelled = false;
+    listAvailableTaxesForUser().then(({ ok, body }) => {
+      if (cancelled) return;
+      if (ok && Array.isArray(body.taxes)) {
+        setAvailableTaxes(body.taxes as BackendTax[]);
+      } else {
+        setAvailableTaxes([]);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Load addresses for the selected client; reset address when client changes.
   useEffect(() => {
     if (!clientId) {
@@ -235,14 +257,40 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     };
   }, []);
 
-  const totalAmount = useMemo(
-    () =>
-      items.reduce(
-        (acc, item) => acc + item.quantity * item.unitPriceEuros,
-        0,
-      ),
-    [items],
+  const taxById = useMemo(
+    () => new Map(availableTaxes.map((t) => [t.id, t])),
+    [availableTaxes],
   );
+
+  const defaultTaxId = useMemo(
+    () => availableTaxes.find((t) => t.is_default)?.id ?? null,
+    [availableTaxes],
+  );
+
+  const totals = useMemo(() => {
+    const ht = items.reduce(
+      (acc, item) => acc + item.quantity * item.unitPriceEuros,
+      0,
+    );
+    const breakdown = new Map<number, { tax: BackendTax; amount: number }>();
+    for (const item of items) {
+      if (item.taxId == null) continue;
+      const tax = taxById.get(item.taxId);
+      if (!tax) continue;
+      const lineHT = item.quantity * item.unitPriceEuros;
+      const taxAmount = (lineHT * Number(tax.rate)) / 100;
+      const cur = breakdown.get(tax.id);
+      breakdown.set(tax.id, {
+        tax,
+        amount: (cur?.amount ?? 0) + taxAmount,
+      });
+    }
+    const sortedBreakdown = Array.from(breakdown.values()).sort(
+      (a, b) => Number(a.tax.rate) - Number(b.tax.rate),
+    );
+    const ttc = ht + sortedBreakdown.reduce((acc, b) => acc + b.amount, 0);
+    return { ht, breakdown: sortedBreakdown, ttc };
+  }, [items, taxById]);
 
   // ────────────────────────────────────────────────────────────
   // Step 1 handlers
@@ -431,6 +479,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         quantity: 1,
         unitPriceEuros: 0,
         position: itemsRef.current.length,
+        taxId: defaultTaxId,
       };
       const { ok, body } = await createLine(quoteId, draft);
       if (ok && body.success) {
@@ -443,6 +492,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             quantity: 1,
             unitPriceEuros: 0,
             position: prev.length,
+            taxId: defaultTaxId,
             saveStatus: "idle",
           },
         ]);
@@ -454,7 +504,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     } finally {
       setAdding(false);
     }
-  }, [adding, quoteId]);
+  }, [adding, quoteId, defaultTaxId]);
 
   const handleRemoveItem = useCallback(
     async (lineId: string) => {
@@ -499,6 +549,14 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       setRow(lineId, {
         unitPriceEuros: Number.isFinite(value) ? value : 0,
       });
+      scheduleLineSave(lineId);
+    },
+    [scheduleLineSave, setRow],
+  );
+
+  const handleTaxChange = useCallback(
+    (lineId: string, taxId: number | null) => {
+      setRow(lineId, { taxId });
       scheduleLineSave(lineId);
     },
     [scheduleLineSave, setRow],
@@ -684,11 +742,14 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           <QuoteStepItems
             items={items}
             isReadonly={isCreate || isReadonly}
-            totalAmount={totalAmount}
+            totals={totals}
+            availableTaxes={availableTaxes}
+            taxById={taxById}
             isAdding={adding}
             onNameChange={handleNameChange}
             onQuantityChange={handleQuantityChange}
             onUnitPriceChange={handleUnitPriceChange}
+            onTaxChange={handleTaxChange}
             onRemoveItem={handleRemoveItem}
             onAddItem={handleAddItem}
           />

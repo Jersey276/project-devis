@@ -23,7 +23,7 @@ import {
   DataTableSortableHead,
   type DataTableRowAction,
 } from "@/components/custom/data-table";
-import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { CheckIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { toast } from "sonner";
 import TaxDialog from "./tax-dialog";
@@ -125,6 +125,7 @@ export default function TaxesTable() {
             <DataTableSortableHead name="name">Nom</DataTableSortableHead>
             <DataTableSortableHead name="rate">Taux</DataTableSortableHead>
             <DataTableHead>Groupe</DataTableHead>
+            <DataTableHead>Défaut</DataTableHead>
             <DataTableHead>
               <span className="sr-only">Actions</span>
             </DataTableHead>
@@ -140,6 +141,7 @@ export default function TaxesTable() {
               <DataTableCell> </DataTableCell>
               <DataTableCell> </DataTableCell>
               <DataTableCell> </DataTableCell>
+              <DataTableCell> </DataTableCell>
             </DataTableRow>
           ) : (
             taxes.map((tax) => (
@@ -148,6 +150,14 @@ export default function TaxesTable() {
                 <DataTableCell>{tax.name}</DataTableCell>
                 <DataTableCell>{tax.rate} %</DataTableCell>
                 <DataTableCell>{groupName(tax.country_group_id)}</DataTableCell>
+                <DataTableCell>
+                  {tax.is_default ? (
+                    <CheckIcon
+                      className="size-4 text-emerald-600"
+                      aria-label="Taxe par défaut"
+                    />
+                  ) : null}
+                </DataTableCell>
                 <DataTableCell className="w-12 text-right">
                   <DataTableRowActions id={tax.id} row={tax} />
                 </DataTableCell>

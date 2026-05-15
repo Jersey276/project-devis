@@ -37,10 +37,11 @@ func Create(ctx context.Context, db *sql.DB, req *quoteGrpc.CreateQuoteLineReque
 
 	lineID := uuid.New().String()
 	_, err = db.ExecContext(ctx,
-		`INSERT INTO quote_lines (line_id, quote_id, type, name, quantity, unit, unit_price, data, position)
-		 VALUES ($1, $2, $3, $4, $5::DECIMAL, $6, $7, $8::jsonb, $9)`,
+		`INSERT INTO quote_lines (line_id, quote_id, type, name, quantity, unit, unit_price, data, position, tax_id)
+		 VALUES ($1, $2, $3, $4, $5::DECIMAL, $6, $7, $8::jsonb, $9, $10)`,
 		lineID, req.QuoteId, req.Type, req.Name, req.Quantity,
 		sqlutil.NullableStr(req.Unit), req.UnitPrice, cleanData, req.Position,
+		sqlutil.NullableInt32(req.TaxId),
 	)
 	if err != nil {
 		return &quoteGrpc.CreateQuoteLineResponse{Success: false, Code: codes.InternalError}, err
