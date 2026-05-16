@@ -125,8 +125,6 @@ export default function QuoteStepItems({
   onRemoveItem,
   onAddItem,
 }: QuoteStepItemsProps) {
-  // Superseded taxes still appear via taxById (so an old line can render
-  // its snapshot label) but must NOT be selectable for new picks.
   const selectableTaxes = availableTaxes.filter((t) => !t.superseded_at);
   const taxesDisabled = selectableTaxes.length === 0;
   return (
@@ -147,7 +145,7 @@ export default function QuoteStepItems({
           {items.map((item) => {
             const lineTotal = item.quantity * item.unitPriceEuros;
             const selectedTax =
-              item.taxId != null ? taxById.get(item.taxId) ?? null : null;
+              item.taxId != null ? (taxById.get(item.taxId) ?? null) : null;
 
             return (
               <TableRow key={item.lineId} data-line-id={item.lineId}>
@@ -182,17 +180,14 @@ export default function QuoteStepItems({
                     step="0.01"
                     value={item.unitPriceEuros}
                     onChange={(event) =>
-                      onUnitPriceChange(
-                        item.lineId,
-                        Number(event.target.value),
-                      )
+                      onUnitPriceChange(item.lineId, Number(event.target.value))
                     }
                     disabled={isReadonly}
                   />
                 </TableCell>
                 <TableCell data-slot="line-tax-cell">
                   <Combobox
-                    items={selectableTaxes}
+                    items={availableTaxes}
                     value={selectedTax}
                     onValueChange={(t: BackendTax | null) =>
                       onTaxChange(item.lineId, t ? t.id : null)
@@ -209,7 +204,11 @@ export default function QuoteStepItems({
                       <ComboboxEmpty>Aucune taxe disponible.</ComboboxEmpty>
                       <ComboboxList>
                         {(t: BackendTax) => (
-                          <ComboboxItem key={t.id} value={t}>
+                          <ComboboxItem
+                            key={t.id}
+                            value={t}
+                            disabled={!!t.superseded_at}
+                          >
                             {taxLabel(t)}
                           </ComboboxItem>
                         )}
