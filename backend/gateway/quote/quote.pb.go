@@ -1023,6 +1023,7 @@ type QuoteLine struct {
 	UnitPrice     int64                  `protobuf:"varint,7,opt,name=unit_price,json=unitPrice,proto3" json:"unit_price,omitempty"`
 	Data          string                 `protobuf:"bytes,8,opt,name=data,proto3" json:"data,omitempty"`
 	Position      int32                  `protobuf:"varint,9,opt,name=position,proto3" json:"position,omitempty"`
+	TaxId         int32                  `protobuf:"varint,10,opt,name=tax_id,json=taxId,proto3" json:"tax_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1120,6 +1121,13 @@ func (x *QuoteLine) GetPosition() int32 {
 	return 0
 }
 
+func (x *QuoteLine) GetTaxId() int32 {
+	if x != nil {
+		return x.TaxId
+	}
+	return 0
+}
+
 type CreateQuoteLineRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	QuoteId       string                 `protobuf:"bytes,1,opt,name=quote_id,json=quoteId,proto3" json:"quote_id,omitempty"`
@@ -1131,6 +1139,7 @@ type CreateQuoteLineRequest struct {
 	UnitPrice     int64                  `protobuf:"varint,7,opt,name=unit_price,json=unitPrice,proto3" json:"unit_price,omitempty"`
 	Data          string                 `protobuf:"bytes,8,opt,name=data,proto3" json:"data,omitempty"`
 	Position      int32                  `protobuf:"varint,9,opt,name=position,proto3" json:"position,omitempty"`
+	TaxId         int32                  `protobuf:"varint,10,opt,name=tax_id,json=taxId,proto3" json:"tax_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1224,6 +1233,13 @@ func (x *CreateQuoteLineRequest) GetData() string {
 func (x *CreateQuoteLineRequest) GetPosition() int32 {
 	if x != nil {
 		return x.Position
+	}
+	return 0
+}
+
+func (x *CreateQuoteLineRequest) GetTaxId() int32 {
+	if x != nil {
+		return x.TaxId
 	}
 	return 0
 }
@@ -1523,6 +1539,7 @@ type UpdateQuoteLineRequest struct {
 	UnitPrice     int64                  `protobuf:"varint,7,opt,name=unit_price,json=unitPrice,proto3" json:"unit_price,omitempty"`
 	Data          string                 `protobuf:"bytes,8,opt,name=data,proto3" json:"data,omitempty"`
 	Position      int32                  `protobuf:"varint,9,opt,name=position,proto3" json:"position,omitempty"`
+	TaxId         int32                  `protobuf:"varint,10,opt,name=tax_id,json=taxId,proto3" json:"tax_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1616,6 +1633,13 @@ func (x *UpdateQuoteLineRequest) GetData() string {
 func (x *UpdateQuoteLineRequest) GetPosition() int32 {
 	if x != nil {
 		return x.Position
+	}
+	return 0
+}
+
+func (x *UpdateQuoteLineRequest) GetTaxId() int32 {
+	if x != nil {
+		return x.TaxId
 	}
 	return 0
 }
@@ -1792,7 +1816,7 @@ const file_quote_proto_rawDesc = "" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\"J\n" +
 	"\x14ContinueQuoteRequest\x12\x19\n" +
 	"\bquote_id\x18\x01 \x01(\tR\aquoteId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xe6\x01\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xfd\x01\n" +
 	"\tQuoteLine\x12\x17\n" +
 	"\aline_id\x18\x01 \x01(\tR\x06lineId\x12\x19\n" +
 	"\bquote_id\x18\x02 \x01(\tR\aquoteId\x12\x12\n" +
@@ -1803,7 +1827,9 @@ const file_quote_proto_rawDesc = "" +
 	"\n" +
 	"unit_price\x18\a \x01(\x03R\tunitPrice\x12\x12\n" +
 	"\x04data\x18\b \x01(\tR\x04data\x12\x1a\n" +
-	"\bposition\x18\t \x01(\x05R\bposition\"\xf3\x01\n" +
+	"\bposition\x18\t \x01(\x05R\bposition\x12\x15\n" +
+	"\x06tax_id\x18\n" +
+	" \x01(\x05R\x05taxId\"\x8a\x02\n" +
 	"\x16CreateQuoteLineRequest\x12\x19\n" +
 	"\bquote_id\x18\x01 \x01(\tR\aquoteId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
@@ -1814,7 +1840,9 @@ const file_quote_proto_rawDesc = "" +
 	"\n" +
 	"unit_price\x18\a \x01(\x03R\tunitPrice\x12\x12\n" +
 	"\x04data\x18\b \x01(\tR\x04data\x12\x1a\n" +
-	"\bposition\x18\t \x01(\x05R\bposition\"`\n" +
+	"\bposition\x18\t \x01(\x05R\bposition\x12\x15\n" +
+	"\x06tax_id\x18\n" +
+	" \x01(\x05R\x05taxId\"`\n" +
 	"\x17CreateQuoteLineResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x17\n" +
@@ -1832,7 +1860,7 @@ const file_quote_proto_rawDesc = "" +
 	"\x16ListQuoteLinesResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12&\n" +
-	"\x05lines\x18\x03 \x03(\v2\x10.quote.QuoteLineR\x05lines\"\xf1\x01\n" +
+	"\x05lines\x18\x03 \x03(\v2\x10.quote.QuoteLineR\x05lines\"\x88\x02\n" +
 	"\x16UpdateQuoteLineRequest\x12\x17\n" +
 	"\aline_id\x18\x01 \x01(\tR\x06lineId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
@@ -1843,7 +1871,9 @@ const file_quote_proto_rawDesc = "" +
 	"\n" +
 	"unit_price\x18\a \x01(\x03R\tunitPrice\x12\x12\n" +
 	"\x04data\x18\b \x01(\tR\x04data\x12\x1a\n" +
-	"\bposition\x18\t \x01(\x05R\bposition\"G\n" +
+	"\bposition\x18\t \x01(\x05R\bposition\x12\x15\n" +
+	"\x06tax_id\x18\n" +
+	" \x01(\x05R\x05taxId\"G\n" +
 	"\x17UpdateQuoteLineResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\"J\n" +

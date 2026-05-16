@@ -12,6 +12,7 @@ export type LineDraft = {
   unit?: string;
   unitPriceEuros: number;
   position: number;
+  taxId: number | null;
 };
 
 function toCents(euros: number): number {
@@ -27,6 +28,7 @@ function toLinePayload(draft: LineDraft) {
     unit_price: toCents(draft.unitPriceEuros),
     data: {},
     position: draft.position,
+    tax_id: draft.taxId ?? 0,
   };
 }
 
@@ -133,6 +135,7 @@ export function lineFromBackend(line: BackendQuoteLine): LineDraft & {
     unit: line.unit,
     unitPriceEuros: line.unit_price / 100,
     position: line.position,
+    taxId: line.tax_id ?? null,
   };
 }
 

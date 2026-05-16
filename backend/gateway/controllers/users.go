@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 
 	"gateway/middleware"
 	users "gateway/users"
@@ -80,6 +81,7 @@ func UserRoutes(r *gin.RouterGroup) {
 
 	taxes := r.Group("/taxes")
 	taxes.GET("", func(c *gin.Context) { ListTaxes(c, client) })
+	taxes.GET("/available", func(c *gin.Context) { ListTaxesForUser(c, client) })
 	taxes.POST("", func(c *gin.Context) { CreateTax(c, client) })
 	taxes.GET("/:id", func(c *gin.Context) { GetTax(c, client) })
 	taxes.PUT("/:id", func(c *gin.Context) { UpdateTax(c, client) })
@@ -783,11 +785,50 @@ func ListTaxes(c *gin.Context, client users.UserServiceClient) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "taxes": resp.Taxes})
 }
 
+func ListTaxesForUser(c *gin.Context, client users.UserServiceClient) {
+	userID := userIDFromCtx(c)
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Non authentifié."})
+		return
+	}
+
+	var includeIDs []int32
+	if raw := c.Query("include_ids"); raw != "" {
+		for _, part := range strings.Split(raw, ",") {
+			part = strings.TrimSpace(part)
+			if part == "" {
+				continue
+			}
+			v, err := strconv.ParseInt(part, 10, 32)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Paramètre include_ids invalide."})
+				return
+			}
+			includeIDs = append(includeIDs, int32(v))
+		}
+	}
+
+	resp, err := client.ListTaxesForUser(c.Request.Context(), &users.ListTaxesForUserRequest{
+		UserId:     userID,
+		IncludeIds: includeIDs,
+	})
+	if err != nil {
+		usersErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		usersErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "taxes": resp.Taxes})
+}
+
 func CreateTax(c *gin.Context, client users.UserServiceClient) {
 	var input struct {
 		Name           string `json:"name" binding:"required"`
 		Rate           string `json:"rate" binding:"required"`
 		CountryGroupID int32  `json:"country_group_id" binding:"required"`
+		IsDefault      bool   `json:"is_default"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
@@ -797,6 +838,7 @@ func CreateTax(c *gin.Context, client users.UserServiceClient) {
 		Name:           input.Name,
 		Rate:           input.Rate,
 		CountryGroupId: input.CountryGroupID,
+		IsDefault:      input.IsDefault,
 	})
 	if err != nil {
 		usersErrors.unavailable(c)
@@ -832,17 +874,19 @@ func UpdateTax(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	var input struct {
-		Name string `json:"name"`
-		Rate string `json:"rate"`
+		Name      string `json:"name"`
+		Rate      string `json:"rate"`
+		IsDefault bool   `json:"is_default"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
 		return
 	}
 	resp, err := client.UpdateTax(c.Request.Context(), &users.UpdateTaxRequest{
-		TaxId: id,
-		Name:  input.Name,
-		Rate:  input.Rate,
+		TaxId:     id,
+		Name:      input.Name,
+		Rate:      input.Rate,
+		IsDefault: input.IsDefault,
 	})
 	if err != nil {
 		usersErrors.unavailable(c)
@@ -852,9 +896,14 @@ func UpdateTax(c *gin.Context, client users.UserServiceClient) {
 		usersErrors.reply(c, resp.Code)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true})
+	// tax_id may differ from the request id if the update created a new
+	// version (the previous row is now superseded). Frontend uses it to
+	// refresh local state.
+	c.JSON(http.StatusOK, gin.H{"success": true, "tax_id": resp.TaxId})
 }
 
+// DeleteTax retires the tax (sets superseded_at). The row is preserved so
+// existing quote_lines keep their snapshot. UI surfaces this as "Retirer".
 func DeleteTax(c *gin.Context, client users.UserServiceClient) {
 	id, ok := paramInt32(c, "id")
 	if !ok {

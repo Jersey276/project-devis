@@ -120,8 +120,8 @@ func TestGetQuote_Success(t *testing.T) {
 
 	mock.ExpectQuery(`SELECT line_id, quote_id, type, name`).
 		WithArgs("q-1").
-		WillReturnRows(sqlmock.NewRows([]string{"line_id", "quote_id", "type", "name", "quantity", "unit", "unit_price", "data", "position"}).
-			AddRow("l-1", "q-1", "simple", "Item", "2", "u", int64(1500), "{}", int32(0)))
+		WillReturnRows(sqlmock.NewRows([]string{"line_id", "quote_id", "type", "name", "quantity", "unit", "unit_price", "data", "position", "tax_id"}).
+			AddRow("l-1", "q-1", "simple", "Item", "2", "u", int64(1500), "{}", int32(0), int32(0)))
 
 	resp, err := srv.GetQuote(context.Background(), &quoteGrpc.GetQuoteRequest{
 		QuoteId: "q-1",

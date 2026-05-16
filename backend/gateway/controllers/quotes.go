@@ -270,6 +270,7 @@ type lineInput struct {
 	UnitPrice int64           `json:"unit_price"`
 	Data      json.RawMessage `json:"data"`
 	Position  int32           `json:"position"`
+	TaxID     int32           `json:"tax_id"`
 }
 
 func (in lineInput) dataString() string {
@@ -311,6 +312,7 @@ func CreateQuoteLine(c *gin.Context, client quote.QuoteServiceClient) {
 		UnitPrice: input.UnitPrice,
 		Data:      input.dataString(),
 		Position:  input.Position,
+		TaxId:     input.TaxID,
 	})
 	if err != nil {
 		quoteErrors.unavailable(c)
@@ -355,6 +357,7 @@ func UpdateQuoteLine(c *gin.Context, client quote.QuoteServiceClient) {
 		UnitPrice: input.UnitPrice,
 		Data:      input.dataString(),
 		Position:  input.Position,
+		TaxId:     input.TaxID,
 	})
 	if err != nil {
 		quoteErrors.unavailable(c)
@@ -423,6 +426,15 @@ func stateToLower(s quote.QuoteState) string {
 	}
 }
 
+// nullableInt converts the proto3 sentinel (0 = unset) into a JSON-friendly
+// pointer so wire-level "no value" stays distinct from "the literal zero".
+func nullableInt(v int32) *int32 {
+	if v == 0 {
+		return nil
+	}
+	return &v
+}
+
 // marshalLine emits the raw JSON `data` field as an object instead of a string,
 // so consumers don't have to double-decode.
 func marshalLine(l *quote.QuoteLine) gin.H {
@@ -439,6 +451,7 @@ func marshalLine(l *quote.QuoteLine) gin.H {
 		"unit_price": l.UnitPrice,
 		"position":   l.Position,
 	}
+	out["tax_id"] = nullableInt(l.TaxId)
 	if l.Data == "" {
 		out["data"] = json.RawMessage("{}")
 	} else {

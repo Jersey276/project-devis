@@ -6,6 +6,7 @@ import (
 
 	"github.com/lib/pq"
 	"project-devis-users/actions/codes"
+	"project-devis-users/actions/tax"
 	usersGrpc "project-devis-users/services/grpc"
 )
 
@@ -81,7 +82,7 @@ func fetchAllCountries(ctx context.Context, db *sql.DB, groupIDs []int32) (map[i
 
 func fetchAllTaxes(ctx context.Context, db *sql.DB, groupIDs []int32) (map[int32][]*usersGrpc.Tax, error) {
 	rows, err := db.QueryContext(ctx,
-		"SELECT id, name, rate::TEXT, country_group_id FROM taxes WHERE country_group_id = ANY($1) ORDER BY name",
+		"SELECT "+tax.Columns+" FROM taxes WHERE country_group_id = ANY($1) AND superseded_at IS NULL ORDER BY name",
 		pq.Array(groupIDs),
 	)
 	if err != nil {
@@ -89,13 +90,13 @@ func fetchAllTaxes(ctx context.Context, db *sql.DB, groupIDs []int32) (map[int32
 	}
 	defer rows.Close()
 
-	result := make(map[int32][]*usersGrpc.Tax)
-	for rows.Next() {
-		var t usersGrpc.Tax
-		if err := rows.Scan(&t.Id, &t.Name, &t.Rate, &t.CountryGroupId); err != nil {
-			return nil, err
-		}
-		result[t.CountryGroupId] = append(result[t.CountryGroupId], &t)
+	taxes, err := tax.ScanRows(rows)
+	if err != nil {
+		return nil, err
 	}
-	return result, rows.Err()
+	result := make(map[int32][]*usersGrpc.Tax)
+	for _, t := range taxes {
+		result[t.CountryGroupId] = append(result[t.CountryGroupId], t)
+	}
+	return result, nil
 }

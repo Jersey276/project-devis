@@ -10,12 +10,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
+import {
   CheckIcon,
   Loader2Icon,
   PlusIcon,
   TriangleAlertIcon,
   Trash2Icon,
 } from "lucide-react";
+import type { BackendTax } from "@/types/backend";
 
 export type LineSaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -24,17 +33,27 @@ export type QuoteItemRow = {
   name: string;
   quantity: number;
   unitPriceEuros: number;
+  taxId: number | null;
   saveStatus: LineSaveStatus;
+};
+
+export type QuoteTotals = {
+  ht: number;
+  breakdown: Array<{ tax: BackendTax; amount: number }>;
+  ttc: number;
 };
 
 type QuoteStepItemsProps = {
   items: QuoteItemRow[];
   isReadonly: boolean;
-  totalAmount: number;
+  totals: QuoteTotals;
+  availableTaxes: BackendTax[];
+  taxById: Map<number, BackendTax>;
   isAdding: boolean;
   onNameChange: (lineId: string, value: string) => void;
   onQuantityChange: (lineId: string, value: number) => void;
   onUnitPriceChange: (lineId: string, value: number) => void;
+  onTaxChange: (lineId: string, taxId: number | null) => void;
   onRemoveItem: (lineId: string) => void;
   onAddItem: () => void;
 };
@@ -87,17 +106,27 @@ function SaveIndicator({ status }: { status: LineSaveStatus }) {
   );
 }
 
+function taxLabel(t: BackendTax): string {
+  const base = `${t.name} (${t.rate}%)`;
+  return t.superseded_at ? `${base} — version archivée` : base;
+}
+
 export default function QuoteStepItems({
   items,
   isReadonly,
-  totalAmount,
+  totals,
+  availableTaxes,
+  taxById,
   isAdding,
   onNameChange,
   onQuantityChange,
   onUnitPriceChange,
+  onTaxChange,
   onRemoveItem,
   onAddItem,
 }: QuoteStepItemsProps) {
+  const selectableTaxes = availableTaxes.filter((t) => !t.superseded_at);
+  const taxesDisabled = selectableTaxes.length === 0;
   return (
     <div className="space-y-4">
       <Table>
@@ -106,6 +135,7 @@ export default function QuoteStepItems({
             <TableHead>Description</TableHead>
             <TableHead>Quantité</TableHead>
             <TableHead>Prix unitaire</TableHead>
+            <TableHead>TVA</TableHead>
             <TableHead>Total ligne</TableHead>
             <TableHead className="w-12">État</TableHead>
             <TableHead className="w-24">Action</TableHead>
@@ -114,6 +144,8 @@ export default function QuoteStepItems({
         <TableBody>
           {items.map((item) => {
             const lineTotal = item.quantity * item.unitPriceEuros;
+            const selectedTax =
+              item.taxId != null ? (taxById.get(item.taxId) ?? null) : null;
 
             return (
               <TableRow key={item.lineId} data-line-id={item.lineId}>
@@ -148,13 +180,41 @@ export default function QuoteStepItems({
                     step="0.01"
                     value={item.unitPriceEuros}
                     onChange={(event) =>
-                      onUnitPriceChange(
-                        item.lineId,
-                        Number(event.target.value),
-                      )
+                      onUnitPriceChange(item.lineId, Number(event.target.value))
                     }
                     disabled={isReadonly}
                   />
+                </TableCell>
+                <TableCell data-slot="line-tax-cell">
+                  <Combobox
+                    items={availableTaxes}
+                    value={selectedTax}
+                    onValueChange={(t: BackendTax | null) =>
+                      onTaxChange(item.lineId, t ? t.id : null)
+                    }
+                    itemToStringLabel={taxLabel}
+                    disabled={isReadonly || taxesDisabled}
+                  >
+                    <ComboboxInput
+                      name="line-tax"
+                      placeholder={taxesDisabled ? "—" : "Sélectionner"}
+                      disabled={isReadonly || taxesDisabled}
+                    />
+                    <ComboboxContent>
+                      <ComboboxEmpty>Aucune taxe disponible.</ComboboxEmpty>
+                      <ComboboxList>
+                        {(t: BackendTax) => (
+                          <ComboboxItem
+                            key={t.id}
+                            value={t}
+                            disabled={!!t.superseded_at}
+                          >
+                            {taxLabel(t)}
+                          </ComboboxItem>
+                        )}
+                      </ComboboxList>
+                    </ComboboxContent>
+                  </Combobox>
                 </TableCell>
                 <TableCell>{lineTotal.toFixed(2)} €</TableCell>
                 <TableCell>
@@ -199,8 +259,31 @@ export default function QuoteStepItems({
       )}
 
       <div className="flex justify-end">
-        <div className="rounded-md border px-4 py-2 text-sm font-medium">
-          Montant total: {totalAmount.toFixed(2)} €
+        <div
+          data-slot="quote-totals"
+          className="min-w-[260px] space-y-1 rounded-md border px-4 py-2 text-sm"
+        >
+          <div className="flex justify-between font-medium">
+            <span>Montant total HT</span>
+            <span data-slot="total-ht">{totals.ht.toFixed(2)} €</span>
+          </div>
+          {totals.breakdown.map(({ tax, amount }) => (
+            <div
+              key={tax.id}
+              data-slot="total-tax-line"
+              data-tax-id={tax.id}
+              className="text-muted-foreground flex justify-between"
+            >
+              <span>{taxLabel(tax)}</span>
+              <span>{amount.toFixed(2)} €</span>
+            </div>
+          ))}
+          {totals.breakdown.length > 0 && (
+            <div className="flex justify-between border-t pt-1 font-semibold">
+              <span>Total TTC</span>
+              <span data-slot="total-ttc">{totals.ttc.toFixed(2)} €</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

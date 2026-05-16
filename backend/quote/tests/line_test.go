@@ -18,7 +18,7 @@ func TestCreateLine_SimpleSuccess(t *testing.T) {
 
 	expectEditableCheck(mock, "q-1", "user-1", "draft")
 	mock.ExpectExec(`INSERT INTO quote_lines`).
-		WithArgs(sqlmock.AnyArg(), "q-1", "simple", "Item", "2", "u", int64(1500), "{}", int32(0)).
+		WithArgs(sqlmock.AnyArg(), "q-1", "simple", "Item", "2", "u", int64(1500), "{}", int32(0), nil).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.CreateQuoteLine(context.Background(), &quoteGrpc.CreateQuoteLineRequest{
@@ -50,7 +50,7 @@ func TestCreateLine_MultipleSuccess(t *testing.T) {
 
 	expectEditableCheck(mock, "q-1", "user-1", "draft")
 	mock.ExpectExec(`INSERT INTO quote_lines`).
-		WithArgs(sqlmock.AnyArg(), "q-1", "multiple", "Pack", "1", nil, int64(0), multipleData, int32(0)).
+		WithArgs(sqlmock.AnyArg(), "q-1", "multiple", "Pack", "1", nil, int64(0), multipleData, int32(0), nil).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.CreateQuoteLine(context.Background(), &quoteGrpc.CreateQuoteLineRequest{
@@ -229,8 +229,8 @@ func TestGetLine_Success(t *testing.T) {
 
 	mock.ExpectQuery(`SELECT l.line_id, l.quote_id`).
 		WithArgs("l-1", "user-1").
-		WillReturnRows(sqlmock.NewRows([]string{"line_id", "quote_id", "type", "name", "quantity", "unit", "unit_price", "data", "position"}).
-			AddRow("l-1", "q-1", "simple", "Item", "2", "u", int64(1500), "{}", int32(0)))
+		WillReturnRows(sqlmock.NewRows([]string{"line_id", "quote_id", "type", "name", "quantity", "unit", "unit_price", "data", "position", "tax_id"}).
+			AddRow("l-1", "q-1", "simple", "Item", "2", "u", int64(1500), "{}", int32(0), int32(0)))
 
 	resp, err := srv.GetQuoteLine(context.Background(), &quoteGrpc.GetQuoteLineRequest{
 		LineId: "l-1",
@@ -252,7 +252,7 @@ func TestGetLine_NotFound(t *testing.T) {
 
 	mock.ExpectQuery(`SELECT l.line_id, l.quote_id`).
 		WithArgs("ghost", "user-1").
-		WillReturnRows(sqlmock.NewRows([]string{"line_id", "quote_id", "type", "name", "quantity", "unit", "unit_price", "data", "position"}))
+		WillReturnRows(sqlmock.NewRows([]string{"line_id", "quote_id", "type", "name", "quantity", "unit", "unit_price", "data", "position", "tax_id"}))
 
 	resp, err := srv.GetQuoteLine(context.Background(), &quoteGrpc.GetQuoteLineRequest{
 		LineId: "ghost",
@@ -278,9 +278,9 @@ func TestListLines_Success(t *testing.T) {
 
 	mock.ExpectQuery(`SELECT line_id, quote_id, type, name`).
 		WithArgs("q-1").
-		WillReturnRows(sqlmock.NewRows([]string{"line_id", "quote_id", "type", "name", "quantity", "unit", "unit_price", "data", "position"}).
-			AddRow("l-1", "q-1", "simple", "A", "1", "", int64(100), "{}", int32(0)).
-			AddRow("l-2", "q-1", "multiple", "B", "1", "", int64(0), multipleData, int32(1)))
+		WillReturnRows(sqlmock.NewRows([]string{"line_id", "quote_id", "type", "name", "quantity", "unit", "unit_price", "data", "position", "tax_id"}).
+			AddRow("l-1", "q-1", "simple", "A", "1", "", int64(100), "{}", int32(0), int32(0)).
+			AddRow("l-2", "q-1", "multiple", "B", "1", "", int64(0), multipleData, int32(1), int32(0)))
 
 	resp, err := srv.ListQuoteLines(context.Background(), &quoteGrpc.ListQuoteLinesRequest{
 		QuoteId: "q-1",
@@ -321,7 +321,7 @@ func TestUpdateLine_Success(t *testing.T) {
 
 	expectLineParentEditable(mock, "l-1", "user-1", "draft")
 	mock.ExpectExec(`UPDATE quote_lines\s+SET type`).
-		WithArgs("simple", "Item v2", "3", "u", int64(2000), "{}", int32(2), "l-1").
+		WithArgs("simple", "Item v2", "3", "u", int64(2000), "{}", int32(2), nil, "l-1").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	resp, err := srv.UpdateQuoteLine(context.Background(), &quoteGrpc.UpdateQuoteLineRequest{

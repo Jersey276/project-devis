@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"project-devis-users/actions/codes"
+	"project-devis-users/actions/tax"
 	usersGrpc "project-devis-users/services/grpc"
 )
 
@@ -62,21 +63,12 @@ func fetchCountries(ctx context.Context, db *sql.DB, groupID int32) ([]*usersGrp
 
 func fetchTaxes(ctx context.Context, db *sql.DB, groupID int32) ([]*usersGrpc.Tax, error) {
 	rows, err := db.QueryContext(ctx,
-		"SELECT id, name, rate::TEXT, country_group_id FROM taxes WHERE country_group_id=$1 ORDER BY name",
+		"SELECT "+tax.Columns+" FROM taxes WHERE country_group_id=$1 AND superseded_at IS NULL ORDER BY name",
 		groupID,
 	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-
-	var taxes []*usersGrpc.Tax
-	for rows.Next() {
-		var t usersGrpc.Tax
-		if err := rows.Scan(&t.Id, &t.Name, &t.Rate, &t.CountryGroupId); err != nil {
-			return nil, err
-		}
-		taxes = append(taxes, &t)
-	}
-	return taxes, rows.Err()
+	return tax.ScanRows(rows)
 }

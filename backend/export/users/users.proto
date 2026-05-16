@@ -45,6 +45,7 @@ service UserService {
     rpc CreateTax(CreateTaxRequest) returns (CreateTaxResponse);
     rpc GetTax(GetTaxRequest) returns (GetTaxResponse);
     rpc ListTaxes(ListTaxesRequest) returns (ListTaxesResponse);
+    rpc ListTaxesForUser(ListTaxesForUserRequest) returns (ListTaxesResponse);
     rpc UpdateTax(UpdateTaxRequest) returns (UpdateTaxResponse);
     rpc DeleteTax(DeleteTaxRequest) returns (GenericResponse);
 }
@@ -402,12 +403,18 @@ message Tax {
     string name = 2;
     string rate = 3;
     int32 country_group_id = 4;
+    bool is_default = 5;
+    int32 original_tax_id = 6; // 0 if this row is the original
+    int32 version = 7;
+    string superseded_at = 8; // ISO8601, "" if current
+    int32 superseded_by = 9; // 0 if not replaced
 }
 
 message CreateTaxRequest {
     string name = 1;
     string rate = 2;
     int32 country_group_id = 3;
+    bool is_default = 4;
 }
 
 message CreateTaxResponse {
@@ -430,6 +437,11 @@ message ListTaxesRequest {
     int32 country_group_id = 1;
 }
 
+message ListTaxesForUserRequest {
+    string user_id = 1;
+    repeated int32 include_ids = 2;
+}
+
 message ListTaxesResponse {
     bool success = 1;
     int32 code = 2;
@@ -440,11 +452,13 @@ message UpdateTaxRequest {
     int32 tax_id = 1;
     string name = 2;
     string rate = 3;
+    bool is_default = 4;
 }
 
 message UpdateTaxResponse {
     bool success = 1;
     int32 code = 2;
+    int32 tax_id = 3; // id of the current version after update (may be a new row)
 }
 
 message DeleteTaxRequest {

@@ -48,6 +48,7 @@ const (
 	UserService_CreateTax_FullMethodName          = "/users.UserService/CreateTax"
 	UserService_GetTax_FullMethodName             = "/users.UserService/GetTax"
 	UserService_ListTaxes_FullMethodName          = "/users.UserService/ListTaxes"
+	UserService_ListTaxesForUser_FullMethodName   = "/users.UserService/ListTaxesForUser"
 	UserService_UpdateTax_FullMethodName          = "/users.UserService/UpdateTax"
 	UserService_DeleteTax_FullMethodName          = "/users.UserService/DeleteTax"
 )
@@ -91,6 +92,7 @@ type UserServiceClient interface {
 	CreateTax(ctx context.Context, in *CreateTaxRequest, opts ...grpc.CallOption) (*CreateTaxResponse, error)
 	GetTax(ctx context.Context, in *GetTaxRequest, opts ...grpc.CallOption) (*GetTaxResponse, error)
 	ListTaxes(ctx context.Context, in *ListTaxesRequest, opts ...grpc.CallOption) (*ListTaxesResponse, error)
+	ListTaxesForUser(ctx context.Context, in *ListTaxesForUserRequest, opts ...grpc.CallOption) (*ListTaxesResponse, error)
 	UpdateTax(ctx context.Context, in *UpdateTaxRequest, opts ...grpc.CallOption) (*UpdateTaxResponse, error)
 	DeleteTax(ctx context.Context, in *DeleteTaxRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 }
@@ -393,6 +395,16 @@ func (c *userServiceClient) ListTaxes(ctx context.Context, in *ListTaxesRequest,
 	return out, nil
 }
 
+func (c *userServiceClient) ListTaxesForUser(ctx context.Context, in *ListTaxesForUserRequest, opts ...grpc.CallOption) (*ListTaxesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListTaxesResponse)
+	err := c.cc.Invoke(ctx, UserService_ListTaxesForUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userServiceClient) UpdateTax(ctx context.Context, in *UpdateTaxRequest, opts ...grpc.CallOption) (*UpdateTaxResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateTaxResponse)
@@ -452,6 +464,7 @@ type UserServiceServer interface {
 	CreateTax(context.Context, *CreateTaxRequest) (*CreateTaxResponse, error)
 	GetTax(context.Context, *GetTaxRequest) (*GetTaxResponse, error)
 	ListTaxes(context.Context, *ListTaxesRequest) (*ListTaxesResponse, error)
+	ListTaxesForUser(context.Context, *ListTaxesForUserRequest) (*ListTaxesResponse, error)
 	UpdateTax(context.Context, *UpdateTaxRequest) (*UpdateTaxResponse, error)
 	DeleteTax(context.Context, *DeleteTaxRequest) (*GenericResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
@@ -550,6 +563,9 @@ func (UnimplementedUserServiceServer) GetTax(context.Context, *GetTaxRequest) (*
 }
 func (UnimplementedUserServiceServer) ListTaxes(context.Context, *ListTaxesRequest) (*ListTaxesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListTaxes not implemented")
+}
+func (UnimplementedUserServiceServer) ListTaxesForUser(context.Context, *ListTaxesForUserRequest) (*ListTaxesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListTaxesForUser not implemented")
 }
 func (UnimplementedUserServiceServer) UpdateTax(context.Context, *UpdateTaxRequest) (*UpdateTaxResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateTax not implemented")
@@ -1100,6 +1116,24 @@ func _UserService_ListTaxes_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_ListTaxesForUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListTaxesForUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).ListTaxesForUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_ListTaxesForUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).ListTaxesForUser(ctx, req.(*ListTaxesForUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UserService_UpdateTax_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateTaxRequest)
 	if err := dec(in); err != nil {
@@ -1258,6 +1292,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListTaxes",
 			Handler:    _UserService_ListTaxes_Handler,
+		},
+		{
+			MethodName: "ListTaxesForUser",
+			Handler:    _UserService_ListTaxesForUser_Handler,
 		},
 		{
 			MethodName: "UpdateTax",

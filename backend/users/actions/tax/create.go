@@ -18,12 +18,27 @@ func Create(ctx context.Context, db *sql.DB, req *usersGrpc.CreateTaxRequest) (*
 		return &usersGrpc.CreateTaxResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 
-	var taxID int32
-	err := db.QueryRowContext(ctx,
-		"INSERT INTO taxes (name, rate, country_group_id) VALUES ($1, $2, $3) RETURNING id",
-		req.Name, req.Rate, req.CountryGroupId,
-	).Scan(&taxID)
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
+		return &usersGrpc.CreateTaxResponse{Success: false, Code: codes.InternalError}, err
+	}
+	defer tx.Rollback()
+
+	if req.IsDefault {
+		if err := clearDefaultInGroup(ctx, tx, req.CountryGroupId, 0); err != nil {
+			return &usersGrpc.CreateTaxResponse{Success: false, Code: codes.InternalError}, err
+		}
+	}
+
+	var taxID int32
+	if err := tx.QueryRowContext(ctx,
+		"INSERT INTO taxes (name, rate, country_group_id, is_default) VALUES ($1, $2, $3, $4) RETURNING id",
+		req.Name, req.Rate, req.CountryGroupId, req.IsDefault,
+	).Scan(&taxID); err != nil {
+		return &usersGrpc.CreateTaxResponse{Success: false, Code: codes.InternalError}, err
+	}
+
+	if err := tx.Commit(); err != nil {
 		return &usersGrpc.CreateTaxResponse{Success: false, Code: codes.InternalError}, err
 	}
 

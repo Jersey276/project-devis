@@ -34,7 +34,7 @@ func Get(ctx context.Context, db *sql.DB, req *quoteGrpc.GetQuoteRequest) (*quot
 	}
 
 	rows, err := db.QueryContext(ctx,
-		`SELECT line_id, quote_id, type, name, quantity::text, COALESCE(unit, ''), unit_price, data::text, position
+		`SELECT line_id, quote_id, type, name, quantity::text, COALESCE(unit, ''), unit_price, data::text, position, COALESCE(tax_id, 0)
 		 FROM quote_lines WHERE quote_id=$1 ORDER BY position ASC, id ASC`,
 		quoteID,
 	)
@@ -46,7 +46,7 @@ func Get(ctx context.Context, db *sql.DB, req *quoteGrpc.GetQuoteRequest) (*quot
 	var lines []*quoteGrpc.QuoteLine
 	for rows.Next() {
 		l := &quoteGrpc.QuoteLine{}
-		if err := rows.Scan(&l.LineId, &l.QuoteId, &l.Type, &l.Name, &l.Quantity, &l.Unit, &l.UnitPrice, &l.Data, &l.Position); err != nil {
+		if err := rows.Scan(&l.LineId, &l.QuoteId, &l.Type, &l.Name, &l.Quantity, &l.Unit, &l.UnitPrice, &l.Data, &l.Position, &l.TaxId); err != nil {
 			return &quoteGrpc.GetQuoteResponse{Success: false, Code: codes.InternalError}, err
 		}
 		lines = append(lines, l)
