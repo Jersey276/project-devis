@@ -64,6 +64,10 @@ func (s *Server) ListQuoteLines(ctx context.Context, req *quoteGrpc.ListQuoteLin
 	return line.List(ctx, s.db, req)
 }
 
+func (s *Server) ListUserQuoteLines(ctx context.Context, req *quoteGrpc.ListUserQuoteLinesRequest) (*quoteGrpc.ListUserQuoteLinesResponse, error) {
+	return line.ListForUser(ctx, s.db, req)
+}
+
 func (s *Server) UpdateQuoteLine(ctx context.Context, req *quoteGrpc.UpdateQuoteLineRequest) (*quoteGrpc.UpdateQuoteLineResponse, error) {
 	return line.Update(ctx, s.db, req)
 }

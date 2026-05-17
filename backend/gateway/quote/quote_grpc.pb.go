@@ -19,21 +19,22 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	QuoteService_CreateQuote_FullMethodName     = "/quote.QuoteService/CreateQuote"
-	QuoteService_GetQuote_FullMethodName        = "/quote.QuoteService/GetQuote"
-	QuoteService_ListQuotes_FullMethodName      = "/quote.QuoteService/ListQuotes"
-	QuoteService_UpdateQuote_FullMethodName     = "/quote.QuoteService/UpdateQuote"
-	QuoteService_DeleteQuote_FullMethodName     = "/quote.QuoteService/DeleteQuote"
-	QuoteService_ArchiveQuote_FullMethodName    = "/quote.QuoteService/ArchiveQuote"
-	QuoteService_RestoreQuote_FullMethodName    = "/quote.QuoteService/RestoreQuote"
-	QuoteService_TrashQuotes_FullMethodName     = "/quote.QuoteService/TrashQuotes"
-	QuoteService_DropQuote_FullMethodName       = "/quote.QuoteService/DropQuote"
-	QuoteService_ContinueQuote_FullMethodName   = "/quote.QuoteService/ContinueQuote"
-	QuoteService_CreateQuoteLine_FullMethodName = "/quote.QuoteService/CreateQuoteLine"
-	QuoteService_GetQuoteLine_FullMethodName    = "/quote.QuoteService/GetQuoteLine"
-	QuoteService_ListQuoteLines_FullMethodName  = "/quote.QuoteService/ListQuoteLines"
-	QuoteService_UpdateQuoteLine_FullMethodName = "/quote.QuoteService/UpdateQuoteLine"
-	QuoteService_DeleteQuoteLine_FullMethodName = "/quote.QuoteService/DeleteQuoteLine"
+	QuoteService_CreateQuote_FullMethodName        = "/quote.QuoteService/CreateQuote"
+	QuoteService_GetQuote_FullMethodName           = "/quote.QuoteService/GetQuote"
+	QuoteService_ListQuotes_FullMethodName         = "/quote.QuoteService/ListQuotes"
+	QuoteService_UpdateQuote_FullMethodName        = "/quote.QuoteService/UpdateQuote"
+	QuoteService_DeleteQuote_FullMethodName        = "/quote.QuoteService/DeleteQuote"
+	QuoteService_ArchiveQuote_FullMethodName       = "/quote.QuoteService/ArchiveQuote"
+	QuoteService_RestoreQuote_FullMethodName       = "/quote.QuoteService/RestoreQuote"
+	QuoteService_TrashQuotes_FullMethodName        = "/quote.QuoteService/TrashQuotes"
+	QuoteService_DropQuote_FullMethodName          = "/quote.QuoteService/DropQuote"
+	QuoteService_ContinueQuote_FullMethodName      = "/quote.QuoteService/ContinueQuote"
+	QuoteService_CreateQuoteLine_FullMethodName    = "/quote.QuoteService/CreateQuoteLine"
+	QuoteService_GetQuoteLine_FullMethodName       = "/quote.QuoteService/GetQuoteLine"
+	QuoteService_ListQuoteLines_FullMethodName     = "/quote.QuoteService/ListQuoteLines"
+	QuoteService_ListUserQuoteLines_FullMethodName = "/quote.QuoteService/ListUserQuoteLines"
+	QuoteService_UpdateQuoteLine_FullMethodName    = "/quote.QuoteService/UpdateQuoteLine"
+	QuoteService_DeleteQuoteLine_FullMethodName    = "/quote.QuoteService/DeleteQuoteLine"
 )
 
 // QuoteServiceClient is the client API for QuoteService service.
@@ -55,6 +56,7 @@ type QuoteServiceClient interface {
 	CreateQuoteLine(ctx context.Context, in *CreateQuoteLineRequest, opts ...grpc.CallOption) (*CreateQuoteLineResponse, error)
 	GetQuoteLine(ctx context.Context, in *GetQuoteLineRequest, opts ...grpc.CallOption) (*GetQuoteLineResponse, error)
 	ListQuoteLines(ctx context.Context, in *ListQuoteLinesRequest, opts ...grpc.CallOption) (*ListQuoteLinesResponse, error)
+	ListUserQuoteLines(ctx context.Context, in *ListUserQuoteLinesRequest, opts ...grpc.CallOption) (*ListUserQuoteLinesResponse, error)
 	UpdateQuoteLine(ctx context.Context, in *UpdateQuoteLineRequest, opts ...grpc.CallOption) (*UpdateQuoteLineResponse, error)
 	DeleteQuoteLine(ctx context.Context, in *DeleteQuoteLineRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 }
@@ -197,6 +199,16 @@ func (c *quoteServiceClient) ListQuoteLines(ctx context.Context, in *ListQuoteLi
 	return out, nil
 }
 
+func (c *quoteServiceClient) ListUserQuoteLines(ctx context.Context, in *ListUserQuoteLinesRequest, opts ...grpc.CallOption) (*ListUserQuoteLinesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUserQuoteLinesResponse)
+	err := c.cc.Invoke(ctx, QuoteService_ListUserQuoteLines_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *quoteServiceClient) UpdateQuoteLine(ctx context.Context, in *UpdateQuoteLineRequest, opts ...grpc.CallOption) (*UpdateQuoteLineResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateQuoteLineResponse)
@@ -236,6 +248,7 @@ type QuoteServiceServer interface {
 	CreateQuoteLine(context.Context, *CreateQuoteLineRequest) (*CreateQuoteLineResponse, error)
 	GetQuoteLine(context.Context, *GetQuoteLineRequest) (*GetQuoteLineResponse, error)
 	ListQuoteLines(context.Context, *ListQuoteLinesRequest) (*ListQuoteLinesResponse, error)
+	ListUserQuoteLines(context.Context, *ListUserQuoteLinesRequest) (*ListUserQuoteLinesResponse, error)
 	UpdateQuoteLine(context.Context, *UpdateQuoteLineRequest) (*UpdateQuoteLineResponse, error)
 	DeleteQuoteLine(context.Context, *DeleteQuoteLineRequest) (*GenericResponse, error)
 	mustEmbedUnimplementedQuoteServiceServer()
@@ -286,6 +299,9 @@ func (UnimplementedQuoteServiceServer) GetQuoteLine(context.Context, *GetQuoteLi
 }
 func (UnimplementedQuoteServiceServer) ListQuoteLines(context.Context, *ListQuoteLinesRequest) (*ListQuoteLinesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListQuoteLines not implemented")
+}
+func (UnimplementedQuoteServiceServer) ListUserQuoteLines(context.Context, *ListUserQuoteLinesRequest) (*ListUserQuoteLinesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListUserQuoteLines not implemented")
 }
 func (UnimplementedQuoteServiceServer) UpdateQuoteLine(context.Context, *UpdateQuoteLineRequest) (*UpdateQuoteLineResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateQuoteLine not implemented")
@@ -548,6 +564,24 @@ func _QuoteService_ListQuoteLines_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _QuoteService_ListUserQuoteLines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUserQuoteLinesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuoteServiceServer).ListUserQuoteLines(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QuoteService_ListUserQuoteLines_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuoteServiceServer).ListUserQuoteLines(ctx, req.(*ListUserQuoteLinesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _QuoteService_UpdateQuoteLine_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateQuoteLineRequest)
 	if err := dec(in); err != nil {
@@ -642,6 +676,10 @@ var QuoteService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListQuoteLines",
 			Handler:    _QuoteService_ListQuoteLines_Handler,
+		},
+		{
+			MethodName: "ListUserQuoteLines",
+			Handler:    _QuoteService_ListUserQuoteLines_Handler,
 		},
 		{
 			MethodName: "UpdateQuoteLine",

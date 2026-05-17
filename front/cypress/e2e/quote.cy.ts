@@ -22,16 +22,18 @@ describe("Quote", () => {
         body: {
           success: true,
           quotes: [
-            quote({ quote_id: "q-1", name: "Devis Alpha" }),
+            quote({ quote_id: "q-1", name: "Devis Alpha", total_ttc: 12000 }),
             quote({
               quote_id: "q-2",
               name: "Devis Beta",
               archived_at: "2026-04-01T00:00:00Z",
+              total_ttc: 5000,
             }),
             quote({
               quote_id: "q-3",
               name: "Devis Gamma",
               state: "drop",
+              total_ttc: 0,
             }),
           ],
         },
@@ -42,10 +44,14 @@ describe("Quote", () => {
 
       cy.contains("td", "Devis Alpha").should("be.visible");
       cy.contains("td", "Brouillon").should("be.visible");
+      cy.contains("td", "120.00 €").should("be.visible");
       cy.contains("td", "Devis Beta").should("be.visible");
       cy.contains("td", "Archivé").should("be.visible");
+      cy.contains("td", "50.00 €").should("be.visible");
       cy.contains("td", "Devis Gamma").should("be.visible");
       cy.contains("td", "Abandonné").should("be.visible");
+      cy.contains("td", "0.00 €").should("be.visible");
+      cy.contains("th", "Total TTC").should("be.visible");
     });
 
     it("shows the empty state when no quotes are returned", () => {

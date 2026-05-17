@@ -16,6 +16,7 @@ import {
 import { listQuotes } from "@/lib/services/quotes";
 import { exportQuotePdf } from "@/lib/services/export";
 import { useMode } from "@/lib/mode-context";
+import { formatEurosFromCents } from "@/lib/utils";
 import {
   type BackendQuote,
   type QuoteListState,
@@ -28,6 +29,7 @@ type QuoteListItem = {
   id: string;
   projectName: string;
   status: QuoteListState;
+  totalTtc: number;
 };
 
 export default function QuoteListTable() {
@@ -75,6 +77,7 @@ export default function QuoteListTable() {
             id: quote.quote_id,
             projectName: quote.name,
             status: quoteListState(quote),
+            totalTtc: quote.total_ttc ?? 0,
           })),
         );
       }
@@ -101,6 +104,9 @@ export default function QuoteListTable() {
             {t("columns.project")}
           </DataTableSortableHead>
           <DataTableSortableHead name="status">{t("columns.status")}</DataTableSortableHead>
+          <DataTableSortableHead name="totalTtc">
+            {t("columns.totalTtc")}
+          </DataTableSortableHead>
           <DataTableHead>{t("columns.actions")}</DataTableHead>
         </DataTableRow>
       </DataTableHeader>
@@ -113,6 +119,7 @@ export default function QuoteListTable() {
             <DataTableCell> </DataTableCell>
             <DataTableCell> </DataTableCell>
             <DataTableCell> </DataTableCell>
+            <DataTableCell> </DataTableCell>
           </DataTableRow>
         ) : (
           visibleItems.map((quote) => (
@@ -120,6 +127,9 @@ export default function QuoteListTable() {
               <DataTableCell>{quote.id}</DataTableCell>
               <DataTableCell>{quote.projectName}</DataTableCell>
               <DataTableCell>{tStatus(quote.status)}</DataTableCell>
+              <DataTableCell className="tabular-nums">
+                {formatEurosFromCents(quote.totalTtc)}
+              </DataTableCell>
               <DataTableCell>
                 <DataTableRowActions id={quote.id} row={quote} />
               </DataTableCell>

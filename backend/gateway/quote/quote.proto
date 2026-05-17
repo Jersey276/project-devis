@@ -21,6 +21,7 @@ service QuoteService {
     rpc CreateQuoteLine(CreateQuoteLineRequest) returns (CreateQuoteLineResponse);
     rpc GetQuoteLine(GetQuoteLineRequest) returns (GetQuoteLineResponse);
     rpc ListQuoteLines(ListQuoteLinesRequest) returns (ListQuoteLinesResponse);
+    rpc ListUserQuoteLines(ListUserQuoteLinesRequest) returns (ListUserQuoteLinesResponse);
     rpc UpdateQuoteLine(UpdateQuoteLineRequest) returns (UpdateQuoteLineResponse);
     rpc DeleteQuoteLine(DeleteQuoteLineRequest) returns (GenericResponse);
 }
@@ -182,6 +183,17 @@ message ListQuoteLinesRequest {
 }
 
 message ListQuoteLinesResponse {
+    bool success = 1;
+    int32 code = 2;
+    repeated QuoteLine lines = 3;
+}
+
+message ListUserQuoteLinesRequest {
+    string user_id = 1;
+    bool include_archived = 2;
+}
+
+message ListUserQuoteLinesResponse {
     bool success = 1;
     int32 code = 2;
     repeated QuoteLine lines = 3;

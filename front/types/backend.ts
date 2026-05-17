@@ -11,6 +11,8 @@ export type BackendQuote = {
   user_address_id: number;
   created_at: string;
   updated_at: string;
+  // Present on GET /api/quotes only — TTC total in cents, aggregated by the gateway.
+  total_ttc?: number;
 };
 
 export type BackendQuoteLineType = "simple" | "multiple";

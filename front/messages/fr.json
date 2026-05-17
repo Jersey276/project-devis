@@ -89,6 +89,7 @@
         "id": "ID",
         "project": "Projet",
         "status": "Statut",
+        "totalTtc": "Total TTC",
         "actions": "Actions"
       },
       "actions": {
