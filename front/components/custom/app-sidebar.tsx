@@ -25,13 +25,7 @@ import {
 import UserMenu from "../user/user-menu";
 import { useMode, type UserMode } from "@/lib/mode-context";
 
-type NavKey =
-  | "quote"
-  | "invoices"
-  | "clients"
-  | "countries"
-  | "taxes"
-  | "test";
+type NavKey = "quote" | "invoices" | "clients" | "countries" | "taxes" | "test";
 
 type SidebarItem = {
   key: NavKey;
@@ -49,12 +43,12 @@ const items: SidebarItem[] = [
     url: "/quote",
     icon: QuoteIcon,
   },
-  {
-    key: "invoices",
-    url: "/invoice",
-    icon: ReceiptEuroIcon,
-    modes: ["provider"],
-  },
+  // {
+  //   key: "invoices",
+  //   url: "/invoice",
+  //   icon: ReceiptEuroIcon,
+  //   modes: ["provider"],
+  // },
   {
     key: "clients",
     url: "/clients",
@@ -75,12 +69,12 @@ const items: SidebarItem[] = [
     modes: ["provider"],
     temp: true,
   },
-  {
-    key: "test",
-    url: "/test",
-    icon: WrenchIcon,
-    modes: ["provider"],
-  },
+  // {
+  //   key: "test",
+  //   url: "/test",
+  //   icon: WrenchIcon,
+  //   modes: ["provider"],
+  // },
 ];
 
 export default function AppSidebar() {

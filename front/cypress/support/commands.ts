@@ -10,9 +10,9 @@ declare global {
   namespace Cypress {
     interface Chainable {
       login(token?: string): Chainable<void>;
-      // Visits a URL with the user mode pre-seeded as a cookie so SSR and
-      // hydration agree on the mode. The server-side layout reads
-      // `app.user-mode` and feeds it to ModeProvider as initialMode.
+      // Mode is currently inert: ModeProvider hard-codes "provider" while
+      // customer mode is disabled at the UI level. The signature is kept so
+      // call sites stay stable when the toggle is restored.
       visitAs(mode: UserMode, url: string): Chainable<void>;
       fillLoginForm(email: string, password: string): Chainable<void>;
     }
@@ -49,8 +49,7 @@ Cypress.Commands.add("login", (token = "fake-token") => {
   });
 });
 
-Cypress.Commands.add("visitAs", (mode: UserMode, url: string) => {
-  cy.setCookie("app.user-mode", mode, { domain: "localhost" });
+Cypress.Commands.add("visitAs", (_mode: UserMode, url: string) => {
   cy.visit(url);
 });
 

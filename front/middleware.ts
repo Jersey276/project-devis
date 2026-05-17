@@ -31,12 +31,10 @@ export async function middleware(request: NextRequest) {
     return redirectToLogin(request);
   }
 
-  // Propagate the refreshed cookies to the same-request page handler. Without this,
-  // SSR auth checks (e.g. app/(app)/layout.tsx) still see the original empty cookies
-  // and bounce to /login even though the refresh succeeded.
-  const refreshed = (await refreshResponse
-    .json()
-    .catch(() => null)) as { token?: string; refresh_token?: string } | null;
+  const refreshed = (await refreshResponse.json().catch(() => null)) as {
+    token?: string;
+    refresh_token?: string;
+  } | null;
   if (refreshed?.token && refreshed?.refresh_token) {
     request.cookies.set(AUTH_TOKEN_COOKIE, refreshed.token);
     request.cookies.set(REFRESH_TOKEN_COOKIE, refreshed.refresh_token);
