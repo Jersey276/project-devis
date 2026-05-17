@@ -24,7 +24,7 @@ import {
   DataTableSortableHead,
   type DataTableRowAction,
 } from "@/components/custom/data-table";
-import { ArchiveIcon, CheckIcon, PencilIcon, PlusIcon } from "lucide-react";
+import { Trash2Icon, CheckIcon, PencilIcon, PlusIcon } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { toast } from "sonner";
 import TaxDialog from "./tax-dialog";

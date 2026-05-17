@@ -46,7 +46,7 @@ import { exportQuotePdf } from "@/lib/services/export";
 import { listClients } from "@/lib/services/clients";
 import { listAddresses } from "@/lib/services/addresses";
 import { listAvailableTaxesForUser } from "@/lib/services/taxes";
-import { fieldErrorsFromBody, type FieldErrors } from "@/lib/api";
+import { apiFetch, fieldErrorsFromBody, type FieldErrors } from "@/lib/api";
 import { useMode } from "@/lib/mode-context";
 import {
   type BackendAddress,
@@ -63,7 +63,7 @@ type QuoteFormProps = {
   quoteId?: string;
 };
 
-const STEP_KEYS = ["basicInfo", "items", "summary"] as const;
+const STEP_KEYS = ["basicInfo", "items"] as const;
 
 const SAVE_DEBOUNCE_MS = 600;
 const SAVED_INDICATOR_MS = 1500;
@@ -127,8 +127,10 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const [projectName, setProjectName] = useState("");
   const [clientId, setClientId] = useState("");
   const [addressId, setAddressId] = useState<number | null>(null);
+  const [userAddressId, setUserAddressId] = useState<number | null>(null);
   const [clients, setClients] = useState<BackendClient[]>([]);
   const [addresses, setAddresses] = useState<BackendAddress[]>([]);
+  const [userAddresses, setUserAddresses] = useState<BackendAddress[]>([]);
   const [items, setItems] = useState<FormItem[]>([]);
   const [availableTaxes, setAvailableTaxes] = useState<BackendTax[]>([]);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -171,6 +173,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       setQuoteState(fetchedQuote.state ?? "draft");
       setClientId(fetchedQuote.client_id ?? "");
       setAddressId(fetchedQuote.address_id ?? null);
+      setUserAddressId(fetchedQuote.user_address_id || null);
       const sorted = [...fetchedLines].sort((a, b) => a.position - b.position);
       setItems(sorted.map(rowFromBackendLine));
       setLoading(false);
@@ -193,6 +196,35 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       cancelled = true;
     };
   }, []);
+
+  // Load the current user's addresses. Step 1 picks the provider
+  // (prestataire) address from this list; step 2 uses it to scope the
+  // available taxes. The listAddresses owner needs the concrete user_id, so
+  // we fetch /me first — the gateway resolves the authenticated user there.
+  useEffect(() => {
+    if (isCustomer) return;
+    let cancelled = false;
+    (async () => {
+      const meRes = await apiFetch("/api/users/me");
+      if (cancelled || !meRes.ok || !meRes.body.success || !meRes.body.user) {
+        return;
+      }
+      const meId = (meRes.body.user as { user_id: string }).user_id;
+      const { ok, body } = await listAddresses({
+        type: "user",
+        userId: meId,
+      });
+      if (cancelled) return;
+      if (ok && Array.isArray(body.addresses)) {
+        setUserAddresses(body.addresses as BackendAddress[]);
+      } else {
+        setUserAddresses([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isCustomer]);
 
   // Load taxes available for the current user (resolved from their first
   // address). Existing lines may reference superseded taxes (the tax was
@@ -222,20 +254,22 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   useEffect(() => {
     if (loading) return;
     let cancelled = false;
-    listAvailableTaxesForUser(includeTaxIds).then(({ ok, body }) => {
-      if (cancelled) return;
-      if (ok && Array.isArray(body.taxes)) {
-        setAvailableTaxes(body.taxes as BackendTax[]);
-      } else {
-        setAvailableTaxes([]);
-      }
-    });
+    listAvailableTaxesForUser(includeTaxIds, userAddressId ?? undefined).then(
+      ({ ok, body }) => {
+        if (cancelled) return;
+        if (ok && Array.isArray(body.taxes)) {
+          setAvailableTaxes(body.taxes as BackendTax[]);
+        } else {
+          setAvailableTaxes([]);
+        }
+      },
+    );
     return () => {
       cancelled = true;
     };
     // includeTaxIds is reference-unstable; key it via the joined string.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, includeTaxIdsKey]);
+  }, [loading, includeTaxIdsKey, userAddressId]);
 
   // Load addresses for the selected client; reset address when client changes.
   useEffect(() => {
@@ -345,6 +379,9 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     if (!addressId) {
       localErrors.address_id = [t("errors.selectAddress")];
     }
+    if (!userAddressId) {
+      localErrors.user_address_id = [t("errors.selectUserAddress")];
+    }
     if (Object.keys(localErrors).length > 0) {
       setErrors(localErrors);
       return;
@@ -357,6 +394,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           name: trimmed,
           clientId,
           addressId: addressId!,
+          userAddressId: userAddressId!,
         });
         if (ok && body.success) {
           const newId = body.quote_id as string;
@@ -376,7 +414,16 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       return;
     }
     setStep(1);
-  }, [addressId, clientId, isCreate, projectName, router, t, tCommon]);
+  }, [
+    addressId,
+    clientId,
+    isCreate,
+    projectName,
+    router,
+    t,
+    tCommon,
+    userAddressId,
+  ]);
 
   // ────────────────────────────────────────────────────────────
   // Step 2 handlers
@@ -608,6 +655,27 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     [isReadonly, quoteId, t],
   );
 
+  const handleUserAddressIdChange = useCallback(
+    (value: number | null) => {
+      setUserAddressId(value);
+      setErrors((prev) => ({ ...prev, user_address_id: [] }));
+      if (!quoteId || isReadonly || value == null) return;
+      const name = projectNameRef.current.trim();
+      if (name.length === 0) return;
+      void updateQuote(quoteId, { name, userAddressId: value }).then(
+        ({ ok, body }) => {
+          if (!ok || !body.success) {
+            toast.error(
+              (body.message as string) ??
+                t("errors.userAddressSaveFailedToast"),
+            );
+          }
+        },
+      );
+    },
+    [isReadonly, quoteId, t],
+  );
+
   // ────────────────────────────────────────────────────────────
   // Render
 
@@ -625,7 +693,11 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   }
 
   const canGoNextFromStep1 =
-    projectName.trim().length > 0 && !!clientId && !!addressId && !creating;
+    projectName.trim().length > 0 &&
+    !!clientId &&
+    !!addressId &&
+    !!userAddressId &&
+    !creating;
 
   const showDropButton =
     !isCustomer &&
@@ -732,15 +804,19 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             projectName={projectName}
             clientId={clientId}
             addressId={addressId}
+            userAddressId={userAddressId}
             isReadonly={isReadonly}
             clients={clients}
             addresses={addresses}
+            userAddresses={userAddresses}
             nameErrors={errors.name}
             clientErrors={errors.client_id}
             addressErrors={errors.address_id}
+            userAddressErrors={errors.user_address_id}
             onProjectNameChange={handleProjectNameChange}
             onClientIdChange={handleClientIdChange}
             onAddressIdChange={handleAddressIdChange}
+            onUserAddressIdChange={handleUserAddressIdChange}
           />
         )}
 

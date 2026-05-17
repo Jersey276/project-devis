@@ -3674,9 +3674,12 @@ func (x *ListTaxesRequest) GetCountryGroupId() int32 {
 }
 
 type ListTaxesForUserRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	IncludeIds    []int32                `protobuf:"varint,2,rep,packed,name=include_ids,json=includeIds,proto3" json:"include_ids,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	UserId     string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	IncludeIds []int32                `protobuf:"varint,2,rep,packed,name=include_ids,json=includeIds,proto3" json:"include_ids,omitempty"`
+	// When non-zero, resolves the country group from this user-owned address
+	// instead of the user's first address (MIN(id)).
+	AddressId     int32 `protobuf:"varint,3,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3723,6 +3726,13 @@ func (x *ListTaxesForUserRequest) GetIncludeIds() []int32 {
 		return x.IncludeIds
 	}
 	return nil
+}
+
+func (x *ListTaxesForUserRequest) GetAddressId() int32 {
+	if x != nil {
+		return x.AddressId
+	}
+	return 0
 }
 
 type ListTaxesResponse struct {
@@ -4246,11 +4256,13 @@ const file_users_proto_rawDesc = "" +
 	"\x03tax\x18\x03 \x01(\v2\n" +
 	".users.TaxR\x03tax\"<\n" +
 	"\x10ListTaxesRequest\x12(\n" +
-	"\x10country_group_id\x18\x01 \x01(\x05R\x0ecountryGroupId\"S\n" +
+	"\x10country_group_id\x18\x01 \x01(\x05R\x0ecountryGroupId\"r\n" +
 	"\x17ListTaxesForUserRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1f\n" +
 	"\vinclude_ids\x18\x02 \x03(\x05R\n" +
-	"includeIds\"c\n" +
+	"includeIds\x12\x1d\n" +
+	"\n" +
+	"address_id\x18\x03 \x01(\x05R\taddressId\"c\n" +
 	"\x11ListTaxesResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12 \n" +

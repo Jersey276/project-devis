@@ -8,6 +8,7 @@ export type BackendQuote = {
   state: BackendQuoteState;
   client_id: string;
   address_id: number;
+  user_address_id: number;
   created_at: string;
   updated_at: string;
 };

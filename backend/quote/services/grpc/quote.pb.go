@@ -137,6 +137,7 @@ type Quote struct {
 	State         QuoteState             `protobuf:"varint,5,opt,name=state,proto3,enum=quote.QuoteState" json:"state,omitempty"`
 	ClientId      string                 `protobuf:"bytes,6,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	AddressId     int32                  `protobuf:"varint,7,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
+	UserAddressId int32                  `protobuf:"varint,8,opt,name=user_address_id,json=userAddressId,proto3" json:"user_address_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -220,12 +221,20 @@ func (x *Quote) GetAddressId() int32 {
 	return 0
 }
 
+func (x *Quote) GetUserAddressId() int32 {
+	if x != nil {
+		return x.UserAddressId
+	}
+	return 0
+}
+
 type CreateQuoteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	ClientId      string                 `protobuf:"bytes,3,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	AddressId     int32                  `protobuf:"varint,4,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
+	UserAddressId int32                  `protobuf:"varint,5,opt,name=user_address_id,json=userAddressId,proto3" json:"user_address_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -284,6 +293,13 @@ func (x *CreateQuoteRequest) GetClientId() string {
 func (x *CreateQuoteRequest) GetAddressId() int32 {
 	if x != nil {
 		return x.AddressId
+	}
+	return 0
+}
+
+func (x *CreateQuoteRequest) GetUserAddressId() int32 {
+	if x != nil {
+		return x.UserAddressId
 	}
 	return 0
 }
@@ -587,6 +603,7 @@ type UpdateQuoteRequest struct {
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	ClientId      string                 `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	AddressId     int32                  `protobuf:"varint,5,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
+	UserAddressId int32                  `protobuf:"varint,6,opt,name=user_address_id,json=userAddressId,proto3" json:"user_address_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -652,6 +669,13 @@ func (x *UpdateQuoteRequest) GetClientId() string {
 func (x *UpdateQuoteRequest) GetAddressId() int32 {
 	if x != nil {
 		return x.AddressId
+	}
+	return 0
+}
+
+func (x *UpdateQuoteRequest) GetUserAddressId() int32 {
+	if x != nil {
+		return x.UserAddressId
 	}
 	return 0
 }
@@ -1755,7 +1779,7 @@ const file_quote_proto_rawDesc = "" +
 	"\vquote.proto\x12\x05quote\"?\n" +
 	"\x0fGenericResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\x05R\x04code\"\xd0\x01\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\"\xf8\x01\n" +
 	"\x05Quote\x12\x19\n" +
 	"\bquote_id\x18\x01 \x01(\tR\aquoteId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
@@ -1764,13 +1788,15 @@ const file_quote_proto_rawDesc = "" +
 	"\x05state\x18\x05 \x01(\x0e2\x11.quote.QuoteStateR\x05state\x12\x1b\n" +
 	"\tclient_id\x18\x06 \x01(\tR\bclientId\x12\x1d\n" +
 	"\n" +
-	"address_id\x18\a \x01(\x05R\taddressId\"}\n" +
+	"address_id\x18\a \x01(\x05R\taddressId\x12&\n" +
+	"\x0fuser_address_id\x18\b \x01(\x05R\ruserAddressId\"\xa5\x01\n" +
 	"\x12CreateQuoteRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1b\n" +
 	"\tclient_id\x18\x03 \x01(\tR\bclientId\x12\x1d\n" +
 	"\n" +
-	"address_id\x18\x04 \x01(\x05R\taddressId\"^\n" +
+	"address_id\x18\x04 \x01(\x05R\taddressId\x12&\n" +
+	"\x0fuser_address_id\x18\x05 \x01(\x05R\ruserAddressId\"^\n" +
 	"\x13CreateQuoteResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x19\n" +
@@ -1789,14 +1815,15 @@ const file_quote_proto_rawDesc = "" +
 	"\x12ListQuotesResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12$\n" +
-	"\x06quotes\x18\x03 \x03(\v2\f.quote.QuoteR\x06quotes\"\x98\x01\n" +
+	"\x06quotes\x18\x03 \x03(\v2\f.quote.QuoteR\x06quotes\"\xc0\x01\n" +
 	"\x12UpdateQuoteRequest\x12\x19\n" +
 	"\bquote_id\x18\x01 \x01(\tR\aquoteId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1b\n" +
 	"\tclient_id\x18\x04 \x01(\tR\bclientId\x12\x1d\n" +
 	"\n" +
-	"address_id\x18\x05 \x01(\x05R\taddressId\"C\n" +
+	"address_id\x18\x05 \x01(\x05R\taddressId\x12&\n" +
+	"\x0fuser_address_id\x18\x06 \x01(\x05R\ruserAddressId\"C\n" +
 	"\x13UpdateQuoteResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\"H\n" +

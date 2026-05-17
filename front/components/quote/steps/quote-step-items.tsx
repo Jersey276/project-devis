@@ -117,11 +117,6 @@ function SaveIndicator({
   );
 }
 
-function taxLabel(t: BackendTax): string {
-  const base = `${t.name} (${t.rate}%)`;
-  return t.superseded_at ? `${base} — version archivée` : base;
-}
-
 export default function QuoteStepItems({
   items,
   isReadonly,
@@ -136,13 +131,17 @@ export default function QuoteStepItems({
   onRemoveItem,
   onAddItem,
 }: QuoteStepItemsProps) {
-  const selectableTaxes = availableTaxes.filter((t) => !t.superseded_at);
+  const selectableTaxes = availableTaxes.filter((tax) => !tax.superseded_at);
   const taxesDisabled = selectableTaxes.length === 0;
   const t = useTranslations("quote.steps.items");
   const indicatorLabels: IndicatorLabels = {
     saving: t("savingAria"),
     saved: t("savedAria"),
     error: t("errorAria"),
+  };
+  const taxLabel = (tax: BackendTax): string => {
+    const base = `${tax.name} (${tax.rate}%)`;
+    return tax.superseded_at ? `${base} — ${t("taxSupersededSuffix")}` : base;
   };
   return (
     <div className="space-y-4">
@@ -214,11 +213,11 @@ export default function QuoteStepItems({
                   >
                     <ComboboxInput
                       name="line-tax"
-                      placeholder={taxesDisabled ? "—" : "Sélectionner"}
+                      placeholder={taxesDisabled ? "—" : t("taxPlaceholder")}
                       disabled={isReadonly || taxesDisabled}
                     />
                     <ComboboxContent>
-                      <ComboboxEmpty>Aucune taxe disponible.</ComboboxEmpty>
+                      <ComboboxEmpty>{t("taxEmpty")}</ComboboxEmpty>
                       <ComboboxList>
                         {(t: BackendTax) => (
                           <ComboboxItem
@@ -235,7 +234,10 @@ export default function QuoteStepItems({
                 </TableCell>
                 <TableCell>{lineTotal.toFixed(2)} €</TableCell>
                 <TableCell>
-                  <SaveIndicator status={item.saveStatus} labels={indicatorLabels} />
+                  <SaveIndicator
+                    status={item.saveStatus}
+                    labels={indicatorLabels}
+                  />
                 </TableCell>
                 <TableCell>
                   {!isReadonly && (
@@ -278,10 +280,10 @@ export default function QuoteStepItems({
       <div className="flex justify-end">
         <div
           data-slot="quote-totals"
-          className="min-w-[260px] space-y-1 rounded-md border px-4 py-2 text-sm"
+          className="min-w-65 space-y-1 rounded-md border px-4 py-2 text-sm"
         >
           <div className="flex justify-between font-medium">
-            <span>Montant total HT</span>
+            <span>{t("totalHt")}</span>
             <span data-slot="total-ht">{totals.ht.toFixed(2)} €</span>
           </div>
           {totals.breakdown.map(({ tax, amount }) => (
@@ -297,12 +299,10 @@ export default function QuoteStepItems({
           ))}
           {totals.breakdown.length > 0 && (
             <div className="flex justify-between border-t pt-1 font-semibold">
-              <span>Total TTC</span>
+              <span>{t("totalTtc")}</span>
               <span data-slot="total-ttc">{totals.ttc.toFixed(2)} €</span>
             </div>
           )}
-        <div className="rounded-md border px-4 py-2 text-sm font-medium">
-          {t("totalAmount", { amount: totalAmount.toFixed(2) })}
         </div>
       </div>
     </div>

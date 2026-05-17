@@ -36,12 +36,12 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 		return fail(codes.InvalidInput), nil
 	}
 
-	// Phase 1: GetQuote, GetUser, and the user's address list have no
-	// inter-dependency, so we fan them out together.
+	// Phase 1: GetQuote and GetUser have no inter-dependency. The user
+	// address fetch moved to Phase 2 because it now keys off the quote's
+	// user_address_id (the prestataire address chosen at quote creation).
 	var (
 		qResp         *quote.GetQuoteResponse
 		user          *users.User
-		userAddr      *users.Address
 		firstUpstream atomic.Int32 // first non-zero local code recorded by a goroutine
 	)
 	recordCode := func(local int32) {
@@ -78,25 +78,6 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 		return nil
 	})
 
-	g.Go(func() error {
-		resp, err := uc.ListAddresses(gctx, &users.ListAddressesRequest{
-			OwnerType:  users.OwnerType_OWNER_TYPE_USER,
-			OwnerId:    req.UserId,
-			AuthUserId: req.UserId,
-		})
-		if err != nil {
-			return err
-		}
-		if !resp.Success {
-			recordCode(codes.InternalError)
-			return fmt.Errorf("list user addresses: upstream %d", resp.Code)
-		}
-		if len(resp.Addresses) > 0 {
-			userAddr = resp.Addresses[0]
-		}
-		return nil
-	})
-
 	if err := g.Wait(); err != nil {
 		if code := firstUpstream.Load(); code != 0 {
 			return fail(code), nil
@@ -104,12 +85,14 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 		return nil, err
 	}
 
-	// Phase 2: GetClient and GetAddress both need ClientId from the quote.
+	// Phase 2: GetClient, GetAddress (client side) and GetAddress (user side)
+	// all need ids from the quote.
 	q := qResp.Quote
 	lines := qResp.Lines
 	var (
 		client     *users.Client
 		clientAddr *users.Address
+		userAddr   *users.Address
 	)
 
 	g2, g2ctx := errgroup.WithContext(ctx)
@@ -142,6 +125,45 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 			return fmt.Errorf("get address: upstream %d", resp.Code)
 		}
 		clientAddr = resp.Address
+		return nil
+	})
+
+	g2.Go(func() error {
+		// Newer quotes always carry a user_address_id (DB column is NOT NULL).
+		// Legacy paths that called Export without one would land here with 0;
+		// keep a list-based fallback so the PDF still renders.
+		if q.UserAddressId == 0 {
+			resp, err := uc.ListAddresses(g2ctx, &users.ListAddressesRequest{
+				OwnerType:  users.OwnerType_OWNER_TYPE_USER,
+				OwnerId:    req.UserId,
+				AuthUserId: req.UserId,
+			})
+			if err != nil {
+				return err
+			}
+			if !resp.Success {
+				recordCode(codes.InternalError)
+				return fmt.Errorf("list user addresses: upstream %d", resp.Code)
+			}
+			if len(resp.Addresses) > 0 {
+				userAddr = resp.Addresses[0]
+			}
+			return nil
+		}
+		resp, err := uc.GetAddress(g2ctx, &users.GetAddressRequest{
+			AddressId:  q.UserAddressId,
+			OwnerType:  users.OwnerType_OWNER_TYPE_USER,
+			OwnerId:    req.UserId,
+			AuthUserId: req.UserId,
+		})
+		if err != nil {
+			return err
+		}
+		if !resp.Success || resp.Address == nil {
+			recordCode(mapDependencyCode(resp.Code))
+			return fmt.Errorf("get user address: upstream %d", resp.Code)
+		}
+		userAddr = resp.Address
 		return nil
 	})
 

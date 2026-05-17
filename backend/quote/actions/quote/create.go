@@ -10,14 +10,14 @@ import (
 )
 
 func Create(ctx context.Context, db *sql.DB, req *quoteGrpc.CreateQuoteRequest) (*quoteGrpc.CreateQuoteResponse, error) {
-	if req.UserId == "" || req.Name == "" || req.ClientId == "" || req.AddressId == 0 {
+	if req.UserId == "" || req.Name == "" || req.ClientId == "" || req.AddressId == 0 || req.UserAddressId == 0 {
 		return &quoteGrpc.CreateQuoteResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 
 	quoteID := uuid.New().String()
 	_, err := db.ExecContext(ctx,
-		`INSERT INTO quotes (quote_id, user_id, name, state, client_id, address_id) VALUES ($1, $2, $3, 'draft', $4, $5)`,
-		quoteID, req.UserId, req.Name, req.ClientId, req.AddressId,
+		`INSERT INTO quotes (quote_id, user_id, name, state, client_id, address_id, user_address_id) VALUES ($1, $2, $3, 'draft', $4, $5, $6)`,
+		quoteID, req.UserId, req.Name, req.ClientId, req.AddressId, req.UserAddressId,
 	)
 	if err != nil {
 		return &quoteGrpc.CreateQuoteResponse{Success: false, Code: codes.InternalError}, err

@@ -440,6 +440,9 @@ message ListTaxesRequest {
 message ListTaxesForUserRequest {
     string user_id = 1;
     repeated int32 include_ids = 2;
+    // When non-zero, resolves the country group from this user-owned address
+    // instead of the user's first address (MIN(id)).
+    int32 address_id = 3;
 }
 
 message ListTaxesResponse {

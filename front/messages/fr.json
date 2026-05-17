@@ -125,9 +125,11 @@
         "requiredField": "Ce champ est requis.",
         "selectClient": "Veuillez sélectionner un client.",
         "selectAddress": "Veuillez sélectionner une adresse.",
+        "selectUserAddress": "Veuillez sélectionner une adresse de prestataire.",
         "nameSaveFailedToast": "Échec de l'enregistrement du nom.",
         "clientSaveFailedToast": "Échec de l'enregistrement du client.",
         "addressSaveFailedToast": "Échec de l'enregistrement de l'adresse.",
+        "userAddressSaveFailedToast": "Échec de l'enregistrement de l'adresse du prestataire.",
         "lineSaveFailedToast": "Échec d'enregistrement de la ligne.",
         "lineAddFailedToast": "Impossible d'ajouter la ligne.",
         "lineRemoveFailedToast": "Impossible de supprimer la ligne."
@@ -142,27 +144,36 @@
         "clientPlaceholderEmpty": "Aucun client disponible",
         "clientPlaceholder": "Sélectionner un client",
         "clientEmpty": "Aucun client trouvé.",
-        "addressLabel": "Adresse",
+        "addressLabel": "Adresse du client",
         "addressPlaceholderNoClient": "Sélectionner d'abord un client",
         "addressPlaceholderEmpty": "Aucune adresse pour ce client",
         "addressPlaceholder": "Sélectionner une adresse",
-        "addressEmpty": "Aucune adresse trouvée."
+        "addressEmpty": "Aucune adresse trouvée.",
+        "userAddressLabel": "Adresse du prestataire",
+        "userAddressPlaceholder": "Sélectionner une adresse",
+        "userAddressPlaceholderEmpty": "Aucune adresse enregistrée — ajoutez-en une dans votre profil.",
+        "userAddressEmpty": "Aucune adresse trouvée."
       },
       "items": {
         "label": "Éléments du devis",
         "description": "Description",
         "quantity": "Quantité",
         "unitPrice": "Prix unitaire",
+        "tax": "TVA",
         "lineTotal": "Total ligne",
         "state": "État",
         "action": "Action",
         "lineNamePlaceholder": "Prestation",
         "deleteAria": "Supprimer la ligne",
         "addAria": "Ajouter une ligne",
-        "totalAmount": "Montant total: {amount} €",
         "savingAria": "Enregistrement en cours",
         "savedAria": "Enregistré",
-        "errorAria": "Échec d'enregistrement"
+        "errorAria": "Échec d'enregistrement",
+        "taxPlaceholder": "Sélectionner",
+        "taxEmpty": "Aucune taxe disponible.",
+        "taxSupersededSuffix": "version archivée",
+        "totalHt": "Montant total HT",
+        "totalTtc": "Total TTC"
       },
       "summary": {
         "label": "Résumé"

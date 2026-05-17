@@ -22,35 +22,44 @@ type QuoteStepBasicInfoProps = {
   projectName: string;
   clientId: string;
   addressId: number | null;
+  userAddressId: number | null;
   isReadonly: boolean;
   clients: BackendClient[];
   addresses: BackendAddress[];
+  userAddresses: BackendAddress[];
   nameErrors?: string[];
   clientErrors?: string[];
   addressErrors?: string[];
+  userAddressErrors?: string[];
   onProjectNameChange: (value: string) => void;
   onClientIdChange: (value: string) => void;
   onAddressIdChange: (value: number | null) => void;
+  onUserAddressIdChange: (value: number | null) => void;
 };
 
 export default function QuoteStepBasicInfo({
   projectName,
   clientId,
   addressId,
+  userAddressId,
   isReadonly,
   clients,
   addresses,
+  userAddresses,
   nameErrors,
   clientErrors,
   addressErrors,
+  userAddressErrors,
   onProjectNameChange,
   onClientIdChange,
   onAddressIdChange,
+  onUserAddressIdChange,
 }: QuoteStepBasicInfoProps) {
   const t = useTranslations("quote.steps.basicInfo");
   const hasNameError = !!nameErrors?.length;
   const hasClientError = !!clientErrors?.length;
   const hasAddressError = !!addressErrors?.length;
+  const hasUserAddressError = !!userAddressErrors?.length;
 
   const selectedClient = clientId
     ? clients.find((c) => c.client_id === clientId) ?? null
@@ -58,6 +67,10 @@ export default function QuoteStepBasicInfo({
   const selectedAddress =
     addressId != null
       ? addresses.find((a) => a.id === addressId) ?? null
+      : null;
+  const selectedUserAddress =
+    userAddressId != null
+      ? userAddresses.find((a) => a.id === userAddressId) ?? null
       : null;
 
   const clientPlaceholder =
@@ -70,6 +83,11 @@ export default function QuoteStepBasicInfo({
     : addresses.length === 0
       ? t("addressPlaceholderEmpty")
       : t("addressPlaceholder");
+
+  const userAddressPlaceholder =
+    userAddresses.length === 0
+      ? t("userAddressPlaceholderEmpty")
+      : t("userAddressPlaceholder");
 
   return (
     <div className="grid gap-4 md:max-w-xl">
@@ -85,6 +103,46 @@ export default function QuoteStepBasicInfo({
           aria-invalid={hasNameError}
         />
         <FieldError errors={toErrorProps(nameErrors)} />
+      </Field>
+
+      <Field data-invalid={hasUserAddressError}>
+        <FieldLabel htmlFor="user-address-picker">
+          {t("userAddressLabel")}
+        </FieldLabel>
+        <Combobox
+          items={userAddresses}
+          value={selectedUserAddress}
+          onValueChange={(address: BackendAddress | null) =>
+            onUserAddressIdChange(address ? address.id : null)
+          }
+          itemToStringLabel={(address: BackendAddress) =>
+            `${address.name} — ${address.street}, ${address.zip_code} ${address.city}`
+          }
+        >
+          <ComboboxInput
+            id="user-address-picker"
+            name="user_address_id"
+            placeholder={userAddressPlaceholder}
+            disabled={isReadonly || userAddresses.length === 0}
+            aria-invalid={hasUserAddressError}
+          />
+          <ComboboxContent>
+            <ComboboxEmpty>{t("userAddressEmpty")}</ComboboxEmpty>
+            <ComboboxList>
+              {(address: BackendAddress) => (
+                <ComboboxItem key={address.id} value={address}>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{address.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {address.street}, {address.zip_code} {address.city}
+                    </span>
+                  </div>
+                </ComboboxItem>
+              )}
+            </ComboboxList>
+          </ComboboxContent>
+        </Combobox>
+        <FieldError errors={toErrorProps(userAddressErrors)} />
       </Field>
 
       <Field data-invalid={hasClientError}>
