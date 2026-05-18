@@ -41,6 +41,7 @@
       "emailLabel": "Email",
       "passwordLabel": "Mot de passe",
       "forgotLink": "Mot de passe oublié ?",
+      "rememberMeLabel": "Se souvenir de moi",
       "submit": "Se connecter",
       "googleSubmit": "Se connecter avec Google",
       "signupPrompt": "Pas encore de compte ?",
