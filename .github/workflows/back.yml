@@ -4,7 +4,6 @@ on:
   pull_request:
     paths:
       - "backend/auth/**"
-      - "backend/gateway/**"
       - "backend/users/**"
       - "backend/quote/**"
       - "backend/export/**"
@@ -34,8 +33,6 @@ jobs:
               - "backend/users/**"
             quote:
               - "backend/quote/**"
-            gateway:
-              - "backend/gateway/**"
             export:
               - "backend/export/**"
   ci:
