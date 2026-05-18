@@ -22,16 +22,18 @@ describe("Quote", () => {
         body: {
           success: true,
           quotes: [
-            quote({ quote_id: "q-1", name: "Devis Alpha" }),
+            quote({ quote_id: "q-1", name: "Devis Alpha", total_ttc: 12000 }),
             quote({
               quote_id: "q-2",
               name: "Devis Beta",
               archived_at: "2026-04-01T00:00:00Z",
+              total_ttc: 5000,
             }),
             quote({
               quote_id: "q-3",
               name: "Devis Gamma",
               state: "drop",
+              total_ttc: 0,
             }),
           ],
         },
@@ -41,11 +43,15 @@ describe("Quote", () => {
       cy.wait("@listQuotes");
 
       cy.contains("td", "Devis Alpha").should("be.visible");
-      cy.contains("td", "brouillon").should("be.visible");
+      cy.contains("td", "Brouillon").should("be.visible");
+      cy.contains("td", "120.00 €").should("be.visible");
       cy.contains("td", "Devis Beta").should("be.visible");
-      cy.contains("td", "archivé").should("be.visible");
+      cy.contains("td", "Archivé").should("be.visible");
+      cy.contains("td", "50.00 €").should("be.visible");
       cy.contains("td", "Devis Gamma").should("be.visible");
-      cy.contains("td", "abandonné").should("be.visible");
+      cy.contains("td", "Abandonné").should("be.visible");
+      cy.contains("td", "0.00 €").should("be.visible");
+      cy.contains("th", "Total TTC").should("be.visible");
     });
 
     it("shows the empty state when no quotes are returned", () => {
@@ -65,6 +71,22 @@ describe("Quote", () => {
     beforeEach(() => stubAvailableTaxes());
 
     function stubClientsAndAddresses() {
+      cy.intercept("GET", "/api/users/me", {
+        statusCode: 200,
+        body: {
+          success: true,
+          user: {
+            user_id: "u-1",
+            email: "user@example.com",
+            phone: "",
+            company: "",
+            siren: "",
+            vat: "",
+            logo_url: "",
+          },
+        },
+      }).as("getMe");
+
       cy.intercept("GET", "/api/users/clients**", {
         statusCode: 200,
         body: {
@@ -112,10 +134,41 @@ describe("Quote", () => {
           },
         },
       ).as("listClientAddresses");
+
+      cy.intercept(
+        "GET",
+        "/api/users/addresses?owner_type=user&owner_id=u-1",
+        {
+          statusCode: 200,
+          body: {
+            success: true,
+            addresses: [
+              {
+                id: 50,
+                owner_type: "user",
+                owner_id: "u-1",
+                name: "Bureau principal",
+                street: "5 rue de Lyon",
+                additional_street: "",
+                city: "Lyon",
+                zip_code: "69001",
+                country_id: 1,
+                email: "",
+                phone: "",
+                archived: false,
+              },
+            ],
+          },
+        },
+      ).as("listUserAddresses");
     }
 
     function fillStep1() {
       cy.get("input[name='name']").type("Nouveau devis");
+      cy.get("input[name='user_address_id']").click();
+      cy.contains("[data-slot='combobox-item']", "Bureau principal").click({
+        force: true,
+      });
       cy.get("input[name='client_id']").type("Jean");
       cy.contains("[data-slot='combobox-item']", "Jean Dupont").click({
         force: true,
@@ -143,6 +196,7 @@ describe("Quote", () => {
             name: "Nouveau devis",
             client_id: "c-1",
             address_id: 1,
+            user_address_id: 50,
           }),
           lines: [],
         },
@@ -150,6 +204,7 @@ describe("Quote", () => {
 
       cy.visit("/quote/create");
       cy.wait("@listClients");
+      cy.wait("@listUserAddresses");
       fillStep1();
       cy.contains("button", "Suivant").click();
 
@@ -158,6 +213,7 @@ describe("Quote", () => {
           name: "Nouveau devis",
           client_id: "c-1",
           address_id: 1,
+          user_address_id: 50,
         });
       });
 
@@ -180,6 +236,7 @@ describe("Quote", () => {
 
       cy.visit("/quote/create");
       cy.wait("@listClients");
+      cy.wait("@listUserAddresses");
       fillStep1();
       cy.contains("button", "Suivant").click();
       cy.wait("@createQuoteInvalid");
@@ -191,7 +248,7 @@ describe("Quote", () => {
       cy.url().should("include", "/quote/create");
     });
 
-    it("blocks Suivant locally when client or address is missing", () => {
+    it("blocks Suivant locally when client, address or provider address is missing", () => {
       cy.login();
       stubClientsAndAddresses();
 

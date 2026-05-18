@@ -5,7 +5,9 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/custom/app-sidebar";
-import { ModeProvider, type UserMode } from "@/lib/mode-context";
+import { ModeProvider } from "@/lib/mode-context";
+import { AUTH_TOKEN_COOKIE } from "@/lib/auth-constants";
+import { redirect } from "next/navigation";
 
 export default async function AppLayout({
   children,
@@ -13,13 +15,11 @@ export default async function AppLayout({
   children: React.ReactNode;
 }>) {
   const cookieStore = await cookies();
-  const modeCookie = cookieStore.get("app.user-mode")?.value;
-  const initialMode: UserMode =
-    modeCookie === "customer" || modeCookie === "provider"
-      ? modeCookie
-      : "provider";
+  if (!cookieStore.get(AUTH_TOKEN_COOKIE)) {
+    redirect("/login");
+  }
   return (
-    <ModeProvider initialMode={initialMode}>
+    <ModeProvider>
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>

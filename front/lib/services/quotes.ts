@@ -40,6 +40,7 @@ export type CreateQuotePayload = {
   name: string;
   clientId: string;
   addressId: number;
+  userAddressId: number;
 };
 
 export async function createQuote(
@@ -51,6 +52,7 @@ export async function createQuote(
       name: payload.name,
       client_id: payload.clientId,
       address_id: payload.addressId,
+      user_address_id: payload.userAddressId,
     }),
   });
 }
@@ -63,6 +65,7 @@ export type UpdateQuotePayload = {
   name: string;
   clientId?: string;
   addressId?: number;
+  userAddressId?: number;
 };
 
 export async function updateQuote(
@@ -72,6 +75,8 @@ export async function updateQuote(
   const body: Record<string, unknown> = { name: payload.name };
   if (payload.clientId !== undefined) body.client_id = payload.clientId;
   if (payload.addressId !== undefined) body.address_id = payload.addressId;
+  if (payload.userAddressId !== undefined)
+    body.user_address_id = payload.userAddressId;
   return apiFetch(`/api/quotes/${encodeURIComponent(quoteId)}`, {
     method: "PUT",
     body: JSON.stringify(body),

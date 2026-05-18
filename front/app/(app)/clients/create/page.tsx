@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,6 +28,8 @@ import { createAddress } from "@/lib/services/addresses";
 
 export default function CreateClientPage() {
   const router = useRouter();
+  const t = useTranslations("client.create");
+  const tCommon = useTranslations("common");
   const [client, setClient] = useState<ClientFormValues>(EMPTY_CLIENT_VALUES);
   const [address, setAddress] = useState<AddressValues>(EMPTY_ADDRESS_VALUES);
   const [submitting, setSubmitting] = useState(false);
@@ -46,8 +50,7 @@ export default function CreateClientPage() {
           setClientErrors(fieldErrorsFromBody(createRes.body));
         } else {
           toast.error(
-            (createRes.body.message as string) ??
-              "Impossible de créer le client.",
+            (createRes.body.message as string) ?? t("createFailedToast"),
           );
         }
         return;
@@ -59,7 +62,7 @@ export default function CreateClientPage() {
         const addrRes = await createAddress(
           { type: "client", clientId },
           {
-            name: address.name || "Adresse principale",
+            name: address.name || t("addressDefaultName"),
             street: address.street,
             additional_street: address.additional_street,
             city: address.city,
@@ -72,8 +75,7 @@ export default function CreateClientPage() {
             setAddressErrors(fieldErrorsFromBody(addrRes.body));
           } else {
             toast.error(
-              (addrRes.body.message as string) ??
-                "Client créé, mais l'adresse n'a pas pu être enregistrée. Vous pouvez l'ajouter depuis la fiche client.",
+              (addrRes.body.message as string) ?? t("addressFailedToast"),
             );
           }
           router.push(`/clients/${clientId}`);
@@ -81,7 +83,7 @@ export default function CreateClientPage() {
         }
       }
 
-      toast.success("Client créé.");
+      toast.success(t("successToast"));
       router.push(`/clients/${clientId}`);
     } finally {
       setSubmitting(false);
@@ -91,10 +93,8 @@ export default function CreateClientPage() {
   return (
     <Card className="max-w-3xl">
       <CardHeader>
-        <CardTitle>Créer un compte client</CardTitle>
-        <CardDescription>
-          Créez un compte de base avec les informations principales.
-        </CardDescription>
+        <CardTitle>{t("title")}</CardTitle>
+        <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
 
       <CardContent>
@@ -114,10 +114,10 @@ export default function CreateClientPage() {
           type="button"
           onClick={() => router.push("/clients")}
         >
-          Annuler
+          {tCommon("actions.cancel")}
         </Button>
         <Button type="button" onClick={handleSubmit} disabled={submitting}>
-          {submitting ? "Création…" : "Créer le compte client"}
+          {submitting ? t("submitting") : t("submit")}
         </Button>
       </CardFooter>
     </Card>

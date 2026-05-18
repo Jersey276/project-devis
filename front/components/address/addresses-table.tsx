@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,6 +57,8 @@ export default function AddressesTable({
   ownerType,
   ownerId,
 }: AddressesTableProps) {
+  const t = useTranslations("address.list");
+  const tCommon = useTranslations("common");
   const [addresses, setAddresses] = useState<BackendAddress[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -114,10 +117,10 @@ export default function AddressesTable({
       pendingDelete.id,
     );
     if (ok && body.success) {
-      toast.success("Adresse supprimée.");
+      toast.success(t("deleteSuccessToast"));
       reload();
     } else {
-      toast.error(body.message ?? "Une erreur est survenue.");
+      toast.error(body.message ?? tCommon("errors.generic"));
     }
     setPendingDelete(null);
   }
@@ -125,13 +128,13 @@ export default function AddressesTable({
   const rowActions: DataTableRowAction[] = [
     {
       type: "callback",
-      label: "Modifier",
+      label: tCommon("actions.edit"),
       icon: PencilIcon,
       callback: (row) => openEdit(row as BackendAddress),
     },
     {
       type: "callback",
-      label: "Supprimer",
+      label: tCommon("actions.delete"),
       icon: Trash2Icon,
       callback: (row) => setPendingDelete(row as BackendAddress),
     },
@@ -142,16 +145,16 @@ export default function AddressesTable({
       <div className="flex justify-end">
         <Button type="button" onClick={openCreate}>
           <PlusIcon />
-          Ajouter une adresse
+          {t("addButton")}
         </Button>
       </div>
 
       <DataTable datas={addresses} row_actions={rowActions} sortBy="">
         <DataTableHeader>
           <DataTableRow>
-            <DataTableHead>Adresse</DataTableHead>
+            <DataTableHead>{t("columns.address")}</DataTableHead>
             <DataTableHead>
-              <span className="sr-only">Actions</span>
+              <span className="sr-only">{t("actionsLabel")}</span>
             </DataTableHead>
           </DataTableRow>
         </DataTableHeader>
@@ -159,7 +162,7 @@ export default function AddressesTable({
           {addresses.length === 0 ? (
             <DataTableRow>
               <DataTableCell className="text-muted-foreground">
-                Aucune adresse pour le moment.
+                {t("empty")}
               </DataTableCell>
               <DataTableCell> </DataTableCell>
             </DataTableRow>
@@ -198,19 +201,18 @@ export default function AddressesTable({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer cette adresse ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. L&apos;adresse sera retirée de
-              votre liste.
+              {t("deleteDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={confirmDelete}
             >
-              Supprimer
+              {tCommon("actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

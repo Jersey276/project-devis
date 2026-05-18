@@ -6,8 +6,10 @@ export type QuoteFixture = {
   state: "draft" | "sent" | "validated" | "drop";
   client_id: string;
   address_id: number;
+  user_address_id: number;
   created_at: string;
   updated_at: string;
+  total_ttc?: number;
 };
 
 export type LineFixture = {
@@ -59,8 +61,10 @@ export function quote(over: Partial<QuoteFixture> = {}): QuoteFixture {
     // unintended /me/clients/:id/addresses request.
     client_id: "",
     address_id: 0,
+    user_address_id: 0,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
+    total_ttc: 0,
     ...over,
   };
 }

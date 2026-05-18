@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   DataTable,
   DataTableBody,
@@ -15,10 +16,11 @@ import {
 import { listQuotes } from "@/lib/services/quotes";
 import { exportQuotePdf } from "@/lib/services/export";
 import { useMode } from "@/lib/mode-context";
+import { formatEurosFromCents } from "@/lib/utils";
 import {
   type BackendQuote,
-  type QuoteListStatus,
-  quoteListStatus,
+  type QuoteListState,
+  quoteListState,
 } from "@/types/backend";
 import { DownloadIcon, PencilIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -26,36 +28,39 @@ import { toast } from "sonner";
 type QuoteListItem = {
   id: string;
   projectName: string;
-  status: QuoteListStatus;
+  status: QuoteListState;
+  totalTtc: number;
 };
 
 export default function QuoteListTable() {
   const { isCustomer } = useMode();
+  const t = useTranslations("quote.list");
+  const tStatus = useTranslations("status.quote");
   const [items, setItems] = useState<QuoteListItem[]>([]);
 
   const rowActions = useMemo<DataTableRowAction[]>(
     () => [
       {
         type: "link",
-        label: isCustomer ? "Voir" : "Voir/Modifier",
+        label: isCustomer ? t("actions.view") : t("actions.viewEdit"),
         icon: PencilIcon,
         href: "/quote/{id}",
       },
       {
         type: "callback",
-        label: "Exporter PDF",
+        label: t("actions.exportPdf"),
         icon: DownloadIcon,
         hidden: isCustomer,
         callback: (row) => {
           const id = (row as { id: string }).id;
           exportQuotePdf(id).catch((err) => {
             console.error("export quote pdf failed", err);
-            toast.error("Échec de l'export.");
+            toast.error(t("exportFailedToast"));
           });
         },
       },
     ],
-    [isCustomer],
+    [isCustomer, t],
   );
 
   useEffect(() => {
@@ -71,7 +76,8 @@ export default function QuoteListTable() {
           quotes.map((quote) => ({
             id: quote.quote_id,
             projectName: quote.name,
-            status: quoteListStatus(quote),
+            status: quoteListState(quote),
+            totalTtc: quote.total_ttc ?? 0,
           })),
         );
       }
@@ -93,20 +99,24 @@ export default function QuoteListTable() {
     >
       <DataTableHeader>
         <DataTableRow>
-          <DataTableSortableHead name="id">ID</DataTableSortableHead>
+          <DataTableSortableHead name="id">{t("columns.id")}</DataTableSortableHead>
           <DataTableSortableHead name="projectName">
-            Projet
+            {t("columns.project")}
           </DataTableSortableHead>
-          <DataTableSortableHead name="status">Statut</DataTableSortableHead>
-          <DataTableHead>Actions</DataTableHead>
+          <DataTableSortableHead name="status">{t("columns.status")}</DataTableSortableHead>
+          <DataTableSortableHead name="totalTtc">
+            {t("columns.totalTtc")}
+          </DataTableSortableHead>
+          <DataTableHead>{t("columns.actions")}</DataTableHead>
         </DataTableRow>
       </DataTableHeader>
       <DataTableBody>
         {visibleItems.length === 0 ? (
           <DataTableRow>
             <DataTableCell className="text-muted-foreground">
-              Aucun devis pour le moment.
+              {t("empty")}
             </DataTableCell>
+            <DataTableCell> </DataTableCell>
             <DataTableCell> </DataTableCell>
             <DataTableCell> </DataTableCell>
             <DataTableCell> </DataTableCell>
@@ -116,7 +126,10 @@ export default function QuoteListTable() {
             <DataTableRow key={quote.id}>
               <DataTableCell>{quote.id}</DataTableCell>
               <DataTableCell>{quote.projectName}</DataTableCell>
-              <DataTableCell>{quote.status}</DataTableCell>
+              <DataTableCell>{tStatus(quote.status)}</DataTableCell>
+              <DataTableCell className="tabular-nums">
+                {formatEurosFromCents(quote.totalTtc)}
+              </DataTableCell>
               <DataTableCell>
                 <DataTableRowActions id={quote.id} row={quote} />
               </DataTableCell>

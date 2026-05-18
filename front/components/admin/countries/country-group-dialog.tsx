@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -51,6 +52,8 @@ export default function CountryGroupDialog({
   group,
   onSaved,
 }: CountryGroupDialogProps) {
+  const t = useTranslations("admin.countryGroups.dialog");
+  const tCommon = useTranslations("common");
   const isEdit = group != null;
   const [name, setName] = useState(group?.name ?? "");
   const [members, setMembers] = useState<Country[]>(group?.countries ?? []);
@@ -99,7 +102,7 @@ export default function CountryGroupDialog({
       });
       if (ok && body.success) {
         toast.success(
-          isEdit ? "Groupe mis à jour." : "Groupe ajouté.",
+          isEdit ? t("updateSuccessToast") : t("createSuccessToast"),
         );
         onSaved();
         onOpenChange(false);
@@ -109,9 +112,9 @@ export default function CountryGroupDialog({
         setFieldErrors(fieldErrorsFromBody(body));
         return;
       }
-      toast.error(body.message ?? "Une erreur est survenue.");
+      toast.error(body.message ?? tCommon("errors.generic"));
     } catch {
-      toast.error("Une erreur est survenue.");
+      toast.error(tCommon("errors.generic"));
     } finally {
       setSubmitting(false);
     }
@@ -126,12 +129,12 @@ export default function CountryGroupDialog({
         { method: "POST" },
       );
       if (ok && body.success) {
-        toast.success("Pays ajouté au groupe.");
+        toast.success(t("attachSuccessToast"));
         setPendingAdd(null);
         await refreshMembers();
         onSaved();
       } else {
-        toast.error(body.message ?? "Une erreur est survenue.");
+        toast.error(body.message ?? tCommon("errors.generic"));
       }
     } finally {
       setMemberMutating(false);
@@ -147,11 +150,11 @@ export default function CountryGroupDialog({
         { method: "DELETE" },
       );
       if (ok && body.success) {
-        toast.success("Pays retiré du groupe.");
+        toast.success(t("detachSuccessToast"));
         await refreshMembers();
         onSaved();
       } else {
-        toast.error(body.message ?? "Une erreur est survenue.");
+        toast.error(body.message ?? tCommon("errors.generic"));
       }
     } finally {
       setMemberMutating(false);
@@ -166,18 +169,18 @@ export default function CountryGroupDialog({
       <DialogContent className="p-6 sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? "Modifier le groupe" : "Nouveau groupe"}
+            {isEdit ? t("editTitle") : t("createTitle")}
           </DialogTitle>
         </DialogHeader>
 
         <form id={FORM_ID} className="grid gap-4" onSubmit={handleSubmit} noValidate>
           <FieldGroup>
             <Field data-invalid={!!fieldErrors.name?.length}>
-              <FieldLabel htmlFor="group_name">Nom</FieldLabel>
+              <FieldLabel htmlFor="group_name">{t("nameLabel")}</FieldLabel>
               <Input
                 id="group_name"
                 name="name"
-                placeholder="Union européenne"
+                placeholder={t("namePlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 aria-invalid={!!fieldErrors.name?.length}
@@ -189,11 +192,11 @@ export default function CountryGroupDialog({
 
         {isEdit && (
           <div className="grid gap-3 rounded-lg border p-4" data-slot="group-members">
-            <h3 className="text-sm font-medium">Pays membres</h3>
+            <h3 className="text-sm font-medium">{t("membersTitle")}</h3>
 
             {members.length === 0 ? (
               <p className="text-muted-foreground text-sm">
-                Aucun pays dans ce groupe.
+                {t("membersEmpty")}
               </p>
             ) : (
               <ul className="grid gap-1.5">
@@ -211,7 +214,7 @@ export default function CountryGroupDialog({
                       type="button"
                       variant="ghost"
                       size="icon-sm"
-                      aria-label={`Retirer ${country.name}`}
+                      aria-label={t("removeAria", { name: country.name })}
                       data-slot="group-member-remove"
                       disabled={memberMutating}
                       onClick={() => handleDetach(country)}
@@ -226,7 +229,7 @@ export default function CountryGroupDialog({
             <div className="flex items-end gap-2">
               <Field className="flex-1">
                 <FieldLabel htmlFor="group_attach_country">
-                  Ajouter un pays
+                  {t("attachLabel")}
                 </FieldLabel>
                 <Combobox
                   items={attachable}
@@ -237,10 +240,10 @@ export default function CountryGroupDialog({
                   <ComboboxInput
                     id="group_attach_country"
                     name="attach_country_id"
-                    placeholder="Sélectionner un pays"
+                    placeholder={t("attachPlaceholder")}
                   />
                   <ComboboxContent>
-                    <ComboboxEmpty>Aucun pays disponible.</ComboboxEmpty>
+                    <ComboboxEmpty>{t("attachEmpty")}</ComboboxEmpty>
                     <ComboboxList>
                       {(country: Country) => (
                         <ComboboxItem key={country.id} value={country}>
@@ -256,7 +259,7 @@ export default function CountryGroupDialog({
                 onClick={handleAttach}
                 disabled={!pendingAdd || memberMutating}
               >
-                Ajouter
+                {t("attachButton")}
               </Button>
             </div>
           </div>
@@ -265,11 +268,11 @@ export default function CountryGroupDialog({
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline">
-              Fermer
+              {tCommon("actions.close")}
             </Button>
           </DialogClose>
           <Button type="submit" form={FORM_ID} disabled={submitting}>
-            {submitting ? "Enregistrement…" : "Enregistrer"}
+            {submitting ? tCommon("actions.saving") : tCommon("actions.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

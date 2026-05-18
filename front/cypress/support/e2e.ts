@@ -10,7 +10,12 @@ Cypress.on("uncaught:exception", (err) => {
     err.message.includes("server rendered HTML didn't match the client") ||
     // Radix UI sometimes calls setPointerCapture with a synthesized pointer id
     // that the browser rejects under Cypress. Harmless — ignore.
-    err.message.includes("Invalid pointer id")
+    err.message.includes("Invalid pointer id") ||
+    // Background fetches that race with navigation (Next.js RSC prefetch, HMR
+    // ping, Link hover-prefetch) can reject after the page is gone, surfacing
+    // as Firefox's "NetworkError when attempting to fetch resource". Unrelated
+    // to the assertions under test.
+    err.message.includes("NetworkError when attempting to fetch resource")
   ) {
     return false;
   }

@@ -21,6 +21,7 @@ service QuoteService {
     rpc CreateQuoteLine(CreateQuoteLineRequest) returns (CreateQuoteLineResponse);
     rpc GetQuoteLine(GetQuoteLineRequest) returns (GetQuoteLineResponse);
     rpc ListQuoteLines(ListQuoteLinesRequest) returns (ListQuoteLinesResponse);
+    rpc ListUserQuoteLines(ListUserQuoteLinesRequest) returns (ListUserQuoteLinesResponse);
     rpc UpdateQuoteLine(UpdateQuoteLineRequest) returns (UpdateQuoteLineResponse);
     rpc DeleteQuoteLine(DeleteQuoteLineRequest) returns (GenericResponse);
 }
@@ -41,20 +42,22 @@ enum QuoteState {
 }
 
 message Quote {
-    string     quote_id   = 1;
-    string     user_id    = 2;
-    string     name       = 3;
-    bool       archived   = 4;
-    QuoteState state      = 5;
-    string     client_id  = 6;
-    int32      address_id = 7;
+    string     quote_id        = 1;
+    string     user_id         = 2;
+    string     name            = 3;
+    bool       archived        = 4;
+    QuoteState state           = 5;
+    string     client_id       = 6;
+    int32      address_id      = 7;
+    int32      user_address_id = 8;
 }
 
 message CreateQuoteRequest {
-    string user_id    = 1;
-    string name       = 2;
-    string client_id  = 3;
-    int32  address_id = 4;
+    string user_id         = 1;
+    string name            = 2;
+    string client_id       = 3;
+    int32  address_id      = 4;
+    int32  user_address_id = 5;
 }
 
 message CreateQuoteResponse {
@@ -87,11 +90,12 @@ message ListQuotesResponse {
 }
 
 message UpdateQuoteRequest {
-    string quote_id   = 1;
-    string user_id    = 2;
-    string name       = 3;
-    string client_id  = 4;
-    int32  address_id = 5;
+    string quote_id        = 1;
+    string user_id         = 2;
+    string name            = 3;
+    string client_id       = 4;
+    int32  address_id      = 5;
+    int32  user_address_id = 6;
 }
 
 message UpdateQuoteResponse {
@@ -179,6 +183,17 @@ message ListQuoteLinesRequest {
 }
 
 message ListQuoteLinesResponse {
+    bool success = 1;
+    int32 code = 2;
+    repeated QuoteLine lines = 3;
+}
+
+message ListUserQuoteLinesRequest {
+    string user_id = 1;
+    bool include_archived = 2;
+}
+
+message ListUserQuoteLinesResponse {
     bool success = 1;
     int32 code = 2;
     repeated QuoteLine lines = 3;

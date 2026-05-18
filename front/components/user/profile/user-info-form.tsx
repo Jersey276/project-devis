@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -33,6 +34,8 @@ type UserInfoFormProps = {
 };
 
 export default function UserInfoForm({ user, onSaved }: UserInfoFormProps) {
+  const t = useTranslations("profile.userInfo");
+  const tCommon = useTranslations("common");
   const [phone, setPhone] = useState(user.phone ?? "");
   const [company, setCompany] = useState(user.company ?? "");
   const [siren, setSiren] = useState(user.siren ?? "");
@@ -50,7 +53,7 @@ export default function UserInfoForm({ user, onSaved }: UserInfoFormProps) {
         body: JSON.stringify({ phone, company, siren, vat }),
       });
       if (ok && body.success) {
-        toast.success("Informations mises à jour.");
+        toast.success(t("successToast"));
         onSaved?.({ ...user, phone, company, siren, vat });
         return;
       }
@@ -58,9 +61,9 @@ export default function UserInfoForm({ user, onSaved }: UserInfoFormProps) {
         setFieldErrors(fieldErrorsFromBody(body));
         return;
       }
-      toast.error(body.message ?? "Une erreur est survenue.");
+      toast.error(body.message ?? tCommon("errors.generic"));
     } catch {
-      toast.error("Une erreur est survenue.");
+      toast.error(tCommon("errors.generic"));
     } finally {
       setSubmitting(false);
     }
@@ -74,7 +77,7 @@ export default function UserInfoForm({ user, onSaved }: UserInfoFormProps) {
     >
       <FieldGroup>
         <Field>
-          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <FieldLabel htmlFor="email">{t("emailLabel")}</FieldLabel>
           <Input
             id="email"
             name="email"
@@ -83,14 +86,12 @@ export default function UserInfoForm({ user, onSaved }: UserInfoFormProps) {
             readOnly
             aria-readonly
           />
-          <FieldDescription>
-            L&apos;adresse email se modifie depuis l&apos;onglet Connexion.
-          </FieldDescription>
+          <FieldDescription>{t("emailHint")}</FieldDescription>
         </Field>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field data-invalid={!!fieldErrors.phone?.length}>
-            <FieldLabel htmlFor="phone">Téléphone</FieldLabel>
+            <FieldLabel htmlFor="phone">{t("phoneLabel")}</FieldLabel>
             <Input
               id="phone"
               name="phone"
@@ -103,7 +104,7 @@ export default function UserInfoForm({ user, onSaved }: UserInfoFormProps) {
           </Field>
 
           <Field data-invalid={!!fieldErrors.company?.length}>
-            <FieldLabel htmlFor="company">Société</FieldLabel>
+            <FieldLabel htmlFor="company">{t("companyLabel")}</FieldLabel>
             <Input
               id="company"
               name="company"
@@ -117,7 +118,7 @@ export default function UserInfoForm({ user, onSaved }: UserInfoFormProps) {
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field data-invalid={!!fieldErrors.siren?.length}>
-            <FieldLabel htmlFor="siren">SIREN</FieldLabel>
+            <FieldLabel htmlFor="siren">{t("sirenLabel")}</FieldLabel>
             <Input
               id="siren"
               name="siren"
@@ -129,7 +130,7 @@ export default function UserInfoForm({ user, onSaved }: UserInfoFormProps) {
           </Field>
 
           <Field data-invalid={!!fieldErrors.vat?.length}>
-            <FieldLabel htmlFor="vat">N° de TVA</FieldLabel>
+            <FieldLabel htmlFor="vat">{t("vatLabel")}</FieldLabel>
             <Input
               id="vat"
               name="vat"
@@ -144,7 +145,7 @@ export default function UserInfoForm({ user, onSaved }: UserInfoFormProps) {
 
       <div className="flex justify-end">
         <Button type="submit" disabled={submitting}>
-          {submitting ? "Enregistrement…" : "Enregistrer"}
+          {submitting ? tCommon("actions.saving") : tCommon("actions.save")}
         </Button>
       </div>
     </form>

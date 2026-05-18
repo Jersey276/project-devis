@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +36,8 @@ function clientFromBackend(c: BackendClient): ClientFormValues {
 export default function EditClientPage() {
   const router = useRouter();
   const { uuid } = useParams<{ uuid: string }>();
+  const t = useTranslations("client.edit");
+  const tCommon = useTranslations("common");
   const [client, setClient] = useState<ClientFormValues>(EMPTY_CLIENT_VALUES);
   const [loaded, setLoaded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -48,14 +51,14 @@ export default function EditClientPage() {
         setClient(clientFromBackend(body.client as BackendClient));
         setLoaded(true);
       } else {
-        toast.error((body.message as string) ?? "Client introuvable.");
+        toast.error((body.message as string) ?? t("notFoundToast"));
         router.push("/clients");
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [uuid, router]);
+  }, [uuid, router, t]);
 
   async function handleSubmit() {
     if (submitting) return;
@@ -64,7 +67,7 @@ export default function EditClientPage() {
     try {
       const { ok, status, body } = await updateClient(uuid, client);
       if (ok && body.success) {
-        toast.success("Client mis à jour.");
+        toast.success(t("successToast"));
         router.push(`/clients/${uuid}`);
         return;
       }
@@ -72,7 +75,7 @@ export default function EditClientPage() {
         setFieldErrors(fieldErrorsFromBody(body));
       } else {
         toast.error(
-          (body.message as string) ?? "Impossible de mettre à jour le client.",
+          (body.message as string) ?? t("failedToast"),
         );
       }
     } finally {
@@ -84,7 +87,7 @@ export default function EditClientPage() {
     return (
       <Card>
         <CardContent className="py-16 text-center text-muted-foreground">
-          Chargement…
+          {tCommon("actions.loading")}
         </CardContent>
       </Card>
     );
@@ -93,10 +96,8 @@ export default function EditClientPage() {
   return (
     <Card className="max-w-3xl">
       <CardHeader>
-        <CardTitle>Modifier le client</CardTitle>
-        <CardDescription>
-          Mettez à jour les informations principales du client.
-        </CardDescription>
+        <CardTitle>{t("title")}</CardTitle>
+        <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
 
       <CardContent>
@@ -113,10 +114,10 @@ export default function EditClientPage() {
           type="button"
           onClick={() => router.push(`/clients/${uuid}`)}
         >
-          Annuler
+          {tCommon("actions.cancel")}
         </Button>
         <Button type="button" onClick={handleSubmit} disabled={submitting}>
-          {submitting ? "Enregistrement…" : "Enregistrer"}
+          {submitting ? tCommon("actions.saving") : tCommon("actions.save")}
         </Button>
       </CardFooter>
     </Card>

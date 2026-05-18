@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Combobox,
   ComboboxContent,
@@ -57,6 +58,7 @@ export default function AddressForm({
   onSubmit,
   onChange,
 }: AddressFormProps) {
+  const t = useTranslations("address.form");
   const [values, setValues] = useState<AddressValues>(
     () => initialValues ?? EMPTY_ADDRESS_VALUES,
   );
@@ -86,11 +88,11 @@ export default function AddressForm({
   const fields = (
     <FieldGroup>
         <Field data-invalid={!!fieldErrors?.name?.length}>
-          <FieldLabel htmlFor="address_name">Nom</FieldLabel>
+          <FieldLabel htmlFor="address_name">{t("nameLabel")}</FieldLabel>
           <Input
             id="address_name"
             name="name"
-            placeholder="Adresse principale"
+            placeholder={t("namePlaceholder")}
             value={values.name}
             onChange={(e) => update("name", e.target.value)}
             aria-invalid={!!fieldErrors?.name?.length}
@@ -99,11 +101,11 @@ export default function AddressForm({
         </Field>
 
         <Field data-invalid={!!fieldErrors?.street?.length}>
-          <FieldLabel htmlFor="address_street">Adresse</FieldLabel>
+          <FieldLabel htmlFor="address_street">{t("streetLabel")}</FieldLabel>
           <Input
             id="address_street"
             name="street"
-            placeholder="12 Rue des Lilas"
+            placeholder={t("streetPlaceholder")}
             value={values.street}
             onChange={(e) => update("street", e.target.value)}
             aria-invalid={!!fieldErrors?.street?.length}
@@ -112,11 +114,11 @@ export default function AddressForm({
         </Field>
 
         <Field data-invalid={!!fieldErrors?.additional_street?.length}>
-          <FieldLabel htmlFor="address_additional_street">Complément</FieldLabel>
+          <FieldLabel htmlFor="address_additional_street">{t("additionalStreetLabel")}</FieldLabel>
           <Input
             id="address_additional_street"
             name="additional_street"
-            placeholder="Bâtiment B, 3ème étage"
+            placeholder={t("additionalStreetPlaceholder")}
             value={values.additional_street}
             onChange={(e) => update("additional_street", e.target.value)}
             aria-invalid={!!fieldErrors?.additional_street?.length}
@@ -126,11 +128,11 @@ export default function AddressForm({
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field data-invalid={!!fieldErrors?.city?.length}>
-            <FieldLabel htmlFor="address_city">Ville</FieldLabel>
+            <FieldLabel htmlFor="address_city">{t("cityLabel")}</FieldLabel>
             <Input
               id="address_city"
               name="city"
-              placeholder="Paris"
+              placeholder={t("cityPlaceholder")}
               value={values.city}
               onChange={(e) => update("city", e.target.value)}
               aria-invalid={!!fieldErrors?.city?.length}
@@ -139,11 +141,11 @@ export default function AddressForm({
           </Field>
 
           <Field data-invalid={!!fieldErrors?.zip_code?.length}>
-            <FieldLabel htmlFor="address_zip_code">Code postal</FieldLabel>
+            <FieldLabel htmlFor="address_zip_code">{t("zipCodeLabel")}</FieldLabel>
             <Input
               id="address_zip_code"
               name="zip_code"
-              placeholder="75001"
+              placeholder={t("zipCodePlaceholder")}
               value={values.zip_code}
               onChange={(e) => update("zip_code", e.target.value)}
               aria-invalid={!!fieldErrors?.zip_code?.length}
@@ -153,7 +155,7 @@ export default function AddressForm({
         </div>
 
         <Field data-invalid={!!fieldErrors?.country_id?.length}>
-          <FieldLabel htmlFor="address_country">Pays</FieldLabel>
+          <FieldLabel htmlFor="address_country">{t("countryLabel")}</FieldLabel>
           <Combobox
             items={countries}
             value={
@@ -169,11 +171,11 @@ export default function AddressForm({
             <ComboboxInput
               id="address_country"
               name="country_id"
-              placeholder="Sélectionner un pays"
+              placeholder={t("countryPlaceholder")}
               aria-invalid={!!fieldErrors?.country_id?.length}
             />
             <ComboboxContent>
-              <ComboboxEmpty>Aucun pays trouvé.</ComboboxEmpty>
+              <ComboboxEmpty>{t("countryEmpty")}</ComboboxEmpty>
               <ComboboxList>
                 {(country: Country) => (
                   <ComboboxItem key={country.id} value={country}>

@@ -4,9 +4,9 @@ on:
   pull_request:
     paths:
       - "backend/auth/**"
-      - "backend/gateway/**"
       - "backend/users/**"
       - "backend/quote/**"
+      - "backend/export/**"
     branches:
       - dev
 
@@ -33,6 +33,8 @@ jobs:
               - "backend/users/**"
             quote:
               - "backend/quote/**"
+            export:
+              - "backend/export/**"
   ci:
     needs: check-changes
     if: needs.check-changes.outputs.services != '[]'

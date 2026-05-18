@@ -1,17 +1,8 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 
 export type UserMode = "provider" | "customer";
-
-const STORAGE_KEY = "app.user-mode";
-const DEFAULT_MODE: UserMode = "provider";
 
 type ModeContextValue = {
   mode: UserMode;
@@ -22,49 +13,15 @@ type ModeContextValue = {
 
 const ModeContext = createContext<ModeContextValue | null>(null);
 
-function parseMode(raw: string | null | undefined): UserMode {
-  return raw === "customer" || raw === "provider" ? raw : DEFAULT_MODE;
-}
-
-function readCookieMode(): UserMode | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(
-    new RegExp(`(?:^|; )${STORAGE_KEY}=([^;]*)`),
-  );
-  return match ? parseMode(decodeURIComponent(match[1])) : null;
-}
-
-function writeCookieMode(mode: UserMode) {
-  if (typeof document === "undefined") return;
-  // Persist for ~1 year. Path=/ so every route sees the same value.
-  document.cookie = `${STORAGE_KEY}=${mode}; path=/; max-age=31536000; samesite=lax`;
-}
-
-export function ModeProvider({
-  initialMode,
-  children,
-}: {
-  initialMode?: UserMode;
-  children: React.ReactNode;
-}) {
-  const [mode, setModeState] = useState<UserMode>(initialMode ?? DEFAULT_MODE);
-
-  // Reconcile with the cookie on mount in case it changed between SSR and
-  // hydration (e.g. another tab updated it). Server-supplied initialMode is
-  // the source of truth for the first paint to avoid hydration mismatches.
-  useEffect(() => {
-    const stored = readCookieMode();
-    if (stored && stored !== mode) setModeState(stored);
-    // Intentionally run only once on mount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+// Customer mode is currently disabled at the UI level: the sidebar toggle is
+// removed and the provider always reports "provider". The full API (setMode,
+// isCustomer) stays in place so re-enabling later is just a matter of
+// restoring the toggle and the cookie reconciliation.
+export function ModeProvider({ children }: { children: React.ReactNode }) {
+  const [mode, setModeState] = useState<UserMode>("provider");
 
   const setMode = useCallback((next: UserMode) => {
-    setModeState((current) => {
-      if (current === next) return current;
-      writeCookieMode(next);
-      return next;
-    });
+    setModeState((current) => (current === next ? current : next));
   }, []);
 
   return (

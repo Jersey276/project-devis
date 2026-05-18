@@ -1,0 +1,129 @@
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  pull_policy: always
+
+x-common-env: &common-env
+  TZ: Europe/Paris
+
+x-db-env: &db-env
+  <<: *common-env
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_PASSWORD_FILE: /run/secrets/db_password
+
+x-db-service: &db-service
+  <<: *service-defaults
+  depends_on:
+    postgres:
+      condition: service_healthy
+  secrets:
+    - db_password
+
+services:
+  front:
+    <<: *service-defaults
+    image: ${IMAGE_PREFIX}/front:${IMAGE_TAG:-latest}
+    environment:
+      <<: *common-env
+      APP_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - devis-gateway
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  devis-gateway:
+    <<: *service-defaults
+    image: ${IMAGE_PREFIX}/gateway:${IMAGE_TAG:-latest}
+    environment:
+      <<: *common-env
+      AUTH_SERVICE_ADDRESS: devis-auth:50051
+      USER_SERVICE_ADDRESS: devis-user:50052
+      QUOTE_SERVICE_ADDRESS: devis-quote:50053
+      EXPORT_SERVICE_ADDRESS: devis-export:50054
+    ports:
+      - "8080:8080"
+    depends_on:
+      - devis-auth
+      - devis-user
+      - devis-quote
+      - devis-export
+
+  devis-auth:
+    <<: *db-service
+    image: ${IMAGE_PREFIX}/auth:${IMAGE_TAG:-latest}
+    environment:
+      <<: *db-env
+      DB_USER: devis-auth
+      DB_NAME: auth
+      USER_SERVICE_ADDRESS: devis-user:50052
+
+  devis-user:
+    <<: *db-service
+    image: ${IMAGE_PREFIX}/users:${IMAGE_TAG:-latest}
+    environment:
+      <<: *db-env
+      DB_USER: devis-users
+      DB_NAME: users
+
+  devis-quote:
+    <<: *db-service
+    image: ${IMAGE_PREFIX}/quote:${IMAGE_TAG:-latest}
+    environment:
+      <<: *db-env
+      DB_USER: devis-quote
+      DB_NAME: quote
+
+  devis-export:
+    <<: *service-defaults
+    image: ${IMAGE_PREFIX}/export:${IMAGE_TAG:-latest}
+    environment:
+      <<: *common-env
+      QUOTE_SERVICE_ADDRESS: devis-quote:50053
+      USER_SERVICE_ADDRESS: devis-user:50052
+      GOTENBERG_ADDRESS: http://gotenberg:3000
+    depends_on:
+      - devis-quote
+      - devis-user
+      - gotenberg
+
+  gotenberg:
+    <<: *service-defaults
+    image: gotenberg/gotenberg:8
+    pull_policy: missing
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--api-timeout=30s"
+      - "--chromium-deny-list=^https?://(localhost|0\\.0\\.0\\.0|127\\.|10\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|\\[::1\\]|\\[[fF][cdCD]|\\[[fF][eE][89aAbB])"
+
+  postgres:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.postgres
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      POSTGRES_USER: devis-auth
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB: auth
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    secrets:
+      - db_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devis-auth -d auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+secrets:
+  db_password:
+    file: backend/secrets/postgres_pswd.txt
+
+volumes:
+  postgres:

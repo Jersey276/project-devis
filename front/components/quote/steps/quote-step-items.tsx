@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -58,14 +61,22 @@ type QuoteStepItemsProps = {
   onAddItem: () => void;
 };
 
-function SaveIndicator({ status }: { status: LineSaveStatus }) {
+type IndicatorLabels = { saving: string; saved: string; error: string };
+
+function SaveIndicator({
+  status,
+  labels,
+}: {
+  status: LineSaveStatus;
+  labels: IndicatorLabels;
+}) {
   if (status === "saving") {
     return (
       <span
         data-slot="line-save-indicator"
         data-status="saving"
         className="text-muted-foreground inline-flex items-center"
-        aria-label="Enregistrement en cours"
+        aria-label={labels.saving}
       >
         <Loader2Icon className="size-4 animate-spin" />
       </span>
@@ -77,7 +88,7 @@ function SaveIndicator({ status }: { status: LineSaveStatus }) {
         data-slot="line-save-indicator"
         data-status="saved"
         className="inline-flex items-center text-emerald-600"
-        aria-label="Enregistré"
+        aria-label={labels.saved}
       >
         <CheckIcon className="size-4" />
       </span>
@@ -89,7 +100,7 @@ function SaveIndicator({ status }: { status: LineSaveStatus }) {
         data-slot="line-save-indicator"
         data-status="error"
         className="text-destructive inline-flex items-center"
-        aria-label="Échec d'enregistrement"
+        aria-label={labels.error}
       >
         <TriangleAlertIcon className="size-4" />
       </span>
@@ -106,11 +117,6 @@ function SaveIndicator({ status }: { status: LineSaveStatus }) {
   );
 }
 
-function taxLabel(t: BackendTax): string {
-  const base = `${t.name} (${t.rate}%)`;
-  return t.superseded_at ? `${base} — version archivée` : base;
-}
-
 export default function QuoteStepItems({
   items,
   isReadonly,
@@ -125,20 +131,30 @@ export default function QuoteStepItems({
   onRemoveItem,
   onAddItem,
 }: QuoteStepItemsProps) {
-  const selectableTaxes = availableTaxes.filter((t) => !t.superseded_at);
+  const selectableTaxes = availableTaxes.filter((tax) => !tax.superseded_at);
   const taxesDisabled = selectableTaxes.length === 0;
+  const t = useTranslations("quote.steps.items");
+  const indicatorLabels: IndicatorLabels = {
+    saving: t("savingAria"),
+    saved: t("savedAria"),
+    error: t("errorAria"),
+  };
+  const taxLabel = (tax: BackendTax): string => {
+    const base = `${tax.name} (${tax.rate}%)`;
+    return tax.superseded_at ? `${base} — ${t("taxSupersededSuffix")}` : base;
+  };
   return (
     <div className="space-y-4">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Description</TableHead>
-            <TableHead>Quantité</TableHead>
-            <TableHead>Prix unitaire</TableHead>
-            <TableHead>TVA</TableHead>
-            <TableHead>Total ligne</TableHead>
-            <TableHead className="w-12">État</TableHead>
-            <TableHead className="w-24">Action</TableHead>
+            <TableHead>{t("description")}</TableHead>
+            <TableHead>{t("quantity")}</TableHead>
+            <TableHead>{t("unitPrice")}</TableHead>
+            <TableHead>{t("tax")}</TableHead>
+            <TableHead>{t("lineTotal")}</TableHead>
+            <TableHead className="w-12">{t("state")}</TableHead>
+            <TableHead className="w-24">{t("action")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -157,7 +173,7 @@ export default function QuoteStepItems({
                       onNameChange(item.lineId, event.target.value)
                     }
                     disabled={isReadonly}
-                    placeholder="Prestation"
+                    placeholder={t("lineNamePlaceholder")}
                   />
                 </TableCell>
                 <TableCell>
@@ -197,11 +213,11 @@ export default function QuoteStepItems({
                   >
                     <ComboboxInput
                       name="line-tax"
-                      placeholder={taxesDisabled ? "—" : "Sélectionner"}
+                      placeholder={taxesDisabled ? "—" : t("taxPlaceholder")}
                       disabled={isReadonly || taxesDisabled}
                     />
                     <ComboboxContent>
-                      <ComboboxEmpty>Aucune taxe disponible.</ComboboxEmpty>
+                      <ComboboxEmpty>{t("taxEmpty")}</ComboboxEmpty>
                       <ComboboxList>
                         {(t: BackendTax) => (
                           <ComboboxItem
@@ -218,7 +234,10 @@ export default function QuoteStepItems({
                 </TableCell>
                 <TableCell>{lineTotal.toFixed(2)} €</TableCell>
                 <TableCell>
-                  <SaveIndicator status={item.saveStatus} />
+                  <SaveIndicator
+                    status={item.saveStatus}
+                    labels={indicatorLabels}
+                  />
                 </TableCell>
                 <TableCell>
                   {!isReadonly && (
@@ -227,7 +246,7 @@ export default function QuoteStepItems({
                       variant="ghost"
                       onClick={() => onRemoveItem(item.lineId)}
                       disabled={items.length <= 1}
-                      aria-label="Supprimer la ligne"
+                      aria-label={t("deleteAria")}
                     >
                       <Trash2Icon className="size-4" />
                     </Button>
@@ -246,7 +265,7 @@ export default function QuoteStepItems({
           className="h-auto w-full p-0"
           onClick={onAddItem}
           disabled={isAdding}
-          aria-label="Ajouter une ligne"
+          aria-label={t("addAria")}
         >
           <Skeleton className="flex h-14 w-full items-center justify-center">
             {isAdding ? (
@@ -261,10 +280,10 @@ export default function QuoteStepItems({
       <div className="flex justify-end">
         <div
           data-slot="quote-totals"
-          className="min-w-[260px] space-y-1 rounded-md border px-4 py-2 text-sm"
+          className="min-w-65 space-y-1 rounded-md border px-4 py-2 text-sm"
         >
           <div className="flex justify-between font-medium">
-            <span>Montant total HT</span>
+            <span>{t("totalHt")}</span>
             <span data-slot="total-ht">{totals.ht.toFixed(2)} €</span>
           </div>
           {totals.breakdown.map(({ tax, amount }) => (
@@ -280,7 +299,7 @@ export default function QuoteStepItems({
           ))}
           {totals.breakdown.length > 0 && (
             <div className="flex justify-between border-t pt-1 font-semibold">
-              <span>Total TTC</span>
+              <span>{t("totalTtc")}</span>
               <span data-slot="total-ttc">{totals.ttc.toFixed(2)} €</span>
             </div>
           )}

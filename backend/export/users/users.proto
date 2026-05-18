@@ -440,6 +440,7 @@ message ListTaxesRequest {
 message ListTaxesForUserRequest {
     string user_id = 1;
     repeated int32 include_ids = 2;
+    int32 address_id = 3;
 }
 
 message ListTaxesResponse {

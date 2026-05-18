@@ -14,18 +14,19 @@ func Get(ctx context.Context, db *sql.DB, req *quoteGrpc.GetQuoteRequest) (*quot
 	}
 
 	var (
-		quoteID    string
-		userID     string
-		name       string
-		archivedAt sql.NullTime
-		state      string
-		clientID   string
-		addressID  int32
+		quoteID       string
+		userID        string
+		name          string
+		archivedAt    sql.NullTime
+		state         string
+		clientID      string
+		addressID     int32
+		userAddressID int32
 	)
 	err := db.QueryRowContext(ctx,
-		`SELECT quote_id, user_id, name, archived_at, state, client_id, address_id FROM quotes WHERE quote_id=$1 AND user_id=$2`,
+		`SELECT quote_id, user_id, name, archived_at, state, client_id, address_id, COALESCE(user_address_id, 0) FROM quotes WHERE quote_id=$1 AND user_id=$2`,
 		req.QuoteId, req.UserId,
-	).Scan(&quoteID, &userID, &name, &archivedAt, &state, &clientID, &addressID)
+	).Scan(&quoteID, &userID, &name, &archivedAt, &state, &clientID, &addressID, &userAddressID)
 	if err == sql.ErrNoRows {
 		return &quoteGrpc.GetQuoteResponse{Success: false, Code: codes.NotFound}, nil
 	}
@@ -59,13 +60,14 @@ func Get(ctx context.Context, db *sql.DB, req *quoteGrpc.GetQuoteRequest) (*quot
 		Success: true,
 		Code:    codes.Success,
 		Quote: &quoteGrpc.Quote{
-			QuoteId:   quoteID,
-			UserId:    userID,
-			Name:      name,
-			Archived:  archivedAt.Valid,
-			State:     StateFromString(state),
-			ClientId:  clientID,
-			AddressId: addressID,
+			QuoteId:       quoteID,
+			UserId:        userID,
+			Name:          name,
+			Archived:      archivedAt.Valid,
+			State:         StateFromString(state),
+			ClientId:      clientID,
+			AddressId:     addressID,
+			UserAddressId: userAddressID,
 		},
 		Lines: lines,
 	}, nil

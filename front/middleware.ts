@@ -31,7 +31,16 @@ export async function middleware(request: NextRequest) {
     return redirectToLogin(request);
   }
 
-  const response = NextResponse.next();
+  const refreshed = (await refreshResponse.json().catch(() => null)) as {
+    token?: string;
+    refresh_token?: string;
+  } | null;
+  if (refreshed?.token && refreshed?.refresh_token) {
+    request.cookies.set(AUTH_TOKEN_COOKIE, refreshed.token);
+    request.cookies.set(REFRESH_TOKEN_COOKIE, refreshed.refresh_token);
+  }
+
+  const response = NextResponse.next({ request });
   for (const setCookie of refreshResponse.headers.getSetCookie()) {
     response.headers.append("set-cookie", setCookie);
   }

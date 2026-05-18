@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   ChevronRight,
   ChevronsUpDownIcon,
@@ -32,6 +33,7 @@ import type { UserProfile } from "@/components/user/profile/user-info-form";
 
 export default function UserMenu() {
   const router = useRouter();
+  const t = useTranslations("user.menu");
   const [user, setUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
@@ -52,9 +54,9 @@ export default function UserMenu() {
   async function handleLogout() {
     const { ok } = await apiFetch("/api/auth/logout", { method: "POST" });
     if (ok) {
-      toast.success("Déconnexion réussie.");
+      toast.success(t("logoutSuccess"));
     } else {
-      toast.error("La déconnexion a échoué.");
+      toast.error(t("logoutFailure"));
     }
     router.replace("/login");
   }
@@ -80,20 +82,20 @@ export default function UserMenu() {
               <DropdownMenuItem asChild>
                 <Link href="/profile">
                   <UserIcon />
-                  <span>Profil</span>
+                  <span>{t("profile")}</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/profile?tab=adresse">
                   <MapPinIcon />
-                  <span>Adresses</span>
+                  <span>{t("addresses")}</span>
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" onSelect={handleLogout}>
               <LogOutIcon />
-              <span>Déconnexion</span>
+              <span>{t("logout")}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

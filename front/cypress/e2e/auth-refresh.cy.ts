@@ -24,6 +24,22 @@ describe("Auth middleware - SSR refresh on missing access token", () => {
         },
         body: { success: true, token: "fake-token" },
       }).as("login");
+      // Default-stub auth-sensitive endpoints the post-login pages hit on mount.
+      // Without these, an unstubbed 401 inside apiFetch triggers a refresh, the
+      // refresh also 401s, and apiFetch does window.location = "/login" — which
+      // would make every assertion below see pathname "/login".
+      cy.intercept("POST", "/api/auth/refresh", {
+        statusCode: 200,
+        body: { success: true },
+      });
+      cy.intercept("GET", "/api/quotes**", {
+        statusCode: 200,
+        body: { success: true, quotes: [] },
+      });
+      cy.intercept("GET", /^\/api\/users\/clients(\?.*)?$/, {
+        statusCode: 200,
+        body: { success: true, clients: [] },
+      });
     });
 
     it("redirects back to next=", () => {
@@ -41,7 +57,7 @@ describe("Auth middleware - SSR refresh on missing access token", () => {
 
       cy.wait("@login");
       cy.url().should("not.include", "evil.example.com");
-      cy.location("pathname").should("eq", "/");
+      cy.location("pathname").should("eq", "/quote");
     });
 
     it("ignores protocol-relative next= (open-redirect guard)", () => {
@@ -50,7 +66,7 @@ describe("Auth middleware - SSR refresh on missing access token", () => {
 
       cy.wait("@login");
       cy.url().should("not.include", "evil.example.com");
-      cy.location("pathname").should("eq", "/");
+      cy.location("pathname").should("eq", "/quote");
     });
   });
 });

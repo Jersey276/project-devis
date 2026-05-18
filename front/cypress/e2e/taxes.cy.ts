@@ -180,42 +180,42 @@ describe("Taxes page", () => {
     });
   });
 
-  describe("Retire", () => {
+  describe("Delete", () => {
     beforeEach(() => stubTaxesPage());
 
-    it("retires a tax (success)", () => {
+    it("deletes a tax (success)", () => {
       cy.intercept("DELETE", "/api/users/taxes/100", {
         statusCode: 200,
         body: { success: true },
-      }).as("retireTax");
+      }).as("deleteTax");
 
       cy.visit("/taxes");
       cy.wait("@getTaxes");
       cy.wait("@getCountryGroups");
 
       cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
-      cy.contains("Retirer").click();
-      cy.contains("[data-slot='alert-dialog-action']", "Retirer").click();
+      cy.contains("Supprimer").click();
+      cy.contains("[data-slot='alert-dialog-action']", "Supprimer").click();
 
-      cy.wait("@retireTax");
-      cy.get("[data-sonner-toaster]").should("contain", "Taxe retirée.");
+      cy.wait("@deleteTax");
+      cy.get("[data-sonner-toaster]").should("contain", "Taxe supprimée.");
     });
 
-    it("shows error toast on retire failure", () => {
+    it("shows error toast on delete failure", () => {
       cy.intercept("DELETE", "/api/users/taxes/100", {
         statusCode: 500,
         body: { success: false, message: "Échec serveur." },
-      }).as("retireTaxFail");
+      }).as("deleteTaxFail");
 
       cy.visit("/taxes");
       cy.wait("@getTaxes");
       cy.wait("@getCountryGroups");
 
       cy.get("table [data-slot='dropdown-menu-trigger']").first().click();
-      cy.contains("Retirer").click();
-      cy.contains("[data-slot='alert-dialog-action']", "Retirer").click();
+      cy.contains("Supprimer").click();
+      cy.contains("[data-slot='alert-dialog-action']", "Supprimer").click();
 
-      cy.wait("@retireTaxFail");
+      cy.wait("@deleteTaxFail");
       cy.get("[data-sonner-toaster]").should("contain", "Échec serveur.");
       cy.contains("td", "TVA 20").should("be.visible");
     });

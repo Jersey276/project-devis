@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,20 +22,16 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 // Must stay in sync with backend/auth/actions/errors.go field validation codes.
-const FIELD_VALIDATION_MESSAGES: Record<number, string> = {
-  1: "This field is required.",
-  2: "Invalid format.",
-  3: "Too short (minimum 8 characters).",
-  4: "This email address is already in use.",
+const FIELD_VALIDATION_KEYS: Record<number, string> = {
+  1: "required",
+  2: "invalidFormat",
+  3: "tooShort",
+  4: "emailInUse",
 };
 
 type FieldErrors = Record<string, string[]>;
 
-function toMessages(codes: number[]): string[] {
-  return codes.map(
-    (code) => FIELD_VALIDATION_MESSAGES[code] ?? `Validation error (${code}).`,
-  );
-}
+type FormEvent = React.FormEvent<HTMLFormElement>;
 
 function toErrorProps(messages: string[] | undefined) {
   return messages?.map((message) => ({ message }));
@@ -45,10 +42,18 @@ export default function RegisterForm({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   const router = useRouter();
+  const t = useTranslations("auth.register");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [confirmError, setConfirmError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function toMessages(codes: number[]): string[] {
+    return codes.map((code) => {
+      const key = FIELD_VALIDATION_KEYS[code];
+      return key ? t(`validation.${key}`) : t("validation.unknown", { code });
+    });
+  }
+
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setFieldErrors({});
     setConfirmError(null);
@@ -60,7 +65,7 @@ export default function RegisterForm({
     const confirmPassword = data.get("confirm-password") as string;
 
     if (password !== confirmPassword) {
-      setConfirmError("Passwords do not match.");
+      setConfirmError(t("confirmMismatch"));
       return;
     }
 
@@ -75,7 +80,7 @@ export default function RegisterForm({
       });
 
       if (response.ok) {
-        toast.success("Registration successful! Please log in.");
+        toast.success(t("successToast"));
         router.replace("/login");
         return;
       }
@@ -94,9 +99,9 @@ export default function RegisterForm({
         return;
       }
 
-      toast.error("Registration failed. Please try again.");
+      toast.error(t("failureToast"));
     } catch {
-      toast.error("Registration failed. Please try again.");
+      toast.error(t("failureToast"));
     }
   }
 
@@ -104,16 +109,14 @@ export default function RegisterForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>Create an account</CardTitle>
-          <CardDescription>
-            Enter your information below to create your account
-          </CardDescription>
+          <CardTitle>{t("title")}</CardTitle>
+          <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} noValidate>
             <FieldGroup>
               <Field data-invalid={!!fieldErrors.email?.length}>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <FieldLabel htmlFor="email">{t("emailLabel")}</FieldLabel>
                 <Input
                   id="email"
                   type="email"
@@ -122,13 +125,10 @@ export default function RegisterForm({
                   aria-invalid={!!fieldErrors.email?.length}
                 />
                 <FieldError errors={toErrorProps(fieldErrors.email)} />
-                <FieldDescription>
-                  We&apos;ll use this to contact you. We will not share your
-                  email with anyone else.
-                </FieldDescription>
+                <FieldDescription>{t("emailHint")}</FieldDescription>
               </Field>
               <Field data-invalid={!!fieldErrors.password?.length}>
-                <FieldLabel htmlFor="password">Password</FieldLabel>
+                <FieldLabel htmlFor="password">{t("passwordLabel")}</FieldLabel>
                 <Input
                   id="password"
                   type="password"
@@ -136,13 +136,11 @@ export default function RegisterForm({
                   aria-invalid={!!fieldErrors.password?.length}
                 />
                 <FieldError errors={toErrorProps(fieldErrors.password)} />
-                <FieldDescription>
-                  Must be at least 8 characters long.
-                </FieldDescription>
+                <FieldDescription>{t("passwordHint")}</FieldDescription>
               </Field>
               <Field data-invalid={!!confirmError}>
                 <FieldLabel htmlFor="confirm-password">
-                  Confirm Password
+                  {t("confirmPasswordLabel")}
                 </FieldLabel>
                 <Input
                   id="confirm-password"
@@ -155,18 +153,16 @@ export default function RegisterForm({
                     confirmError ? [{ message: confirmError }] : undefined
                   }
                 />
-                <FieldDescription>
-                  Please confirm your password.
-                </FieldDescription>
+                <FieldDescription>{t("confirmPasswordHint")}</FieldDescription>
               </Field>
               <FieldGroup>
                 <Field>
-                  <Button type="submit">Create Account</Button>
+                  <Button type="submit">{t("submit")}</Button>
                   <Button variant="outline" type="button">
-                    Sign up with Google
+                    {t("googleSubmit")}
                   </Button>
                   <FieldDescription className="px-6 text-center">
-                    Already have an account? <a href="/login">Sign in</a>
+                    {t("loginPrompt")} <a href="/login">{t("loginLink")}</a>
                   </FieldDescription>
                 </Field>
               </FieldGroup>
@@ -175,8 +171,8 @@ export default function RegisterForm({
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+        {t("termsPrefix")} <a href="#">{t("termsLink")}</a> {t("termsJoiner")}{" "}
+        <a href="#">{t("privacyLink")}</a>.
       </FieldDescription>
     </div>
   );

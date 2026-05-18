@@ -808,9 +808,20 @@ func ListTaxesForUser(c *gin.Context, client users.UserServiceClient) {
 		}
 	}
 
+	var addressID int32
+	if raw := c.Query("address_id"); raw != "" {
+		v, err := strconv.ParseInt(raw, 10, 32)
+		if err != nil || v <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Paramètre address_id invalide."})
+			return
+		}
+		addressID = int32(v)
+	}
+
 	resp, err := client.ListTaxesForUser(c.Request.Context(), &users.ListTaxesForUserRequest{
 		UserId:     userID,
 		IncludeIds: includeIDs,
+		AddressId:  addressID,
 	})
 	if err != nil {
 		usersErrors.unavailable(c)

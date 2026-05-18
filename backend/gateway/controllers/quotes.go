@@ -3,12 +3,16 @@ package controllers
 import (
 	"encoding/json"
 	"log"
+	"math"
 	"net/http"
 	"os"
+	"strconv"
 
 	quote "gateway/quote"
+	users "gateway/users"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -48,7 +52,17 @@ func QuotesRoutes(r *gin.RouterGroup) {
 	}
 	client := quote.NewQuoteServiceClient(conn)
 
-	r.GET("", func(c *gin.Context) { ListQuotes(c, client) })
+	usersAddress := os.Getenv("USER_SERVICE_ADDRESS")
+	if usersAddress == "" {
+		usersAddress = "localhost:50052"
+	}
+	usersConn, err := grpc.NewClient(usersAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Failed to connect to users gRPC server: %v", err)
+	}
+	usersClient := users.NewUserServiceClient(usersConn)
+
+	r.GET("", func(c *gin.Context) { ListQuotes(c, client, usersClient) })
 	r.POST("", func(c *gin.Context) { CreateQuote(c, client) })
 
 	archive := r.Group("/archive")
@@ -73,38 +87,129 @@ func QuotesRoutes(r *gin.RouterGroup) {
 
 // ─── Quote handlers ──────────────────────────────────────────────────────────
 
-func ListQuotes(c *gin.Context, client quote.QuoteServiceClient) {
+func ListQuotes(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
 	includeArchived := c.Query("archived") == "true"
-	resp, err := client.ListQuotes(c.Request.Context(), &quote.ListQuotesRequest{
-		UserId:          userIDFromCtx(c),
-		IncludeArchived: includeArchived,
+	userID := userIDFromCtx(c)
+
+	var (
+		quotesResp *quote.ListQuotesResponse
+		linesResp  *quote.ListUserQuoteLinesResponse
+	)
+
+	g, gctx := errgroup.WithContext(c.Request.Context())
+	g.Go(func() error {
+		resp, err := client.ListQuotes(gctx, &quote.ListQuotesRequest{
+			UserId:          userID,
+			IncludeArchived: includeArchived,
+		})
+		if err != nil {
+			return err
+		}
+		quotesResp = resp
+		return nil
+	})
+	g.Go(func() error {
+		resp, err := client.ListUserQuoteLines(gctx, &quote.ListUserQuoteLinesRequest{
+			UserId:          userID,
+			IncludeArchived: includeArchived,
+		})
+		if err != nil {
+			return err
+		}
+		linesResp = resp
+		return nil
+	})
+	if err := g.Wait(); err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !quotesResp.Success {
+		quoteErrors.reply(c, quotesResp.Code)
+		return
+	}
+
+	// Fetch taxes after lines so we can pass the referenced tax_ids as
+	// include_ids — otherwise superseded taxes are filtered out by
+	// users.ListTaxesForUser and lines using them would silently fall back to
+	// 0% (TTC == HT). See backend/users/actions/tax/list_for_user.go.
+	taxesResp, err := usersClient.ListTaxesForUser(c.Request.Context(), &users.ListTaxesForUserRequest{
+		UserId:     userID,
+		IncludeIds: distinctTaxIds(linesResp.Lines),
 	})
 	if err != nil {
 		quoteErrors.unavailable(c)
 		return
 	}
-	if !resp.Success {
-		quoteErrors.reply(c, resp.Code)
-		return
+
+	totals := computeQuoteTotals(linesResp.Lines, taxesResp.Taxes)
+
+	out := make([]gin.H, 0, len(quotesResp.Quotes))
+	for _, q := range quotesResp.Quotes {
+		m := marshalQuote(q)
+		m["total_ttc"] = totals[q.QuoteId]
+		out = append(out, m)
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "quotes": marshalQuotes(resp.Quotes)})
+	c.JSON(http.StatusOK, gin.H{"success": true, "quotes": out})
+}
+
+func distinctTaxIds(lines []*quote.QuoteLine) []int32 {
+	seen := make(map[int32]struct{}, len(lines))
+	ids := make([]int32, 0, len(lines))
+	for _, l := range lines {
+		if l.TaxId == 0 {
+			continue
+		}
+		if _, ok := seen[l.TaxId]; ok {
+			continue
+		}
+		seen[l.TaxId] = struct{}{}
+		ids = append(ids, l.TaxId)
+	}
+	return ids
+}
+
+// computeQuoteTotals folds quote_lines into per-quote TTC totals in cents.
+// Round once per line — matches the per-line breakdown of quote-form.tsx and
+// the canonical PDF total. Lines with tax_id=0 ("no tax") contribute HT only.
+func computeQuoteTotals(lines []*quote.QuoteLine, taxes []*users.Tax) map[string]int64 {
+	rates := make(map[int32]float64, len(taxes)+1)
+	for _, t := range taxes {
+		r, err := strconv.ParseFloat(t.Rate, 64)
+		if err != nil {
+			continue
+		}
+		rates[t.Id] = r
+	}
+
+	totals := map[string]int64{}
+	for _, l := range lines {
+		qty, err := strconv.ParseFloat(l.Quantity, 64)
+		if err != nil {
+			continue
+		}
+		rate := rates[l.TaxId]
+		totals[l.QuoteId] += int64(math.Round(qty * float64(l.UnitPrice) * (1 + rate/100)))
+	}
+	return totals
 }
 
 func CreateQuote(c *gin.Context, client quote.QuoteServiceClient) {
 	var input struct {
-		Name      string `json:"name" binding:"required"`
-		ClientID  string `json:"client_id" binding:"required"`
-		AddressID int32  `json:"address_id" binding:"required"`
+		Name          string `json:"name" binding:"required"`
+		ClientID      string `json:"client_id" binding:"required"`
+		AddressID     int32  `json:"address_id" binding:"required"`
+		UserAddressID int32  `json:"user_address_id" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
 		return
 	}
 	resp, err := client.CreateQuote(c.Request.Context(), &quote.CreateQuoteRequest{
-		UserId:    userIDFromCtx(c),
-		Name:      input.Name,
-		ClientId:  input.ClientID,
-		AddressId: input.AddressID,
+		UserId:        userIDFromCtx(c),
+		Name:          input.Name,
+		ClientId:      input.ClientID,
+		AddressId:     input.AddressID,
+		UserAddressId: input.UserAddressID,
 	})
 	if err != nil {
 		quoteErrors.unavailable(c)
@@ -139,20 +244,22 @@ func GetQuote(c *gin.Context, client quote.QuoteServiceClient) {
 
 func UpdateQuote(c *gin.Context, client quote.QuoteServiceClient) {
 	var input struct {
-		Name      string `json:"name" binding:"required"`
-		ClientID  string `json:"client_id"`
-		AddressID int32  `json:"address_id"`
+		Name          string `json:"name" binding:"required"`
+		ClientID      string `json:"client_id"`
+		AddressID     int32  `json:"address_id"`
+		UserAddressID int32  `json:"user_address_id"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
 		return
 	}
 	resp, err := client.UpdateQuote(c.Request.Context(), &quote.UpdateQuoteRequest{
-		QuoteId:   c.Param("id"),
-		UserId:    userIDFromCtx(c),
-		Name:      input.Name,
-		ClientId:  input.ClientID,
-		AddressId: input.AddressID,
+		QuoteId:       c.Param("id"),
+		UserId:        userIDFromCtx(c),
+		Name:          input.Name,
+		ClientId:      input.ClientID,
+		AddressId:     input.AddressID,
+		UserAddressId: input.UserAddressID,
 	})
 	if err != nil {
 		quoteErrors.unavailable(c)
@@ -393,23 +500,17 @@ func marshalQuote(q *quote.Quote) gin.H {
 		return nil
 	}
 	return gin.H{
-		"quote_id":   q.QuoteId,
-		"user_id":    q.UserId,
-		"name":       q.Name,
-		"archived":   q.Archived,
-		"state":      stateToLower(q.State),
-		"client_id":  q.ClientId,
-		"address_id": q.AddressId,
+		"quote_id":        q.QuoteId,
+		"user_id":         q.UserId,
+		"name":            q.Name,
+		"archived":        q.Archived,
+		"state":           stateToLower(q.State),
+		"client_id":       q.ClientId,
+		"address_id":      q.AddressId,
+		"user_address_id": q.UserAddressId,
 	}
 }
 
-func marshalQuotes(quotes []*quote.Quote) []gin.H {
-	out := make([]gin.H, 0, len(quotes))
-	for _, q := range quotes {
-		out = append(out, marshalQuote(q))
-	}
-	return out
-}
 
 func stateToLower(s quote.QuoteState) string {
 	switch s {

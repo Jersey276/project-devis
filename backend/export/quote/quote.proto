@@ -41,20 +41,22 @@ enum QuoteState {
 }
 
 message Quote {
-    string     quote_id   = 1;
-    string     user_id    = 2;
-    string     name       = 3;
-    bool       archived   = 4;
-    QuoteState state      = 5;
-    string     client_id  = 6;
-    int32      address_id = 7;
+    string     quote_id        = 1;
+    string     user_id         = 2;
+    string     name            = 3;
+    bool       archived        = 4;
+    QuoteState state           = 5;
+    string     client_id       = 6;
+    int32      address_id      = 7;
+    int32      user_address_id = 8;
 }
 
 message CreateQuoteRequest {
-    string user_id    = 1;
-    string name       = 2;
-    string client_id  = 3;
-    int32  address_id = 4;
+    string user_id         = 1;
+    string name            = 2;
+    string client_id       = 3;
+    int32  address_id      = 4;
+    int32  user_address_id = 5;
 }
 
 message CreateQuoteResponse {
@@ -87,11 +89,12 @@ message ListQuotesResponse {
 }
 
 message UpdateQuoteRequest {
-    string quote_id   = 1;
-    string user_id    = 2;
-    string name       = 3;
-    string client_id  = 4;
-    int32  address_id = 5;
+    string quote_id        = 1;
+    string user_id         = 2;
+    string name            = 3;
+    string client_id       = 4;
+    int32  address_id      = 5;
+    int32  user_address_id = 6;
 }
 
 message UpdateQuoteResponse {
