@@ -86,7 +86,7 @@ describe("Login", () => {
       .should("eq", 401);
     cy.get("[data-sonner-toaster]").should(
       "contain",
-      "Login failed. Please check your credentials and try again.",
+      "Échec de la connexion. Vérifiez vos identifiants et réessayez.",
     );
   });
 
@@ -100,7 +100,7 @@ describe("Login", () => {
 
     cy.get("[data-sonner-toaster]").should(
       "contain",
-      "Login failed. Please check your credentials and try again.",
+      "Échec de la connexion. Vérifiez vos identifiants et réessayez.",
     );
   });
 });

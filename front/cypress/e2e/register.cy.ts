@@ -39,7 +39,7 @@ describe("Register", () => {
     cy.wait("@registerSuccessToast");
     cy.get("[data-sonner-toaster]").should(
       "contain",
-      "Registration successful! Please log in."
+      "Inscription réussie. Veuillez vous connecter."
     );
   });
 
@@ -58,7 +58,7 @@ describe("Register", () => {
     cy.wait("@registerFailure").its("response.statusCode").should("eq", 400);
     cy.get("[data-sonner-toaster]").should(
       "contain",
-      "Registration failed. Please try again."
+      "Échec de l'inscription. Veuillez réessayer."
     );
   });
 
@@ -75,7 +75,7 @@ describe("Register", () => {
 
     cy.get("[data-sonner-toaster]").should(
       "contain",
-      "Registration failed. Please try again."
+      "Échec de l'inscription. Veuillez réessayer."
     );
   });
 
@@ -94,7 +94,7 @@ describe("Register", () => {
       cy.get("input[name='confirm-password']")
         .closest("[data-slot='field']")
         .find("[data-slot='field-error']")
-        .should("contain", "Passwords do not match.");
+        .should("contain", "Les mots de passe ne correspondent pas.");
     });
 
     it("shows inline field error when email is already in use", () => {
@@ -117,7 +117,7 @@ describe("Register", () => {
       cy.get("input[name='email']")
         .closest("[data-slot='field']")
         .find("[data-slot='field-error']")
-        .should("contain", "This email address is already in use.");
+        .should("contain", "Cette adresse email est déjà utilisée.");
     });
 
     it("shows inline field errors for invalid format and too short", () => {
@@ -144,12 +144,12 @@ describe("Register", () => {
       cy.get("input[name='email']")
         .closest("[data-slot='field']")
         .find("[data-slot='field-error']")
-        .should("contain", "Invalid format.");
+        .should("contain", "Format invalide.");
 
       cy.get("input[name='password']")
         .closest("[data-slot='field']")
         .find("[data-slot='field-error']")
-        .should("contain", "Too short (minimum 8 characters).");
+        .should("contain", "Trop court (8 caractères minimum).");
     });
 
     it("clears field errors when submitting again", () => {
