@@ -1,0 +1,102 @@
+name: Production CD
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Build & push images to GHCR
+  # ---------------------------------------------------------------------------
+  build-and-push:
+    name: Build & push ${{ matrix.image.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        image:
+          - name: front
+            context: ./front
+            dockerfile: ./front/Dockerfile
+            build_args: ""
+          - name: gateway
+            context: ./backend
+            dockerfile: ./backend/Dockerfile
+            build_args: "SERVICE_NAME=gateway"
+          - name: auth
+            context: ./backend
+            dockerfile: ./backend/Dockerfile
+            build_args: "SERVICE_NAME=auth"
+          - name: users
+            context: ./backend
+            dockerfile: ./backend/Dockerfile
+            build_args: "SERVICE_NAME=users"
+          - name: quote
+            context: ./backend
+            dockerfile: ./backend/Dockerfile
+            build_args: "SERVICE_NAME=quote"
+          - name: export
+            context: ./backend
+            dockerfile: ./backend/Dockerfile
+            build_args: "SERVICE_NAME=export"
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Compute image name (lowercase)
+        id: img
+        run: |
+          owner_repo=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "ref=${{ env.REGISTRY }}/${owner_repo}/${{ matrix.image.name }}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.image.context }}
+          file: ${{ matrix.image.dockerfile }}
+          push: true
+          build-args: ${{ matrix.image.build_args }}
+          tags: |
+            ${{ steps.img.outputs.ref }}:${{ github.sha }}
+            ${{ steps.img.outputs.ref }}:latest
+          cache-from: type=gha,scope=${{ matrix.image.name }}
+          cache-to: type=gha,scope=${{ matrix.image.name }},mode=max
+
+  # ---------------------------------------------------------------------------
+  # Deploy to production server (SSH + docker compose pull/up)
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -euo pipefail
+            cd ${{ secrets.DEPLOY_PATH }}
+            git fetch origin master
+            git reset --hard ${{ github.sha }}
+            echo "${{ secrets.GHCR_PULL_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_PULL_USER }}" --password-stdin
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker image prune -f
