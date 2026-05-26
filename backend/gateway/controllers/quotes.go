@@ -511,7 +511,6 @@ func marshalQuote(q *quote.Quote) gin.H {
 	}
 }
 
-
 func stateToLower(s quote.QuoteState) string {
 	switch s {
 	case quote.QuoteState_QUOTE_STATE_DRAFT:

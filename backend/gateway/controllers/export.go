@@ -76,7 +76,7 @@ func ExportQuote(c *gin.Context, client export.ExportServiceClient) {
 }
 
 // Emits both the legacy `filename="…"` (non-ASCII stripped) and the
-// `filename*=UTF-8''` form (RFC 5987 / 6266) so accented filenames round-trip
+// `filename*=UTF-8”` form (RFC 5987 / 6266) so accented filenames round-trip
 // through older clients without being mangled.
 func contentDispositionAttachment(filename string) string {
 	ascii := stripNonASCII(filename)

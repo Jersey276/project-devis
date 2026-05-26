@@ -3,8 +3,8 @@ package tests
 import (
 	"context"
 	"flag"
-	"net/http"
 	authGrpc "gateway/auth"
+	"net/http"
 	"testing"
 
 	"google.golang.org/grpc"
@@ -33,7 +33,7 @@ func TestRegisterSuccess(t *testing.T) {
 	defer conn.Close()
 	client := authGrpc.NewAuthServiceClient(conn)
 	resp, err := client.Register(context.Background(), &authGrpc.RegisterRequest{
-		Email: "test@example.com",
+		Email:    "test@example.com",
 		Password: "password123",
 	})
 	if err != nil {
@@ -52,7 +52,7 @@ func TestLoginSuccess(t *testing.T) {
 	defer conn.Close()
 	client := authGrpc.NewAuthServiceClient(conn)
 	resp, err := client.Login(context.Background(), &authGrpc.LoginRequest{
-		Email: "test@example.com",
+		Email:    "test@example.com",
 		Password: "password123",
 	})
 	if err != nil {
