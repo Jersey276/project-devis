@@ -2,36 +2,53 @@ package tests
 
 import (
 	"context"
-	"flag"
 	authGrpc "gateway/auth"
-	"net/http"
+	"net"
 	"testing"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
-var (
-	port = flag.Int("port", 50051, "The server port")
-)
-
-type server struct {
+type mockAuthServer struct {
 	authGrpc.UnimplementedAuthServiceServer
 }
 
-func TestRegisterSuccess(t *testing.T) {
-	// Create a test server using the main function
-	ts := http.Server{
-		Addr: ":50051",
-	}
+func (s *mockAuthServer) Register(_ context.Context, _ *authGrpc.RegisterRequest) (*authGrpc.FormGenericResponse, error) {
+	return &authGrpc.FormGenericResponse{Success: true}, nil
+}
 
-	ts.ListenAndServe()
+func (s *mockAuthServer) Login(_ context.Context, _ *authGrpc.LoginRequest) (*authGrpc.LoginResponse, error) {
+	token := "test-token"
+	return &authGrpc.LoginResponse{Success: true, Token: &token}, nil
+}
 
-	conn, err := grpc.NewClient("localhost:50051", grpc.WithInsecure())
+func startTestServer(t *testing.T) (authGrpc.AuthServiceClient, func()) {
+	t.Helper()
+	lis, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
-		t.Fatalf("Failed to connect to server: %v", err)
+		t.Fatalf("failed to listen: %v", err)
 	}
-	defer conn.Close()
-	client := authGrpc.NewAuthServiceClient(conn)
+	s := grpc.NewServer()
+	authGrpc.RegisterAuthServiceServer(s, &mockAuthServer{})
+	go s.Serve(lis)
+
+	conn, err := grpc.NewClient(lis.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		s.Stop()
+		t.Fatalf("failed to connect: %v", err)
+	}
+
+	return authGrpc.NewAuthServiceClient(conn), func() {
+		conn.Close()
+		s.Stop()
+	}
+}
+
+func TestRegisterSuccess(t *testing.T) {
+	client, cleanup := startTestServer(t)
+	defer cleanup()
+
 	resp, err := client.Register(context.Background(), &authGrpc.RegisterRequest{
 		Email:    "test@example.com",
 		Password: "password123",
@@ -39,18 +56,15 @@ func TestRegisterSuccess(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to register: %v", err)
 	}
-	if resp.GetSuccess() != true {
-		t.Fatalf("Expected success, got %v", resp.GetSuccess())
+	if !resp.GetSuccess() {
+		t.Fatal("Expected success, got false")
 	}
 }
 
 func TestLoginSuccess(t *testing.T) {
-	conn, err := grpc.NewClient("localhost:50051", grpc.WithInsecure())
-	if err != nil {
-		t.Fatalf("Failed to connect to server: %v", err)
-	}
-	defer conn.Close()
-	client := authGrpc.NewAuthServiceClient(conn)
+	client, cleanup := startTestServer(t)
+	defer cleanup()
+
 	resp, err := client.Login(context.Background(), &authGrpc.LoginRequest{
 		Email:    "test@example.com",
 		Password: "password123",
@@ -58,10 +72,10 @@ func TestLoginSuccess(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to login: %v", err)
 	}
-	if resp.GetSuccess() != true {
-		t.Fatalf("Expected success, got %v", resp.GetSuccess())
+	if !resp.GetSuccess() {
+		t.Fatal("Expected success, got false")
 	}
 	if resp.GetToken() == "" {
-		t.Fatalf("Expected token, got empty string")
+		t.Fatal("Expected token, got empty string")
 	}
 }
