@@ -476,14 +476,45 @@
       "list": "Templates",
       "create": "Nouveau template"
     },
+    "tabs": {
+      "lines": "Lignes",
+      "quotes": "Devis"
+    },
     "list": {
       "title": "Templates",
       "new": "Nouveau template",
-      "empty": "Aucun template pour le moment."
+      "empty": "Aucun template pour le moment.",
+      "columns": {
+        "name": "Nom",
+        "createdAt": "Date de création",
+        "actions": "Actions"
+      },
+      "actions": {
+        "edit": "Modifier"
+      },
+      "loadFailedToast": "Impossible de charger les templates."
     },
     "create": {
       "title": "Nouveau template",
       "coming_soon": "Formulaire de création à venir."
+    },
+    "editLine": {
+      "title": "Modifier le template de ligne",
+      "templateNameLabel": "Nom du template",
+      "lineNameLabel": "Description",
+      "quantityLabel": "Quantité",
+      "unitPriceLabel": "Prix unitaire (€)",
+      "taxLabel": "TVA",
+      "saveSuccessToast": "Template mis à jour.",
+      "saveFailedToast": "Impossible de mettre à jour le template.",
+      "loadFailedToast": "Impossible de charger le template."
+    },
+    "editQuote": {
+      "title": "Modifier le template de devis",
+      "templateNameLabel": "Nom du template",
+      "saveSuccessToast": "Template mis à jour.",
+      "saveFailedToast": "Impossible de mettre à jour le template.",
+      "loadFailedToast": "Impossible de charger le template."
     }
   },
   "template": {

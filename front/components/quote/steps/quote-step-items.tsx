@@ -65,6 +65,7 @@ type QuoteStepItemsProps = {
   availableTaxes: BackendTax[];
   taxById: Map<number, BackendTax>;
   isAdding: boolean;
+  hideTotals?: boolean;
   onNameChange: (lineId: string, value: string) => void;
   onQuantityChange: (lineId: string, value: number) => void;
   onUnitPriceChange: (lineId: string, value: number) => void;
@@ -138,6 +139,7 @@ export default function QuoteStepItems({
   availableTaxes,
   taxById,
   isAdding,
+  hideTotals,
   onNameChange,
   onQuantityChange,
   onUnitPriceChange,
@@ -350,32 +352,34 @@ export default function QuoteStepItems({
       )}
 
       <div className="flex justify-end">
-        <div
-          data-slot="quote-totals"
-          className="min-w-65 space-y-1 rounded-md border px-4 py-2 text-sm"
-        >
-          <div className="flex justify-between font-medium">
-            <span>{t("totalHt")}</span>
-            <span data-slot="total-ht">{totals.ht.toFixed(2)} €</span>
+        {!hideTotals && (
+          <div
+            data-slot="quote-totals"
+            className="min-w-65 space-y-1 rounded-md border px-4 py-2 text-sm"
+          >
+            <div className="flex justify-between font-medium">
+              <span>{t("totalHt")}</span>
+              <span data-slot="total-ht">{totals.ht.toFixed(2)} €</span>
+            </div>
+            {totals.breakdown.map(({ tax, amount }) => (
+              <div
+                key={tax.id}
+                data-slot="total-tax-line"
+                data-tax-id={tax.id}
+                className="text-muted-foreground flex justify-between"
+              >
+                <span>{taxLabel(tax)}</span>
+                <span>{amount.toFixed(2)} €</span>
+              </div>
+            ))}
+            {totals.breakdown.length > 0 && (
+              <div className="flex justify-between border-t pt-1 font-semibold">
+                <span>{t("totalTtc")}</span>
+                <span data-slot="total-ttc">{totals.ttc.toFixed(2)} €</span>
+              </div>
+            )}
           </div>
-          {totals.breakdown.map(({ tax, amount }) => (
-            <div
-              key={tax.id}
-              data-slot="total-tax-line"
-              data-tax-id={tax.id}
-              className="text-muted-foreground flex justify-between"
-            >
-              <span>{taxLabel(tax)}</span>
-              <span>{amount.toFixed(2)} €</span>
-            </div>
-          ))}
-          {totals.breakdown.length > 0 && (
-            <div className="flex justify-between border-t pt-1 font-semibold">
-              <span>{t("totalTtc")}</span>
-              <span data-slot="total-ttc">{totals.ttc.toFixed(2)} €</span>
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       {onSaveLineAsTemplate && (
