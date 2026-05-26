@@ -1,51 +1,28 @@
 package line
 
 import (
+	"context"
 	"database/sql"
-	"encoding/json"
-	"net/http"
 	"strconv"
 
 	"project-devis-template/actions/codes"
 	"project-devis-template/actions/sqlutil"
-
-	"github.com/gin-gonic/gin"
+	templateGrpc "project-devis-template/services/grpc"
 )
 
-type updateLineRequest struct {
-	Type      string          `json:"type"`
-	Name      string          `json:"name"`
-	Quantity  string          `json:"quantity"`
-	Unit      string          `json:"unit"`
-	UnitPrice int64           `json:"unit_price"`
-	Data      json.RawMessage `json:"data"`
-	Position  int32           `json:"position"`
-	TaxID     int32           `json:"tax_id"`
-}
-
-func Update(c *gin.Context, db *sql.DB) {
-	userID := c.GetHeader("X-User-Id")
-	templateID := c.Param("id")
-	lineID := c.Param("lineId")
-
-	var req updateLineRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "code": codes.InvalidInput, "message": "Données invalides."})
-		return
-	}
+func Update(ctx context.Context, db *sql.DB, req *templateGrpc.UpdateTemplateLineRequest) (*templateGrpc.UpdateTemplateLineResponse, error) {
 	if req.Quantity != "" {
 		if _, err := strconv.ParseFloat(req.Quantity, 64); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"success": false, "code": codes.InvalidInput, "message": "Quantité invalide."})
-			return
+			return &templateGrpc.UpdateTemplateLineResponse{Success: false, Code: codes.InvalidInput}, nil
 		}
 	}
 
-	dataStr := interface{}(nil)
-	if len(req.Data) > 0 {
-		dataStr = string(req.Data)
+	var dataStr interface{}
+	if req.Data != "" {
+		dataStr = req.Data
 	}
 
-	res, err := db.ExecContext(c.Request.Context(),
+	res, err := db.ExecContext(ctx,
 		`UPDATE template_lines tl
 		 SET type=COALESCE(NULLIF($1,''), tl.type),
 		     name=COALESCE(NULLIF($2,''), tl.name),
@@ -60,18 +37,16 @@ func Update(c *gin.Context, db *sql.DB) {
 		 WHERE tl.line_id=$9 AND tl.template_id=$10 AND t.template_id=$10 AND t.user_id=$11`,
 		req.Type, req.Name, sqlutil.NullableStr(req.Quantity),
 		sqlutil.NullableStr(req.Unit), req.UnitPrice,
-		dataStr, req.Position, sqlutil.NullableInt32(req.TaxID),
-		lineID, templateID, userID,
+		dataStr, req.Position, sqlutil.NullableInt32(req.TaxId),
+		req.LineId, req.TemplateId, req.UserId,
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "code": codes.InternalError, "message": "Erreur interne."})
-		return
+		return &templateGrpc.UpdateTemplateLineResponse{Success: false, Code: codes.InternalError}, nil
 	}
 	n, _ := res.RowsAffected()
 	if n == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"success": false, "code": codes.NotFound, "message": "Ligne introuvable."})
-		return
+		return &templateGrpc.UpdateTemplateLineResponse{Success: false, Code: codes.NotFound}, nil
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true, "code": codes.Success})
+	return &templateGrpc.UpdateTemplateLineResponse{Success: true, Code: codes.Success}, nil
 }

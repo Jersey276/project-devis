@@ -1,64 +1,52 @@
 package template
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
-	"net/http"
 
 	"project-devis-template/actions/codes"
-
-	"github.com/gin-gonic/gin"
+	templateGrpc "project-devis-template/services/grpc"
 )
 
-func List(c *gin.Context, db *sql.DB) {
-	userID := c.GetHeader("X-User-Id")
-	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "code": codes.InvalidInput, "message": "X-User-Id header manquant."})
-		return
-	}
-
-	includeArchived := c.Query("archived") == "true"
-	templateType := c.Query("type")
-
+func List(ctx context.Context, db *sql.DB, req *templateGrpc.ListTemplatesRequest) (*templateGrpc.ListTemplatesResponse, error) {
 	query := `SELECT template_id, user_id, template_type, target_resource, name,
 	                 archived_at, payload_version, payload, created_at, updated_at
 	          FROM templates WHERE user_id=$1`
-	args := []interface{}{userID}
+	args := []interface{}{req.UserId}
 
-	if !includeArchived {
+	if !req.IncludeArchived {
 		query += " AND archived_at IS NULL"
 	}
-	if templateType != "" {
-		args = append(args, templateType)
+	if req.TemplateType != "" {
+		args = append(args, req.TemplateType)
 		query += " AND template_type=$2"
 	}
 	query += " ORDER BY created_at DESC"
 
-	rows, err := db.QueryContext(c.Request.Context(), query, args...)
+	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "code": codes.InternalError, "message": "Erreur interne."})
-		return
+		return &templateGrpc.ListTemplatesResponse{Success: false, Code: codes.InternalError}, nil
 	}
 	defer rows.Close()
 
-	templates := make([]Template, 0)
+	templates := make([]*templateGrpc.Template, 0)
 	for rows.Next() {
-		var t Template
+		var t templateGrpc.Template
 		var archivedAt sql.NullString
 		var payloadRaw []byte
 		if err := rows.Scan(
-			&t.TemplateID, &t.UserID, &t.TemplateType, &t.TargetResource, &t.Name,
+			&t.TemplateId, &t.UserId, &t.TemplateType, &t.TargetResource, &t.Name,
 			&archivedAt, &t.PayloadVersion, &payloadRaw, &t.CreatedAt, &t.UpdatedAt,
 		); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "code": codes.InternalError, "message": "Erreur interne."})
-			return
+			return &templateGrpc.ListTemplatesResponse{Success: false, Code: codes.InternalError}, nil
 		}
 		if archivedAt.Valid {
-			t.ArchivedAt = &archivedAt.String
+			t.ArchivedAt = archivedAt.String
 		}
-		t.Payload = json.RawMessage(payloadRaw)
-		templates = append(templates, t)
+		t.Payload = string(json.RawMessage(payloadRaw))
+		templates = append(templates, &t)
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true, "templates": templates})
+	return &templateGrpc.ListTemplatesResponse{Success: true, Code: codes.Success, Templates: templates}, nil
 }

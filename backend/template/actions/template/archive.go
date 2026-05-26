@@ -1,54 +1,43 @@
 package template
 
 import (
+	"context"
 	"database/sql"
-	"net/http"
 
 	"project-devis-template/actions/codes"
-
-	"github.com/gin-gonic/gin"
+	templateGrpc "project-devis-template/services/grpc"
 )
 
-func Archive(c *gin.Context, db *sql.DB) {
-	userID := c.GetHeader("X-User-Id")
-	templateID := c.Param("id")
-
-	res, err := db.ExecContext(c.Request.Context(),
+func Archive(ctx context.Context, db *sql.DB, req *templateGrpc.ArchiveTemplateRequest) (*templateGrpc.GenericResponse, error) {
+	res, err := db.ExecContext(ctx,
 		`UPDATE templates SET archived_at=now(), updated_at=now()
 		 WHERE template_id=$1 AND user_id=$2 AND archived_at IS NULL`,
-		templateID, userID,
+		req.TemplateId, req.UserId,
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "code": codes.InternalError, "message": "Erreur interne."})
-		return
+		return &templateGrpc.GenericResponse{Success: false, Code: codes.InternalError}, nil
 	}
 	n, _ := res.RowsAffected()
 	if n == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"success": false, "code": codes.NotFound, "message": "Template introuvable ou déjà archivé."})
-		return
+		return &templateGrpc.GenericResponse{Success: false, Code: codes.NotFound}, nil
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true, "code": codes.Success})
+	return &templateGrpc.GenericResponse{Success: true, Code: codes.Success}, nil
 }
 
-func Restore(c *gin.Context, db *sql.DB) {
-	userID := c.GetHeader("X-User-Id")
-	templateID := c.Param("id")
-
-	res, err := db.ExecContext(c.Request.Context(),
+func Restore(ctx context.Context, db *sql.DB, req *templateGrpc.RestoreTemplateRequest) (*templateGrpc.GenericResponse, error) {
+	res, err := db.ExecContext(ctx,
 		`UPDATE templates SET archived_at=NULL, updated_at=now()
 		 WHERE template_id=$1 AND user_id=$2 AND archived_at IS NOT NULL`,
-		templateID, userID,
+		req.TemplateId, req.UserId,
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "code": codes.InternalError, "message": "Erreur interne."})
-		return
+		return &templateGrpc.GenericResponse{Success: false, Code: codes.InternalError}, nil
 	}
 	n, _ := res.RowsAffected()
 	if n == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"success": false, "code": codes.NotFound, "message": "Template introuvable ou non archivé."})
-		return
+		return &templateGrpc.GenericResponse{Success: false, Code: codes.NotFound}, nil
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true, "code": codes.Success})
+	return &templateGrpc.GenericResponse{Success: true, Code: codes.Success}, nil
 }

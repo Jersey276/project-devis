@@ -1,64 +1,56 @@
 package line
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
-	"net/http"
 
 	"project-devis-template/actions/codes"
-
-	"github.com/gin-gonic/gin"
+	templateGrpc "project-devis-template/services/grpc"
 )
 
-func List(c *gin.Context, db *sql.DB) {
-	userID := c.GetHeader("X-User-Id")
-	templateID := c.Param("id")
-
-	// verify template belongs to user
+func List(ctx context.Context, db *sql.DB, req *templateGrpc.ListTemplateLinesRequest) (*templateGrpc.ListTemplateLinesResponse, error) {
 	var count int
-	err := db.QueryRowContext(c.Request.Context(),
+	err := db.QueryRowContext(ctx,
 		`SELECT COUNT(1) FROM templates WHERE template_id=$1 AND user_id=$2`,
-		templateID, userID,
+		req.TemplateId, req.UserId,
 	).Scan(&count)
 	if err != nil || count == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"success": false, "code": codes.NotFound, "message": "Template introuvable."})
-		return
+		return &templateGrpc.ListTemplateLinesResponse{Success: false, Code: codes.NotFound}, nil
 	}
 
-	rows, err := db.QueryContext(c.Request.Context(),
+	rows, err := db.QueryContext(ctx,
 		`SELECT line_id, template_id, type, name, quantity::text, unit, unit_price, data, position, tax_id, created_at, updated_at
 		 FROM template_lines WHERE template_id=$1 ORDER BY position ASC`,
-		templateID,
+		req.TemplateId,
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "code": codes.InternalError, "message": "Erreur interne."})
-		return
+		return &templateGrpc.ListTemplateLinesResponse{Success: false, Code: codes.InternalError}, nil
 	}
 	defer rows.Close()
 
-	lines := make([]TemplateLine, 0)
+	lines := make([]*templateGrpc.TemplateLine, 0)
 	for rows.Next() {
-		var l TemplateLine
+		var l templateGrpc.TemplateLine
 		var unit sql.NullString
 		var taxID sql.NullInt32
 		var dataRaw []byte
 		if err := rows.Scan(
-			&l.LineID, &l.TemplateID, &l.Type, &l.Name, &l.Quantity,
+			&l.LineId, &l.TemplateId, &l.Type, &l.Name, &l.Quantity,
 			&unit, &l.UnitPrice, &dataRaw, &l.Position, &taxID,
-			&l.CreatedAt, &l.UpdatedAt,
+			new(string), new(string),
 		); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "code": codes.InternalError, "message": "Erreur interne."})
-			return
+			return &templateGrpc.ListTemplateLinesResponse{Success: false, Code: codes.InternalError}, nil
 		}
 		if unit.Valid {
-			l.Unit = &unit.String
+			l.Unit = unit.String
 		}
 		if taxID.Valid {
-			l.TaxID = &taxID.Int32
+			l.TaxId = taxID.Int32
 		}
-		l.Data = json.RawMessage(dataRaw)
-		lines = append(lines, l)
+		l.Data = string(json.RawMessage(dataRaw))
+		lines = append(lines, &l)
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true, "lines": lines})
+	return &templateGrpc.ListTemplateLinesResponse{Success: true, Code: codes.Success, Lines: lines}, nil
 }

@@ -1,45 +1,39 @@
 package template
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
-	"net/http"
 
 	"project-devis-template/actions/codes"
-
-	"github.com/gin-gonic/gin"
+	templateGrpc "project-devis-template/services/grpc"
 )
 
-func Get(c *gin.Context, db *sql.DB) {
-	userID := c.GetHeader("X-User-Id")
-	templateID := c.Param("id")
-
-	var t Template
+func Get(ctx context.Context, db *sql.DB, req *templateGrpc.GetTemplateRequest) (*templateGrpc.GetTemplateResponse, error) {
+	var t templateGrpc.Template
 	var archivedAt sql.NullString
 	var payloadRaw []byte
 
-	err := db.QueryRowContext(c.Request.Context(),
+	err := db.QueryRowContext(ctx,
 		`SELECT template_id, user_id, template_type, target_resource, name,
 		        archived_at, payload_version, payload, created_at, updated_at
 		 FROM templates WHERE template_id=$1 AND user_id=$2`,
-		templateID, userID,
+		req.TemplateId, req.UserId,
 	).Scan(
-		&t.TemplateID, &t.UserID, &t.TemplateType, &t.TargetResource, &t.Name,
+		&t.TemplateId, &t.UserId, &t.TemplateType, &t.TargetResource, &t.Name,
 		&archivedAt, &t.PayloadVersion, &payloadRaw, &t.CreatedAt, &t.UpdatedAt,
 	)
 	if err == sql.ErrNoRows {
-		c.JSON(http.StatusNotFound, gin.H{"success": false, "code": codes.NotFound, "message": "Template introuvable."})
-		return
+		return &templateGrpc.GetTemplateResponse{Success: false, Code: codes.NotFound}, nil
 	}
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "code": codes.InternalError, "message": "Erreur interne."})
-		return
+		return &templateGrpc.GetTemplateResponse{Success: false, Code: codes.InternalError}, nil
 	}
 
 	if archivedAt.Valid {
-		t.ArchivedAt = &archivedAt.String
+		t.ArchivedAt = archivedAt.String
 	}
-	t.Payload = json.RawMessage(payloadRaw)
+	t.Payload = string(json.RawMessage(payloadRaw))
 
-	c.JSON(http.StatusOK, gin.H{"success": true, "template": t})
+	return &templateGrpc.GetTemplateResponse{Success: true, Code: codes.Success, Template: &t}, nil
 }

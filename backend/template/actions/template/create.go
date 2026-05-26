@@ -1,49 +1,41 @@
 package template
 
 import (
+	"context"
 	"database/sql"
-	"net/http"
 
 	"project-devis-template/actions/codes"
+	templateGrpc "project-devis-template/services/grpc"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
-type createRequest struct {
-	TemplateType   string `json:"template_type" binding:"required"`
-	TargetResource string `json:"target_resource" binding:"required"`
-	Name           string `json:"name" binding:"required"`
+const (
+	TypeQuoteDocument  = "quote_document"
+	TypeQuoteLine      = "quote_line"
+	TypeDocumentDesign = "document_design"
+)
+
+var validTypes = map[string]bool{
+	TypeQuoteDocument:  true,
+	TypeQuoteLine:      true,
+	TypeDocumentDesign: true,
 }
 
-func Create(c *gin.Context, db *sql.DB) {
-	userID := c.GetHeader("X-User-Id")
-	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "code": codes.InvalidInput, "message": "X-User-Id header manquant."})
-		return
-	}
-
-	var req createRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "code": codes.InvalidInput, "message": "Données invalides."})
-		return
-	}
-
+func Create(ctx context.Context, db *sql.DB, req *templateGrpc.CreateTemplateRequest) (*templateGrpc.CreateTemplateResponse, error) {
 	if !validTypes[req.TemplateType] {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "code": codes.InvalidTemplateType, "message": "Type de template invalide."})
-		return
+		return &templateGrpc.CreateTemplateResponse{Success: false, Code: codes.InvalidTemplateType}, nil
 	}
 
 	templateID := uuid.New().String()
-	_, err := db.ExecContext(c.Request.Context(),
+	_, err := db.ExecContext(ctx,
 		`INSERT INTO templates (template_id, user_id, template_type, target_resource, name)
 		 VALUES ($1, $2, $3, $4, $5)`,
-		templateID, userID, req.TemplateType, req.TargetResource, req.Name,
+		templateID, req.UserId, req.TemplateType, req.TargetResource, req.Name,
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "code": codes.InternalError, "message": "Erreur interne."})
-		return
+		return &templateGrpc.CreateTemplateResponse{Success: false, Code: codes.InternalError}, nil
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"success": true, "code": codes.Success, "template_id": templateID})
+	return &templateGrpc.CreateTemplateResponse{Success: true, Code: codes.Success, TemplateId: templateID}, nil
 }
