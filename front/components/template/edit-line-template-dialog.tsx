@@ -28,7 +28,11 @@ import {
   updateTemplate,
   updateTemplateLine,
 } from "@/lib/services/templates";
-import type { BackendTax, BackendTemplate, BackendTemplateLine } from "@/types/backend";
+import type {
+  BackendTax,
+  BackendTemplate,
+  BackendTemplateLine,
+} from "@/types/backend";
 
 type Props = {
   templateId: string;
@@ -78,7 +82,11 @@ export default function EditLineTemplateSheet({
         const tpl = tplRes.body.template as BackendTemplate;
         setTemplateName(tpl.name);
 
-        if (linesRes.ok && Array.isArray(linesRes.body.lines) && linesRes.body.lines.length > 0) {
+        if (
+          linesRes.ok &&
+          Array.isArray(linesRes.body.lines) &&
+          linesRes.body.lines.length > 0
+        ) {
           const line = (linesRes.body.lines as BackendTemplateLine[])[0];
           setLineId(line.line_id);
           setLineName(line.name);
@@ -111,7 +119,9 @@ export default function EditLineTemplateSheet({
   async function handleSave() {
     setSaving(true);
     try {
-      const tplRes = await updateTemplate(templateId, { name: templateName.trim() });
+      const tplRes = await updateTemplate(templateId, {
+        name: templateName.trim(),
+      });
       if (!tplRes.ok || !tplRes.body.success) {
         toast.error(t("saveFailedToast"));
         return;
@@ -142,7 +152,7 @@ export default function EditLineTemplateSheet({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg p-6">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>

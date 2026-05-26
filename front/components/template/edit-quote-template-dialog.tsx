@@ -25,7 +25,11 @@ import {
   updateTemplate,
   updateTemplateLine,
 } from "@/lib/services/templates";
-import type { BackendTax, BackendTemplate, BackendTemplateLine } from "@/types/backend";
+import type {
+  BackendTax,
+  BackendTemplate,
+  BackendTemplateLine,
+} from "@/types/backend";
 
 type LocalItem = QuoteItemRow & { position: number };
 
@@ -73,7 +77,9 @@ export default function EditQuoteTemplateSheet({
   const [templateName, setTemplateName] = useState("");
   const [originalName, setOriginalName] = useState("");
   const [items, setItems] = useState<LocalItem[]>([]);
-  const [originalLineIds, setOriginalLineIds] = useState<Set<string>>(new Set());
+  const [originalLineIds, setOriginalLineIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   const itemsRef = useRef(items);
   itemsRef.current = items;
@@ -147,6 +153,24 @@ export default function EditQuoteTemplateSheet({
     setItems((prev) => prev.filter((row) => row.lineId !== lineId));
   }
 
+  async function handleAddItemFromTemplate(sourceTemplateId: string) {
+    const { ok, body } = await listTemplateLines(sourceTemplateId);
+    if (!ok || !Array.isArray(body.lines) || body.lines.length === 0) return;
+    const line = (body.lines as BackendTemplateLine[])[0];
+    setItems((prev) => [
+      ...prev,
+      {
+        lineId: newTempId(),
+        name: line.name,
+        quantity: Number(line.quantity),
+        unitPriceEuros: line.unit_price / 100,
+        taxId: line.tax_id ?? null,
+        position: prev.length,
+        saveStatus: "idle",
+      },
+    ]);
+  }
+
   async function handleSave() {
     setSaving(true);
     try {
@@ -161,7 +185,9 @@ export default function EditQuoteTemplateSheet({
       }
 
       const currentIds = new Set(items.map((i) => i.lineId));
-      const deletedIds = [...originalLineIds].filter((id) => !currentIds.has(id));
+      const deletedIds = [...originalLineIds].filter(
+        (id) => !currentIds.has(id),
+      );
 
       const results = await Promise.all([
         ...deletedIds.map((id) => deleteTemplateLine(templateId, id)),
@@ -200,7 +226,7 @@ export default function EditQuoteTemplateSheet({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl overflow-y-auto max-h-[90vh]">
+      <DialogContent className="sm:max-w-3xl overflow-y-auto max-h-[90vh] p-6">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
@@ -237,6 +263,7 @@ export default function EditQuoteTemplateSheet({
               onTaxChange={(id, tid) => setRow(id, { taxId: tid })}
               onRemoveItem={handleRemoveItem}
               onAddItem={handleAddItem}
+              onAddItemFromTemplate={handleAddItemFromTemplate}
             />
           </div>
         )}
