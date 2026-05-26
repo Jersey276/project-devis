@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+// Package matches the users service so the wire format aligns:
+// /users.UserService/CreateUser and /users.UserService/DeleteUser
+package users;
+
+option go_package = "project-devis-auth/services/user_auth";
+
+// UserService is the subset of the users service API that the auth service needs.
+service UserService {
+    // CreateUser adds a new user to the users service.
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+    // DeleteUser removes a user from the users service (used for rollback on failed registration).
+    rpc DeleteUser(DeleteUserRequest) returns (GenericResponse);
+}
+
+message CreateUserRequest {
+    string email = 1;
+}
+
+message CreateUserResponse {
+    bool success = 1;
+    int32 code = 2;
+    string user_id = 3;
+}
+
+message DeleteUserRequest {
+    string user_id = 1;
+}
+
+message GenericResponse {
+    bool success = 1;
+    int32 code = 2;
+}
