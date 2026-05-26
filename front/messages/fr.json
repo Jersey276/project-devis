@@ -495,7 +495,9 @@
       "confirm": "Enregistrer"
     },
     "selectLinePopover": {
-      "empty": "Aucun template de ligne disponible."
+      "empty": "Aucun template de ligne disponible.",
+      "searchPlaceholder": "Rechercher un template…",
+      "noResults": "Aucun résultat."
     },
     "selectQuoteDialog": {
       "title": "Créer depuis un template",
