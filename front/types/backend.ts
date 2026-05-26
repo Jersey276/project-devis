@@ -49,6 +49,37 @@ export function quoteListState(quote: BackendQuote): QuoteListState {
   return quote.state ?? "draft";
 }
 
+export type BackendTemplateType = "quote_document" | "quote_line" | "document_design";
+export type BackendTemplateTargetResource = "quote" | "invoice" | "schedule";
+
+export type BackendTemplate = {
+  template_id: string;
+  user_id: string;
+  template_type: BackendTemplateType;
+  target_resource: BackendTemplateTargetResource;
+  name: string;
+  archived_at: string | null;
+  payload_version: number;
+  payload: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BackendTemplateLine = {
+  line_id: string;
+  template_id: string;
+  type: string;
+  name: string;
+  quantity: string;
+  unit: string | null;
+  unit_price: number;
+  data: Record<string, unknown>;
+  position: number;
+  tax_id: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type BackendClient = {
   client_id: string;
   user_id: string;

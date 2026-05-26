@@ -27,6 +27,7 @@
     "clients": "Clients",
     "countries": "Pays",
     "taxes": "Taxes",
+    "templates": "Templates",
     "test": "Test"
   },
   "breadcrumb": {},
@@ -456,5 +457,20 @@
       "logoutFailure": "La déconnexion a échoué."
     }
   },
-  "errors": {}
+  "errors": {},
+  "templates": {
+    "breadcrumb": {
+      "list": "Templates",
+      "create": "Nouveau template"
+    },
+    "list": {
+      "title": "Templates",
+      "new": "Nouveau template",
+      "empty": "Aucun template pour le moment."
+    },
+    "create": {
+      "title": "Nouveau template",
+      "coming_soon": "Formulaire de création à venir."
+    }
+  }
 }

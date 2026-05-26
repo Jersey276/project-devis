@@ -36,6 +36,7 @@ services:
       USER_SERVICE_ADDRESS: devis-user:50052
       QUOTE_SERVICE_ADDRESS: devis-quote:50053
       EXPORT_SERVICE_ADDRESS: devis-export:50054
+      TEMPLATE_SERVICE_ADDRESS: http://devis-template:8085
     ports:
       - "8080:8080"
     depends_on:
@@ -43,6 +44,7 @@ services:
       - devis-user
       - devis-quote
       - devis-export
+      - devis-template
 
   devis-auth:
     <<: *db-service
@@ -77,6 +79,16 @@ services:
       <<: *db-env
       DB_USER: devis-quote
       DB_NAME: quote
+
+  devis-template:
+    <<: *db-service
+    build:
+      context: .
+      dockerfile: Dockerfile.template
+    environment:
+      <<: *db-env
+      DB_USER: devis-template
+      DB_NAME: template
 
   devis-export:
     <<: *service-defaults
