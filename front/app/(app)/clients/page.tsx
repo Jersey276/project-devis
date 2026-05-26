@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { PlusIcon } from "lucide-react";
@@ -14,25 +14,46 @@ import type { BackendClient } from "@/types/backend";
 export default function ClientIndex() {
   const t = useTranslations("client.list");
   const [clients, setClients] = useState<BackendClient[]>([]);
-  const cancelledRef = useRef(false);
 
-  const reload = useCallback(async () => {
+  const fetchClients = useCallback(async (): Promise<
+    BackendClient[] | null
+  > => {
     const { ok, body } = await listClients();
-    if (cancelledRef.current) return;
+
     if (ok && Array.isArray(body.clients)) {
-      setClients(body.clients as BackendClient[]);
-    } else if (!ok) {
+      return body.clients as BackendClient[];
+    }
+
+    if (!ok) {
       toast.error((body.message as string) ?? t("loadFailedToast"));
     }
+
+    return null;
   }, [t]);
 
   useEffect(() => {
-    cancelledRef.current = false;
-    reload();
+    let cancelled = false;
+
+    async function load() {
+      const data = await fetchClients();
+      if (!cancelled && data) {
+        setClients(data);
+      }
+    }
+
+    void load();
+
     return () => {
-      cancelledRef.current = true;
+      cancelled = true;
     };
-  }, [reload]);
+  }, [fetchClients]);
+
+  const reload = useCallback(async () => {
+    const data = await fetchClients();
+    if (data) {
+      setClients(data);
+    }
+  }, [fetchClients]);
 
   return (
     <Card>
