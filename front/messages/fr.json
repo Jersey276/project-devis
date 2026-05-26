@@ -87,6 +87,8 @@
     "list": {
       "title": "Devis",
       "newButton": "Nouveau devis",
+      "newBlank": "Devis vierge",
+      "newFromTemplate": "Depuis un template",
       "columns": {
         "id": "ID",
         "project": "Projet",
@@ -97,9 +99,12 @@
       "actions": {
         "view": "Voir",
         "viewEdit": "Voir/Modifier",
-        "exportPdf": "Exporter PDF"
+        "exportPdf": "Exporter PDF",
+        "saveAsTemplate": "Enregistrer comme template"
       },
       "exportFailedToast": "Échec de l'export.",
+      "saveAsTemplateSuccessToast": "Template enregistré.",
+      "saveAsTemplateFailedToast": "Impossible d'enregistrer le template.",
       "empty": "Aucun devis pour le moment."
     },
     "form": {
@@ -110,6 +115,8 @@
       "notFoundToast": "Devis introuvable.",
       "exportButton": "Exporter",
       "exportFailedToast": "Échec de l'export.",
+      "saveAsTemplateButton": "Enregistrer comme template",
+      "saveAsTemplateSuccessToast": "Template enregistré.",
       "dropButton": "Abandonner",
       "dropDialog": {
         "title": "Abandonner ce devis ?",
@@ -135,7 +142,10 @@
         "userAddressSaveFailedToast": "Échec de l'enregistrement de l'adresse du prestataire.",
         "lineSaveFailedToast": "Échec d'enregistrement de la ligne.",
         "lineAddFailedToast": "Impossible d'ajouter la ligne.",
-        "lineRemoveFailedToast": "Impossible de supprimer la ligne."
+        "lineRemoveFailedToast": "Impossible de supprimer la ligne.",
+        "lineAddFromTemplateFailedToast": "Impossible d'ajouter la ligne depuis le template.",
+        "saveLineAsTemplateFailedToast": "Impossible d'enregistrer la ligne comme template.",
+        "saveQuoteAsTemplateFailedToast": "Impossible d'enregistrer le devis comme template."
       }
     },
     "steps": {
@@ -169,6 +179,9 @@
         "lineNamePlaceholder": "Prestation",
         "deleteAria": "Supprimer la ligne",
         "addAria": "Ajouter une ligne",
+        "addFromTemplateAria": "Ajouter depuis un template",
+        "saveAsTemplate": "Enregistrer comme template",
+        "deleteLine": "Supprimer la ligne",
         "savingAria": "Enregistrement en cours",
         "savedAria": "Enregistré",
         "errorAria": "Échec d'enregistrement",
@@ -471,6 +484,23 @@
     "create": {
       "title": "Nouveau template",
       "coming_soon": "Formulaire de création à venir."
+    }
+  },
+  "template": {
+    "saveDialog": {
+      "title": "Enregistrer comme template",
+      "description": "Donnez un nom à votre template.",
+      "nameLabel": "Nom du template",
+      "namePlaceholder": "Ex : Installation standard",
+      "confirm": "Enregistrer"
+    },
+    "selectLinePopover": {
+      "empty": "Aucun template de ligne disponible."
+    },
+    "selectQuoteDialog": {
+      "title": "Créer depuis un template",
+      "description": "Choisissez un modèle de devis.",
+      "empty": "Aucun template de devis disponible."
     }
   }
 }

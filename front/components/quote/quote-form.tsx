@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { DownloadIcon, Loader2Icon } from "lucide-react";
+import { DownloadIcon, BookmarkIcon, Loader2Icon } from "lucide-react";
 import QuoteStepBasicInfo from "@/components/quote/steps/quote-step-basic-info";
 import QuoteStepItems, {
   type QuoteItemRow as RenderedRow,
@@ -43,6 +43,12 @@ import {
   updateQuote,
 } from "@/lib/services/quotes";
 import { exportQuotePdf } from "@/lib/services/export";
+import {
+  createTemplate,
+  createTemplateLine,
+  listTemplateLines,
+} from "@/lib/services/templates";
+import type { BackendTemplateLine } from "@/types/backend";
 import { listClients } from "@/lib/services/clients";
 import { listAddresses } from "@/lib/services/addresses";
 import { listAvailableTaxesForUser } from "@/lib/services/taxes";
@@ -56,6 +62,7 @@ import {
   type BackendQuoteState,
   type BackendTax,
 } from "@/types/backend";
+import SaveTemplateDialog from "@/components/template/save-template-dialog";
 
 type FormItem = RenderedRow & { position: number };
 
@@ -139,6 +146,13 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const [quoteState, setQuoteState] = useState<BackendQuoteState>("draft");
   const [transitioning, setTransitioning] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
+
+  const templateIdFromQuery = useMemo(
+    () => searchParams.get("template") ?? null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   const isReadonly =
     isCustomer || quoteState === "validated" || quoteState === "drop";
@@ -398,6 +412,27 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         });
         if (ok && body.success) {
           const newId = body.quote_id as string;
+          if (templateIdFromQuery) {
+            const linesRes = await listTemplateLines(templateIdFromQuery);
+            if (linesRes.ok && Array.isArray(linesRes.body.lines)) {
+              const sorted = (
+                linesRes.body.lines as BackendTemplateLine[]
+              ).sort((a, b) => a.position - b.position);
+              await Promise.all(
+                sorted.map((tl, idx) =>
+                  createLine(newId, {
+                    type: "simple",
+                    name: tl.name,
+                    quantity: Number(tl.quantity),
+                    unit: tl.unit ?? undefined,
+                    unitPriceEuros: tl.unit_price / 100,
+                    position: idx,
+                    taxId: tl.tax_id ?? null,
+                  }),
+                ),
+              );
+            }
+          }
           router.replace(`/quote/${newId}?step=2`);
           return;
         }
@@ -422,6 +457,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     router,
     t,
     tCommon,
+    templateIdFromQuery,
     userAddressId,
   ]);
 
@@ -520,8 +556,126 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     }
   }, [quoteId, isExporting, t]);
 
+  const handleSaveQuoteAsTemplate = useCallback(
+    async (name: string) => {
+      const { ok, body } = await createTemplate({
+        templateType: "quote_document",
+        targetResource: "quote",
+        name,
+      });
+      if (!ok || !body.success) {
+        toast.error(
+          (body.message as string) ??
+            t("errors.saveQuoteAsTemplateFailedToast"),
+        );
+        return;
+      }
+      const templateId = body.template_id as string;
+      await Promise.all(
+        itemsRef.current.map((row, idx) =>
+          createTemplateLine(templateId, {
+            type: "simple",
+            name: row.name,
+            quantity: row.quantity,
+            unitPriceEuros: row.unitPriceEuros,
+            position: idx,
+            taxId: row.taxId,
+          }),
+        ),
+      );
+      toast.success(t("saveAsTemplateSuccessToast"));
+    },
+    [t],
+  );
+
+  const handleSaveLineAsTemplate = useCallback(
+    async (lineId: string, name: string) => {
+      const row = itemsRef.current.find((r) => r.lineId === lineId);
+      if (!row) return;
+      const { ok, body } = await createTemplate({
+        templateType: "quote_line",
+        targetResource: "quote",
+        name,
+      });
+      if (!ok || !body.success) {
+        toast.error(
+          (body.message as string) ?? t("errors.saveLineAsTemplateFailedToast"),
+        );
+        return;
+      }
+      const templateId = body.template_id as string;
+      const lineRes = await createTemplateLine(templateId, {
+        type: "simple",
+        name: row.name,
+        quantity: row.quantity,
+        unitPriceEuros: row.unitPriceEuros,
+        position: 0,
+        taxId: row.taxId,
+      });
+      if (!lineRes.ok || !lineRes.body.success) {
+        toast.error(
+          (lineRes.body.message as string) ??
+            t("errors.saveLineAsTemplateFailedToast"),
+        );
+        return;
+      }
+      toast.success(t("saveAsTemplateSuccessToast"));
+    },
+    [t],
+  );
+
+  const handleAddItemFromTemplate = useCallback(
+    async (templateId: string) => {
+      if (!quoteId || adding) return;
+      setAdding(true);
+      try {
+        const { ok, body } = await listTemplateLines(templateId);
+        if (!ok || !Array.isArray(body.lines) || body.lines.length === 0) {
+          toast.error(t("errors.lineAddFromTemplateFailedToast"));
+          return;
+        }
+        const lines = (body.lines as BackendTemplateLine[]).sort(
+          (a, b) => a.position - b.position,
+        );
+        const tl = lines[0];
+        const draft: LineDraft = {
+          type: "simple",
+          name: tl.name,
+          quantity: Number(tl.quantity),
+          unit: tl.unit ?? undefined,
+          unitPriceEuros: tl.unit_price / 100,
+          position: itemsRef.current.length,
+          taxId: tl.tax_id ?? null,
+        };
+        const createRes = await createLine(quoteId, draft);
+        if (createRes.ok && createRes.body.success) {
+          const newLineId = createRes.body.line_id as string;
+          setItems((prev) => [
+            ...prev,
+            {
+              lineId: newLineId,
+              name: tl.name,
+              quantity: Number(tl.quantity),
+              unitPriceEuros: tl.unit_price / 100,
+              position: prev.length,
+              taxId: tl.tax_id ?? null,
+              saveStatus: "idle",
+            },
+          ]);
+        } else {
+          toast.error(
+            (createRes.body.message as string) ??
+              t("errors.lineAddFromTemplateFailedToast"),
+          );
+        }
+      } finally {
+        setAdding(false);
+      }
+    },
+    [adding, quoteId, t],
+  );
+
   const handleAddItem = useCallback(async () => {
-    if (!quoteId || adding) return;
     setAdding(true);
     try {
       const draft: LineDraft = {
@@ -737,6 +891,16 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             {t("exportButton")}
           </Button>
         )}
+        {!isCreate && !isReadonly && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setSaveTemplateOpen(true)}
+          >
+            <BookmarkIcon className="size-4" />
+            {t("saveAsTemplateButton")}
+          </Button>
+        )}
         {showDropButton && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -834,6 +998,12 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             onTaxChange={handleTaxChange}
             onRemoveItem={handleRemoveItem}
             onAddItem={handleAddItem}
+            onSaveLineAsTemplate={
+              !isCreate && !isReadonly ? handleSaveLineAsTemplate : undefined
+            }
+            onAddItemFromTemplate={
+              !isCreate && !isReadonly ? handleAddItemFromTemplate : undefined
+            }
           />
         )}
 
@@ -879,6 +1049,13 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           )}
         </div>
       </CardFooter>
+
+      <SaveTemplateDialog
+        open={saveTemplateOpen}
+        onOpenChange={setSaveTemplateOpen}
+        defaultName={projectName}
+        onSave={handleSaveQuoteAsTemplate}
+      />
     </Card>
   );
 }
