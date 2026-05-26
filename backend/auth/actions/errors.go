@@ -16,8 +16,8 @@ const (
 // These are independent from route response codes and describe
 // why a specific field failed validation.
 const (
-	FieldErrRequired       int32 = 1
-	FieldErrInvalidFormat  int32 = 2
-	FieldErrTooShort       int32 = 3
-	FieldErrAlreadyInUse   int32 = 4
+	FieldErrRequired      int32 = 1
+	FieldErrInvalidFormat int32 = 2
+	FieldErrTooShort      int32 = 3
+	FieldErrAlreadyInUse  int32 = 4
 )
