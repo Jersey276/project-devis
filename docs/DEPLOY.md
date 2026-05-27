@@ -20,10 +20,10 @@ déclenche sur toute pull request ouverte vers la branche `main`. Il enchaîne :
    les push sur GHCR (`ghcr.io/jersey276/project-devis-<name>`) avec les tags
    `:latest` et `:<sha>`.
 5. **`deploy`** — SSH sur le serveur de production, checkout du commit, `docker
-   compose pull` et `up -d` en utilisant
+compose pull` et `up -d` en utilisant
    [`docker-compose.prod.yml`](../docker-compose.prod.yml).
 6. **`auto-merge`** — si le déploiement réussit, `gh pr merge --squash
-   --delete-branch` est exécuté automatiquement.
+--delete-branch` est exécuté automatiquement.
 
 Si **n'importe quelle** étape échoue, le pipeline s'arrête et la PR n'est ni
 déployée, ni mergée.
@@ -33,12 +33,12 @@ déployée, ni mergée.
 À configurer dans **Settings → Secrets and variables → Actions → Repository
 secrets** :
 
-| Secret | Description |
-|---|---|
-| `SSH_HOST` | IP ou hostname du serveur de production. |
-| `SSH_USER` | Utilisateur SSH (doit être dans le groupe `docker`). |
-| `SSH_PRIVATE_KEY` | Clé privée SSH (RSA ou ED25519) au format OpenSSH. |
-| `DEPLOY_PATH` | Chemin absolu du repo cloné sur le serveur (ex: `/srv/project-devis`). |
+| Secret              | Description                                                                                    |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| `SSH_HOST`          | IP ou hostname du serveur de production.                                                       |
+| `SSH_USER`          | Utilisateur SSH (doit être dans le groupe `docker`).                                           |
+| `SSH_PRIVATE_KEY`   | Clé privée SSH (RSA ou ED25519) au format OpenSSH.                                             |
+| `DEPLOY_PATH`       | Chemin absolu du repo cloné sur le serveur (ex: `/srv/project-devis`).                         |
 | `POSTGRES_PASSWORD` | Mot de passe Postgres utilisé pour le job E2E en CI (sans rapport avec celui du serveur prod). |
 
 `GITHUB_TOKEN` est fourni automatiquement par GitHub Actions ; il est utilisé
@@ -120,7 +120,8 @@ sudo chown -R "$USER":"$USER" /srv/project-devis
 
 ### 6. (Optionnel mais recommandé) Reverse proxy
 
-Le compose expose les ports `3000` (front) et `8080` (gateway API) en clair sur
+Le compose expose les ports `3001` (front, configurable via `FRONT_PORT`) et `8080`
+(gateway API) en clair sur
 toutes les interfaces. Pour un usage en production réelle, placer un reverse
 proxy (Caddy, Nginx, Traefik) devant pour gérer TLS et redirection.
 
@@ -165,7 +166,7 @@ docker compose -f docker-compose.prod.yml logs -f --tail=200 devis-gateway
 docker compose -f docker-compose.prod.yml logs -f --tail=200 front
 
 # Healthcheck rapide
-curl -i http://localhost:3000
+curl -i http://localhost:3001
 curl -i http://localhost:8080
 ```
 
