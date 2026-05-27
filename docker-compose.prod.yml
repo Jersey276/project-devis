@@ -27,7 +27,7 @@ services:
       <<: *common-env
       APP_ENV: production
     ports:
-      - "3000:3000"
+      - "${FRONT_PORT:-3001}:3000"
     depends_on:
       - devis-gateway
     healthcheck:
