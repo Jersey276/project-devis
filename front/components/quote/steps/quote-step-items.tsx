@@ -274,36 +274,40 @@ export default function QuoteStepItems({
                 </TableCell>
                 <TableCell>
                   {!isReadonly && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label={t("action")}
-                        >
-                          <EllipsisVerticalIcon className="size-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {onSaveLineAsTemplate && (
-                          <DropdownMenuItem
-                            onClick={() => openSaveLineDialog(item.lineId)}
-                          >
-                            <BookmarkIcon className="size-4" />
-                            {t("saveAsTemplate")}
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                          disabled={items.length <= 1}
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => onRemoveItem(item.lineId)}
-                        >
-                          <Trash2Icon className="size-4" />
-                          {t("deleteLine")}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center justify-end gap-1">
+                      {onSaveLineAsTemplate && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label={t("action")}
+                            >
+                              <EllipsisVerticalIcon className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => openSaveLineDialog(item.lineId)}
+                            >
+                              <BookmarkIcon className="size-4" />
+                              {t("saveAsTemplate")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t("deleteAria")}
+                        disabled={items.length <= 1}
+                        onClick={() => onRemoveItem(item.lineId)}
+                      >
+                        <Trash2Icon className="size-4" />
+                      </Button>
+                    </div>
                   )}
                 </TableCell>
               </TableRow>
