@@ -624,3 +624,98 @@ func TestConfirmResetPassword_WeakPassword_ReturnsWeakPasswordCode(t *testing.T)
 		t.Fatalf("unmet expectations (no DB calls expected): %v", err)
 	}
 }
+
+// --- UpdatePassword ---
+
+func TestUpdatePassword_Success_UpdatesPasswordAndRevokesSessions(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	oldPasswordHash := "$2a$14$XC05j1ejsVEfzQm6g5f52.dw2EN.cadB6VJPH2R5YsdKIpYHmf/NW" // password123
+
+	mock.ExpectQuery(`SELECT user_id, password FROM auth WHERE email = \$1`).
+		WithArgs("user@example.com").
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "password"}).AddRow("user-123", oldPasswordHash))
+
+	mock.ExpectBegin()
+	mock.ExpectExec(`UPDATE auth SET password = \$1 WHERE user_id = \$2`).
+		WithArgs(sqlmock.AnyArg(), "user-123").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(`DELETE FROM refresh_tokens WHERE user_id = \$1`).
+		WithArgs("user-123").
+		WillReturnResult(sqlmock.NewResult(0, 2))
+	mock.ExpectCommit()
+
+	resp, err := srv.UpdatePassword(context.Background(), &authGrpc.UpdatePasswordRequest{
+		Email:       "user@example.com",
+		OldPassword: "password123",
+		NewPassword: "StrongPass123!",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatalf("expected success, got code %d", resp.Code)
+	}
+	if resp.Code != actions.CodeSuccess {
+		t.Fatalf("expected code %d, got %d", actions.CodeSuccess, resp.Code)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
+func TestUpdatePassword_InvalidOldPassword_ReturnsInvalidCredentials(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	oldPasswordHash := "$2a$14$XC05j1ejsVEfzQm6g5f52.dw2EN.cadB6VJPH2R5YsdKIpYHmf/NW" // password123
+
+	mock.ExpectQuery(`SELECT user_id, password FROM auth WHERE email = \$1`).
+		WithArgs("user@example.com").
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "password"}).AddRow("user-123", oldPasswordHash))
+
+	resp, err := srv.UpdatePassword(context.Background(), &authGrpc.UpdatePasswordRequest{
+		Email:       "user@example.com",
+		OldPassword: "wrongpassword",
+		NewPassword: "StrongPass123!",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure")
+	}
+	if resp.Code != actions.CodeInvalidCredentials {
+		t.Fatalf("expected code %d, got %d", actions.CodeInvalidCredentials, resp.Code)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
+func TestUpdatePassword_WeakPassword_ReturnsWeakPassword(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	resp, err := srv.UpdatePassword(context.Background(), &authGrpc.UpdatePasswordRequest{
+		Email:       "user@example.com",
+		OldPassword: "password123",
+		NewPassword: "short",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure")
+	}
+	if resp.Code != actions.CodeWeakPassword {
+		t.Fatalf("expected code %d, got %d", actions.CodeWeakPassword, resp.Code)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations (no DB calls expected): %v", err)
+	}
+}

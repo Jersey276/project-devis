@@ -42,10 +42,53 @@ func (s *Server) ResetPassword(ctx context.Context, req *authGrpc.ResetPasswordR
 }
 
 func (s *Server) UpdatePassword(ctx context.Context, req *authGrpc.UpdatePasswordRequest) (*authGrpc.GenericResponse, error) {
-	return &authGrpc.GenericResponse{
-		Success: false,
-		Code:    CodeNotImplemented,
-	}, nil
+	if _, err := mail.ParseAddress(req.Email); err != nil {
+		return &authGrpc.GenericResponse{Success: false, Code: CodeInvalidCredentials}, nil
+	}
+	if req.OldPassword == "" {
+		return &authGrpc.GenericResponse{Success: false, Code: CodeInvalidCredentials}, nil
+	}
+	if !isStrongPassword(req.NewPassword) {
+		return &authGrpc.GenericResponse{Success: false, Code: CodeWeakPassword}, nil
+	}
+
+	var userID, storedPasswordHash string
+	err := s.db.QueryRowContext(ctx, "SELECT user_id, password FROM auth WHERE email = $1", req.Email).Scan(&userID, &storedPasswordHash)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return &authGrpc.GenericResponse{Success: false, Code: CodeInvalidCredentials}, nil
+		}
+		return &authGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
+	}
+
+	if !services.VerifyPassword(req.OldPassword, storedPasswordHash) {
+		return &authGrpc.GenericResponse{Success: false, Code: CodeInvalidCredentials}, nil
+	}
+
+	hashedNewPassword, err := services.HashPassword(req.NewPassword)
+	if err != nil {
+		return &authGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return &authGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.ExecContext(ctx, "UPDATE auth SET password = $1 WHERE user_id = $2", hashedNewPassword, userID); err != nil {
+		return &authGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
+	}
+
+	if _, err := tx.ExecContext(ctx, "DELETE FROM refresh_tokens WHERE user_id = $1", userID); err != nil {
+		return &authGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return &authGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
+	}
+
+	return &authGrpc.GenericResponse{Success: true, Code: CodeSuccess}, nil
 }
 
 func (s *Server) ConfirmResetPassword(ctx context.Context, req *authGrpc.ConfirmResetPasswordRequest) (*authGrpc.GenericResponse, error) {
