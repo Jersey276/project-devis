@@ -109,9 +109,10 @@ services:
       - db_password
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U devis-auth -d auth"]
-      interval: 1s
+      interval: 5s
       timeout: 5s
-      retries: 30
+      retries: 20
+      start_period: 20s
 
   # Idempotent DB/role provisioning. Runs on every compose up against the
   # live cluster, so adding a new database does not require wiping the volume.
