@@ -33,6 +33,15 @@ Variables runtime auth/users/quote:
 - `DB_NAME`
 - `DB_PASSWORD_FILE`
 
+Variables runtime auth (password reset email):
+
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USER`
+- `SMTP_PASSWORD`
+- `SMTP_FROM`
+- `RESET_PASSWORD_BASE_URL`
+
 Variables runtime export:
 
 - `QUOTE_SERVICE_ADDRESS`
