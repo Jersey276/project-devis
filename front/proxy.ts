@@ -4,7 +4,7 @@ import { NEXT_PARAM } from "@/lib/auth-utils";
 
 const REFRESH_TIMEOUT_MS = 5000;
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const cookies = request.cookies;
 
   if (cookies.get(AUTH_TOKEN_COOKIE)) {

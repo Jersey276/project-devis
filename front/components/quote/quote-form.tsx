@@ -676,6 +676,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   );
 
   const handleAddItem = useCallback(async () => {
+    if (!quoteId || adding) return;
     setAdding(true);
     try {
       const draft: LineDraft = {
