@@ -5,9 +5,23 @@ x-service-defaults: &service-defaults
 x-common-env: &common-env
   TZ: Europe/Paris
 
+x-postgres-build: &postgres-build
+  context: ./backend
+  dockerfile: Dockerfile.postgres
+
 x-db-common-env: &db-common-env
   <<: *common-env
+  DB_HOST: postgres
   DB_PORT: 5432
+  DB_PASSWORD_FILE: /run/secrets/db_password
+
+x-db-service: &db-service
+  <<: *service-defaults
+  depends_on:
+    postgres-init:
+      condition: service_completed_successfully
+  secrets:
+    - db_password
 
 services:
   front:
@@ -44,37 +58,28 @@ services:
       - devis-export
 
   devis-auth:
-    <<: *service-defaults
+    <<: *db-service
     image: ${IMAGE_PREFIX}/auth:${IMAGE_TAG:-latest}
     environment:
       <<: *db-common-env
-      DB_HOST: ${AUTH_DB_HOST}
-      DB_PORT: ${AUTH_DB_PORT:-5432}
-      DB_USER: ${AUTH_DB_USER}
-      DB_PASSWORD: ${AUTH_DB_PASSWORD}
+      DB_USER: devis-auth
       DB_NAME: ${AUTH_DB_NAME:-auth}
       USER_SERVICE_ADDRESS: devis-user:50052
 
   devis-user:
-    <<: *service-defaults
+    <<: *db-service
     image: ${IMAGE_PREFIX}/users:${IMAGE_TAG:-latest}
     environment:
       <<: *db-common-env
-      DB_HOST: ${USER_DB_HOST}
-      DB_PORT: ${USER_DB_PORT:-5432}
-      DB_USER: ${USER_DB_USER}
-      DB_PASSWORD: ${USER_DB_PASSWORD}
+      DB_USER: devis-users
       DB_NAME: ${USER_DB_NAME:-users}
 
   devis-quote:
-    <<: *service-defaults
+    <<: *db-service
     image: ${IMAGE_PREFIX}/quote:${IMAGE_TAG:-latest}
     environment:
       <<: *db-common-env
-      DB_HOST: ${QUOTE_DB_HOST}
-      DB_PORT: ${QUOTE_DB_PORT:-5432}
-      DB_USER: ${QUOTE_DB_USER}
-      DB_PASSWORD: ${QUOTE_DB_PASSWORD}
+      DB_USER: devis-quote
       DB_NAME: ${QUOTE_DB_NAME:-quote}
 
   devis-export:
@@ -99,3 +104,43 @@ services:
       - "--chromium-disable-javascript=true"
       - "--api-timeout=30s"
       - "--chromium-deny-list=^https?://(localhost|0\\.0\\.0\\.0|127\\.|10\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|\\[::1\\]|\\[[fF][cdCD]|\\[[fF][eE][89aAbB])"
+
+  postgres:
+    build: *postgres-build
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: devis-auth
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB: auth
+      TZ: Europe/Paris
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    secrets:
+      - db_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devis-auth -d auth"]
+      interval: 1s
+      timeout: 5s
+      retries: 30
+
+  # Idempotent DB/role provisioning. Runs on every compose up against the
+  # live cluster, so adding a new database does not require wiping the volume.
+  postgres-init:
+    build: *postgres-build
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      POSTGRES_USER: devis-auth
+    secrets:
+      - db_password
+    entrypoint: ["/docker-entrypoint-initdb.d/init.sh"]
+    restart: "no"
+
+secrets:
+  db_password:
+    file: backend/secrets/postgres_pswd.txt
+
+volumes:
+  postgres:
