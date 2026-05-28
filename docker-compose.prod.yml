@@ -11,7 +11,17 @@ x-postgres-build: &postgres-build
 
 x-db-common-env: &db-common-env
   <<: *common-env
+  DB_HOST: postgres
   DB_PORT: 5432
+  DB_PASSWORD_FILE: /run/secrets/db_password
+
+x-db-service: &db-service
+  <<: *service-defaults
+  depends_on:
+    postgres-init:
+      condition: service_completed_successfully
+  secrets:
+    - db_password
 
 services:
   front:
@@ -48,7 +58,7 @@ services:
       - devis-export
 
   devis-auth:
-    <<: *service-defaults
+    <<: *db-service
     image: ${IMAGE_PREFIX}/auth:${IMAGE_TAG:-latest}
     environment:
       <<: *db-common-env
@@ -57,7 +67,7 @@ services:
       USER_SERVICE_ADDRESS: devis-user:50052
 
   devis-user:
-    <<: *service-defaults
+    <<: *db-service
     image: ${IMAGE_PREFIX}/users:${IMAGE_TAG:-latest}
     environment:
       <<: *db-common-env
@@ -65,7 +75,7 @@ services:
       DB_NAME: ${USER_DB_NAME:-users}
 
   devis-quote:
-    <<: *service-defaults
+    <<: *db-service
     image: ${IMAGE_PREFIX}/quote:${IMAGE_TAG:-latest}
     environment:
       <<: *db-common-env
@@ -109,9 +119,10 @@ services:
       - db_password
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U devis-auth -d auth"]
-      interval: 1s
+      interval: 5s
       timeout: 5s
-      retries: 30
+      retries: 20
+      start_period: 20s
 
   # Idempotent DB/role provisioning. Runs on every compose up against the
   # live cluster, so adding a new database does not require wiping the volume.
