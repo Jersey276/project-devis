@@ -35,3 +35,27 @@ Produire des documents PDF (devis) a partir des donnees metier.
 ## Risques/contraintes
 
 - si payload PDF grossit au-dela de 8 MiB, envisager un passage en streaming gRPC
+
+## Ports
+
+| Contexte          |       Port | Direction   | Note                             |
+| ----------------- | ---------: | ----------- | -------------------------------- |
+| Processus export  |      50054 | ecoute gRPC | flag `-port` (defaut 50054)      |
+| Docker local      | non publie | interne     | atteint via `devis-export:50054` |
+| Docker production | non publie | interne     | atteint via `devis-export:50054` |
+
+## Variables d'environnement (exhaustif)
+
+### Variables consommees par le code (`main.go`)
+
+| Variable                | Usage                 | Definie local | Definie prod |
+| ----------------------- | --------------------- | ------------- | ------------ |
+| `QUOTE_SERVICE_ADDRESS` | client gRPC quote     | oui           | oui          |
+| `USER_SERVICE_ADDRESS`  | client gRPC users     | oui           | oui          |
+| `GOTENBERG_ADDRESS`     | client HTTP gotenberg | oui           | oui          |
+
+### Variables injectees par compose (non lues directement par le code export)
+
+| Variable | Definie local | Definie prod | Note             |
+| -------- | ------------- | ------------ | ---------------- |
+| `TZ`     | oui           | oui          | timezone runtime |
