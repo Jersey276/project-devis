@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
+	"time"
 
 	auth "gateway/auth"
 	"gateway/authcookie"
@@ -20,6 +22,9 @@ const (
 	CodeUserNotFound        int32 = 1002
 	CodeInvalidCredentials  int32 = 1003
 	CodeInvalidRefreshToken int32 = 1004
+	CodeInvalidResetToken   int32 = 1005
+	CodeExpiredResetToken   int32 = 1006
+	CodeWeakPassword        int32 = 1007
 	CodeUserServiceError    int32 = 2001
 	CodeInternalError       int32 = 2002
 	CodeNotImplemented      int32 = 2003
@@ -32,6 +37,12 @@ const (
 )
 
 var cookieSecure = os.Getenv("ENV") == "production"
+
+var (
+	resetPasswordIPLimiter    = newSlidingWindowLimiter()
+	resetPasswordEmailLimiter = newSlidingWindowLimiter()
+	confirmResetIPLimiter     = newSlidingWindowLimiter()
+)
 
 func setAuthCookies(c *gin.Context, accessToken, refreshToken string, rememberMe bool) {
 	refreshMaxAge := cookieRefreshMaxAge
@@ -55,6 +66,9 @@ var authErrors = &serviceErrors{
 		CodeUserNotFound:        {http.StatusNotFound, "Aucun compte trouvé avec cette adresse email."},
 		CodeInvalidCredentials:  {http.StatusUnauthorized, "Adresse email ou mot de passe incorrect."},
 		CodeInvalidRefreshToken: {http.StatusUnauthorized, "Session expirée, veuillez vous reconnecter."},
+		CodeInvalidResetToken:   {http.StatusBadRequest, "Le lien de réinitialisation est invalide ou déjà utilisé."},
+		CodeExpiredResetToken:   {http.StatusGone, "Le lien de réinitialisation a expiré."},
+		CodeWeakPassword:        {http.StatusUnprocessableEntity, "Le mot de passe ne respecte pas la politique de sécurité."},
 		CodeUserServiceError:    {http.StatusBadGateway, "Erreur lors de la création du compte, veuillez réessayer."},
 		CodeInternalError:       {http.StatusInternalServerError, "Une erreur interne est survenue."},
 		CodeNotImplemented:      {http.StatusNotImplemented, "Cette fonctionnalité n'est pas encore disponible."},
@@ -80,6 +94,7 @@ func AuthRoutes(r *gin.RouterGroup) *gin.RouterGroup {
 
 	password := r.Group("/password")
 	password.POST("/reset", func(c *gin.Context) { ResetPassword(c, client) })
+	password.POST("/confirm-reset", func(c *gin.Context) { ConfirmResetPassword(c, client) })
 	password.POST("/update", func(c *gin.Context) { UpdatePassword(c, client) })
 
 	email := r.Group("/email")
@@ -244,8 +259,20 @@ func ResetPassword(c *gin.Context, client auth.AuthServiceClient) {
 		return
 	}
 
+	now := time.Now()
+	normalizedEmail := strings.ToLower(strings.TrimSpace(input.Email))
+	if !resetPasswordIPLimiter.Allow("ip:"+c.ClientIP(), 5, time.Minute, now) ||
+		!resetPasswordEmailLimiter.Allow("email:"+normalizedEmail, 3, 15*time.Minute, now) {
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"success": false,
+			"message": "Trop de demandes. Veuillez réessayer plus tard.",
+			"code":    "RATE_LIMITED",
+		})
+		return
+	}
+
 	resp, err := client.ResetPassword(c.Request.Context(), &auth.ResetPasswordRequest{
-		Email: input.Email,
+		Email: normalizedEmail,
 	})
 	if err != nil {
 		authErrors.unavailable(c)
@@ -285,6 +312,42 @@ func UpdatePassword(c *gin.Context, client auth.AuthServiceClient) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Mot de passe mis à jour."})
+}
+
+func ConfirmResetPassword(c *gin.Context, client auth.AuthServiceClient) {
+	var input struct {
+		Token       string `json:"token" binding:"required"`
+		NewPassword string `json:"new_password" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides.", "code": "VALIDATION_ERROR"})
+		return
+	}
+
+	if !confirmResetIPLimiter.Allow("confirm_ip:"+c.ClientIP(), 10, time.Minute, time.Now()) {
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"success": false,
+			"message": "Trop de demandes. Veuillez réessayer plus tard.",
+			"code":    "RATE_LIMITED",
+		})
+		return
+	}
+
+	resp, err := client.ConfirmResetPassword(c.Request.Context(), &auth.ConfirmResetPasswordRequest{
+		Token:       input.Token,
+		NewPassword: input.NewPassword,
+	})
+	if err != nil {
+		authErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		authErrors.reply(c, resp.Code)
+		return
+	}
+
+	clearAuthCookies(c)
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Mot de passe réinitialisé."})
 }
 
 func VerifyEmail(c *gin.Context, client auth.AuthServiceClient) {
