@@ -56,7 +56,7 @@
       "emailLabel": "Email",
       "emailHint": "Nous l'utiliserons pour vous contacter. Votre email ne sera jamais partagé.",
       "passwordLabel": "Mot de passe",
-      "passwordHint": "Au moins 8 caractères.",
+      "passwordHint": "12+ caractères avec majuscule, minuscule, chiffre et caractère spécial.",
       "confirmPasswordLabel": "Confirmer le mot de passe",
       "confirmPasswordHint": "Veuillez confirmer votre mot de passe.",
       "confirmMismatch": "Les mots de passe ne correspondent pas.",
@@ -72,14 +72,44 @@
       "failureToast": "Échec de l'inscription. Veuillez réessayer.",
       "validation": {
         "required": "Ce champ est obligatoire.",
-        "invalidFormat": "Format invalide.",
-        "tooShort": "Trop court (8 caractères minimum).",
+        "invalidFormat": "Format invalide (majuscule, minuscule, chiffre et caractère spécial requis).",
+        "tooShort": "Trop court (12 caractères minimum).",
         "emailInUse": "Cette adresse email est déjà utilisée.",
         "unknown": "Erreur de validation ({code})."
       }
     },
     "forgetPassword": {
-      "title": "Mot de passe oublié"
+      "title": "Mot de passe oublié",
+      "description": "Saisissez votre email pour recevoir un lien de réinitialisation.",
+      "emailLabel": "Email",
+      "submit": "Envoyer le lien",
+      "submitLoading": "Envoi…",
+      "successToast": "Si un compte existe, un email de réinitialisation a été envoyé.",
+      "failureToast": "Impossible de traiter votre demande pour le moment.",
+      "rateLimitedToast": "Trop de demandes. Veuillez réessayer plus tard.",
+      "backToLoginPrompt": "Vous vous souvenez de votre mot de passe ?",
+      "backToLoginLink": "Se connecter"
+    },
+    "resetPassword": {
+      "title": "Réinitialiser le mot de passe",
+      "description": "Saisissez votre nouveau mot de passe.",
+      "newPasswordLabel": "Nouveau mot de passe",
+      "newPasswordHint": "12+ caractères avec majuscule, minuscule, chiffre et caractère spécial.",
+      "confirmPasswordLabel": "Confirmer le mot de passe",
+      "confirmMismatch": "Les mots de passe ne correspondent pas.",
+      "submit": "Mettre à jour le mot de passe",
+      "submitLoading": "Mise à jour…",
+      "successToast": "Mot de passe réinitialisé. Vous pouvez vous connecter.",
+      "failureToast": "Impossible de réinitialiser le mot de passe.",
+      "invalidTokenToast": "Le lien de réinitialisation est invalide ou déjà utilisé.",
+      "expiredTokenToast": "Le lien de réinitialisation a expiré.",
+      "weakPasswordToast": "Le mot de passe ne respecte pas la politique de sécurité.",
+      "rateLimitedToast": "Trop de demandes. Veuillez réessayer plus tard.",
+      "invalidLinkTitle": "Lien de réinitialisation invalide",
+      "invalidLinkDescription": "Le lien est manquant ou mal formé. Demandez un nouveau lien.",
+      "requestNewLink": "Demander un nouveau lien",
+      "backToLoginPrompt": "Retour à la connexion :",
+      "backToLoginLink": "Se connecter"
     },
     "invite": {}
   },
