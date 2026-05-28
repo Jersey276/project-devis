@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,13 +22,24 @@ import {
   ComboboxList,
 } from "@/components/ui/combobox";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  BookmarkIcon,
   CheckIcon,
+  EllipsisVerticalIcon,
+  LayoutTemplateIcon,
   Loader2Icon,
   PlusIcon,
-  TriangleAlertIcon,
   Trash2Icon,
+  TriangleAlertIcon,
 } from "lucide-react";
 import type { BackendTax } from "@/types/backend";
+import SaveTemplateDialog from "@/components/template/save-template-dialog";
+import SelectLineTemplatePopover from "@/components/template/select-line-template-popover";
 
 export type LineSaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -53,12 +65,15 @@ type QuoteStepItemsProps = {
   availableTaxes: BackendTax[];
   taxById: Map<number, BackendTax>;
   isAdding: boolean;
+  hideTotals?: boolean;
   onNameChange: (lineId: string, value: string) => void;
   onQuantityChange: (lineId: string, value: number) => void;
   onUnitPriceChange: (lineId: string, value: number) => void;
   onTaxChange: (lineId: string, taxId: number | null) => void;
   onRemoveItem: (lineId: string) => void;
   onAddItem: () => void;
+  onSaveLineAsTemplate?: (lineId: string, name: string) => Promise<boolean>;
+  onAddItemFromTemplate?: (templateId: string) => Promise<void>;
 };
 
 type IndicatorLabels = { saving: string; saved: string; error: string };
@@ -124,12 +139,15 @@ export default function QuoteStepItems({
   availableTaxes,
   taxById,
   isAdding,
+  hideTotals,
   onNameChange,
   onQuantityChange,
   onUnitPriceChange,
   onTaxChange,
   onRemoveItem,
   onAddItem,
+  onSaveLineAsTemplate,
+  onAddItemFromTemplate,
 }: QuoteStepItemsProps) {
   const selectableTaxes = availableTaxes.filter((tax) => !tax.superseded_at);
   const taxesDisabled = selectableTaxes.length === 0;
@@ -139,10 +157,25 @@ export default function QuoteStepItems({
     saved: t("savedAria"),
     error: t("errorAria"),
   };
+
+  const [saveDialogLineId, setSaveDialogLineId] = useState<string | null>(null);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+
   const taxLabel = (tax: BackendTax): string => {
     const base = `${tax.name} (${tax.rate}%)`;
     return tax.superseded_at ? `${base} — ${t("taxSupersededSuffix")}` : base;
   };
+
+  function openSaveLineDialog(lineId: string) {
+    setSaveDialogLineId(lineId);
+    setSaveDialogOpen(true);
+  }
+
+  const saveDialogDefaultName =
+    saveDialogLineId != null
+      ? (items.find((i) => i.lineId === saveDialogLineId)?.name ?? "")
+      : "";
+
   return (
     <div className="space-y-4">
       <Table>
@@ -241,15 +274,40 @@ export default function QuoteStepItems({
                 </TableCell>
                 <TableCell>
                   {!isReadonly && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => onRemoveItem(item.lineId)}
-                      disabled={items.length <= 1}
-                      aria-label={t("deleteAria")}
-                    >
-                      <Trash2Icon className="size-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      {onSaveLineAsTemplate && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label={t("action")}
+                            >
+                              <EllipsisVerticalIcon className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => openSaveLineDialog(item.lineId)}
+                            >
+                              <BookmarkIcon className="size-4" />
+                              {t("saveAsTemplate")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t("deleteAria")}
+                        disabled={items.length <= 1}
+                        onClick={() => onRemoveItem(item.lineId)}
+                      >
+                        <Trash2Icon className="size-4" />
+                      </Button>
+                    </div>
                   )}
                 </TableCell>
               </TableRow>
@@ -259,52 +317,88 @@ export default function QuoteStepItems({
       </Table>
 
       {!isReadonly && (
-        <Button
-          type="button"
-          variant="ghost"
-          className="h-auto w-full p-0"
-          onClick={onAddItem}
-          disabled={isAdding}
-          aria-label={t("addAria")}
-        >
-          <Skeleton className="flex h-14 w-full items-center justify-center">
-            {isAdding ? (
-              <Loader2Icon className="size-7 animate-spin" />
-            ) : (
-              <PlusIcon className="size-7" />
-            )}
-          </Skeleton>
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-auto flex-1 p-0"
+            onClick={onAddItem}
+            disabled={isAdding}
+            aria-label={t("addAria")}
+          >
+            <Skeleton className="flex h-14 w-full items-center justify-center">
+              {isAdding ? (
+                <Loader2Icon className="size-7 animate-spin" />
+              ) : (
+                <PlusIcon className="size-7" />
+              )}
+            </Skeleton>
+          </Button>
+          {onAddItemFromTemplate && (
+            <SelectLineTemplatePopover
+              disabled={isAdding}
+              onSelect={onAddItemFromTemplate}
+            >
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-auto p-0"
+                disabled={isAdding}
+                aria-label={t("addFromTemplateAria")}
+              >
+                <Skeleton className="flex h-14 w-14 items-center justify-center">
+                  <LayoutTemplateIcon className="size-5" />
+                </Skeleton>
+              </Button>
+            </SelectLineTemplatePopover>
+          )}
+        </div>
       )}
 
       <div className="flex justify-end">
-        <div
-          data-slot="quote-totals"
-          className="min-w-65 space-y-1 rounded-md border px-4 py-2 text-sm"
-        >
-          <div className="flex justify-between font-medium">
-            <span>{t("totalHt")}</span>
-            <span data-slot="total-ht">{totals.ht.toFixed(2)} €</span>
+        {!hideTotals && (
+          <div
+            data-slot="quote-totals"
+            className="min-w-65 space-y-1 rounded-md border px-4 py-2 text-sm"
+          >
+            <div className="flex justify-between font-medium">
+              <span>{t("totalHt")}</span>
+              <span data-slot="total-ht">{totals.ht.toFixed(2)} €</span>
+            </div>
+            {totals.breakdown.map(({ tax, amount }) => (
+              <div
+                key={tax.id}
+                data-slot="total-tax-line"
+                data-tax-id={tax.id}
+                className="text-muted-foreground flex justify-between"
+              >
+                <span>{taxLabel(tax)}</span>
+                <span>{amount.toFixed(2)} €</span>
+              </div>
+            ))}
+            {totals.breakdown.length > 0 && (
+              <div className="flex justify-between border-t pt-1 font-semibold">
+                <span>{t("totalTtc")}</span>
+                <span data-slot="total-ttc">{totals.ttc.toFixed(2)} €</span>
+              </div>
+            )}
           </div>
-          {totals.breakdown.map(({ tax, amount }) => (
-            <div
-              key={tax.id}
-              data-slot="total-tax-line"
-              data-tax-id={tax.id}
-              className="text-muted-foreground flex justify-between"
-            >
-              <span>{taxLabel(tax)}</span>
-              <span>{amount.toFixed(2)} €</span>
-            </div>
-          ))}
-          {totals.breakdown.length > 0 && (
-            <div className="flex justify-between border-t pt-1 font-semibold">
-              <span>{t("totalTtc")}</span>
-              <span data-slot="total-ttc">{totals.ttc.toFixed(2)} €</span>
-            </div>
-          )}
-        </div>
+        )}
       </div>
+
+      {onSaveLineAsTemplate && (
+        <SaveTemplateDialog
+          open={saveDialogOpen}
+          onOpenChange={setSaveDialogOpen}
+          defaultName={saveDialogDefaultName}
+          onSave={async (name) => {
+            if (saveDialogLineId) {
+              return onSaveLineAsTemplate(saveDialogLineId, name);
+            }
+            return false;
+          }}
+        />
+      )}
     </div>
   );
 }

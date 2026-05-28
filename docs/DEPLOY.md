@@ -17,7 +17,7 @@ déclenche sur toute pull request ouverte vers la branche `main`. Il enchaîne :
    `backend/docker-compose.yml`, démarre le front en local et lance Cypress
    contre l'API réelle (vérifie l'interconnexion).
 4. **`build-and-push`** — build les 6 images Docker (front + 5 services Go) et
-   les push sur GHCR (`ghcr.io/jersey276/project-devis-<name>`) avec les tags
+   les push sur GHCR (`ghcr.io/jersey276/project-devis/<name>`) avec les tags
    `:latest` et `:<sha>`.
 5. **`deploy`** — SSH sur le serveur de production, checkout du commit, `docker
 compose pull` et `up -d` en utilisant
@@ -40,9 +40,13 @@ secrets** :
 | `SSH_PRIVATE_KEY`   | Clé privée SSH (RSA ou ED25519) au format OpenSSH.                                             |
 | `DEPLOY_PATH`       | Chemin absolu du repo cloné sur le serveur (ex: `/srv/project-devis`).                         |
 | `POSTGRES_PASSWORD` | Mot de passe Postgres utilisé pour le job E2E en CI (sans rapport avec celui du serveur prod). |
+| `GHCR_PULL_USER` | Username GitHub utilisé pour `docker login` sur le serveur prod. |
+| `GHCR_PULL_TOKEN` | Personal Access Token (classic) avec scope `read:packages` uniquement. **Ne pas réutiliser un token plus large.** |
 
 `GITHUB_TOKEN` est fourni automatiquement par GitHub Actions ; il est utilisé
-pour pousser sur GHCR et pour `gh pr merge`.
+côté runner pour pousser sur GHCR et pour `gh pr merge`. Le serveur de
+production reçoit uniquement `GHCR_PULL_TOKEN` (scope restreint) pour minimiser
+l'impact en cas de compromission de la machine.
 
 ## Pré-requis serveur (à exécuter une seule fois manuellement)
 
@@ -91,13 +95,16 @@ réutilisé par `postgres-init` et par les services `auth`, `users` et `quote`.
 
 ### 3.bis. Configurer `.env` pour le compose
 
-`docker-compose.prod.yml` lit `IMAGE_PREFIX` depuis un fichier `.env` placé à
-côté de lui :
+`docker-compose.prod.yml` lit `IMAGE_PREFIX` et `IMAGE_TAG` depuis un fichier
+`.env` placé à côté de lui :
 
 ```bash
 cp .env.example .env
 # Éditer .env si le prefix GHCR n'est pas ghcr.io/jersey276/project-devis
 ```
+
+`IMAGE_TAG` vaut `latest` par défaut. Pour figer la prod sur un SHA précis
+(rollback), modifier cette variable (voir section [Rollback manuel](#rollback-manuel)).
 
 ### 4. Login GHCR pour pouvoir `pull` les images privées
 
@@ -207,24 +214,30 @@ docker compose -f docker-compose.prod.yml exec -T postgres \
 
 ## Rollback manuel
 
-Si une version pose problème :
+Si une version pose problème, pinner `IMAGE_TAG` sur un SHA précédent via le
+fichier `.env` (sans toucher au compose tracké par git) :
 
 ```bash
 ssh "$SSH_USER@$SSH_HOST"
 cd /srv/project-devis
 
-# Lister les SHAs disponibles dans GHCR (depuis github.com/<user>?tab=packages)
-# Ou : docker images | grep project-devis
+# Lister les SHAs disponibles : github.com/<user>?tab=packages
+# Ou localement : docker images | grep ghcr.io/jersey276/project-devis
 
-# Re-tagger localement (ou éditer docker-compose.prod.yml pour pointer sur un sha précis)
-SHA=<sha-précédent>
-sed -i "s|:latest|:${SHA}|g" docker-compose.prod.yml
+# Éditer IMAGE_TAG dans .env
+sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=<sha-précédent>|" .env
+
 docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-Pour revenir à `:latest`, restaurer le fichier (`git checkout
-docker-compose.prod.yml`) et relancer `pull`/`up`.
+Pour revenir à la version courante : `sed -i 's|^IMAGE_TAG=.*|IMAGE_TAG=latest|' .env` puis `pull`/`up`.
+
+⚠ Le prochain déploiement automatique remettra `IMAGE_TAG=latest` ? **Non** — le
+pipeline ne touche pas au fichier `.env`. Tant que le `.env` pointe sur un SHA
+fixe, le serveur restera sur cette version, même si de nouvelles PRs sont
+mergées. Penser à restaurer `IMAGE_TAG=latest` après que la version défaillante
+soit corrigée et redéployée.
 
 ## Debug rapide
 

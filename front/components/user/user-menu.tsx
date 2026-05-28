@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   ChevronRight,
-  ChevronsUpDownIcon,
   LogOutIcon,
   MapPinIcon,
   User2Icon,
