@@ -86,6 +86,9 @@ chmod 600 backend/secrets/postgres_pswd.txt
 > persistées dans le volume `postgres`. Le perdre signifie perdre l'accès aux
 > données.
 
+Ce secret est monté par le service `postgres` du compose de production, puis
+réutilisé par `postgres-init` et par les services `auth`, `users` et `quote`.
+
 ### 3.bis. Configurer `.env` pour le compose
 
 `docker-compose.prod.yml` lit `IMAGE_PREFIX` depuis un fichier `.env` placé à
