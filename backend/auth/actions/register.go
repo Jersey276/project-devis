@@ -103,10 +103,10 @@ func validateRegisterRequest(req *authGrpc.RegisterRequest) []*authGrpc.FormFiel
 			Field:     "password",
 			ErrorCode: []int32{FieldErrRequired},
 		})
-	} else if len(req.Password) < 8 {
+	} else if passwordCodes := passwordPolicyFieldErrors(req.Password); len(passwordCodes) > 0 {
 		fieldErrors = append(fieldErrors, &authGrpc.FormFieldError{
 			Field:     "password",
-			ErrorCode: []int32{FieldErrTooShort},
+			ErrorCode: passwordCodes,
 		})
 	}
 
