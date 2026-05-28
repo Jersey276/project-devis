@@ -51,17 +51,13 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
 
     setSubmitting(true);
     try {
-      const { ok, status, body } = await apiFetch(
-        "/api/auth/password/update",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            email,
-            old_password: oldPassword,
-            new_password: newPassword,
-          }),
-        },
-      );
+      const { ok, status, body } = await apiFetch("/api/auth/password/update", {
+        method: "POST",
+        body: JSON.stringify({
+          old_password: oldPassword,
+          new_password: newPassword,
+        }),
+      });
       if (ok && body.success) {
         toast.success(t("successToast"));
         reset();
@@ -80,11 +76,7 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
   }
 
   return (
-    <form
-      className="grid max-w-3xl gap-4"
-      onSubmit={handleSubmit}
-      noValidate
-    >
+    <form className="grid max-w-3xl gap-4" onSubmit={handleSubmit} noValidate>
       <FieldGroup>
         <Field>
           <FieldLabel htmlFor="connection_email">{t("emailLabel")}</FieldLabel>
@@ -100,7 +92,9 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
         </Field>
 
         <Field data-invalid={!!fieldErrors.old_password?.length}>
-          <FieldLabel htmlFor="old_password">{t("oldPasswordLabel")}</FieldLabel>
+          <FieldLabel htmlFor="old_password">
+            {t("oldPasswordLabel")}
+          </FieldLabel>
           <Input
             id="old_password"
             name="old_password"
@@ -114,7 +108,9 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
         </Field>
 
         <Field data-invalid={!!fieldErrors.new_password?.length}>
-          <FieldLabel htmlFor="new_password">{t("newPasswordLabel")}</FieldLabel>
+          <FieldLabel htmlFor="new_password">
+            {t("newPasswordLabel")}
+          </FieldLabel>
           <Input
             id="new_password"
             name="new_password"
@@ -129,7 +125,9 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
         </Field>
 
         <Field data-invalid={!!confirmError}>
-          <FieldLabel htmlFor="confirm_password">{t("confirmPasswordLabel")}</FieldLabel>
+          <FieldLabel htmlFor="confirm_password">
+            {t("confirmPasswordLabel")}
+          </FieldLabel>
           <Input
             id="confirm_password"
             name="confirm_password"

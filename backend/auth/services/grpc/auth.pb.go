@@ -213,12 +213,13 @@ func (x *LoginResponse) GetRememberMe() bool {
 }
 
 type UpdatePasswordRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	OldPassword   string                 `protobuf:"bytes,2,opt,name=old_password,json=oldPassword,proto3" json:"old_password,omitempty"`
-	NewPassword   string                 `protobuf:"bytes,3,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Email               string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	OldPassword         string                 `protobuf:"bytes,2,opt,name=old_password,json=oldPassword,proto3" json:"old_password,omitempty"`
+	NewPassword         string                 `protobuf:"bytes,3,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
+	CurrentRefreshToken string                 `protobuf:"bytes,4,opt,name=current_refresh_token,json=currentRefreshToken,proto3" json:"current_refresh_token,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *UpdatePasswordRequest) Reset() {
@@ -268,6 +269,13 @@ func (x *UpdatePasswordRequest) GetOldPassword() string {
 func (x *UpdatePasswordRequest) GetNewPassword() string {
 	if x != nil {
 		return x.NewPassword
+	}
+	return ""
+}
+
+func (x *UpdatePasswordRequest) GetCurrentRefreshToken() string {
+	if x != nil {
+		return x.CurrentRefreshToken
 	}
 	return ""
 }
@@ -696,11 +704,12 @@ const file_auth_proto_rawDesc = "" +
 	"\x06_tokenB\a\n" +
 	"\x05_codeB\x10\n" +
 	"\x0e_refresh_tokenB\x0e\n" +
-	"\f_remember_me\"s\n" +
+	"\f_remember_me\"\xa7\x01\n" +
 	"\x15UpdatePasswordRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12!\n" +
 	"\fold_password\x18\x02 \x01(\tR\voldPassword\x12!\n" +
-	"\fnew_password\x18\x03 \x01(\tR\vnewPassword\"?\n" +
+	"\fnew_password\x18\x03 \x01(\tR\vnewPassword\x122\n" +
+	"\x15current_refresh_token\x18\x04 \x01(\tR\x13currentRefreshToken\"?\n" +
 	"\x0fGenericResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\",\n" +

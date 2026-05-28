@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	auth "gateway/auth"
+	"gateway/authcookie"
+	"gateway/middleware"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -17,6 +19,7 @@ import (
 type mockAuthClient struct {
 	resetFn   func(context.Context, *auth.ResetPasswordRequest) (*auth.GenericResponse, error)
 	confirmFn func(context.Context, *auth.ConfirmResetPasswordRequest) (*auth.GenericResponse, error)
+	updateFn  func(context.Context, *auth.UpdatePasswordRequest) (*auth.GenericResponse, error)
 }
 
 func (m *mockAuthClient) Register(context.Context, *auth.RegisterRequest, ...grpc.CallOption) (*auth.FormGenericResponse, error) {
@@ -43,7 +46,10 @@ func (m *mockAuthClient) ConfirmResetPassword(ctx context.Context, req *auth.Con
 	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
 }
 
-func (m *mockAuthClient) UpdatePassword(context.Context, *auth.UpdatePasswordRequest, ...grpc.CallOption) (*auth.GenericResponse, error) {
+func (m *mockAuthClient) UpdatePassword(ctx context.Context, req *auth.UpdatePasswordRequest, _ ...grpc.CallOption) (*auth.GenericResponse, error) {
+	if m.updateFn != nil {
+		return m.updateFn(ctx, req)
+	}
 	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
 }
 
@@ -165,5 +171,44 @@ func TestConfirmResetPassword_RateLimitedByIP(t *testing.T) {
 	ConfirmResetPassword(ctx, client)
 	if res.Code != http.StatusTooManyRequests {
 		t.Fatalf("expected 429 for confirm-reset rate limit, got %d", res.Code)
+	}
+}
+
+func TestUpdatePassword_UsesEmailFromAuthContext(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	client := &mockAuthClient{}
+	forwardedEmail := ""
+	forwardedRefreshToken := ""
+	client.updateFn = func(_ context.Context, req *auth.UpdatePasswordRequest) (*auth.GenericResponse, error) {
+		forwardedEmail = req.Email
+		forwardedRefreshToken = req.CurrentRefreshToken
+		return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
+	}
+
+	ctx, res := newJSONContext(http.MethodPost, "/api/auth/password/update", `{"email":"attacker@example.com","old_password":"old","new_password":"StrongPass123!"}`, "10.0.0.5:1234")
+	ctx.Set(middleware.CtxEmail, "owner@example.com")
+	ctx.Request.AddCookie(&http.Cookie{Name: authcookie.RefreshName, Value: "current-refresh-token"})
+	UpdatePassword(ctx, client)
+
+	if res.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", res.Code)
+	}
+	if forwardedEmail != "owner@example.com" {
+		t.Fatalf("expected forwarded email owner@example.com, got %q", forwardedEmail)
+	}
+	if forwardedRefreshToken != "current-refresh-token" {
+		t.Fatalf("expected forwarded refresh token current-refresh-token, got %q", forwardedRefreshToken)
+	}
+}
+
+func TestUpdatePassword_RequiresAuthContextEmail(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	client := &mockAuthClient{}
+
+	ctx, res := newJSONContext(http.MethodPost, "/api/auth/password/update", `{"old_password":"old","new_password":"StrongPass123!"}`, "10.0.0.6:1234")
+	UpdatePassword(ctx, client)
+
+	if res.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", res.Code)
 	}
 }

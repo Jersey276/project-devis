@@ -9,6 +9,7 @@ import (
 
 	auth "gateway/auth"
 	"gateway/authcookie"
+	"gateway/middleware"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -95,7 +96,9 @@ func AuthRoutes(r *gin.RouterGroup) *gin.RouterGroup {
 	password := r.Group("/password")
 	password.POST("/reset", func(c *gin.Context) { ResetPassword(c, client) })
 	password.POST("/confirm-reset", func(c *gin.Context) { ConfirmResetPassword(c, client) })
-	password.POST("/update", func(c *gin.Context) { UpdatePassword(c, client) })
+	passwordAuth := password.Group("")
+	passwordAuth.Use(middleware.AuthRequired())
+	passwordAuth.POST("/update", func(c *gin.Context) { UpdatePassword(c, client) })
 
 	email := r.Group("/email")
 	email.POST("/verify", func(c *gin.Context) { VerifyEmail(c, client) })
@@ -288,19 +291,32 @@ func ResetPassword(c *gin.Context, client auth.AuthServiceClient) {
 
 func UpdatePassword(c *gin.Context, client auth.AuthServiceClient) {
 	var input struct {
-		Email       string `json:"email" binding:"required,email"`
 		OldPassword string `json:"old_password" binding:"required"`
-		NewPassword string `json:"new_password" binding:"required,min=8"`
+		NewPassword string `json:"new_password" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides.", "code": "VALIDATION_ERROR"})
 		return
 	}
 
+	ctxEmailRaw, exists := c.Get(middleware.CtxEmail)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Token d'authentification manquant."})
+		return
+	}
+	ctxEmail, ok := ctxEmailRaw.(string)
+	if !ok || strings.TrimSpace(ctxEmail) == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Token invalide."})
+		return
+	}
+
+	currentRefreshToken, _ := c.Cookie(authcookie.RefreshName)
+
 	resp, err := client.UpdatePassword(c.Request.Context(), &auth.UpdatePasswordRequest{
-		Email:       input.Email,
-		OldPassword: input.OldPassword,
-		NewPassword: input.NewPassword,
+		Email:               strings.ToLower(strings.TrimSpace(ctxEmail)),
+		OldPassword:         input.OldPassword,
+		NewPassword:         input.NewPassword,
+		CurrentRefreshToken: currentRefreshToken,
 	})
 	if err != nil {
 		authErrors.unavailable(c)

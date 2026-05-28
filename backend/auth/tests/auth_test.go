@@ -627,7 +627,7 @@ func TestConfirmResetPassword_WeakPassword_ReturnsWeakPasswordCode(t *testing.T)
 
 // --- UpdatePassword ---
 
-func TestUpdatePassword_Success_UpdatesPasswordAndRevokesSessions(t *testing.T) {
+func TestUpdatePassword_Success_UpdatesPasswordAndRevokesOtherSessions(t *testing.T) {
 	mockUser := &MockUserClient{}
 	srv, mock := setupServer(t, mockUser)
 
@@ -641,15 +641,16 @@ func TestUpdatePassword_Success_UpdatesPasswordAndRevokesSessions(t *testing.T) 
 	mock.ExpectExec(`UPDATE auth SET password = \$1 WHERE user_id = \$2`).
 		WithArgs(sqlmock.AnyArg(), "user-123").
 		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec(`DELETE FROM refresh_tokens WHERE user_id = \$1`).
-		WithArgs("user-123").
+	mock.ExpectExec(`DELETE FROM refresh_tokens WHERE user_id = \$1 AND token_hash <> \$2`).
+		WithArgs("user-123", sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(0, 2))
 	mock.ExpectCommit()
 
 	resp, err := srv.UpdatePassword(context.Background(), &authGrpc.UpdatePasswordRequest{
-		Email:       "user@example.com",
-		OldPassword: "password123",
-		NewPassword: "StrongPass123!",
+		Email:               "user@example.com",
+		OldPassword:         "password123",
+		NewPassword:         "StrongPass123!",
+		CurrentRefreshToken: "current-refresh-token",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

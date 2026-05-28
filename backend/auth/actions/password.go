@@ -80,7 +80,7 @@ func (s *Server) UpdatePassword(ctx context.Context, req *authGrpc.UpdatePasswor
 		return &authGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
 
-	if _, err := tx.ExecContext(ctx, "DELETE FROM refresh_tokens WHERE user_id = $1", userID); err != nil {
+	if err := services.DeleteOtherRefreshTokensTx(ctx, tx, userID, req.CurrentRefreshToken); err != nil {
 		return &authGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
 
