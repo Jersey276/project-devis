@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v7.34.0
-// source: auth/auth.proto
+// source: auth.proto
 
 package auth
 
@@ -19,13 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_Register_FullMethodName       = "/auth.AuthService/Register"
-	AuthService_Login_FullMethodName          = "/auth.AuthService/Login"
-	AuthService_ResetPassword_FullMethodName  = "/auth.AuthService/ResetPassword"
-	AuthService_UpdatePassword_FullMethodName = "/auth.AuthService/UpdatePassword"
-	AuthService_VerifyEmail_FullMethodName    = "/auth.AuthService/VerifyEmail"
-	AuthService_RefreshToken_FullMethodName   = "/auth.AuthService/RefreshToken"
-	AuthService_Logout_FullMethodName         = "/auth.AuthService/Logout"
+	AuthService_Register_FullMethodName             = "/auth.AuthService/Register"
+	AuthService_Login_FullMethodName                = "/auth.AuthService/Login"
+	AuthService_ResetPassword_FullMethodName        = "/auth.AuthService/ResetPassword"
+	AuthService_ConfirmResetPassword_FullMethodName = "/auth.AuthService/ConfirmResetPassword"
+	AuthService_UpdatePassword_FullMethodName       = "/auth.AuthService/UpdatePassword"
+	AuthService_VerifyEmail_FullMethodName          = "/auth.AuthService/VerifyEmail"
+	AuthService_RefreshToken_FullMethodName         = "/auth.AuthService/RefreshToken"
+	AuthService_Logout_FullMethodName               = "/auth.AuthService/Logout"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -35,6 +36,7 @@ type AuthServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*FormGenericResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	ResetPassword(ctx context.Context, in *ResetPasswordRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	ConfirmResetPassword(ctx context.Context, in *ConfirmResetPasswordRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	UpdatePassword(ctx context.Context, in *UpdatePasswordRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*LoginResponse, error)
@@ -73,6 +75,16 @@ func (c *authServiceClient) ResetPassword(ctx context.Context, in *ResetPassword
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GenericResponse)
 	err := c.cc.Invoke(ctx, AuthService_ResetPassword_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) ConfirmResetPassword(ctx context.Context, in *ConfirmResetPasswordRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, AuthService_ConfirmResetPassword_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -126,6 +138,7 @@ type AuthServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*FormGenericResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	ResetPassword(context.Context, *ResetPasswordRequest) (*GenericResponse, error)
+	ConfirmResetPassword(context.Context, *ConfirmResetPasswordRequest) (*GenericResponse, error)
 	UpdatePassword(context.Context, *UpdatePasswordRequest) (*GenericResponse, error)
 	VerifyEmail(context.Context, *VerifyEmailRequest) (*GenericResponse, error)
 	RefreshToken(context.Context, *RefreshTokenRequest) (*LoginResponse, error)
@@ -148,6 +161,9 @@ func (UnimplementedAuthServiceServer) Login(context.Context, *LoginRequest) (*Lo
 }
 func (UnimplementedAuthServiceServer) ResetPassword(context.Context, *ResetPasswordRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ResetPassword not implemented")
+}
+func (UnimplementedAuthServiceServer) ConfirmResetPassword(context.Context, *ConfirmResetPasswordRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ConfirmResetPassword not implemented")
 }
 func (UnimplementedAuthServiceServer) UpdatePassword(context.Context, *UpdatePasswordRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdatePassword not implemented")
@@ -232,6 +248,24 @@ func _AuthService_ResetPassword_Handler(srv interface{}, ctx context.Context, de
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuthServiceServer).ResetPassword(ctx, req.(*ResetPasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_ConfirmResetPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfirmResetPasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).ConfirmResetPassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_ConfirmResetPassword_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).ConfirmResetPassword(ctx, req.(*ConfirmResetPasswordRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -328,6 +362,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AuthService_ResetPassword_Handler,
 		},
 		{
+			MethodName: "ConfirmResetPassword",
+			Handler:    _AuthService_ConfirmResetPassword_Handler,
+		},
+		{
 			MethodName: "UpdatePassword",
 			Handler:    _AuthService_UpdatePassword_Handler,
 		},
@@ -345,5 +383,5 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "auth/auth.proto",
+	Metadata: "auth.proto",
 }
