@@ -65,7 +65,7 @@ func TestRegister_Success(t *testing.T) {
 
 	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
 		Email:    "new@example.com",
-		Password: "password123",
+		Password: "Password123!",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -94,7 +94,7 @@ func TestRegister_UserAlreadyExists(t *testing.T) {
 
 	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
 		Email:    "existing@example.com",
-		Password: "password123",
+		Password: "Password123!",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -116,7 +116,7 @@ func TestRegister_ValidationInvalidEmail(t *testing.T) {
 
 	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
 		Email:    "not-an-email",
-		Password: "password123",
+		Password: "Password123!",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -202,7 +202,7 @@ func TestRegister_RollbackOnAuthInsertFailure(t *testing.T) {
 
 	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
 		Email:    "fail@example.com",
-		Password: "password123",
+		Password: "Password123!",
 	})
 	if err == nil {
 		t.Fatal("expected error from failed insert")
@@ -232,7 +232,7 @@ func TestRegister_UserServiceError(t *testing.T) {
 
 	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
 		Email:    "new@example.com",
-		Password: "password123",
+		Password: "Password123!",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -444,5 +444,183 @@ func TestLogout_Success(t *testing.T) {
 	}
 	if !resp.Success {
 		t.Fatalf("expected success, got code %d", resp.Code)
+	}
+}
+
+// --- ResetPassword ---
+
+func TestResetPassword_UserNotFound_ReturnsGenericSuccess(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	mock.ExpectQuery(`SELECT user_id FROM auth WHERE email = \$1`).
+		WithArgs("missing@example.com").
+		WillReturnRows(sqlmock.NewRows([]string{"user_id"}))
+
+	resp, err := srv.ResetPassword(context.Background(), &authGrpc.ResetPasswordRequest{
+		Email: "missing@example.com",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatalf("expected success for anti-enumeration, got code %d", resp.Code)
+	}
+	if resp.Code != actions.CodeSuccess {
+		t.Fatalf("expected code %d, got %d", actions.CodeSuccess, resp.Code)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
+func TestResetPassword_ExistingUser_CreatesResetToken(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	mock.ExpectQuery(`SELECT user_id FROM auth WHERE email = \$1`).
+		WithArgs("known@example.com").
+		WillReturnRows(sqlmock.NewRows([]string{"user_id"}).AddRow("user-123"))
+
+	mock.ExpectExec(`INSERT INTO password_reset_tokens \(user_id, token_hash, expires_at\) VALUES \(\$1, \$2, \$3\)`).
+		WithArgs("user-123", sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	resp, err := srv.ResetPassword(context.Background(), &authGrpc.ResetPasswordRequest{
+		Email: "known@example.com",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatalf("expected success, got code %d", resp.Code)
+	}
+	if resp.Code != actions.CodeSuccess {
+		t.Fatalf("expected code %d, got %d", actions.CodeSuccess, resp.Code)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
+// --- ConfirmResetPassword ---
+
+func TestConfirmResetPassword_Success_UpdatesPasswordRevokesSessionsAndConsumesToken(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	mock.ExpectQuery(`SELECT user_id, expires_at, used_at FROM password_reset_tokens WHERE token_hash = \$1`).
+		WithArgs(sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "expires_at", "used_at"}).
+			AddRow("user-abc", time.Now().Add(10*time.Minute), nil))
+
+	mock.ExpectBegin()
+	mock.ExpectExec(`UPDATE auth SET password = \$1 WHERE user_id = \$2`).
+		WithArgs(sqlmock.AnyArg(), "user-abc").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(`DELETE FROM refresh_tokens WHERE user_id = \$1`).
+		WithArgs("user-abc").
+		WillReturnResult(sqlmock.NewResult(0, 3))
+	mock.ExpectExec(`UPDATE password_reset_tokens SET used_at = NOW\(\) WHERE token_hash = \$1 AND used_at IS NULL AND expires_at > NOW\(\)`).
+		WithArgs(sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	resp, err := srv.ConfirmResetPassword(context.Background(), &authGrpc.ConfirmResetPasswordRequest{
+		Token:       "reset-token",
+		NewPassword: "StrongPass123!",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatalf("expected success, got code %d", resp.Code)
+	}
+	if resp.Code != actions.CodeSuccess {
+		t.Fatalf("expected code %d, got %d", actions.CodeSuccess, resp.Code)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
+func TestConfirmResetPassword_InvalidToken_ReturnsBusinessError(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	mock.ExpectQuery(`SELECT user_id, expires_at, used_at FROM password_reset_tokens WHERE token_hash = \$1`).
+		WithArgs(sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "expires_at", "used_at"}))
+
+	resp, err := srv.ConfirmResetPassword(context.Background(), &authGrpc.ConfirmResetPasswordRequest{
+		Token:       "missing-token",
+		NewPassword: "StrongPass123!",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure")
+	}
+	if resp.Code != actions.CodeInvalidResetToken {
+		t.Fatalf("expected code %d, got %d", actions.CodeInvalidResetToken, resp.Code)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
+func TestConfirmResetPassword_ExpiredToken_ReturnsExpiredCode(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	mock.ExpectQuery(`SELECT user_id, expires_at, used_at FROM password_reset_tokens WHERE token_hash = \$1`).
+		WithArgs(sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "expires_at", "used_at"}).
+			AddRow("user-abc", time.Now().Add(-1*time.Minute), nil))
+
+	resp, err := srv.ConfirmResetPassword(context.Background(), &authGrpc.ConfirmResetPasswordRequest{
+		Token:       "expired-token",
+		NewPassword: "StrongPass123!",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure")
+	}
+	if resp.Code != actions.CodeExpiredResetToken {
+		t.Fatalf("expected code %d, got %d", actions.CodeExpiredResetToken, resp.Code)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
+func TestConfirmResetPassword_WeakPassword_ReturnsWeakPasswordCode(t *testing.T) {
+	mockUser := &MockUserClient{}
+	srv, mock := setupServer(t, mockUser)
+
+	resp, err := srv.ConfirmResetPassword(context.Background(), &authGrpc.ConfirmResetPasswordRequest{
+		Token:       "any-token",
+		NewPassword: "short",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure")
+	}
+	if resp.Code != actions.CodeWeakPassword {
+		t.Fatalf("expected code %d, got %d", actions.CodeWeakPassword, resp.Code)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations (no DB calls expected): %v", err)
 	}
 }
