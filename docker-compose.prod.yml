@@ -5,19 +5,9 @@ x-service-defaults: &service-defaults
 x-common-env: &common-env
   TZ: Europe/Paris
 
-x-db-env: &db-env
+x-db-common-env: &db-common-env
   <<: *common-env
-  DB_HOST: postgres
   DB_PORT: 5432
-  DB_PASSWORD_FILE: /run/secrets/db_password
-
-x-db-service: &db-service
-  <<: *service-defaults
-  depends_on:
-    postgres-init:
-      condition: service_completed_successfully
-  secrets:
-    - db_password
 
 services:
   front:
@@ -54,29 +44,38 @@ services:
       - devis-export
 
   devis-auth:
-    <<: *db-service
+    <<: *service-defaults
     image: ${IMAGE_PREFIX}/auth:${IMAGE_TAG:-latest}
     environment:
-      <<: *db-env
-      DB_USER: devis-auth
-      DB_NAME: auth
+      <<: *db-common-env
+      DB_HOST: ${AUTH_DB_HOST}
+      DB_PORT: ${AUTH_DB_PORT:-5432}
+      DB_USER: ${AUTH_DB_USER}
+      DB_PASSWORD: ${AUTH_DB_PASSWORD}
+      DB_NAME: ${AUTH_DB_NAME:-auth}
       USER_SERVICE_ADDRESS: devis-user:50052
 
   devis-user:
-    <<: *db-service
+    <<: *service-defaults
     image: ${IMAGE_PREFIX}/users:${IMAGE_TAG:-latest}
     environment:
-      <<: *db-env
-      DB_USER: devis-users
-      DB_NAME: users
+      <<: *db-common-env
+      DB_HOST: ${USER_DB_HOST}
+      DB_PORT: ${USER_DB_PORT:-5432}
+      DB_USER: ${USER_DB_USER}
+      DB_PASSWORD: ${USER_DB_PASSWORD}
+      DB_NAME: ${USER_DB_NAME:-users}
 
   devis-quote:
-    <<: *db-service
+    <<: *service-defaults
     image: ${IMAGE_PREFIX}/quote:${IMAGE_TAG:-latest}
     environment:
-      <<: *db-env
-      DB_USER: devis-quote
-      DB_NAME: quote
+      <<: *db-common-env
+      DB_HOST: ${QUOTE_DB_HOST}
+      DB_PORT: ${QUOTE_DB_PORT:-5432}
+      DB_USER: ${QUOTE_DB_USER}
+      DB_PASSWORD: ${QUOTE_DB_PASSWORD}
+      DB_NAME: ${QUOTE_DB_NAME:-quote}
 
   devis-export:
     <<: *service-defaults
@@ -100,46 +99,3 @@ services:
       - "--chromium-disable-javascript=true"
       - "--api-timeout=30s"
       - "--chromium-deny-list=^https?://(localhost|0\\.0\\.0\\.0|127\\.|10\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|\\[::1\\]|\\[[fF][cdCD]|\\[[fF][eE][89aAbB])"
-
-  postgres:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.postgres
-    restart: unless-stopped
-    environment:
-      <<: *common-env
-      POSTGRES_USER: devis-auth
-      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
-      POSTGRES_DB: auth
-    volumes:
-      - postgres:/var/lib/postgresql/data
-    secrets:
-      - db_password
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U devis-auth -d auth"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 20s
-
-  postgres-init:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.postgres
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      PGHOST: postgres
-      POSTGRES_USER: devis-auth
-    secrets:
-      - db_password
-    entrypoint: ["/docker-entrypoint-initdb.d/init.sh"]
-    restart: "no"
-
-secrets:
-  db_password:
-    file: backend/secrets/postgres_pswd.txt
-
-volumes:
-  postgres:

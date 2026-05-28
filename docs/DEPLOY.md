@@ -134,6 +134,74 @@ Hors scope de ce document.
 3. Suivre l'exécution dans l'onglet **Actions** du repo.
 4. Une fois le job `deploy` au vert, la PR est mergée automatiquement.
 
+## Checklist exploitation Postgres (prod)
+
+Architecture retenue: un seul cluster Postgres avec plusieurs bases separees
+(`auth`, `users`, `quote`) et un utilisateur dedie par base.
+
+### 1. Persistance et commandes destructives
+
+- Le volume nomme `postgres` doit rester attache au service Postgres.
+- `docker compose down` est autorise pour arreter la stack sans perdre les donnees.
+- `docker compose down -v` est strictement reserve aux environnements non prod.
+- Ne jamais supprimer le volume Postgres en prod sauf operation de reconstruction
+  explicitement validee.
+
+### 2. Sauvegardes
+
+- Faire un dump quotidien de chaque base (`auth`, `users`, `quote`) avec retention.
+- Copier les sauvegardes hors machine (stockage objet ou serveur de backup).
+- Chiffrer les sauvegardes si elles quittent le serveur de production.
+
+Exemple minimal (a adapter):
+
+```bash
+mkdir -p /var/backups/project-devis
+TS=$(date +%F-%H%M)
+
+docker compose -f docker-compose.prod.yml exec -T postgres \
+   pg_dump -U devis-auth -d auth > /var/backups/project-devis/auth-${TS}.sql
+
+docker compose -f docker-compose.prod.yml exec -T postgres \
+   pg_dump -U devis-users -d users > /var/backups/project-devis/users-${TS}.sql
+
+docker compose -f docker-compose.prod.yml exec -T postgres \
+   pg_dump -U devis-quote -d quote > /var/backups/project-devis/quote-${TS}.sql
+```
+
+### 3. Test de restauration
+
+- Verifier une restauration complete au moins une fois par mois.
+- Mesurer le temps de restauration (objectif RTO) et la perte max acceptable (RPO).
+- Documenter la procedure et la garder executable par une autre personne que
+  l'auteur initial.
+
+### 4. Isolation des acces
+
+- Un service ne doit se connecter qu'a sa base avec son utilisateur dedie.
+- Eviter tout compte partage entre services.
+- Appliquer le principe de moindre privilege (pas de droits superflus).
+
+### 5. Monitoring et alertes
+
+- Suivre au minimum: connexions, latence, erreurs, taille des bases, espace disque.
+- Alerter sur la saturation disque et les redemarrages repetes du conteneur Postgres.
+- Conserver les logs Postgres suffisamment longtemps pour l'analyse d'incident.
+
+### 6. Migrations
+
+- Les migrations doivent rester idempotentes quand c'est possible.
+- Avant une release sensible, valider les migrations sur une copie recente de prod.
+- En cas d'echec migration, corriger puis relancer sans wipe du volume.
+
+### 7. Hygiene d'exploitation
+
+- Eviter de changer le nom de projet Compose en prod (`COMPOSE_PROJECT_NAME`) sans
+  plan de migration: cela peut faire pointer vers un autre volume.
+- Centraliser les commandes d'exploitation dans des scripts/Make targets pour limiter
+  les erreurs humaines.
+- Tenir a jour cette checklist apres chaque incident ou post-mortem.
+
 ## Rollback manuel
 
 Si une version pose problème :
