@@ -11,17 +11,7 @@ x-postgres-build: &postgres-build
 
 x-db-common-env: &db-common-env
   <<: *common-env
-  DB_HOST: postgres
   DB_PORT: 5432
-  DB_PASSWORD_FILE: /run/secrets/db_password
-
-x-db-service: &db-service
-  <<: *service-defaults
-  depends_on:
-    postgres-init:
-      condition: service_completed_successfully
-  secrets:
-    - db_password
 
 services:
   front:
@@ -58,7 +48,7 @@ services:
       - devis-export
 
   devis-auth:
-    <<: *db-service
+    <<: *service-defaults
     image: ${IMAGE_PREFIX}/auth:${IMAGE_TAG:-latest}
     environment:
       <<: *db-common-env
@@ -67,7 +57,7 @@ services:
       USER_SERVICE_ADDRESS: devis-user:50052
 
   devis-user:
-    <<: *db-service
+    <<: *service-defaults
     image: ${IMAGE_PREFIX}/users:${IMAGE_TAG:-latest}
     environment:
       <<: *db-common-env
@@ -75,7 +65,7 @@ services:
       DB_NAME: ${USER_DB_NAME:-users}
 
   devis-quote:
-    <<: *db-service
+    <<: *service-defaults
     image: ${IMAGE_PREFIX}/quote:${IMAGE_TAG:-latest}
     environment:
       <<: *db-common-env
