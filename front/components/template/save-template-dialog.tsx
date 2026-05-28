@@ -19,7 +19,7 @@ type SaveTemplateDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultName?: string;
-  onSave: (name: string) => Promise<void>;
+  onSave: (name: string) => Promise<boolean>;
 };
 
 export default function SaveTemplateDialog({
@@ -42,8 +42,10 @@ export default function SaveTemplateDialog({
     if (!trimmed) return;
     setSaving(true);
     try {
-      await onSave(trimmed);
-      onOpenChange(false);
+      const success = await onSave(trimmed);
+      if (success) {
+        onOpenChange(false);
+      }
     } finally {
       setSaving(false);
     }

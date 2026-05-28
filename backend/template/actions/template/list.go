@@ -48,5 +48,9 @@ func List(ctx context.Context, db *sql.DB, req *templateGrpc.ListTemplatesReques
 		templates = append(templates, &t)
 	}
 
+	if err := rows.Err(); err != nil {
+		return &templateGrpc.ListTemplatesResponse{Success: false, Code: codes.InternalError}, nil
+	}
+
 	return &templateGrpc.ListTemplatesResponse{Success: true, Code: codes.Success, Templates: templates}, nil
 }

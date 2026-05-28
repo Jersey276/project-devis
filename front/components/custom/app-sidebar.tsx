@@ -7,7 +7,6 @@ import {
   GlobeIcon,
   PercentIcon,
   QuoteIcon,
-  ReceiptEuroIcon,
   WrenchIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -25,7 +24,14 @@ import {
 import UserMenu from "../user/user-menu";
 import { useMode, type UserMode } from "@/lib/mode-context";
 
-type NavKey = "quote" | "invoices" | "clients" | "countries" | "taxes" | "templates" | "test";
+type NavKey =
+  | "quote"
+  | "invoices"
+  | "clients"
+  | "countries"
+  | "taxes"
+  | "templates"
+  | "test";
 
 type SidebarItem = {
   key: NavKey;

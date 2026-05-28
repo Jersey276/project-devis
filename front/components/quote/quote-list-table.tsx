@@ -15,7 +15,11 @@ import {
 } from "@/components/custom/data-table";
 import { listQuotes, getQuote } from "@/lib/services/quotes";
 import { exportQuotePdf } from "@/lib/services/export";
-import { createTemplate, createTemplateLine } from "@/lib/services/templates";
+import {
+  createTemplate,
+  createTemplateLine,
+  deleteTemplate,
+} from "@/lib/services/templates";
 import { useMode } from "@/lib/mode-context";
 import { formatEurosFromCents } from "@/lib/utils";
 import {
@@ -60,12 +64,12 @@ export default function QuoteListTable() {
   }, []);
 
   const handleConfirmSaveAsTemplate = useCallback(
-    async (name: string) => {
-      if (!saveTemplateQuoteId) return;
+    async (name: string): Promise<boolean> => {
+      if (!saveTemplateQuoteId) return false;
       const { ok, body } = await getQuote(saveTemplateQuoteId);
       if (!ok || !body.success) {
         toast.error(t("saveAsTemplateFailedToast"));
-        return;
+        return false;
       }
       const lines = (body.lines ?? []) as BackendQuoteLine[];
       const tplRes = await createTemplate({
@@ -77,24 +81,30 @@ export default function QuoteListTable() {
         toast.error(
           (tplRes.body.message as string) ?? t("saveAsTemplateFailedToast"),
         );
-        return;
+        return false;
       }
       const templateId = tplRes.body.template_id as string;
       const sorted = [...lines].sort((a, b) => a.position - b.position);
-      await Promise.all(
-        sorted.map((line, idx) =>
-          createTemplateLine(templateId, {
-            type: "simple",
-            name: line.name,
-            quantity: Number(line.quantity),
-            unit: line.unit ?? undefined,
-            unitPriceEuros: line.unit_price / 100,
-            position: idx,
-            taxId: line.tax_id ?? null,
-          }),
-        ),
-      );
+      for (const [idx, line] of sorted.entries()) {
+        const lineRes = await createTemplateLine(templateId, {
+          type: "simple",
+          name: line.name,
+          quantity: Number(line.quantity),
+          unit: line.unit ?? undefined,
+          unitPriceEuros: line.unit_price / 100,
+          position: idx,
+          taxId: line.tax_id ?? null,
+        });
+        if (!lineRes.ok || !lineRes.body.success) {
+          await deleteTemplate(templateId);
+          toast.error(
+            (lineRes.body.message as string) ?? t("saveAsTemplateFailedToast"),
+          );
+          return false;
+        }
+      }
       toast.success(t("saveAsTemplateSuccessToast"));
+      return true;
     },
     [saveTemplateQuoteId, t],
   );

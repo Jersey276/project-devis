@@ -72,7 +72,7 @@ type QuoteStepItemsProps = {
   onTaxChange: (lineId: string, taxId: number | null) => void;
   onRemoveItem: (lineId: string) => void;
   onAddItem: () => void;
-  onSaveLineAsTemplate?: (lineId: string, name: string) => Promise<void>;
+  onSaveLineAsTemplate?: (lineId: string, name: string) => Promise<boolean>;
   onAddItemFromTemplate?: (templateId: string) => Promise<void>;
 };
 
@@ -393,8 +393,9 @@ export default function QuoteStepItems({
           defaultName={saveDialogDefaultName}
           onSave={async (name) => {
             if (saveDialogLineId) {
-              await onSaveLineAsTemplate(saveDialogLineId, name);
+              return onSaveLineAsTemplate(saveDialogLineId, name);
             }
+            return false;
           }}
         />
       )}

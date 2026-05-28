@@ -46,6 +46,7 @@ import { exportQuotePdf } from "@/lib/services/export";
 import {
   createTemplate,
   createTemplateLine,
+  deleteTemplate,
   listTemplateLines,
 } from "@/lib/services/templates";
 import type { BackendTemplateLine } from "@/types/backend";
@@ -557,7 +558,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   }, [quoteId, isExporting, t]);
 
   const handleSaveQuoteAsTemplate = useCallback(
-    async (name: string) => {
+    async (name: string): Promise<boolean> => {
       const { ok, body } = await createTemplate({
         templateType: "quote_document",
         targetResource: "quote",
@@ -568,30 +569,37 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           (body.message as string) ??
             t("errors.saveQuoteAsTemplateFailedToast"),
         );
-        return;
+        return false;
       }
       const templateId = body.template_id as string;
-      await Promise.all(
-        itemsRef.current.map((row, idx) =>
-          createTemplateLine(templateId, {
-            type: "simple",
-            name: row.name,
-            quantity: row.quantity,
-            unitPriceEuros: row.unitPriceEuros,
-            position: idx,
-            taxId: row.taxId,
-          }),
-        ),
-      );
+      for (const [idx, row] of itemsRef.current.entries()) {
+        const lineRes = await createTemplateLine(templateId, {
+          type: "simple",
+          name: row.name,
+          quantity: row.quantity,
+          unitPriceEuros: row.unitPriceEuros,
+          position: idx,
+          taxId: row.taxId,
+        });
+        if (!lineRes.ok || !lineRes.body.success) {
+          await deleteTemplate(templateId);
+          toast.error(
+            (lineRes.body.message as string) ??
+              t("errors.saveQuoteAsTemplateFailedToast"),
+          );
+          return false;
+        }
+      }
       toast.success(t("saveAsTemplateSuccessToast"));
+      return true;
     },
     [t],
   );
 
   const handleSaveLineAsTemplate = useCallback(
-    async (lineId: string, name: string) => {
+    async (lineId: string, name: string): Promise<boolean> => {
       const row = itemsRef.current.find((r) => r.lineId === lineId);
-      if (!row) return;
+      if (!row) return false;
       const { ok, body } = await createTemplate({
         templateType: "quote_line",
         targetResource: "quote",
@@ -601,7 +609,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         toast.error(
           (body.message as string) ?? t("errors.saveLineAsTemplateFailedToast"),
         );
-        return;
+        return false;
       }
       const templateId = body.template_id as string;
       const lineRes = await createTemplateLine(templateId, {
@@ -613,13 +621,15 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         taxId: row.taxId,
       });
       if (!lineRes.ok || !lineRes.body.success) {
+        await deleteTemplate(templateId);
         toast.error(
           (lineRes.body.message as string) ??
             t("errors.saveLineAsTemplateFailedToast"),
         );
-        return;
+        return false;
       }
       toast.success(t("saveAsTemplateSuccessToast"));
+      return true;
     },
     [t],
   );

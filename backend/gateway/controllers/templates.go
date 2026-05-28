@@ -278,13 +278,13 @@ func CreateTemplateLine(c *gin.Context, client template.TemplateServiceClient) {
 
 func UpdateTemplateLine(c *gin.Context, client template.TemplateServiceClient) {
 	var input struct {
-		Type      string          `json:"type"`
+		Type      string          `json:"type" binding:"required"`
 		Name      string          `json:"name"`
-		Quantity  string          `json:"quantity"`
+		Quantity  string          `json:"quantity" binding:"required"`
 		Unit      string          `json:"unit"`
-		UnitPrice int64           `json:"unit_price"`
+		UnitPrice int64           `json:"unit_price" binding:"required"`
 		Data      json.RawMessage `json:"data"`
-		Position  int32           `json:"position"`
+		Position  int32           `json:"position" binding:"required"`
 		TaxID     int32           `json:"tax_id"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {

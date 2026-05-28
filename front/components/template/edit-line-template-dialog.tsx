@@ -142,8 +142,14 @@ export default function EditLineTemplateSheet({
         }
       }
 
+      const refreshed = await getTemplate(templateId);
+      if (!refreshed.ok || !refreshed.body.success) {
+        toast.error(t("saveFailedToast"));
+        return;
+      }
+
       toast.success(t("saveSuccessToast"));
-      onSaved(tplRes.body.template as BackendTemplate);
+      onSaved(refreshed.body.template as BackendTemplate);
       onOpenChange(false);
     } finally {
       setSaving(false);

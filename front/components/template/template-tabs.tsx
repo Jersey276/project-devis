@@ -52,7 +52,6 @@ export default function TemplateTabs() {
   }, []);
 
   useEffect(() => {
-    setLoadingLines(true);
     listTemplates({ type: "quote_line" }).then(({ ok, body }) => {
       setLoadingLines(false);
       if (ok && Array.isArray(body.templates)) {
@@ -64,7 +63,6 @@ export default function TemplateTabs() {
   }, [t]);
 
   useEffect(() => {
-    setLoadingQuotes(true);
     listTemplates({ type: "quote_document" }).then(({ ok, body }) => {
       setLoadingQuotes(false);
       if (ok && Array.isArray(body.templates)) {

@@ -52,5 +52,9 @@ func List(ctx context.Context, db *sql.DB, req *templateGrpc.ListTemplateLinesRe
 		lines = append(lines, &l)
 	}
 
+	if err := rows.Err(); err != nil {
+		return &templateGrpc.ListTemplateLinesResponse{Success: false, Code: codes.InternalError}, nil
+	}
+
 	return &templateGrpc.ListTemplateLinesResponse{Success: true, Code: codes.Success, Lines: lines}, nil
 }
