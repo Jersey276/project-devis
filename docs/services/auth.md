@@ -41,9 +41,9 @@ Gerer l'authentification et la session:
 | Docker local      | non publie | interne     | atteint via `devis-auth:50051` |
 | Docker production | non publie | interne     | atteint via `devis-auth:50051` |
 
-## Variables d'environnement (exhaustif)
+## Variables d'environnement (vue exhaustive)
 
-### Variables declarees dans le service (`services/env.go`)
+### Variables declarees par le service (`services/env.go`)
 
 | Variable               | Usage                    | Definie local | Definie prod  |
 | ---------------------- | ------------------------ | ------------- | ------------- |

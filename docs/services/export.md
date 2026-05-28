@@ -44,7 +44,7 @@ Produire des documents PDF (devis) a partir des donnees metier.
 | Docker local      | non publie | interne     | atteint via `devis-export:50054` |
 | Docker production | non publie | interne     | atteint via `devis-export:50054` |
 
-## Variables d'environnement (exhaustif)
+## Variables d'environnement (vue exhaustive)
 
 ### Variables consommees par le code (`main.go`)
 

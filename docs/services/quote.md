@@ -37,7 +37,7 @@ Gerer le cycle de vie des devis:
 ## Points d'attention
 
 - Le calcul TTC depend de la qualite des donnees `quantity` (string parsee)
-- Les codes metier sont mappees vers HTTP dans le gateway
+- Les codes metier sont mappes vers HTTP dans le gateway
 
 ## Ports
 
@@ -47,9 +47,9 @@ Gerer le cycle de vie des devis:
 | Docker local      | non publie | interne     | atteint via `devis-quote:50053` |
 | Docker production | non publie | interne     | atteint via `devis-quote:50053` |
 
-## Variables d'environnement (exhaustif)
+## Variables d'environnement (vue exhaustive)
 
-### Variables declarees dans le service (`services/env.go`)
+### Variables declarees par le service (`services/env.go`)
 
 | Variable              | Usage                    | Definie local | Definie prod |
 | --------------------- | ------------------------ | ------------- | ------------ |

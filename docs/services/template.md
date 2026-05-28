@@ -42,9 +42,9 @@ Gerer des templates reutilisables de devis:
 | Docker local       |  non publie | interne     | atteint via `devis-template:50055` |
 | Docker production  | non deploye | n/a         | service absent du compose prod     |
 
-## Variables d'environnement (exhaustif)
+## Variables d'environnement (vue exhaustive)
 
-### Variables declarees dans le service (`services/env.go`)
+### Variables declarees par le service (`services/env.go`)
 
 | Variable              | Usage                    | Definie local | Definie prod |
 | --------------------- | ------------------------ | ------------- | ------------ |

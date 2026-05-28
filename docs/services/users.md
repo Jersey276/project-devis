@@ -50,9 +50,9 @@ Fournir les donnees utilisateur et referentiels associes:
 | Docker local      | non publie | interne     | atteint via `devis-user:50052` |
 | Docker production | non publie | interne     | atteint via `devis-user:50052` |
 
-## Variables d'environnement (exhaustif)
+## Variables d'environnement (vue exhaustive)
 
-### Variables declarees dans le service (`services/env.go`)
+### Variables declarees par le service (`services/env.go`)
 
 | Variable              | Usage                    | Definie local | Definie prod |
 | --------------------- | ------------------------ | ------------- | ------------ |

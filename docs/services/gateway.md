@@ -43,7 +43,7 @@ JWT:
 | Docker local      | 8080:8080 | publie      | API accessible depuis l'hote |
 | Docker production | 8080:8080 | publie      | API accessible depuis l'hote |
 
-## Variables d'environnement (exhaustif)
+## Variables d'environnement (vue exhaustive)
 
 ### Variables consommees par le code
 
