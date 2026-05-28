@@ -12,6 +12,8 @@ service AuthService {
     rpc Login(LoginRequest) returns (LoginResponse);
     // ResetPassword initiates a password reset process
     rpc ResetPassword(ResetPasswordRequest) returns (GenericResponse);
+    // ConfirmResetPassword completes a password reset using a token
+    rpc ConfirmResetPassword(ConfirmResetPasswordRequest) returns (GenericResponse);
     // UpdatePassword changes a user's password
     rpc UpdatePassword(UpdatePasswordRequest) returns (GenericResponse);
     // VerifyEmail confirms a user's email address
@@ -57,6 +59,11 @@ message GenericResponse {
 
 message ResetPasswordRequest {
     string email = 1;
+}
+
+message ConfirmResetPasswordRequest {
+    string token = 1;
+    string new_password = 2;
 }
 
 message VerifyEmailRequest {
