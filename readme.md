@@ -29,6 +29,11 @@ Portail de documentation technique du projet.
 - [docs/DEPLOY.md](docs/DEPLOY.md)
 - [docs/operations/env-and-config.md](docs/operations/env-and-config.md)
 - [docs/operations/runbook.md](docs/operations/runbook.md)
+- [docs/operations/pr-doc-checklist.md](docs/operations/pr-doc-checklist.md)
+
+### ADR
+
+- [docs/adr/0001-backend-architecture-and-gateway-pattern.md](docs/adr/0001-backend-architecture-and-gateway-pattern.md)
 
 ### Securite
 
@@ -40,3 +45,4 @@ Portail de documentation technique du projet.
 2. Toute evolution de configuration runtime implique une mise a jour de `docs/operations/env-and-config.md`.
 3. Toute evolution de routage gateway implique une mise a jour de `docs/services/gateway.md`.
 4. Toute migration metier impactant l'exploitation doit etre refletee dans `docs/operations/runbook.md`.
+5. Toute decision structurante d'architecture doit etre tracee dans `docs/adr/*.md`.
