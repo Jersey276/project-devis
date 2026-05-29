@@ -8,8 +8,11 @@ import (
 )
 
 func (s *Server) Login(ctx context.Context, req *authGrpc.LoginRequest) (*authGrpc.LoginResponse, error) {
-	var storedPassword, userID, email string
-	err := s.db.QueryRowContext(ctx, "SELECT email, password, user_id FROM auth WHERE email = $1", req.Email).Scan(&email, &storedPassword, &userID)
+	var storedPassword, userID, email, role, accountStatus, subscriptionTier string
+	err := s.db.QueryRowContext(ctx,
+		"SELECT email, password, user_id, role, account_status, subscription_tier FROM auth WHERE email = $1",
+		req.Email,
+	).Scan(&email, &storedPassword, &userID, &role, &accountStatus, &subscriptionTier)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			code := CodeUserNotFound
@@ -24,7 +27,7 @@ func (s *Server) Login(ctx context.Context, req *authGrpc.LoginRequest) (*authGr
 		return &authGrpc.LoginResponse{Success: false, Code: &code}, nil
 	}
 
-	accessToken, err := services.GenerateAccessToken(email, userID)
+	accessToken, err := services.GenerateAccessToken(email, userID, role, accountStatus, subscriptionTier)
 	if err != nil {
 		code := CodeInternalError
 		return &authGrpc.LoginResponse{Success: false, Code: &code}, err
