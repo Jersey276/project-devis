@@ -365,6 +365,10 @@
     }
   },
   "admin": {
+    "guard": {
+      "loading": "Vérification des droits administrateur...",
+      "forbidden": "Accès refusé. Cette section est réservée aux super administrateurs actifs."
+    },
     "countries": {
       "tabs": {
         "countries": "Pays",

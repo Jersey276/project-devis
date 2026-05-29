@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
@@ -23,6 +23,8 @@ import {
 } from "../ui/sidebar";
 import UserMenu from "../user/user-menu";
 import { useMode, type UserMode } from "@/lib/mode-context";
+import { apiFetch } from "@/lib/api";
+import { isSuperAdmin, type AuthContext } from "@/lib/access";
 
 type NavKey =
   | "quote"
@@ -41,6 +43,7 @@ type SidebarItem = {
   modes?: UserMode[];
   // Marker for entries that will be gated by the upcoming roles/permissions system.
   temp?: boolean;
+  adminOnly?: boolean;
 };
 
 const items: SidebarItem[] = [
@@ -67,6 +70,7 @@ const items: SidebarItem[] = [
     icon: GlobeIcon,
     modes: ["provider"],
     temp: true,
+    adminOnly: true,
   },
   {
     key: "taxes",
@@ -74,6 +78,7 @@ const items: SidebarItem[] = [
     icon: PercentIcon,
     modes: ["provider"],
     temp: true,
+    adminOnly: true,
   },
   {
     key: "templates",
@@ -92,9 +97,28 @@ const items: SidebarItem[] = [
 export default function AppSidebar() {
   const { mode } = useMode();
   const t = useTranslations("nav");
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch("/api/auth/me").then(({ ok, body }) => {
+      if (cancelled) return;
+      const auth = (body.auth ?? null) as AuthContext | null;
+      setIsAdmin(ok && body.success === true && isSuperAdmin(auth));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const visibleItems = useMemo(
-    () => items.filter((item) => !item.modes || item.modes.includes(mode)),
-    [mode],
+    () =>
+      items.filter(
+        (item) =>
+          (!item.modes || item.modes.includes(mode)) &&
+          (!item.adminOnly || isAdmin),
+      ),
+    [mode, isAdmin],
   );
   return (
     <Sidebar data-mode={mode}>
