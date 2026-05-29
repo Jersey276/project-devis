@@ -31,10 +31,6 @@ Variables inter-services:
 - `EXPORT_SERVICE_ADDRESS`
 - `TEMPLATE_SERVICE_ADDRESS` (local/dev)
 
-JWT:
-
-- `APP_KEY`
-
 ## Ports
 
 | Contexte          |      Port | Direction   | Note                         |
@@ -54,7 +50,6 @@ JWT:
 | `QUOTE_SERVICE_ADDRESS`    | client gRPC quote                    | oui           | oui           |
 | `EXPORT_SERVICE_ADDRESS`   | client gRPC export                   | oui           | oui           |
 | `TEMPLATE_SERVICE_ADDRESS` | client gRPC template                 | oui           | non           |
-| `APP_KEY`                  | verification JWT middleware          | non (compose) | non (compose) |
 | `ENV`                      | cookie `secure` dans auth controller | non (compose) | non (compose) |
 
 ### Variables injectees par compose (non lues directement par le code gateway)
@@ -67,8 +62,13 @@ JWT:
 
 - source: `backend/gateway/middleware/auth.go`
 - extraction token via Bearer ou cookie
-- validation HS256
-- injection contexte (`user_id`, `email`)
+- introspection gRPC via auth (`IntrospectToken`)
+- injection contexte (`user_id`, `email`, `role`, `account_status`, `subscription_tier`, `session_version`)
+
+Comportement en cas de session invalidee:
+
+- si auth renvoie `CodeSessionInvalidated (1008)`, le middleware retourne `401` avec code `SESSION_INVALIDATED`
+- sinon token invalide/expire: `401` avec code `TOKEN_INVALID`
 
 ## Contrat de sortie
 

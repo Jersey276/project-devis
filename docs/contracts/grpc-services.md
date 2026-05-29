@@ -25,10 +25,16 @@ Responsabilites:
 - register/login/logout
 - refresh token
 - verification email / reset password
+- introspection access token (`IntrospectToken`) pour controle strict de session
 
 Dependance externe:
 
 - appel users service pour certaines operations identite
+
+Note session:
+
+- le contrat d'introspection permet de detecter les tokens obsoletes via `session_version`
+- en cas d'obsolescence, auth renvoie le code metier `1008` (session invalidee)
 
 ## Users service
 
