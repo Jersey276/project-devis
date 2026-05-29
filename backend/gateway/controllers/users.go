@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"gateway/authz"
 	"gateway/middleware"
 	users "gateway/users"
 
@@ -64,6 +65,7 @@ func UserRoutes(r *gin.RouterGroup) {
 	addresses.DELETE("/:id", func(c *gin.Context) { ArchiveAddress(c, client) })
 
 	countries := r.Group("/countries")
+	countries.Use(middleware.RequireAdminResource(authz.ResourceAdminCountries))
 	countries.GET("", func(c *gin.Context) { ListCountries(c, client) })
 	countries.POST("", func(c *gin.Context) { CreateCountry(c, client) })
 	countries.GET("/:id", func(c *gin.Context) { GetCountry(c, client) })
@@ -71,6 +73,7 @@ func UserRoutes(r *gin.RouterGroup) {
 	countries.DELETE("/:id", func(c *gin.Context) { DeleteCountry(c, client) })
 
 	groups := r.Group("/country-groups")
+	groups.Use(middleware.RequireAdminResource(authz.ResourceAdminCountryGroup))
 	groups.GET("", func(c *gin.Context) { ListCountryGroups(c, client) })
 	groups.POST("", func(c *gin.Context) { CreateCountryGroup(c, client) })
 	groups.GET("/:id", func(c *gin.Context) { GetCountryGroup(c, client) })
@@ -80,12 +83,15 @@ func UserRoutes(r *gin.RouterGroup) {
 	groups.DELETE("/:id/countries/:countryId", func(c *gin.Context) { DetachCountry(c, client) })
 
 	taxes := r.Group("/taxes")
-	taxes.GET("", func(c *gin.Context) { ListTaxes(c, client) })
 	taxes.GET("/available", func(c *gin.Context) { ListTaxesForUser(c, client) })
-	taxes.POST("", func(c *gin.Context) { CreateTax(c, client) })
-	taxes.GET("/:id", func(c *gin.Context) { GetTax(c, client) })
-	taxes.PUT("/:id", func(c *gin.Context) { UpdateTax(c, client) })
-	taxes.DELETE("/:id", func(c *gin.Context) { DeleteTax(c, client) })
+
+	adminTaxes := taxes.Group("")
+	adminTaxes.Use(middleware.RequireAdminResource(authz.ResourceAdminTaxes))
+	adminTaxes.GET("", func(c *gin.Context) { ListTaxes(c, client) })
+	adminTaxes.POST("", func(c *gin.Context) { CreateTax(c, client) })
+	adminTaxes.GET("/:id", func(c *gin.Context) { GetTax(c, client) })
+	adminTaxes.PUT("/:id", func(c *gin.Context) { UpdateTax(c, client) })
+	adminTaxes.DELETE("/:id", func(c *gin.Context) { DeleteTax(c, client) })
 }
 
 func userIDFromCtx(c *gin.Context) string {

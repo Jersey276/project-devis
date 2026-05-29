@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"gateway/authz"
 	"gateway/authcookie"
 
 	"github.com/gin-gonic/gin"
@@ -13,14 +14,31 @@ import (
 )
 
 const (
-	CtxUserID = "user_id"
-	CtxEmail  = "email"
+	CtxUserID           = "user_id"
+	CtxEmail            = "email"
+	CtxRole             = "role"
+	CtxAccountStatus    = "account_status"
+	CtxSubscriptionTier = "subscription_tier"
 )
 
 type authClaims struct {
-	Email  string `json:"email"`
-	UserID string `json:"user_id"`
+	Email            string `json:"email"`
+	UserID           string `json:"user_id"`
+	Role             string `json:"role"`
+	AccountStatus    string `json:"account_status"`
+	SubscriptionTier string `json:"subscription_tier"`
 	jwt.RegisteredClaims
+}
+
+var authorizer = authz.NewFromEnv()
+
+func isWriteMethod(method string) bool {
+	switch method {
+	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
+		return true
+	default:
+		return false
+	}
 }
 
 func AuthRequired() gin.HandlerFunc {
@@ -65,6 +83,83 @@ func AuthRequired() gin.HandlerFunc {
 
 		c.Set(CtxUserID, claims.UserID)
 		c.Set(CtxEmail, claims.Email)
+		c.Set(CtxRole, claims.Role)
+		c.Set(CtxAccountStatus, claims.AccountStatus)
+		c.Set(CtxSubscriptionTier, claims.SubscriptionTier)
+
+		action := authz.ActionRead
+		if isWriteMethod(c.Request.Method) {
+			action = authz.ActionManage
+		}
+
+		decision, authzErr := authorizer.Can(c.Request.Context(), authz.Subject{
+			Role:             claims.Role,
+			AccountStatus:    claims.AccountStatus,
+			SubscriptionTier: claims.SubscriptionTier,
+		}, action, authz.ResourceGeneral)
+		if authzErr != nil {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "Autorisation indisponible.",
+				"code":    "AUTHZ_UNAVAILABLE",
+			})
+			return
+		}
+
+		if !decision.Allowed {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "Accès refusé.",
+				"code":    decision.Reason,
+			})
+			return
+		}
+
 		c.Next()
+	}
+}
+
+func RequireSuperAdmin() gin.HandlerFunc {
+	return RequireAdminResource(authz.ResourceAdminCountries)
+}
+
+func RequireAdminResource(resource authz.Resource) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		decision, err := authorizer.Can(c.Request.Context(), subjectFromContext(c), authz.ActionManage, resource)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "Autorisation indisponible.",
+				"code":    "AUTHZ_UNAVAILABLE",
+			})
+			return
+		}
+
+		if !decision.Allowed {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "Accès administrateur requis.",
+				"code":    decision.Reason,
+			})
+			return
+		}
+
+		c.Next()
+	}
+}
+
+func subjectFromContext(c *gin.Context) authz.Subject {
+	role, _ := c.Get(CtxRole)
+	status, _ := c.Get(CtxAccountStatus)
+	tier, _ := c.Get(CtxSubscriptionTier)
+
+	roleStr, _ := role.(string)
+	statusStr, _ := status.(string)
+	tierStr, _ := tier.(string)
+
+	return authz.Subject{
+		Role:             roleStr,
+		AccountStatus:    statusStr,
+		SubscriptionTier: tierStr,
 	}
 }

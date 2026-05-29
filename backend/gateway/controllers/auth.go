@@ -93,6 +93,10 @@ func AuthRoutes(r *gin.RouterGroup) *gin.RouterGroup {
 	r.POST("/refresh", func(c *gin.Context) { RefreshToken(c, client) })
 	r.POST("/logout", func(c *gin.Context) { Logout(c, client) })
 
+	me := r.Group("/me")
+	me.Use(middleware.AuthRequired())
+	me.GET("", AuthContextMe)
+
 	password := r.Group("/password")
 	password.POST("/reset", func(c *gin.Context) { ResetPassword(c, client) })
 	password.POST("/confirm-reset", func(c *gin.Context) { ConfirmResetPassword(c, client) })
@@ -104,6 +108,25 @@ func AuthRoutes(r *gin.RouterGroup) *gin.RouterGroup {
 	email.POST("/verify", func(c *gin.Context) { VerifyEmail(c, client) })
 
 	return r
+}
+
+func AuthContextMe(c *gin.Context) {
+	userID, _ := c.Get(middleware.CtxUserID)
+	email, _ := c.Get(middleware.CtxEmail)
+	role, _ := c.Get(middleware.CtxRole)
+	status, _ := c.Get(middleware.CtxAccountStatus)
+	tier, _ := c.Get(middleware.CtxSubscriptionTier)
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"auth": gin.H{
+			"user_id":           userID,
+			"email":             email,
+			"role":              role,
+			"account_status":    status,
+			"subscription_tier": tier,
+		},
+	})
 }
 
 type registerInput struct {
