@@ -72,6 +72,7 @@
       "failureToast": "Échec de l'inscription. Veuillez réessayer.",
       "validation": {
         "required": "Ce champ est obligatoire.",
+        "emailInvalidFormat": "Format invalide.",
         "invalidFormat": "Format invalide (majuscule, minuscule, chiffre et caractère spécial requis).",
         "tooShort": "Trop court (12 caractères minimum).",
         "emailInUse": "Cette adresse email est déjà utilisée.",

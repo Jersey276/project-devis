@@ -151,7 +151,7 @@ describe("Register", () => {
       cy.get("input[name='password']")
         .closest("[data-slot='field']")
         .find("[data-slot='field-error']")
-        .should("contain", "Trop court (8 caractères minimum).");
+        .should("contain", "Trop court (12 caractères minimum).");
     });
 
     it("clears field errors when submitting again", () => {
