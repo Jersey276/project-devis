@@ -1,11 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CountriesTab from "@/components/admin/countries/countries-tab";
 import CountryGroupsTab from "@/components/admin/countries/country-groups-tab";
 import AdminGuard from "@/components/custom/admin-guard";

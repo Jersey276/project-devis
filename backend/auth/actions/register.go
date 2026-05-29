@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"log"
 	"net/mail"
-	"strings"
 	"project-devis-auth/services"
 	authGrpc "project-devis-auth/services/grpc"
 	userGrpc "project-devis-auth/services/user_auth"
+	"strings"
 )
 
 func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*authGrpc.FormGenericResponse, error) {
