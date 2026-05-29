@@ -15,10 +15,11 @@ func (s *Server) RefreshToken(ctx context.Context, req *authGrpc.RefreshTokenReq
 
 	// Get auth identity + access control fields for access-token claims.
 	var email, role, accountStatus, subscriptionTier string
+	var sessionVersion int32
 	err = s.db.QueryRowContext(ctx,
-		"SELECT email, role, account_status, subscription_tier FROM auth WHERE user_id = $1",
+		"SELECT email, role, account_status, subscription_tier, session_version FROM auth WHERE user_id = $1",
 		userID,
-	).Scan(&email, &role, &accountStatus, &subscriptionTier)
+	).Scan(&email, &role, &accountStatus, &subscriptionTier, &sessionVersion)
 	if err != nil {
 		code := CodeUserNotFound
 		return &authGrpc.LoginResponse{Success: false, Code: &code}, nil
@@ -27,7 +28,7 @@ func (s *Server) RefreshToken(ctx context.Context, req *authGrpc.RefreshTokenReq
 	// Delete old refresh token (rotation)
 	_ = services.DeleteRefreshToken(ctx, s.db, req.RefreshToken)
 
-	accessToken, err := services.GenerateAccessToken(email, userID, role, accountStatus, subscriptionTier)
+	accessToken, err := services.GenerateAccessToken(email, userID, role, accountStatus, subscriptionTier, sessionVersion)
 	if err != nil {
 		code := CodeInternalError
 		return &authGrpc.LoginResponse{Success: false, Code: &code}, err

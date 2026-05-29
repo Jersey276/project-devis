@@ -1,16 +1,18 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 
+	"gateway/auth"
 	"gateway/authcookie"
 	"gateway/authz"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -19,18 +21,33 @@ const (
 	CtxRole             = "role"
 	CtxAccountStatus    = "account_status"
 	CtxSubscriptionTier = "subscription_tier"
+	CtxSessionVersion   = "session_version"
+	codeSessionInvalidated int32 = 1008
 )
 
-type authClaims struct {
-	Email            string `json:"email"`
-	UserID           string `json:"user_id"`
-	Role             string `json:"role"`
-	AccountStatus    string `json:"account_status"`
-	SubscriptionTier string `json:"subscription_tier"`
-	jwt.RegisteredClaims
-}
-
 var authorizer = authz.NewFromEnv()
+
+var (
+	authClientOnce sync.Once
+	authClient     auth.AuthServiceClient
+	authClientErr  error
+)
+
+func getAuthClient() (auth.AuthServiceClient, error) {
+	authClientOnce.Do(func() {
+		address := os.Getenv("AUTH_SERVICE_ADDRESS")
+		if address == "" {
+			address = "localhost:50051"
+		}
+		conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			authClientErr = err
+			return
+		}
+		authClient = auth.NewAuthServiceClient(conn)
+	})
+	return authClient, authClientErr
+}
 
 func isWriteMethod(method string) bool {
 	switch method {
@@ -42,7 +59,6 @@ func isWriteMethod(method string) bool {
 }
 
 func AuthRequired() gin.HandlerFunc {
-	key := []byte(os.Getenv("APP_KEY"))
 	return func(c *gin.Context) {
 		var tokenStr string
 		if header := c.GetHeader("Authorization"); strings.HasPrefix(header, "Bearer ") {
@@ -58,34 +74,40 @@ func AuthRequired() gin.HandlerFunc {
 			return
 		}
 
-		token, err := jwt.ParseWithClaims(tokenStr, &authClaims{}, func(t *jwt.Token) (interface{}, error) {
-			if t.Method != jwt.SigningMethodHS256 {
-				return nil, fmt.Errorf("algorithme de signature inattendu: %v", t.Header["alg"])
+		client, err := getAuthClient()
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"success": false,
+				"message": "Service d'authentification indisponible.",
+				"code":    "AUTH_UNAVAILABLE",
+			})
+			return
+		}
+
+		resp, err := client.IntrospectToken(c.Request.Context(), &auth.IntrospectTokenRequest{Token: tokenStr})
+		if err != nil || !resp.GetSuccess() || resp.GetContext() == nil {
+			statusCode := "TOKEN_INVALID"
+			message := "Token invalide ou expiré."
+			if resp != nil && resp.GetCode() == codeSessionInvalidated {
+				statusCode = "SESSION_INVALIDATED"
+				message = "Session expirée, veuillez vous reconnecter."
 			}
-			return key, nil
-		})
-		if err != nil || !token.Valid {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"success": false,
-				"message": "Token invalide ou expiré.",
+				"message": message,
+				"code":    statusCode,
 			})
 			return
 		}
 
-		claims, ok := token.Claims.(*authClaims)
-		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "Token invalide.",
-			})
-			return
-		}
+		ctx := resp.GetContext()
 
-		c.Set(CtxUserID, claims.UserID)
-		c.Set(CtxEmail, claims.Email)
-		c.Set(CtxRole, claims.Role)
-		c.Set(CtxAccountStatus, claims.AccountStatus)
-		c.Set(CtxSubscriptionTier, claims.SubscriptionTier)
+		c.Set(CtxUserID, ctx.GetUserId())
+		c.Set(CtxEmail, ctx.GetEmail())
+		c.Set(CtxRole, ctx.GetRole())
+		c.Set(CtxAccountStatus, ctx.GetAccountStatus())
+		c.Set(CtxSubscriptionTier, ctx.GetSubscriptionTier())
+		c.Set(CtxSessionVersion, ctx.GetSessionVersion())
 
 		action := authz.ActionRead
 		if isWriteMethod(c.Request.Method) {
@@ -93,9 +115,9 @@ func AuthRequired() gin.HandlerFunc {
 		}
 
 		decision, authzErr := authorizer.Can(c.Request.Context(), authz.Subject{
-			Role:             claims.Role,
-			AccountStatus:    claims.AccountStatus,
-			SubscriptionTier: claims.SubscriptionTier,
+			Role:             ctx.GetRole(),
+			AccountStatus:    ctx.GetAccountStatus(),
+			SubscriptionTier: ctx.GetSubscriptionTier(),
 		}, action, authz.ResourceGeneral)
 		if authzErr != nil {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{

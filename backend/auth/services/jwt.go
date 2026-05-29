@@ -12,10 +12,11 @@ type AuthClaims struct {
 	Role             string `json:"role"`
 	AccountStatus    string `json:"account_status"`
 	SubscriptionTier string `json:"subscription_tier"`
+	SessionVersion   int32  `json:"session_version"`
 	jwt.RegisteredClaims
 }
 
-func GenerateAccessToken(email, userID, role, accountStatus, subscriptionTier string) (string, error) {
+func GenerateAccessToken(email, userID, role, accountStatus, subscriptionTier string, sessionVersion int32) (string, error) {
 	key := []byte(APPKey.GetValue())
 
 	claims := AuthClaims{
@@ -24,9 +25,10 @@ func GenerateAccessToken(email, userID, role, accountStatus, subscriptionTier st
 		Role:             role,
 		AccountStatus:    accountStatus,
 		SubscriptionTier: subscriptionTier,
+		SessionVersion:   sessionVersion,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(2 * time.Minute)),
 		},
 	}
 

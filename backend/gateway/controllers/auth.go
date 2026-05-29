@@ -26,13 +26,14 @@ const (
 	CodeInvalidResetToken   int32 = 1005
 	CodeExpiredResetToken   int32 = 1006
 	CodeWeakPassword        int32 = 1007
+	CodeSessionInvalidated  int32 = 1008
 	CodeUserServiceError    int32 = 2001
 	CodeInternalError       int32 = 2002
 	CodeNotImplemented      int32 = 2003
 )
 
 const (
-	cookieAccessMaxAge          = 15 * 60          // must not outlive the JWT (services/jwt.go)
+	cookieAccessMaxAge          = 2 * 60           // must not outlive the JWT (services/jwt.go)
 	cookieRefreshMaxAge         = 7 * 24 * 60 * 60 // default refresh-token lifetime
 	cookieRefreshRememberMaxAge = 60 * 24 * 60 * 60
 )
@@ -70,6 +71,7 @@ var authErrors = &serviceErrors{
 		CodeInvalidResetToken:   {http.StatusBadRequest, "Le lien de réinitialisation est invalide ou déjà utilisé."},
 		CodeExpiredResetToken:   {http.StatusGone, "Le lien de réinitialisation a expiré."},
 		CodeWeakPassword:        {http.StatusUnprocessableEntity, "Le mot de passe ne respecte pas la politique de sécurité."},
+		CodeSessionInvalidated:  {http.StatusUnauthorized, "Session expirée, veuillez vous reconnecter."},
 		CodeUserServiceError:    {http.StatusBadGateway, "Erreur lors de la création du compte, veuillez réessayer."},
 		CodeInternalError:       {http.StatusInternalServerError, "Une erreur interne est survenue."},
 		CodeNotImplemented:      {http.StatusNotImplemented, "Cette fonctionnalité n'est pas encore disponible."},

@@ -792,6 +792,15 @@ func ListTaxes(c *gin.Context, client users.UserServiceClient) {
 }
 
 func ListTaxesForUser(c *gin.Context, client users.UserServiceClient) {
+	if status, _ := c.Get(middleware.CtxAccountStatus); status == "suspended" {
+		c.JSON(http.StatusForbidden, gin.H{
+			"success": false,
+			"message": "Compte suspendu: accès restreint.",
+			"code":    "ACCOUNT_SUSPENDED",
+		})
+		return
+	}
+
 	userID := userIDFromCtx(c)
 	if userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Non authentifié."})

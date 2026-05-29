@@ -12,6 +12,8 @@ import (
 )
 
 func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*authGrpc.FormGenericResponse, error) {
+	normalizedEmail := strings.ToLower(strings.TrimSpace(req.Email))
+
 	if fieldErrors := validateRegisterRequest(req); len(fieldErrors) > 0 {
 		return &authGrpc.FormGenericResponse{
 			Success:     false,
@@ -21,7 +23,7 @@ func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*
 	}
 
 	var existingEmail string
-	err := s.db.QueryRowContext(ctx, "SELECT email FROM auth WHERE email = $1", req.Email).Scan(&existingEmail)
+	err := s.db.QueryRowContext(ctx, "SELECT email FROM auth WHERE email = $1", normalizedEmail).Scan(&existingEmail)
 	if err == nil {
 		return &authGrpc.FormGenericResponse{
 			Success: false,
@@ -39,7 +41,7 @@ func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*
 	}
 
 	insertResp, err := s.userClient.CreateUser(ctx, &userGrpc.CreateUserRequest{
-		Email: req.Email,
+		Email: normalizedEmail,
 	})
 	if err != nil {
 		return &authGrpc.FormGenericResponse{
@@ -109,7 +111,7 @@ func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*
 		ctx,
 		"INSERT INTO auth (user_id, email, password, role, account_status, subscription_tier) VALUES ($1, $2, $3, $4, $5, $6)",
 		userID,
-		req.Email,
+		normalizedEmail,
 		hashedPassword,
 		role,
 		"active",

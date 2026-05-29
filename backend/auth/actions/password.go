@@ -76,7 +76,7 @@ func (s *Server) UpdatePassword(ctx context.Context, req *authGrpc.UpdatePasswor
 	}
 	defer tx.Rollback()
 
-	if _, err := tx.ExecContext(ctx, "UPDATE auth SET password = $1 WHERE user_id = $2", hashedNewPassword, userID); err != nil {
+	if _, err := tx.ExecContext(ctx, "UPDATE auth SET password = $1, session_version = session_version + 1 WHERE user_id = $2", hashedNewPassword, userID); err != nil {
 		return &authGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
 
@@ -122,7 +122,7 @@ func (s *Server) ConfirmResetPassword(ctx context.Context, req *authGrpc.Confirm
 	}
 	defer tx.Rollback()
 
-	if _, err := tx.ExecContext(ctx, "UPDATE auth SET password = $1 WHERE user_id = $2", hashedPassword, userID); err != nil {
+	if _, err := tx.ExecContext(ctx, "UPDATE auth SET password = $1, session_version = session_version + 1 WHERE user_id = $2", hashedPassword, userID); err != nil {
 		return &authGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
 

@@ -24,6 +24,8 @@ export type ApiResult = {
   body: ApiBody;
 };
 
+const CODE_SESSION_INVALIDATED = 1008;
+
 // Endpoints that must not trigger the refresh-and-retry loop (would recurse or mask login failures).
 // /api/auth/password/update returns 401 when the current password is wrong — not a session
 // expiry — so refreshing the token and retrying would just log the user out on a typo.
@@ -38,6 +40,7 @@ const REFRESH_SKIP_PATHS = new Set([
 
 // Coalesces concurrent 401s onto a single /api/auth/refresh call.
 let refreshPromise: Promise<boolean> | null = null;
+let sessionInvalidationPromise: Promise<void> | null = null;
 
 function attemptRefresh(): Promise<boolean> {
   if (refreshPromise) return refreshPromise;
@@ -60,8 +63,40 @@ function attemptRefresh(): Promise<boolean> {
 
 function redirectToLogin() {
   if (typeof window !== "undefined") {
-    window.location.href = "/login";
+    const next = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    window.location.href = `/login?next=${encodeURIComponent(next)}`;
   }
+}
+
+async function readResponseCode(
+  response: Response,
+): Promise<number | undefined> {
+  try {
+    const body = (await response.clone().json()) as ApiBody;
+    return body.code;
+  } catch {
+    return undefined;
+  }
+}
+
+async function handleSessionInvalidation(): Promise<void> {
+  if (!sessionInvalidationPromise) {
+    sessionInvalidationPromise = (async () => {
+      try {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        });
+      } catch {
+        // Best effort only: even if logout fails, we still redirect.
+      } finally {
+        redirectToLogin();
+        sessionInvalidationPromise = null;
+      }
+    })();
+  }
+  await sessionInvalidationPromise;
 }
 
 // Runs `doFetch`, retries once after a successful /api/auth/refresh on a 401,
@@ -73,7 +108,15 @@ export async function fetchWithRefresh(
   opts: { skipRefresh?: boolean } = {},
 ): Promise<Response | null> {
   let res = await doFetch();
-  if (res.status !== 401 || opts.skipRefresh) return res;
+  if (res.status !== 401) return res;
+
+  const code = await readResponseCode(res);
+  if (code === CODE_SESSION_INVALIDATED) {
+    await handleSessionInvalidation();
+    return null;
+  }
+
+  if (opts.skipRefresh) return res;
 
   const refreshed = await attemptRefresh();
   if (!refreshed) {

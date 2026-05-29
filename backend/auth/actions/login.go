@@ -5,14 +5,18 @@ import (
 	"database/sql"
 	"project-devis-auth/services"
 	authGrpc "project-devis-auth/services/grpc"
+	"strings"
 )
 
 func (s *Server) Login(ctx context.Context, req *authGrpc.LoginRequest) (*authGrpc.LoginResponse, error) {
+	emailInput := strings.ToLower(strings.TrimSpace(req.Email))
+
 	var storedPassword, userID, email, role, accountStatus, subscriptionTier string
+	var sessionVersion int32
 	err := s.db.QueryRowContext(ctx,
-		"SELECT email, password, user_id, role, account_status, subscription_tier FROM auth WHERE email = $1",
-		req.Email,
-	).Scan(&email, &storedPassword, &userID, &role, &accountStatus, &subscriptionTier)
+		"SELECT email, password, user_id, role, account_status, subscription_tier, session_version FROM auth WHERE email = $1",
+		emailInput,
+	).Scan(&email, &storedPassword, &userID, &role, &accountStatus, &subscriptionTier, &sessionVersion)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			code := CodeUserNotFound
@@ -27,7 +31,7 @@ func (s *Server) Login(ctx context.Context, req *authGrpc.LoginRequest) (*authGr
 		return &authGrpc.LoginResponse{Success: false, Code: &code}, nil
 	}
 
-	accessToken, err := services.GenerateAccessToken(email, userID, role, accountStatus, subscriptionTier)
+	accessToken, err := services.GenerateAccessToken(email, userID, role, accountStatus, subscriptionTier, sessionVersion)
 	if err != nil {
 		code := CodeInternalError
 		return &authGrpc.LoginResponse{Success: false, Code: &code}, err
