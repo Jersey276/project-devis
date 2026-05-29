@@ -6,6 +6,7 @@ Gerer l'authentification et la session:
 
 - inscription
 - connexion
+- reset password (demande + confirmation)
 - refresh token
 - deconnexion
 - operations de compte (email/password)
@@ -45,24 +46,30 @@ Gerer l'authentification et la session:
 
 ### Variables declarees par le service (`services/env.go`)
 
-| Variable               | Usage                    | Definie local | Definie prod  |
-| ---------------------- | ------------------------ | ------------- | ------------- |
-| `ENV`                  | convention environnement | non           | non           |
-| `API_HOST`             | reserve                  | non           | non           |
-| `API_PORT`             | reserve                  | non           | non           |
-| `APP_KEY`              | signature/validation JWT | non (compose) | non (compose) |
-| `POSTGRES_USER`        | compat legacy            | non           | non           |
-| `POSTGRES_PASSWORD`    | compat legacy            | non           | non           |
-| `POSTGRES_DB`          | compat legacy            | non           | non           |
-| `POSTGRES_DB_ADDRESS`  | compat legacy            | non           | non           |
-| `POSTGRES_DB_PORT`     | compat legacy            | non           | non           |
-| `DB_HOST`              | connexion DB             | oui           | oui           |
-| `DB_PORT`              | connexion DB             | oui           | oui           |
-| `DB_USER`              | connexion DB             | oui           | oui           |
-| `DB_PASSWORD`          | fallback secret direct   | non           | non           |
-| `DB_PASSWORD_FILE`     | secret DB via fichier    | oui           | oui           |
-| `DB_NAME`              | base cible               | oui           | oui           |
-| `USER_SERVICE_ADDRESS` | client gRPC users        | oui           | oui           |
+| Variable                  | Usage                    | Definie local | Definie prod    |
+| ------------------------- | ------------------------ | ------------- | --------------- |
+| `ENV`                     | convention environnement | non           | non             |
+| `API_HOST`                | reserve                  | non           | non             |
+| `API_PORT`                | reserve                  | non           | non             |
+| `APP_KEY`                 | signature/validation JWT | non (compose) | non (compose)   |
+| `POSTGRES_USER`           | compat legacy            | non           | non             |
+| `POSTGRES_PASSWORD`       | compat legacy            | non           | non             |
+| `POSTGRES_DB`             | compat legacy            | non           | non             |
+| `POSTGRES_DB_ADDRESS`     | compat legacy            | non           | non             |
+| `POSTGRES_DB_PORT`        | compat legacy            | non           | non             |
+| `DB_HOST`                 | connexion DB             | oui           | oui             |
+| `DB_PORT`                 | connexion DB             | oui           | oui             |
+| `DB_USER`                 | connexion DB             | oui           | oui             |
+| `DB_PASSWORD`             | fallback secret direct   | non           | non             |
+| `DB_PASSWORD_FILE`        | secret DB via fichier    | oui           | oui             |
+| `DB_NAME`                 | base cible               | oui           | oui             |
+| `USER_SERVICE_ADDRESS`    | client gRPC users        | oui           | oui             |
+| `SMTP_HOST`               | hote SMTP                | oui (mailpit) | oui (si active) |
+| `SMTP_PORT`               | port SMTP                | oui           | oui             |
+| `SMTP_USER`               | auth SMTP login          | non           | oui (si requis) |
+| `SMTP_PASSWORD`           | auth SMTP secret         | non           | oui (si requis) |
+| `SMTP_FROM`               | expediteur email         | oui           | oui             |
+| `RESET_PASSWORD_BASE_URL` | URL front lien reset     | oui           | oui             |
 
 ## Contrats et erreurs
 

@@ -2,7 +2,7 @@
 export const FIELD_VALIDATION_MESSAGES: Record<number, string> = {
   1: "Ce champ est requis.",
   2: "Format invalide.",
-  3: "Trop court (8 caractères minimum).",
+  3: "Trop court (12 caractères minimum).",
   4: "Cette adresse email est déjà utilisée.",
 };
 
@@ -32,6 +32,8 @@ const REFRESH_SKIP_PATHS = new Set([
   "/api/auth/login",
   "/api/auth/logout",
   "/api/auth/password/update",
+  "/api/auth/password/reset",
+  "/api/auth/password/confirm-reset",
 ]);
 
 // Coalesces concurrent 401s onto a single /api/auth/refresh call.

@@ -61,6 +61,7 @@ References:
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
 - `POST /api/auth/password/reset`
+- `POST /api/auth/password/confirm-reset`
 - `POST /api/auth/password/update`
 - `POST /api/auth/email/verify`
 

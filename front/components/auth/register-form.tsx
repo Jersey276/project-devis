@@ -33,6 +33,8 @@ type FieldErrors = Record<string, string[]>;
 
 type FormEvent = React.FormEvent<HTMLFormElement>;
 
+type RegisterField = "email" | "password";
+
 function toErrorProps(messages: string[] | undefined) {
   return messages?.map((message) => ({ message }));
 }
@@ -46,8 +48,11 @@ export default function RegisterForm({
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [confirmError, setConfirmError] = useState<string | null>(null);
 
-  function toMessages(codes: number[]): string[] {
+  function toMessages(field: RegisterField, codes: number[]): string[] {
     return codes.map((code) => {
+      if (field === "email" && code === 2) {
+        return t("validation.emailInvalidFormat");
+      }
       const key = FIELD_VALIDATION_KEYS[code];
       return key ? t(`validation.${key}`) : t("validation.unknown", { code });
     });
@@ -93,7 +98,16 @@ export default function RegisterForm({
           field: string;
           error_code: number[];
         }[]) {
-          errors[entry.field] = toMessages(entry.error_code);
+          if (entry.field === "email" || entry.field === "password") {
+            errors[entry.field] = toMessages(entry.field, entry.error_code);
+            continue;
+          }
+          errors[entry.field] = entry.error_code.map((code) => {
+            const key = FIELD_VALIDATION_KEYS[code];
+            return key
+              ? t(`validation.${key}`)
+              : t("validation.unknown", { code });
+          });
         }
         setFieldErrors(errors);
         return;

@@ -200,7 +200,9 @@ describe("Profile page", () => {
       cy.get("input[name='city']").type("Lyon");
       cy.get("input[name='zip_code']").type("69002");
       cy.get("input[name='country_id']").type("Bel");
-      cy.contains("[data-slot='combobox-item']", "Belgique").click({ force: true });
+      cy.contains("[data-slot='combobox-item']", "Belgique").click({
+        force: true,
+      });
 
       cy.contains("[data-slot='dialog-footer'] button", "Enregistrer").click();
 
@@ -268,10 +270,7 @@ describe("Profile page", () => {
           city: "Marseille",
         });
       });
-      cy.get("[data-sonner-toaster]").should(
-        "contain",
-        "Adresse mise à jour.",
-      );
+      cy.get("[data-sonner-toaster]").should("contain", "Adresse mise à jour.");
     });
 
     it("cancels deletion (no API call)", () => {
@@ -380,7 +379,6 @@ describe("Profile page", () => {
 
       cy.wait("@updatePassword").then((interception) => {
         expect(interception.request.body).to.deep.equal({
-          email: USER.email,
           old_password: "currentPass1",
           new_password: "newPassword1",
         });
@@ -466,7 +464,7 @@ describe("Profile page", () => {
       cy.get("input[name='new_password']")
         .closest("[data-slot='field']")
         .find("[data-slot='field-error']")
-        .should("contain", "Trop court (8 caractères minimum).");
+        .should("contain", "Trop court (12 caractères minimum).");
     });
   });
 });

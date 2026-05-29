@@ -7,6 +7,9 @@ const (
 	CodeUserNotFound        int32 = 1002
 	CodeInvalidCredentials  int32 = 1003
 	CodeInvalidRefreshToken int32 = 1004
+	CodeInvalidResetToken   int32 = 1005
+	CodeExpiredResetToken   int32 = 1006
+	CodeWeakPassword        int32 = 1007
 	CodeUserServiceError    int32 = 2001
 	CodeInternalError       int32 = 2002
 	CodeNotImplemented      int32 = 2003

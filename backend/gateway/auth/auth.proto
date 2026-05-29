@@ -8,6 +8,7 @@ service AuthService {
     rpc Register(RegisterRequest) returns (FormGenericResponse);
     rpc Login(LoginRequest) returns (LoginResponse);
     rpc ResetPassword(ResetPasswordRequest) returns (GenericResponse);
+    rpc ConfirmResetPassword(ConfirmResetPasswordRequest) returns (GenericResponse);
     rpc UpdatePassword(UpdatePasswordRequest) returns (GenericResponse);
     rpc VerifyEmail(VerifyEmailRequest) returns (GenericResponse);
     rpc RefreshToken(RefreshTokenRequest) returns (LoginResponse);
@@ -37,6 +38,7 @@ message UpdatePasswordRequest {
     string email = 1;
     string old_password = 2;
     string new_password = 3;
+    string current_refresh_token = 4;
 }
 
 message GenericResponse {
@@ -46,6 +48,11 @@ message GenericResponse {
 
 message ResetPasswordRequest {
     string email = 1;
+}
+
+message ConfirmResetPasswordRequest {
+    string token = 1;
+    string new_password = 2;
 }
 
 message VerifyEmailRequest {

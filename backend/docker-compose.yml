@@ -57,6 +57,17 @@ services:
       DB_USER: devis-auth
       DB_NAME: auth
       USER_SERVICE_ADDRESS: devis-user:50052
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_FROM: no-reply@project-devis.local
+      RESET_PASSWORD_BASE_URL: http://localhost:3000/reset-password
+    depends_on:
+      postgres-init:
+        condition: service_completed_successfully
+      devis-user:
+        condition: service_started
+      mailpit:
+        condition: service_started
 
   devis-user:
     <<: *db-service
@@ -122,6 +133,13 @@ services:
       # Chromium canonicalizes IPv6 to the short form before matching, so these
       # bracketed patterns also cover the equivalent expanded representations.
       - "--chromium-deny-list=^https?://(localhost|0\\.0\\.0\\.0|127\\.|10\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|\\[::1\\]|\\[[fF][cdCD]|\\[[fF][eE][89aAbB])"
+
+  mailpit:
+    <<: *service-defaults
+    image: axllent/mailpit:v1.27
+    ports:
+      - "8025:8025"
+      - "1025:1025"
 
   postgres:
     build: *postgres-build
