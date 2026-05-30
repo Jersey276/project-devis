@@ -50,6 +50,12 @@ func UserRoutes(r *gin.RouterGroup) {
 	me.PUT("", func(c *gin.Context) { UpdateMe(c, client) })
 	me.DELETE("", func(c *gin.Context) { DeleteMe(c, client) })
 
+	admin := r.Group("/admin/accounts")
+	admin.Use(middleware.AdminRequired())
+	admin.GET("", func(c *gin.Context) { ListAdminAccounts(c, client) })
+	admin.PUT("/:userId", func(c *gin.Context) { UpdateAdminAccount(c, client) })
+	admin.POST("/:userId/suspend", func(c *gin.Context) { SuspendAdminAccount(c, client) })
+
 	clients := r.Group("/clients")
 	clients.GET("", func(c *gin.Context) { ListClients(c, client) })
 	clients.POST("", func(c *gin.Context) { CreateClient(c, client) })
@@ -135,7 +141,27 @@ func GetMe(c *gin.Context, client users.UserServiceClient) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "user": resp.User})
 }
 
+func ensureUserWritable(c *gin.Context, client users.UserServiceClient) bool {
+	resp, err := client.GetUserAccessInfo(c.Request.Context(), &users.GetUserAccessInfoRequest{UserId: userIDFromCtx(c)})
+	if err != nil {
+		usersErrors.unavailable(c)
+		return false
+	}
+	if !resp.Success {
+		usersErrors.reply(c, resp.Code)
+		return false
+	}
+	if resp.Suspended {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"success": false, "message": "Compte suspendu. Modification désactivée."})
+		return false
+	}
+	return true
+}
+
 func UpdateMe(c *gin.Context, client users.UserServiceClient) {
+	if !ensureUserWritable(c, client) {
+		return
+	}
 	var input struct {
 		Phone   string `json:"phone"`
 		Company string `json:"company"`
@@ -171,6 +197,9 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 }
 
 func DeleteMe(c *gin.Context, client users.UserServiceClient) {
+	if !ensureUserWritable(c, client) {
+		return
+	}
 	resp, err := client.DeleteUser(c.Request.Context(), &users.DeleteUserRequest{UserId: userIDFromCtx(c)})
 	if err != nil {
 		usersErrors.unavailable(c)
@@ -180,6 +209,105 @@ func DeleteMe(c *gin.Context, client users.UserServiceClient) {
 		usersErrors.reply(c, resp.Code)
 		return
 	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func marshalAdminAccount(a *users.AdminAccount) gin.H {
+	if a == nil {
+		return nil
+	}
+
+	var lastLoginAt any = nil
+	if a.LastLoginAt != "" {
+		lastLoginAt = a.LastLoginAt
+	}
+
+	return gin.H{
+		"user_id":       a.UserId,
+		"first_name":    a.FirstName,
+		"last_name":     a.LastName,
+		"email":         a.Email,
+		"role":          a.Role,
+		"plan":          a.Plan,
+		"last_login_at": lastLoginAt,
+		"suspended":     a.Suspended,
+		"phone":         a.Phone,
+		"company":       a.Company,
+		"siren":         a.Siren,
+		"vat":           a.Vat,
+	}
+}
+
+func ListAdminAccounts(c *gin.Context, client users.UserServiceClient) {
+	resp, err := client.ListAdminAccounts(c.Request.Context(), &users.ListAdminAccountsRequest{})
+	if err != nil {
+		usersErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		usersErrors.reply(c, resp.Code)
+		return
+	}
+
+	out := make([]gin.H, 0, len(resp.Accounts))
+	for _, account := range resp.Accounts {
+		out = append(out, marshalAdminAccount(account))
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "users": out})
+}
+
+func UpdateAdminAccount(c *gin.Context, client users.UserServiceClient) {
+	var input struct {
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+		Email     string `json:"email" binding:"required"`
+		Role      string `json:"role" binding:"required"`
+		Plan      string `json:"plan"`
+		Phone     string `json:"phone"`
+		Company   string `json:"company"`
+		Siren     string `json:"siren"`
+		Vat       string `json:"vat"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+
+	resp, err := client.UpdateAdminAccount(c.Request.Context(), &users.UpdateAdminAccountRequest{
+		UserId:    c.Param("userId"),
+		FirstName: input.FirstName,
+		LastName:  input.LastName,
+		Email:     input.Email,
+		Role:      input.Role,
+		Plan:      input.Plan,
+		Phone:     input.Phone,
+		Company:   input.Company,
+		Siren:     input.Siren,
+		Vat:       input.Vat,
+	})
+	if err != nil {
+		usersErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		usersErrors.reply(c, resp.Code)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func SuspendAdminAccount(c *gin.Context, client users.UserServiceClient) {
+	resp, err := client.SuspendAdminAccount(c.Request.Context(), &users.SuspendAdminAccountRequest{UserId: c.Param("userId")})
+	if err != nil {
+		usersErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		usersErrors.reply(c, resp.Code)
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
