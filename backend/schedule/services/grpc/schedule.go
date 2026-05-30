@@ -67,6 +67,11 @@ type GetScheduleRequest struct {
 	UserId     string
 }
 
+type ListSchedulesRequest struct {
+	UserId  string
+	QuoteId string
+}
+
 type ScheduleLineSummary struct {
 	QuoteLineId   string
 	PlannedCents  int64
@@ -95,6 +100,21 @@ type GetScheduleResponse struct {
 	Success  bool
 	Code     int32
 	Schedule *ScheduleDetails
+}
+
+type ScheduleSummary struct {
+	ScheduleId     string
+	QuoteId        string
+	Status         string
+	Name           string
+	StartMonth     string
+	DurationMonths int32
+}
+
+type ListSchedulesResponse struct {
+	Success   bool
+	Code      int32
+	Schedules []*ScheduleSummary
 }
 
 var _ context.Context
