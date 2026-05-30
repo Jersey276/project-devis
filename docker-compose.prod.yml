@@ -48,6 +48,7 @@ services:
       AUTH_SERVICE_ADDRESS: devis-auth:50051
       USER_SERVICE_ADDRESS: devis-user:50052
       QUOTE_SERVICE_ADDRESS: devis-quote:50053
+      SCHEDULE_SERVICE_ADDRESS: devis-schedule:50056
       EXPORT_SERVICE_ADDRESS: devis-export:50054
     ports:
       - "8080:8080"
@@ -55,6 +56,7 @@ services:
       - devis-auth
       - devis-user
       - devis-quote
+      - devis-schedule
       - devis-export
 
   devis-auth:
@@ -87,6 +89,15 @@ services:
       <<: *db-common-env
       DB_USER: devis-quote
       DB_NAME: ${QUOTE_DB_NAME:-quote}
+
+  devis-schedule:
+    <<: *db-service
+    image: ${IMAGE_PREFIX}/schedule:${IMAGE_TAG:-latest}
+    environment:
+      <<: *db-common-env
+      DB_USER: devis-schedule
+      DB_NAME: ${SCHEDULE_DB_NAME:-schedule}
+      QUOTE_SERVICE_ADDRESS: devis-quote:50053
 
   devis-export:
     <<: *service-defaults
