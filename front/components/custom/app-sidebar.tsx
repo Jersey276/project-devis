@@ -32,6 +32,7 @@ import { isSuperAdmin, type AuthContext } from "@/lib/access";
 
 type NavKey =
   | "quote"
+  | "schedule"
   | "invoices"
   | "clients"
   | "users"
@@ -58,6 +59,12 @@ const items: SidebarItem[] = [
     key: "quote",
     url: "/quote",
     icon: QuoteIcon,
+  },
+  {
+    key: "schedule",
+    url: "/schedule",
+    icon: QuoteIcon,
+    modes: ["provider"],
   },
   // {
   //   key: "invoices",
@@ -126,11 +133,7 @@ export default function AppSidebar() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!isAdmin && sidebarView !== "user") {
-      setSidebarView("user");
-    }
-  }, [isAdmin, sidebarView]);
+  const effectiveSidebarView: SidebarView = isAdmin ? sidebarView : "user";
 
   const visibleItems = useMemo(
     () =>
@@ -152,10 +155,12 @@ export default function AppSidebar() {
     [visibleItems],
   );
 
-  const shownItems = sidebarView === "admin" ? adminItems : userItems;
+  const shownItems = effectiveSidebarView === "admin" ? adminItems : userItems;
 
   const shownGroupLabel =
-    sidebarView === "admin" ? t("adminGroupLabel") : t("userGroupLabel");
+    effectiveSidebarView === "admin"
+      ? t("adminGroupLabel")
+      : t("userGroupLabel");
 
   return (
     <Sidebar data-mode={mode}>
