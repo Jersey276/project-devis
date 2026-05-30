@@ -62,4 +62,39 @@ type ValidateScheduleRequest struct {
 	UserId     string
 }
 
+type GetScheduleRequest struct {
+	ScheduleId string
+	UserId     string
+}
+
+type ScheduleLineSummary struct {
+	QuoteLineId   string
+	PlannedCents  int64
+	ExpectedCents int64
+}
+
+type ScheduleColumnTotal struct {
+	MonthIndex  int32
+	AmountCents int64
+}
+
+type ScheduleDetails struct {
+	ScheduleId        string
+	QuoteId           string
+	Status            string
+	Name              string
+	StartMonth        string
+	DurationMonths    int32
+	Lines             []*ScheduleLineSummary
+	ColumnTotals      []*ScheduleColumnTotal
+	QuoteTotalCents   int64
+	PlannedTotalCents int64
+}
+
+type GetScheduleResponse struct {
+	Success  bool
+	Code     int32
+	Schedule *ScheduleDetails
+}
+
 var _ context.Context
