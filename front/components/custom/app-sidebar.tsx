@@ -4,12 +4,15 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
+  ShieldIcon,
+  UserIcon,
   GlobeIcon,
   PercentIcon,
   QuoteIcon,
   WrenchIcon,
   type LucideIcon,
 } from "lucide-react";
+import { Button } from "../ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -45,6 +48,8 @@ type SidebarItem = {
   temp?: boolean;
   adminOnly?: boolean;
 };
+
+type SidebarView = "user" | "admin";
 
 const items: SidebarItem[] = [
   {
@@ -98,6 +103,7 @@ export default function AppSidebar() {
   const { mode } = useMode();
   const t = useTranslations("nav");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [sidebarView, setSidebarView] = useState<SidebarView>("user");
 
   useEffect(() => {
     let cancelled = false;
@@ -111,6 +117,12 @@ export default function AppSidebar() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isAdmin && sidebarView !== "user") {
+      setSidebarView("user");
+    }
+  }, [isAdmin, sidebarView]);
+
   const visibleItems = useMemo(
     () =>
       items.filter(
@@ -120,14 +132,58 @@ export default function AppSidebar() {
       ),
     [mode, isAdmin],
   );
+
+  const userItems = useMemo(
+    () => visibleItems.filter((item) => !item.adminOnly),
+    [visibleItems],
+  );
+
+  const adminItems = useMemo(
+    () => visibleItems.filter((item) => item.adminOnly),
+    [visibleItems],
+  );
+
+  const shownItems = sidebarView === "admin" ? adminItems : userItems;
+
+  const shownGroupLabel =
+    sidebarView === "admin" ? t("adminGroupLabel") : t("userGroupLabel");
+
   return (
     <Sidebar data-mode={mode}>
       <SidebarContent className="bg-primary-foreground text-primary">
+        {isAdmin && adminItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>{t("viewSwitchLabel")}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={sidebarView === "user" ? "default" : "outline"}
+                  onClick={() => setSidebarView("user")}
+                >
+                  <UserIcon />
+                  <span>{t("userViewButton")}</span>
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={sidebarView === "admin" ? "default" : "outline"}
+                  onClick={() => setSidebarView("admin")}
+                >
+                  <ShieldIcon />
+                  <span>{t("adminViewButton")}</span>
+                </Button>
+              </div>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         <SidebarGroup>
-          <SidebarGroupLabel>{t("appGroupLabel")}</SidebarGroupLabel>
+          <SidebarGroupLabel>{shownGroupLabel}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {visibleItems.map((item) => (
+              {shownItems.map((item) => (
                 <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton asChild>
                     <Link href={item.url}>

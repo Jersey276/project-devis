@@ -22,6 +22,11 @@
   },
   "nav": {
     "appGroupLabel": "Application",
+    "userGroupLabel": "Menu utilisateur",
+    "adminGroupLabel": "Administration",
+    "viewSwitchLabel": "Vue de la sidebar",
+    "userViewButton": "Utilisateur",
+    "adminViewButton": "Admin",
     "quote": "Devis",
     "invoices": "Factures",
     "clients": "Clients",
