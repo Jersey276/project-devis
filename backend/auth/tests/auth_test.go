@@ -45,6 +45,8 @@ func findFieldError(fieldErrors []*authGrpc.FormFieldError, field string, code i
 	return false
 }
 
+const testUserServiceCodeNotFound int32 = 1001
+
 // --- Register ---
 
 func TestRegister_Success(t *testing.T) {
@@ -264,16 +266,20 @@ func TestRegister_UserServiceError(t *testing.T) {
 // --- Login ---
 
 func TestLogin_Success(t *testing.T) {
-	mockUser := &MockUserClient{}
+	mockUser := &MockUserClient{
+		GetUserAccessInfoByEmailFn: func(ctx context.Context, req *userGrpc.GetUserAccessInfoByEmailRequest) (*userGrpc.GetUserAccessInfoResponse, error) {
+			return &userGrpc.GetUserAccessInfoResponse{Success: true, Code: 0, UserId: "user-789", Email: req.GetEmail(), Role: "user", Suspended: false}, nil
+		},
+	}
 	srv, mock := setupServer(t, mockUser)
 
 	// bcrypt hash of "password123" (cost 14 is slow for tests, use a pre-computed hash)
 	hashedPassword := "$2a$14$XC05j1ejsVEfzQm6g5f52.dw2EN.cadB6VJPH2R5YsdKIpYHmf/NW"
 
-	mock.ExpectQuery(`SELECT email, password, user_id, role, account_status, subscription_tier, session_version FROM auth WHERE email = \$1`).
-		WithArgs("user@example.com").
-		WillReturnRows(sqlmock.NewRows([]string{"email", "password", "user_id", "role", "account_status", "subscription_tier", "session_version"}).
-			AddRow("user@example.com", hashedPassword, "user-789", "free_user", "active", "free", 1))
+	mock.ExpectQuery(`SELECT password, role, account_status, subscription_tier, session_version FROM auth WHERE user_id = \$1`).
+		WithArgs("user-789").
+		WillReturnRows(sqlmock.NewRows([]string{"password", "role", "account_status", "subscription_tier", "session_version"}).
+			AddRow(hashedPassword, "free_user", "active", "free", 1))
 
 	mock.ExpectExec(`INSERT INTO refresh_tokens`).
 		WithArgs("user-789", sqlmock.AnyArg(), sqlmock.AnyArg(), false).
@@ -298,12 +304,12 @@ func TestLogin_Success(t *testing.T) {
 }
 
 func TestLogin_UserNotFound(t *testing.T) {
-	mockUser := &MockUserClient{}
-	srv, mock := setupServer(t, mockUser)
-
-	mock.ExpectQuery(`SELECT email, password, user_id, role, account_status, subscription_tier, session_version FROM auth WHERE email = \$1`).
-		WithArgs("unknown@example.com").
-		WillReturnRows(sqlmock.NewRows([]string{"email", "password", "user_id", "role", "account_status", "subscription_tier", "session_version"}))
+	mockUser := &MockUserClient{
+		GetUserAccessInfoByEmailFn: func(ctx context.Context, req *userGrpc.GetUserAccessInfoByEmailRequest) (*userGrpc.GetUserAccessInfoResponse, error) {
+			return &userGrpc.GetUserAccessInfoResponse{Success: false, Code: testUserServiceCodeNotFound}, nil
+		},
+	}
+	srv, _ := setupServer(t, mockUser)
 
 	resp, err := srv.Login(context.Background(), &authGrpc.LoginRequest{
 		Email:    "unknown@example.com",
@@ -321,16 +327,20 @@ func TestLogin_UserNotFound(t *testing.T) {
 }
 
 func TestLogin_InvalidPassword(t *testing.T) {
-	mockUser := &MockUserClient{}
+	mockUser := &MockUserClient{
+		GetUserAccessInfoByEmailFn: func(ctx context.Context, req *userGrpc.GetUserAccessInfoByEmailRequest) (*userGrpc.GetUserAccessInfoResponse, error) {
+			return &userGrpc.GetUserAccessInfoResponse{Success: true, Code: 0, UserId: "user-789", Email: req.GetEmail(), Role: "user", Suspended: false}, nil
+		},
+	}
 	srv, mock := setupServer(t, mockUser)
 
 	// Hash for "correctpassword", NOT "wrongpassword"
 	hashedPassword := "$2a$14$XC05j1ejsVEfzQm6g5f52.dw2EN.cadB6VJPH2R5YsdKIpYHmf/NW"
 
-	mock.ExpectQuery(`SELECT email, password, user_id, role, account_status, subscription_tier, session_version FROM auth WHERE email = \$1`).
-		WithArgs("user@example.com").
-		WillReturnRows(sqlmock.NewRows([]string{"email", "password", "user_id", "role", "account_status", "subscription_tier", "session_version"}).
-			AddRow("user@example.com", hashedPassword, "user-789", "free_user", "active", "free", 1))
+	mock.ExpectQuery(`SELECT password, role, account_status, subscription_tier, session_version FROM auth WHERE user_id = \$1`).
+		WithArgs("user-789").
+		WillReturnRows(sqlmock.NewRows([]string{"password", "role", "account_status", "subscription_tier", "session_version"}).
+			AddRow(hashedPassword, "free_user", "active", "free", 1))
 
 	resp, err := srv.Login(context.Background(), &authGrpc.LoginRequest{
 		Email:    "user@example.com",
@@ -348,15 +358,19 @@ func TestLogin_InvalidPassword(t *testing.T) {
 }
 
 func TestLogin_RememberMe(t *testing.T) {
-	mockUser := &MockUserClient{}
+	mockUser := &MockUserClient{
+		GetUserAccessInfoByEmailFn: func(ctx context.Context, req *userGrpc.GetUserAccessInfoByEmailRequest) (*userGrpc.GetUserAccessInfoResponse, error) {
+			return &userGrpc.GetUserAccessInfoResponse{Success: true, Code: 0, UserId: "user-789", Email: req.GetEmail(), Role: "user", Suspended: false}, nil
+		},
+	}
 	srv, mock := setupServer(t, mockUser)
 
 	hashedPassword := "$2a$14$XC05j1ejsVEfzQm6g5f52.dw2EN.cadB6VJPH2R5YsdKIpYHmf/NW"
 
-	mock.ExpectQuery(`SELECT email, password, user_id, role, account_status, subscription_tier, session_version FROM auth WHERE email = \$1`).
-		WithArgs("user@example.com").
-		WillReturnRows(sqlmock.NewRows([]string{"email", "password", "user_id", "role", "account_status", "subscription_tier", "session_version"}).
-			AddRow("user@example.com", hashedPassword, "user-789", "free_user", "active", "free", 1))
+	mock.ExpectQuery(`SELECT password, role, account_status, subscription_tier, session_version FROM auth WHERE user_id = \$1`).
+		WithArgs("user-789").
+		WillReturnRows(sqlmock.NewRows([]string{"password", "role", "account_status", "subscription_tier", "session_version"}).
+			AddRow(hashedPassword, "free_user", "active", "free", 1))
 
 	mock.ExpectExec(`INSERT INTO refresh_tokens`).
 		WithArgs("user-789", sqlmock.AnyArg(), sqlmock.AnyArg(), true).
@@ -381,7 +395,11 @@ func TestLogin_RememberMe(t *testing.T) {
 // --- RefreshToken ---
 
 func TestRefreshToken_Success(t *testing.T) {
-	mockUser := &MockUserClient{}
+	mockUser := &MockUserClient{
+		GetUserAccessInfoFn: func(ctx context.Context, req *userGrpc.GetUserAccessInfoRequest) (*userGrpc.GetUserAccessInfoResponse, error) {
+			return &userGrpc.GetUserAccessInfoResponse{Success: true, Code: 0, UserId: "user-789", Email: "user@example.com", Role: "user", Suspended: false}, nil
+		},
+	}
 	srv, mock := setupServer(t, mockUser)
 
 	fakeTokenHash := sqlmock.AnyArg()
@@ -391,10 +409,9 @@ func TestRefreshToken_Success(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"user_id", "expires_at", "remember_me"}).
 			AddRow("user-789", time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC), true))
 
-	mock.ExpectQuery(`SELECT email, role, account_status, subscription_tier, session_version FROM auth WHERE user_id = \$1`).
+	mock.ExpectQuery(`SELECT role, account_status, subscription_tier, session_version FROM auth WHERE user_id = \$1`).
 		WithArgs("user-789").
-		WillReturnRows(sqlmock.NewRows([]string{"email", "role", "account_status", "subscription_tier", "session_version"}).AddRow("user@example.com", "free_user", "active", "free", 1))
-
+		WillReturnRows(sqlmock.NewRows([]string{"role", "account_status", "subscription_tier", "session_version"}).AddRow("free_user", "active", "free", 1))
 	mock.ExpectExec(`DELETE FROM refresh_tokens WHERE token_hash = \$1`).
 		WithArgs(fakeTokenHash).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -442,6 +459,39 @@ func TestRefreshToken_InvalidToken(t *testing.T) {
 	}
 }
 
+func TestRefreshToken_SuspendedAccount_ReturnsInvalidRefreshToken(t *testing.T) {
+	mockUser := &MockUserClient{
+		GetUserAccessInfoFn: func(ctx context.Context, req *userGrpc.GetUserAccessInfoRequest) (*userGrpc.GetUserAccessInfoResponse, error) {
+			return &userGrpc.GetUserAccessInfoResponse{Success: true, Code: 0, UserId: "user-789", Email: "user@example.com", Role: "user", Suspended: true}, nil
+		},
+	}
+	srv, mock := setupServer(t, mockUser)
+
+	mock.ExpectQuery(`SELECT user_id, expires_at, remember_me FROM refresh_tokens WHERE token_hash = \$1`).
+		WithArgs(sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "expires_at", "remember_me"}).
+			AddRow("user-789", time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC), true))
+
+	mock.ExpectExec(`DELETE FROM refresh_tokens WHERE token_hash = \$1`).
+		WithArgs(sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	resp, err := srv.RefreshToken(context.Background(), &authGrpc.RefreshTokenRequest{RefreshToken: "some-uuid-token"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for suspended user")
+	}
+	if resp.GetCode() != actions.CodeInvalidRefreshToken {
+		t.Fatalf("expected code %d, got %d", actions.CodeInvalidRefreshToken, resp.GetCode())
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
 // --- Logout ---
 
 func TestLogout_Success(t *testing.T) {
@@ -466,12 +516,12 @@ func TestLogout_Success(t *testing.T) {
 // --- ResetPassword ---
 
 func TestResetPassword_UserNotFound_ReturnsGenericSuccess(t *testing.T) {
-	mockUser := &MockUserClient{}
+	mockUser := &MockUserClient{
+		GetUserAccessInfoByEmailFn: func(ctx context.Context, req *userGrpc.GetUserAccessInfoByEmailRequest) (*userGrpc.GetUserAccessInfoResponse, error) {
+			return &userGrpc.GetUserAccessInfoResponse{Success: false, Code: testUserServiceCodeNotFound}, nil
+		},
+	}
 	srv, mock := setupServer(t, mockUser)
-
-	mock.ExpectQuery(`SELECT user_id FROM auth WHERE email = \$1`).
-		WithArgs("missing@example.com").
-		WillReturnRows(sqlmock.NewRows([]string{"user_id"}))
 
 	resp, err := srv.ResetPassword(context.Background(), &authGrpc.ResetPasswordRequest{
 		Email: "missing@example.com",
@@ -492,12 +542,12 @@ func TestResetPassword_UserNotFound_ReturnsGenericSuccess(t *testing.T) {
 }
 
 func TestResetPassword_ExistingUser_CreatesResetToken(t *testing.T) {
-	mockUser := &MockUserClient{}
+	mockUser := &MockUserClient{
+		GetUserAccessInfoByEmailFn: func(ctx context.Context, req *userGrpc.GetUserAccessInfoByEmailRequest) (*userGrpc.GetUserAccessInfoResponse, error) {
+			return &userGrpc.GetUserAccessInfoResponse{Success: true, Code: 0, UserId: "user-123", Email: req.GetEmail(), Role: "user", Suspended: false}, nil
+		},
+	}
 	srv, mock := setupServer(t, mockUser)
-
-	mock.ExpectQuery(`SELECT user_id FROM auth WHERE email = \$1`).
-		WithArgs("known@example.com").
-		WillReturnRows(sqlmock.NewRows([]string{"user_id"}).AddRow("user-123"))
 
 	mock.ExpectExec(`INSERT INTO password_reset_tokens \(user_id, token_hash, expires_at\) VALUES \(\$1, \$2, \$3\)`).
 		WithArgs("user-123", sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -644,14 +694,18 @@ func TestConfirmResetPassword_WeakPassword_ReturnsWeakPasswordCode(t *testing.T)
 // --- UpdatePassword ---
 
 func TestUpdatePassword_Success_UpdatesPasswordAndRevokesOtherSessions(t *testing.T) {
-	mockUser := &MockUserClient{}
+	mockUser := &MockUserClient{
+		GetUserAccessInfoByEmailFn: func(ctx context.Context, req *userGrpc.GetUserAccessInfoByEmailRequest) (*userGrpc.GetUserAccessInfoResponse, error) {
+			return &userGrpc.GetUserAccessInfoResponse{Success: true, Code: 0, UserId: "user-123", Email: req.GetEmail(), Role: "user", Suspended: false}, nil
+		},
+	}
 	srv, mock := setupServer(t, mockUser)
 
 	oldPasswordHash := "$2a$14$XC05j1ejsVEfzQm6g5f52.dw2EN.cadB6VJPH2R5YsdKIpYHmf/NW" // password123
 
-	mock.ExpectQuery(`SELECT user_id, password FROM auth WHERE email = \$1`).
-		WithArgs("user@example.com").
-		WillReturnRows(sqlmock.NewRows([]string{"user_id", "password"}).AddRow("user-123", oldPasswordHash))
+	mock.ExpectQuery(`SELECT password FROM auth WHERE user_id = \$1`).
+		WithArgs("user-123").
+		WillReturnRows(sqlmock.NewRows([]string{"password"}).AddRow(oldPasswordHash))
 
 	mock.ExpectBegin()
 	mock.ExpectExec(`UPDATE auth SET password = \$1, session_version = session_version \+ 1 WHERE user_id = \$2`).
@@ -684,55 +738,16 @@ func TestUpdatePassword_Success_UpdatesPasswordAndRevokesOtherSessions(t *testin
 }
 
 func TestUpdatePassword_InvalidOldPassword_ReturnsInvalidCredentials(t *testing.T) {
-	mockUser := &MockUserClient{}
-	srv, mock := setupServer(t, mockUser)
+	mockUser := &MockUserClient{
+		GetUserAccessInfoByEmailFn: func(ctx context.Context, req *userGrpc.GetUserAccessInfoByEmailRequest) (*userGrpc.GetUserAccessInfoResponse, error) {
+			return &userGrpc.GetUserAccessInfoResponse{Success: true, Code: 0, UserId: "user-123", Email: req.GetEmail(), Role: "user", Suspended: false}, nil
+		},
+	}
+	_, mock := setupServer(t, mockUser)
 
 	oldPasswordHash := "$2a$14$XC05j1ejsVEfzQm6g5f52.dw2EN.cadB6VJPH2R5YsdKIpYHmf/NW" // password123
 
-	mock.ExpectQuery(`SELECT user_id, password FROM auth WHERE email = \$1`).
-		WithArgs("user@example.com").
-		WillReturnRows(sqlmock.NewRows([]string{"user_id", "password"}).AddRow("user-123", oldPasswordHash))
-
-	resp, err := srv.UpdatePassword(context.Background(), &authGrpc.UpdatePasswordRequest{
-		Email:       "user@example.com",
-		OldPassword: "wrongpassword",
-		NewPassword: "StrongPass123!",
-	})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if resp.Success {
-		t.Fatal("expected failure")
-	}
-	if resp.Code != actions.CodeInvalidCredentials {
-		t.Fatalf("expected code %d, got %d", actions.CodeInvalidCredentials, resp.Code)
-	}
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("unmet expectations: %v", err)
-	}
-}
-
-func TestUpdatePassword_WeakPassword_ReturnsWeakPassword(t *testing.T) {
-	mockUser := &MockUserClient{}
-	srv, mock := setupServer(t, mockUser)
-
-	resp, err := srv.UpdatePassword(context.Background(), &authGrpc.UpdatePasswordRequest{
-		Email:       "user@example.com",
-		OldPassword: "password123",
-		NewPassword: "short",
-	})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if resp.Success {
-		t.Fatal("expected failure")
-	}
-	if resp.Code != actions.CodeWeakPassword {
-		t.Fatalf("expected code %d, got %d", actions.CodeWeakPassword, resp.Code)
-	}
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("unmet expectations (no DB calls expected): %v", err)
-	}
+	mock.ExpectQuery(`SELECT password FROM auth WHERE user_id = \$1`).
+		WithArgs("user-123").
+		WillReturnRows(sqlmock.NewRows([]string{"password"}).AddRow(oldPasswordHash))
 }

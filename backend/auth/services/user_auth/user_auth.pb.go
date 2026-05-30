@@ -2,7 +2,10 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v7.34.0
-// source: services/user_auth/user_auth.proto
+// source: user_auth.proto
+
+// Package matches the users service so the wire format aligns:
+// /users.UserService/CreateUser and /users.UserService/DeleteUser
 
 package user_auth
 
@@ -30,7 +33,7 @@ type CreateUserRequest struct {
 
 func (x *CreateUserRequest) Reset() {
 	*x = CreateUserRequest{}
-	mi := &file_services_user_auth_user_auth_proto_msgTypes[0]
+	mi := &file_user_auth_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -42,7 +45,7 @@ func (x *CreateUserRequest) String() string {
 func (*CreateUserRequest) ProtoMessage() {}
 
 func (x *CreateUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_user_auth_user_auth_proto_msgTypes[0]
+	mi := &file_user_auth_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -55,7 +58,7 @@ func (x *CreateUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateUserRequest.ProtoReflect.Descriptor instead.
 func (*CreateUserRequest) Descriptor() ([]byte, []int) {
-	return file_services_user_auth_user_auth_proto_rawDescGZIP(), []int{0}
+	return file_user_auth_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *CreateUserRequest) GetEmail() string {
@@ -76,7 +79,7 @@ type CreateUserResponse struct {
 
 func (x *CreateUserResponse) Reset() {
 	*x = CreateUserResponse{}
-	mi := &file_services_user_auth_user_auth_proto_msgTypes[1]
+	mi := &file_user_auth_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -88,7 +91,7 @@ func (x *CreateUserResponse) String() string {
 func (*CreateUserResponse) ProtoMessage() {}
 
 func (x *CreateUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_services_user_auth_user_auth_proto_msgTypes[1]
+	mi := &file_user_auth_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -101,7 +104,7 @@ func (x *CreateUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateUserResponse.ProtoReflect.Descriptor instead.
 func (*CreateUserResponse) Descriptor() ([]byte, []int) {
-	return file_services_user_auth_user_auth_proto_rawDescGZIP(), []int{1}
+	return file_user_auth_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *CreateUserResponse) GetSuccess() bool {
@@ -134,7 +137,7 @@ type DeleteUserRequest struct {
 
 func (x *DeleteUserRequest) Reset() {
 	*x = DeleteUserRequest{}
-	mi := &file_services_user_auth_user_auth_proto_msgTypes[2]
+	mi := &file_user_auth_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -146,7 +149,7 @@ func (x *DeleteUserRequest) String() string {
 func (*DeleteUserRequest) ProtoMessage() {}
 
 func (x *DeleteUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_user_auth_user_auth_proto_msgTypes[2]
+	mi := &file_user_auth_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -159,10 +162,226 @@ func (x *DeleteUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteUserRequest.ProtoReflect.Descriptor instead.
 func (*DeleteUserRequest) Descriptor() ([]byte, []int) {
-	return file_services_user_auth_user_auth_proto_rawDescGZIP(), []int{2}
+	return file_user_auth_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *DeleteUserRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type GetUserAccessInfoRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserAccessInfoRequest) Reset() {
+	*x = GetUserAccessInfoRequest{}
+	mi := &file_user_auth_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserAccessInfoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserAccessInfoRequest) ProtoMessage() {}
+
+func (x *GetUserAccessInfoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_auth_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserAccessInfoRequest.ProtoReflect.Descriptor instead.
+func (*GetUserAccessInfoRequest) Descriptor() ([]byte, []int) {
+	return file_user_auth_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetUserAccessInfoRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type GetUserAccessInfoByEmailRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserAccessInfoByEmailRequest) Reset() {
+	*x = GetUserAccessInfoByEmailRequest{}
+	mi := &file_user_auth_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserAccessInfoByEmailRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserAccessInfoByEmailRequest) ProtoMessage() {}
+
+func (x *GetUserAccessInfoByEmailRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_auth_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserAccessInfoByEmailRequest.ProtoReflect.Descriptor instead.
+func (*GetUserAccessInfoByEmailRequest) Descriptor() ([]byte, []int) {
+	return file_user_auth_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetUserAccessInfoByEmailRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+type GetUserAccessInfoResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	UserId        string                 `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Email         string                 `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
+	Role          string                 `protobuf:"bytes,5,opt,name=role,proto3" json:"role,omitempty"`
+	Suspended     bool                   `protobuf:"varint,6,opt,name=suspended,proto3" json:"suspended,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserAccessInfoResponse) Reset() {
+	*x = GetUserAccessInfoResponse{}
+	mi := &file_user_auth_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserAccessInfoResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserAccessInfoResponse) ProtoMessage() {}
+
+func (x *GetUserAccessInfoResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_user_auth_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserAccessInfoResponse.ProtoReflect.Descriptor instead.
+func (*GetUserAccessInfoResponse) Descriptor() ([]byte, []int) {
+	return file_user_auth_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetUserAccessInfoResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *GetUserAccessInfoResponse) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *GetUserAccessInfoResponse) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *GetUserAccessInfoResponse) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *GetUserAccessInfoResponse) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *GetUserAccessInfoResponse) GetSuspended() bool {
+	if x != nil {
+		return x.Suspended
+	}
+	return false
+}
+
+type TouchUserLastLoginRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TouchUserLastLoginRequest) Reset() {
+	*x = TouchUserLastLoginRequest{}
+	mi := &file_user_auth_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TouchUserLastLoginRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TouchUserLastLoginRequest) ProtoMessage() {}
+
+func (x *TouchUserLastLoginRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_auth_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TouchUserLastLoginRequest.ProtoReflect.Descriptor instead.
+func (*TouchUserLastLoginRequest) Descriptor() ([]byte, []int) {
+	return file_user_auth_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *TouchUserLastLoginRequest) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
@@ -179,7 +398,7 @@ type GenericResponse struct {
 
 func (x *GenericResponse) Reset() {
 	*x = GenericResponse{}
-	mi := &file_services_user_auth_user_auth_proto_msgTypes[3]
+	mi := &file_user_auth_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -191,7 +410,7 @@ func (x *GenericResponse) String() string {
 func (*GenericResponse) ProtoMessage() {}
 
 func (x *GenericResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_services_user_auth_user_auth_proto_msgTypes[3]
+	mi := &file_user_auth_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -204,7 +423,7 @@ func (x *GenericResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenericResponse.ProtoReflect.Descriptor instead.
 func (*GenericResponse) Descriptor() ([]byte, []int) {
-	return file_services_user_auth_user_auth_proto_rawDescGZIP(), []int{3}
+	return file_user_auth_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GenericResponse) GetSuccess() bool {
@@ -221,11 +440,11 @@ func (x *GenericResponse) GetCode() int32 {
 	return 0
 }
 
-var File_services_user_auth_user_auth_proto protoreflect.FileDescriptor
+var File_user_auth_proto protoreflect.FileDescriptor
 
-const file_services_user_auth_user_auth_proto_rawDesc = "" +
+const file_user_auth_proto_rawDesc = "" +
 	"\n" +
-	"\"services/user_auth/user_auth.proto\x12\x05users\")\n" +
+	"\x0fuser_auth.proto\x12\x05users\")\n" +
 	"\x11CreateUserRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\"[\n" +
 	"\x12CreateUserResponse\x12\x18\n" +
@@ -233,67 +452,93 @@ const file_services_user_auth_user_auth_proto_rawDesc = "" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x17\n" +
 	"\auser_id\x18\x03 \x01(\tR\x06userId\",\n" +
 	"\x11DeleteUserRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"3\n" +
+	"\x18GetUserAccessInfoRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"7\n" +
+	"\x1fGetUserAccessInfoByEmailRequest\x12\x14\n" +
+	"\x05email\x18\x01 \x01(\tR\x05email\"\xaa\x01\n" +
+	"\x19GetUserAccessInfoResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x17\n" +
+	"\auser_id\x18\x03 \x01(\tR\x06userId\x12\x14\n" +
+	"\x05email\x18\x04 \x01(\tR\x05email\x12\x12\n" +
+	"\x04role\x18\x05 \x01(\tR\x04role\x12\x1c\n" +
+	"\tsuspended\x18\x06 \x01(\bR\tsuspended\"4\n" +
+	"\x19TouchUserLastLoginRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\"?\n" +
 	"\x0fGenericResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\x05R\x04code2\x90\x01\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code2\x9e\x03\n" +
 	"\vUserService\x12A\n" +
 	"\n" +
 	"CreateUser\x12\x18.users.CreateUserRequest\x1a\x19.users.CreateUserResponse\x12>\n" +
 	"\n" +
-	"DeleteUser\x12\x18.users.DeleteUserRequest\x1a\x16.users.GenericResponseB'Z%project-devis-auth/services/user_authb\x06proto3"
+	"DeleteUser\x12\x18.users.DeleteUserRequest\x1a\x16.users.GenericResponse\x12d\n" +
+	"\x18GetUserAccessInfoByEmail\x12&.users.GetUserAccessInfoByEmailRequest\x1a .users.GetUserAccessInfoResponse\x12V\n" +
+	"\x11GetUserAccessInfo\x12\x1f.users.GetUserAccessInfoRequest\x1a .users.GetUserAccessInfoResponse\x12N\n" +
+	"\x12TouchUserLastLogin\x12 .users.TouchUserLastLoginRequest\x1a\x16.users.GenericResponseB'Z%project-devis-auth/services/user_authb\x06proto3"
 
 var (
-	file_services_user_auth_user_auth_proto_rawDescOnce sync.Once
-	file_services_user_auth_user_auth_proto_rawDescData []byte
+	file_user_auth_proto_rawDescOnce sync.Once
+	file_user_auth_proto_rawDescData []byte
 )
 
-func file_services_user_auth_user_auth_proto_rawDescGZIP() []byte {
-	file_services_user_auth_user_auth_proto_rawDescOnce.Do(func() {
-		file_services_user_auth_user_auth_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_services_user_auth_user_auth_proto_rawDesc), len(file_services_user_auth_user_auth_proto_rawDesc)))
+func file_user_auth_proto_rawDescGZIP() []byte {
+	file_user_auth_proto_rawDescOnce.Do(func() {
+		file_user_auth_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_user_auth_proto_rawDesc), len(file_user_auth_proto_rawDesc)))
 	})
-	return file_services_user_auth_user_auth_proto_rawDescData
+	return file_user_auth_proto_rawDescData
 }
 
-var file_services_user_auth_user_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
-var file_services_user_auth_user_auth_proto_goTypes = []any{
-	(*CreateUserRequest)(nil),  // 0: users.CreateUserRequest
-	(*CreateUserResponse)(nil), // 1: users.CreateUserResponse
-	(*DeleteUserRequest)(nil),  // 2: users.DeleteUserRequest
-	(*GenericResponse)(nil),    // 3: users.GenericResponse
+var file_user_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_user_auth_proto_goTypes = []any{
+	(*CreateUserRequest)(nil),               // 0: users.CreateUserRequest
+	(*CreateUserResponse)(nil),              // 1: users.CreateUserResponse
+	(*DeleteUserRequest)(nil),               // 2: users.DeleteUserRequest
+	(*GetUserAccessInfoRequest)(nil),        // 3: users.GetUserAccessInfoRequest
+	(*GetUserAccessInfoByEmailRequest)(nil), // 4: users.GetUserAccessInfoByEmailRequest
+	(*GetUserAccessInfoResponse)(nil),       // 5: users.GetUserAccessInfoResponse
+	(*TouchUserLastLoginRequest)(nil),       // 6: users.TouchUserLastLoginRequest
+	(*GenericResponse)(nil),                 // 7: users.GenericResponse
 }
-var file_services_user_auth_user_auth_proto_depIdxs = []int32{
+var file_user_auth_proto_depIdxs = []int32{
 	0, // 0: users.UserService.CreateUser:input_type -> users.CreateUserRequest
 	2, // 1: users.UserService.DeleteUser:input_type -> users.DeleteUserRequest
-	1, // 2: users.UserService.CreateUser:output_type -> users.CreateUserResponse
-	3, // 3: users.UserService.DeleteUser:output_type -> users.GenericResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	4, // 2: users.UserService.GetUserAccessInfoByEmail:input_type -> users.GetUserAccessInfoByEmailRequest
+	3, // 3: users.UserService.GetUserAccessInfo:input_type -> users.GetUserAccessInfoRequest
+	6, // 4: users.UserService.TouchUserLastLogin:input_type -> users.TouchUserLastLoginRequest
+	1, // 5: users.UserService.CreateUser:output_type -> users.CreateUserResponse
+	7, // 6: users.UserService.DeleteUser:output_type -> users.GenericResponse
+	5, // 7: users.UserService.GetUserAccessInfoByEmail:output_type -> users.GetUserAccessInfoResponse
+	5, // 8: users.UserService.GetUserAccessInfo:output_type -> users.GetUserAccessInfoResponse
+	7, // 9: users.UserService.TouchUserLastLogin:output_type -> users.GenericResponse
+	5, // [5:10] is the sub-list for method output_type
+	0, // [0:5] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_services_user_auth_user_auth_proto_init() }
-func file_services_user_auth_user_auth_proto_init() {
-	if File_services_user_auth_user_auth_proto != nil {
+func init() { file_user_auth_proto_init() }
+func file_user_auth_proto_init() {
+	if File_user_auth_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_services_user_auth_user_auth_proto_rawDesc), len(file_services_user_auth_user_auth_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_auth_proto_rawDesc), len(file_user_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_services_user_auth_user_auth_proto_goTypes,
-		DependencyIndexes: file_services_user_auth_user_auth_proto_depIdxs,
-		MessageInfos:      file_services_user_auth_user_auth_proto_msgTypes,
+		GoTypes:           file_user_auth_proto_goTypes,
+		DependencyIndexes: file_user_auth_proto_depIdxs,
+		MessageInfos:      file_user_auth_proto_msgTypes,
 	}.Build()
-	File_services_user_auth_user_auth_proto = out.File
-	file_services_user_auth_user_auth_proto_goTypes = nil
-	file_services_user_auth_user_auth_proto_depIdxs = nil
+	File_user_auth_proto = out.File
+	file_user_auth_proto_goTypes = nil
+	file_user_auth_proto_depIdxs = nil
 }

@@ -1,0 +1,9 @@
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+
+ALTER TABLE users
+  DROP COLUMN IF EXISTS suspended,
+  DROP COLUMN IF EXISTS last_login_at,
+  DROP COLUMN IF EXISTS plan,
+  DROP COLUMN IF EXISTS role,
+  DROP COLUMN IF EXISTS last_name,
+  DROP COLUMN IF EXISTS first_name;

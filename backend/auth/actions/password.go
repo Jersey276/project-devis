@@ -6,36 +6,37 @@ import (
 	"errors"
 	"log"
 	"net/mail"
+
 	"project-devis-auth/services"
 	authGrpc "project-devis-auth/services/grpc"
+	userGrpc "project-devis-auth/services/user_auth"
 )
 
 func (s *Server) ResetPassword(ctx context.Context, req *authGrpc.ResetPasswordRequest) (*authGrpc.GenericResponse, error) {
 	if _, err := mail.ParseAddress(req.Email); err != nil {
-		return &authGrpc.GenericResponse{
-			Success: false,
-			Code:    CodeInvalidCredentials,
-		}, nil
+		return &authGrpc.GenericResponse{Success: false, Code: CodeInvalidCredentials}, nil
 	}
 
-	var userID string
-	err := s.db.QueryRowContext(ctx, "SELECT user_id FROM auth WHERE email = $1", req.Email).Scan(&userID)
+	accessInfo, err := s.userClient.GetUserAccessInfoByEmail(ctx, &userGrpc.GetUserAccessInfoByEmailRequest{Email: req.Email})
 	if err != nil {
-		if err == sql.ErrNoRows {
-			// Anti-enumeration: same success response when no account is found.
+		return &authGrpc.GenericResponse{Success: false, Code: CodeUserServiceError}, err
+	}
+	if !accessInfo.GetSuccess() {
+		if accessInfo.GetCode() == userServiceCodeNotFound {
+			// Anti-enumeration: keep a generic success when the account does not exist.
 			return &authGrpc.GenericResponse{Success: true, Code: CodeSuccess}, nil
 		}
-		return &authGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
+		return &authGrpc.GenericResponse{Success: false, Code: CodeUserServiceError}, nil
 	}
 
-	resetToken, err := services.GeneratePasswordResetToken(ctx, s.db, userID)
+	resetToken, err := services.GeneratePasswordResetToken(ctx, s.db, accessInfo.GetUserId())
 	if err != nil {
 		return &authGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
 
-	if err := s.emailSender.SendPasswordReset(req.Email, resetToken); err != nil {
-		// Keep anti-enumeration behavior: callers always receive success.
-		log.Printf("password reset email send failed for email=%s: %v", req.Email, err)
+	if err := s.emailSender.SendPasswordReset(accessInfo.GetEmail(), resetToken); err != nil {
+		// Keep anti-enumeration behavior for callers.
+		log.Printf("password reset email send failed for email=%s: %v", accessInfo.GetEmail(), err)
 	}
 
 	return &authGrpc.GenericResponse{Success: true, Code: CodeSuccess}, nil
@@ -52,9 +53,19 @@ func (s *Server) UpdatePassword(ctx context.Context, req *authGrpc.UpdatePasswor
 		return &authGrpc.GenericResponse{Success: false, Code: CodeWeakPassword}, nil
 	}
 
-	var userID, storedPasswordHash string
-	err := s.db.QueryRowContext(ctx, "SELECT user_id, password FROM auth WHERE email = $1", req.Email).Scan(&userID, &storedPasswordHash)
+	accessInfo, err := s.userClient.GetUserAccessInfoByEmail(ctx, &userGrpc.GetUserAccessInfoByEmailRequest{Email: req.Email})
 	if err != nil {
+		return &authGrpc.GenericResponse{Success: false, Code: CodeUserServiceError}, err
+	}
+	if !accessInfo.GetSuccess() {
+		if accessInfo.GetCode() == userServiceCodeNotFound {
+			return &authGrpc.GenericResponse{Success: false, Code: CodeInvalidCredentials}, nil
+		}
+		return &authGrpc.GenericResponse{Success: false, Code: CodeUserServiceError}, nil
+	}
+
+	var storedPasswordHash string
+	if err := s.db.QueryRowContext(ctx, "SELECT password FROM auth WHERE user_id = $1", accessInfo.GetUserId()).Scan(&storedPasswordHash); err != nil {
 		if err == sql.ErrNoRows {
 			return &authGrpc.GenericResponse{Success: false, Code: CodeInvalidCredentials}, nil
 		}
@@ -76,11 +87,11 @@ func (s *Server) UpdatePassword(ctx context.Context, req *authGrpc.UpdatePasswor
 	}
 	defer tx.Rollback()
 
-	if _, err := tx.ExecContext(ctx, "UPDATE auth SET password = $1, session_version = session_version + 1 WHERE user_id = $2", hashedNewPassword, userID); err != nil {
+	if _, err := tx.ExecContext(ctx, "UPDATE auth SET password = $1, session_version = session_version + 1 WHERE user_id = $2", hashedNewPassword, accessInfo.GetUserId()); err != nil {
 		return &authGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
 
-	if err := services.DeleteOtherRefreshTokensTx(ctx, tx, userID, req.CurrentRefreshToken); err != nil {
+	if err := services.DeleteOtherRefreshTokensTx(ctx, tx, accessInfo.GetUserId(), req.CurrentRefreshToken); err != nil {
 		return &authGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
 

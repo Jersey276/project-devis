@@ -30,6 +30,30 @@ func (s *Server) DeleteUser(ctx context.Context, req *usersGrpc.DeleteUserReques
 	return user.Delete(ctx, s.db, req)
 }
 
+func (s *Server) GetUserAccessInfo(ctx context.Context, req *usersGrpc.GetUserAccessInfoRequest) (*usersGrpc.GetUserAccessInfoResponse, error) {
+	return user.GetUserAccessInfo(ctx, s.db, req)
+}
+
+func (s *Server) GetUserAccessInfoByEmail(ctx context.Context, req *usersGrpc.GetUserAccessInfoByEmailRequest) (*usersGrpc.GetUserAccessInfoResponse, error) {
+	return user.GetUserAccessInfoByEmail(ctx, s.db, req)
+}
+
+func (s *Server) ListAdminAccounts(ctx context.Context, req *usersGrpc.ListAdminAccountsRequest) (*usersGrpc.ListAdminAccountsResponse, error) {
+	return user.ListAdminAccounts(ctx, s.db, req)
+}
+
+func (s *Server) UpdateAdminAccount(ctx context.Context, req *usersGrpc.UpdateAdminAccountRequest) (*usersGrpc.GenericResponse, error) {
+	return user.UpdateAdminAccount(ctx, s.db, req)
+}
+
+func (s *Server) SuspendAdminAccount(ctx context.Context, req *usersGrpc.SuspendAdminAccountRequest) (*usersGrpc.GenericResponse, error) {
+	return user.SuspendAdminAccount(ctx, s.db, req)
+}
+
+func (s *Server) TouchUserLastLogin(ctx context.Context, req *usersGrpc.TouchUserLastLoginRequest) (*usersGrpc.GenericResponse, error) {
+	return user.TouchUserLastLogin(ctx, s.db, req)
+}
+
 // ─── Client ──────────────────────────────────────────────────────────────────
 
 func (s *Server) CreateClient(ctx context.Context, req *usersGrpc.CreateClientRequest) (*usersGrpc.CreateClientResponse, error) {
