@@ -16,9 +16,26 @@ Ce service est dedie au domaine echeancier afin d'eviter d'alourdir le service d
 
 ## Etat
 
-Document cible de conception.
+Document de conception et de bootstrap.
 
-Le service n'est pas encore implemente dans le depot au moment de la redaction, mais son comportement attendu et son integration sont figes par cette documentation et par la matrice TDD associee.
+Un premier squelette backend TDD est maintenant present dans le depot:
+
+- `backend/schedule/go.mod`
+- `backend/schedule/main.go`
+- `backend/schedule/actions/`
+- `backend/schedule/services/`
+- `backend/schedule/migrations/`
+- `backend/schedule/tests/`
+
+Le service n'est pas encore branche au gateway ni au compose, et les RPC metier ne sont pas encore implementees. En revanche, le socle suivant existe deja:
+
+- bootstrap gRPC minimal sur le port cible `50056`
+- structure `actions.Server` alignee avec les autres services Go
+- migrations initiales `schedules` et `schedule_cells`
+- premier lot TDD backend sur:
+  - validation des inputs de creation
+  - validation des montants EUR
+  - regles d'editabilite selon le statut
 
 Reference tests: `docs/operations/schedule-test-matrix.md`
 
@@ -214,6 +231,11 @@ RPC attendues a minima:
 - `ValidateSchedule`
 - `GetScheduleExportPayload` ou RPC equivalente pour fournir les donnees d'export
 
+Etat actuel du squelette:
+
+- un package gRPC minimal est present pour permettre le bootstrap et les tests du module
+- le contrat `.proto` complet reste a ecrire avant l'implementation des RPC metier reelles
+
 ## Strategie d'export PDF
 
 L'export PDF ne doit pas etre genere par le service schedule.
@@ -303,6 +325,13 @@ Le service schedule suit une regle TDD stricte:
 4. tests d'export avant branchement final du PDF
 
 Reference detaillee: `docs/operations/schedule-test-matrix.md`
+
+Premier lot deja pose dans `backend/schedule/tests/`:
+
+- `TestNewServer`
+- `TestValidateCreateScheduleInput`
+- `TestParseAmountEuros`
+- `TestIsEditableStatus`
 
 ## Risques et points d'attention
 
