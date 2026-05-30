@@ -49,4 +49,12 @@ type CreateScheduleResponse struct {
 	ScheduleId string
 }
 
+type UpdateScheduleCellRequest struct {
+	ScheduleId  string
+	UserId      string
+	QuoteLineId string
+	MonthIndex  int32
+	AmountEur   string
+}
+
 var _ context.Context
