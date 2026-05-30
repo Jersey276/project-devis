@@ -57,4 +57,9 @@ type UpdateScheduleCellRequest struct {
 	AmountEur   string
 }
 
+type ValidateScheduleRequest struct {
+	ScheduleId string
+	UserId     string
+}
+
 var _ context.Context
