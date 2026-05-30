@@ -67,6 +67,21 @@ func (m *mockAuthClient) Logout(context.Context, *auth.LogoutRequest, ...grpc.Ca
 	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
 }
 
+func (m *mockAuthClient) IntrospectToken(context.Context, *auth.IntrospectTokenRequest, ...grpc.CallOption) (*auth.IntrospectTokenResponse, error) {
+	return &auth.IntrospectTokenResponse{
+		Success: true,
+		Code:    CodeSuccess,
+		Context: &auth.AccessContext{
+			UserId:           "user-1",
+			Email:            "user@example.com",
+			Role:             "free_user",
+			AccountStatus:    "active",
+			SubscriptionTier: "free",
+			SessionVersion:   1,
+		},
+	}, nil
+}
+
 func resetAuthLimiterStateForTests() {
 	resetPasswordIPLimiter = newSlidingWindowLimiter()
 	resetPasswordEmailLimiter = newSlidingWindowLimiter()

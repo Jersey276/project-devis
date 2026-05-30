@@ -76,6 +76,22 @@ Gerer l'authentification et la session:
 - codes metier auth documentes dans `docs/ERROR_CODES.md`
 - mapping HTTP applique dans `backend/gateway/controllers/auth.go`
 
+## Session invalidation stricte
+
+Le service auth applique une invalidation stricte des sessions d'access token:
+
+- un champ `session_version` est stocke dans la table `auth`
+- la claim `session_version` est incluse dans l'access token JWT
+- l'RPC `IntrospectToken` verifie token + etat courant en base
+- si la version JWT est obsolete, le service renvoie `CodeSessionInvalidated (1008)`
+
+Actions qui invalident immediatement les sessions actives:
+
+- changement de mot de passe
+- confirmation de reset mot de passe
+
+Dans ces cas, `session_version` est incremente et les anciens access tokens deviennent invalides.
+
 ## Tests
 
 - tests legacy potentiellement instables/hang sur certains scenarios

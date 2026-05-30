@@ -13,6 +13,7 @@ service AuthService {
     rpc VerifyEmail(VerifyEmailRequest) returns (GenericResponse);
     rpc RefreshToken(RefreshTokenRequest) returns (LoginResponse);
     rpc Logout(LogoutRequest) returns (GenericResponse);
+    rpc IntrospectToken(IntrospectTokenRequest) returns (IntrospectTokenResponse);
 }
 
 message RegisterRequest {
@@ -77,4 +78,23 @@ message FormGenericResponse {
 message FormFieldError {
     string field = 1;
     repeated int32 error_code = 2;
+}
+
+message IntrospectTokenRequest {
+    string token = 1;
+}
+
+message AccessContext {
+    string user_id = 1;
+    string email = 2;
+    string role = 3;
+    string account_status = 4;
+    string subscription_tier = 5;
+    int32 session_version = 6;
+}
+
+message IntrospectTokenResponse {
+    bool success = 1;
+    int32 code = 2;
+    AccessContext context = 3;
 }

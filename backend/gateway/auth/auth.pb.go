@@ -677,6 +677,194 @@ func (x *FormFieldError) GetErrorCode() []int32 {
 	return nil
 }
 
+type IntrospectTokenRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IntrospectTokenRequest) Reset() {
+	*x = IntrospectTokenRequest{}
+	mi := &file_auth_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IntrospectTokenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IntrospectTokenRequest) ProtoMessage() {}
+
+func (x *IntrospectTokenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IntrospectTokenRequest.ProtoReflect.Descriptor instead.
+func (*IntrospectTokenRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *IntrospectTokenRequest) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+type AccessContext struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	UserId           string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Email            string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	Role             string                 `protobuf:"bytes,3,opt,name=role,proto3" json:"role,omitempty"`
+	AccountStatus    string                 `protobuf:"bytes,4,opt,name=account_status,json=accountStatus,proto3" json:"account_status,omitempty"`
+	SubscriptionTier string                 `protobuf:"bytes,5,opt,name=subscription_tier,json=subscriptionTier,proto3" json:"subscription_tier,omitempty"`
+	SessionVersion   int32                  `protobuf:"varint,6,opt,name=session_version,json=sessionVersion,proto3" json:"session_version,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *AccessContext) Reset() {
+	*x = AccessContext{}
+	mi := &file_auth_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AccessContext) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AccessContext) ProtoMessage() {}
+
+func (x *AccessContext) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AccessContext.ProtoReflect.Descriptor instead.
+func (*AccessContext) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *AccessContext) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *AccessContext) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *AccessContext) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *AccessContext) GetAccountStatus() string {
+	if x != nil {
+		return x.AccountStatus
+	}
+	return ""
+}
+
+func (x *AccessContext) GetSubscriptionTier() string {
+	if x != nil {
+		return x.SubscriptionTier
+	}
+	return ""
+}
+
+func (x *AccessContext) GetSessionVersion() int32 {
+	if x != nil {
+		return x.SessionVersion
+	}
+	return 0
+}
+
+type IntrospectTokenResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	Context       *AccessContext         `protobuf:"bytes,3,opt,name=context,proto3" json:"context,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IntrospectTokenResponse) Reset() {
+	*x = IntrospectTokenResponse{}
+	mi := &file_auth_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IntrospectTokenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IntrospectTokenResponse) ProtoMessage() {}
+
+func (x *IntrospectTokenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IntrospectTokenResponse.ProtoReflect.Descriptor instead.
+func (*IntrospectTokenResponse) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *IntrospectTokenResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *IntrospectTokenResponse) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *IntrospectTokenResponse) GetContext() *AccessContext {
+	if x != nil {
+		return x.Context
+	}
+	return nil
+}
+
 var File_auth_proto protoreflect.FileDescriptor
 
 const file_auth_proto_rawDesc = "" +
@@ -729,7 +917,20 @@ const file_auth_proto_rawDesc = "" +
 	"\x0eFormFieldError\x12\x14\n" +
 	"\x05field\x18\x01 \x01(\tR\x05field\x12\x1d\n" +
 	"\n" +
-	"error_code\x18\x02 \x03(\x05R\terrorCode2\x8f\x04\n" +
+	"error_code\x18\x02 \x03(\x05R\terrorCode\".\n" +
+	"\x16IntrospectTokenRequest\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\"\xcf\x01\n" +
+	"\rAccessContext\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
+	"\x04role\x18\x03 \x01(\tR\x04role\x12%\n" +
+	"\x0eaccount_status\x18\x04 \x01(\tR\raccountStatus\x12+\n" +
+	"\x11subscription_tier\x18\x05 \x01(\tR\x10subscriptionTier\x12'\n" +
+	"\x0fsession_version\x18\x06 \x01(\x05R\x0esessionVersion\"v\n" +
+	"\x17IntrospectTokenResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x12-\n" +
+	"\acontext\x18\x03 \x01(\v2\x13.auth.AccessContextR\acontext2\xdf\x04\n" +
 	"\vAuthService\x12<\n" +
 	"\bRegister\x12\x15.auth.RegisterRequest\x1a\x19.auth.FormGenericResponse\x120\n" +
 	"\x05Login\x12\x12.auth.LoginRequest\x1a\x13.auth.LoginResponse\x12B\n" +
@@ -738,7 +939,8 @@ const file_auth_proto_rawDesc = "" +
 	"\x0eUpdatePassword\x12\x1b.auth.UpdatePasswordRequest\x1a\x15.auth.GenericResponse\x12>\n" +
 	"\vVerifyEmail\x12\x18.auth.VerifyEmailRequest\x1a\x15.auth.GenericResponse\x12>\n" +
 	"\fRefreshToken\x12\x19.auth.RefreshTokenRequest\x1a\x13.auth.LoginResponse\x124\n" +
-	"\x06Logout\x12\x13.auth.LogoutRequest\x1a\x15.auth.GenericResponseB\x0eZ\fgateway/authb\x06proto3"
+	"\x06Logout\x12\x13.auth.LogoutRequest\x1a\x15.auth.GenericResponse\x12N\n" +
+	"\x0fIntrospectToken\x12\x1c.auth.IntrospectTokenRequest\x1a\x1d.auth.IntrospectTokenResponseB\x0eZ\fgateway/authb\x06proto3"
 
 var (
 	file_auth_proto_rawDescOnce sync.Once
@@ -752,7 +954,7 @@ func file_auth_proto_rawDescGZIP() []byte {
 	return file_auth_proto_rawDescData
 }
 
-var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_auth_proto_goTypes = []any{
 	(*RegisterRequest)(nil),             // 0: auth.RegisterRequest
 	(*LoginRequest)(nil),                // 1: auth.LoginRequest
@@ -766,30 +968,36 @@ var file_auth_proto_goTypes = []any{
 	(*LogoutRequest)(nil),               // 9: auth.LogoutRequest
 	(*FormGenericResponse)(nil),         // 10: auth.FormGenericResponse
 	(*FormFieldError)(nil),              // 11: auth.FormFieldError
+	(*IntrospectTokenRequest)(nil),      // 12: auth.IntrospectTokenRequest
+	(*AccessContext)(nil),               // 13: auth.AccessContext
+	(*IntrospectTokenResponse)(nil),     // 14: auth.IntrospectTokenResponse
 }
 var file_auth_proto_depIdxs = []int32{
 	11, // 0: auth.FormGenericResponse.field_errors:type_name -> auth.FormFieldError
-	0,  // 1: auth.AuthService.Register:input_type -> auth.RegisterRequest
-	1,  // 2: auth.AuthService.Login:input_type -> auth.LoginRequest
-	5,  // 3: auth.AuthService.ResetPassword:input_type -> auth.ResetPasswordRequest
-	6,  // 4: auth.AuthService.ConfirmResetPassword:input_type -> auth.ConfirmResetPasswordRequest
-	3,  // 5: auth.AuthService.UpdatePassword:input_type -> auth.UpdatePasswordRequest
-	7,  // 6: auth.AuthService.VerifyEmail:input_type -> auth.VerifyEmailRequest
-	8,  // 7: auth.AuthService.RefreshToken:input_type -> auth.RefreshTokenRequest
-	9,  // 8: auth.AuthService.Logout:input_type -> auth.LogoutRequest
-	10, // 9: auth.AuthService.Register:output_type -> auth.FormGenericResponse
-	2,  // 10: auth.AuthService.Login:output_type -> auth.LoginResponse
-	4,  // 11: auth.AuthService.ResetPassword:output_type -> auth.GenericResponse
-	4,  // 12: auth.AuthService.ConfirmResetPassword:output_type -> auth.GenericResponse
-	4,  // 13: auth.AuthService.UpdatePassword:output_type -> auth.GenericResponse
-	4,  // 14: auth.AuthService.VerifyEmail:output_type -> auth.GenericResponse
-	2,  // 15: auth.AuthService.RefreshToken:output_type -> auth.LoginResponse
-	4,  // 16: auth.AuthService.Logout:output_type -> auth.GenericResponse
-	9,  // [9:17] is the sub-list for method output_type
-	1,  // [1:9] is the sub-list for method input_type
-	1,  // [1:1] is the sub-list for extension type_name
-	1,  // [1:1] is the sub-list for extension extendee
-	0,  // [0:1] is the sub-list for field type_name
+	13, // 1: auth.IntrospectTokenResponse.context:type_name -> auth.AccessContext
+	0,  // 2: auth.AuthService.Register:input_type -> auth.RegisterRequest
+	1,  // 3: auth.AuthService.Login:input_type -> auth.LoginRequest
+	5,  // 4: auth.AuthService.ResetPassword:input_type -> auth.ResetPasswordRequest
+	6,  // 5: auth.AuthService.ConfirmResetPassword:input_type -> auth.ConfirmResetPasswordRequest
+	3,  // 6: auth.AuthService.UpdatePassword:input_type -> auth.UpdatePasswordRequest
+	7,  // 7: auth.AuthService.VerifyEmail:input_type -> auth.VerifyEmailRequest
+	8,  // 8: auth.AuthService.RefreshToken:input_type -> auth.RefreshTokenRequest
+	9,  // 9: auth.AuthService.Logout:input_type -> auth.LogoutRequest
+	12, // 10: auth.AuthService.IntrospectToken:input_type -> auth.IntrospectTokenRequest
+	10, // 11: auth.AuthService.Register:output_type -> auth.FormGenericResponse
+	2,  // 12: auth.AuthService.Login:output_type -> auth.LoginResponse
+	4,  // 13: auth.AuthService.ResetPassword:output_type -> auth.GenericResponse
+	4,  // 14: auth.AuthService.ConfirmResetPassword:output_type -> auth.GenericResponse
+	4,  // 15: auth.AuthService.UpdatePassword:output_type -> auth.GenericResponse
+	4,  // 16: auth.AuthService.VerifyEmail:output_type -> auth.GenericResponse
+	2,  // 17: auth.AuthService.RefreshToken:output_type -> auth.LoginResponse
+	4,  // 18: auth.AuthService.Logout:output_type -> auth.GenericResponse
+	14, // 19: auth.AuthService.IntrospectToken:output_type -> auth.IntrospectTokenResponse
+	11, // [11:20] is the sub-list for method output_type
+	2,  // [2:11] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_auth_proto_init() }
@@ -804,7 +1012,7 @@ func file_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_proto_rawDesc), len(file_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

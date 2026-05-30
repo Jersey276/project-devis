@@ -99,5 +99,6 @@ Le front implemente:
 
 - refresh/retry automatique sur 401
 - exclusions de refresh pour certaines routes auth
+- gestion explicite des sessions invalidees (`code: 1008` ou `code: "SESSION_INVALIDATED"`) avec logout puis redirection vers `/login?next=...`
 
 Reference: `front/lib/api.ts`

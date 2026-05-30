@@ -26,13 +26,14 @@ const (
 	CodeInvalidResetToken   int32 = 1005
 	CodeExpiredResetToken   int32 = 1006
 	CodeWeakPassword        int32 = 1007
+	CodeSessionInvalidated  int32 = 1008
 	CodeUserServiceError    int32 = 2001
 	CodeInternalError       int32 = 2002
 	CodeNotImplemented      int32 = 2003
 )
 
 const (
-	cookieAccessMaxAge          = 15 * 60          // must not outlive the JWT (services/jwt.go)
+	cookieAccessMaxAge          = 2 * 60           // must not outlive the JWT (services/jwt.go)
 	cookieRefreshMaxAge         = 7 * 24 * 60 * 60 // default refresh-token lifetime
 	cookieRefreshRememberMaxAge = 60 * 24 * 60 * 60
 )
@@ -70,6 +71,7 @@ var authErrors = &serviceErrors{
 		CodeInvalidResetToken:   {http.StatusBadRequest, "Le lien de réinitialisation est invalide ou déjà utilisé."},
 		CodeExpiredResetToken:   {http.StatusGone, "Le lien de réinitialisation a expiré."},
 		CodeWeakPassword:        {http.StatusUnprocessableEntity, "Le mot de passe ne respecte pas la politique de sécurité."},
+		CodeSessionInvalidated:  {http.StatusUnauthorized, "Session expirée, veuillez vous reconnecter."},
 		CodeUserServiceError:    {http.StatusBadGateway, "Erreur lors de la création du compte, veuillez réessayer."},
 		CodeInternalError:       {http.StatusInternalServerError, "Une erreur interne est survenue."},
 		CodeNotImplemented:      {http.StatusNotImplemented, "Cette fonctionnalité n'est pas encore disponible."},
@@ -93,6 +95,10 @@ func AuthRoutes(r *gin.RouterGroup) *gin.RouterGroup {
 	r.POST("/refresh", func(c *gin.Context) { RefreshToken(c, client) })
 	r.POST("/logout", func(c *gin.Context) { Logout(c, client) })
 
+	me := r.Group("/me")
+	me.Use(middleware.AuthRequired())
+	me.GET("", AuthContextMe)
+
 	password := r.Group("/password")
 	password.POST("/reset", func(c *gin.Context) { ResetPassword(c, client) })
 	password.POST("/confirm-reset", func(c *gin.Context) { ConfirmResetPassword(c, client) })
@@ -104,6 +110,25 @@ func AuthRoutes(r *gin.RouterGroup) *gin.RouterGroup {
 	email.POST("/verify", func(c *gin.Context) { VerifyEmail(c, client) })
 
 	return r
+}
+
+func AuthContextMe(c *gin.Context) {
+	userID, _ := c.Get(middleware.CtxUserID)
+	email, _ := c.Get(middleware.CtxEmail)
+	role, _ := c.Get(middleware.CtxRole)
+	status, _ := c.Get(middleware.CtxAccountStatus)
+	tier, _ := c.Get(middleware.CtxSubscriptionTier)
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"auth": gin.H{
+			"user_id":           userID,
+			"email":             email,
+			"role":              role,
+			"account_status":    status,
+			"subscription_tier": tier,
+		},
+	})
 }
 
 type registerInput struct {

@@ -22,6 +22,11 @@
   },
   "nav": {
     "appGroupLabel": "Application",
+    "userGroupLabel": "Menu utilisateur",
+    "adminGroupLabel": "Administration",
+    "viewSwitchLabel": "Vue de la sidebar",
+    "userViewButton": "Utilisateur",
+    "adminViewButton": "Admin",
     "quote": "Devis",
     "invoices": "Factures",
     "clients": "Clients",
@@ -365,6 +370,10 @@
     }
   },
   "admin": {
+    "guard": {
+      "loading": "Vérification des droits administrateur...",
+      "forbidden": "Accès refusé. Cette section est réservée aux super administrateurs actifs."
+    },
     "countries": {
       "tabs": {
         "countries": "Pays",

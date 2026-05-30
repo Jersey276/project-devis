@@ -8,9 +8,12 @@ import (
 	"project-devis-auth/services"
 	authGrpc "project-devis-auth/services/grpc"
 	userGrpc "project-devis-auth/services/user_auth"
+	"strings"
 )
 
 func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*authGrpc.FormGenericResponse, error) {
+	normalizedEmail := strings.ToLower(strings.TrimSpace(req.Email))
+
 	if fieldErrors := validateRegisterRequest(req); len(fieldErrors) > 0 {
 		return &authGrpc.FormGenericResponse{
 			Success:     false,
@@ -20,7 +23,7 @@ func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*
 	}
 
 	var existingEmail string
-	err := s.db.QueryRowContext(ctx, "SELECT email FROM auth WHERE email = $1", req.Email).Scan(&existingEmail)
+	err := s.db.QueryRowContext(ctx, "SELECT email FROM auth WHERE email = $1", normalizedEmail).Scan(&existingEmail)
 	if err == nil {
 		return &authGrpc.FormGenericResponse{
 			Success: false,
@@ -38,7 +41,7 @@ func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*
 	}
 
 	insertResp, err := s.userClient.CreateUser(ctx, &userGrpc.CreateUserRequest{
-		Email: req.Email,
+		Email: normalizedEmail,
 	})
 	if err != nil {
 		return &authGrpc.FormGenericResponse{
@@ -68,8 +71,61 @@ func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*
 		}, err
 	}
 
-	_, err = s.db.ExecContext(ctx, "INSERT INTO auth (user_id, email, password) VALUES ($1, $2, $3)", userID, req.Email, hashedPassword)
+	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
+		s.rollbackUser(ctx, userID)
+		return &authGrpc.FormGenericResponse{
+			Success: false,
+			Code:    CodeInternalError,
+		}, err
+	}
+
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	if _, err = tx.ExecContext(ctx, "SELECT pg_advisory_xact_lock($1)", int64(2026052901)); err != nil {
+		s.rollbackUser(ctx, userID)
+		return &authGrpc.FormGenericResponse{
+			Success: false,
+			Code:    CodeInternalError,
+		}, err
+	}
+
+	role := "free_user"
+	var authCount int64
+	if err = tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM auth").Scan(&authCount); err != nil {
+		s.rollbackUser(ctx, userID)
+		return &authGrpc.FormGenericResponse{
+			Success: false,
+			Code:    CodeInternalError,
+		}, err
+	}
+	if authCount == 0 {
+		role = "super_admin"
+	}
+
+	_, err = tx.ExecContext(
+		ctx,
+		"INSERT INTO auth (user_id, email, password, role, account_status, subscription_tier) VALUES ($1, $2, $3, $4, $5, $6)",
+		userID,
+		normalizedEmail,
+		hashedPassword,
+		role,
+		"active",
+		"free",
+	)
+	if err != nil {
+		s.rollbackUser(ctx, userID)
+		return &authGrpc.FormGenericResponse{
+			Success: false,
+			Code:    CodeInternalError,
+		}, err
+	}
+
+	if err = tx.Commit(); err != nil {
 		s.rollbackUser(ctx, userID)
 		return &authGrpc.FormGenericResponse{
 			Success: false,
@@ -86,12 +142,12 @@ func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*
 func validateRegisterRequest(req *authGrpc.RegisterRequest) []*authGrpc.FormFieldError {
 	var fieldErrors []*authGrpc.FormFieldError
 
-	if req.Email == "" {
+	if strings.TrimSpace(req.Email) == "" {
 		fieldErrors = append(fieldErrors, &authGrpc.FormFieldError{
 			Field:     "email",
 			ErrorCode: []int32{FieldErrRequired},
 		})
-	} else if _, err := mail.ParseAddress(req.Email); err != nil {
+	} else if _, err := mail.ParseAddress(strings.TrimSpace(req.Email)); err != nil {
 		fieldErrors = append(fieldErrors, &authGrpc.FormFieldError{
 			Field:     "email",
 			ErrorCode: []int32{FieldErrInvalidFormat},
