@@ -9,6 +9,7 @@ Ce document fournit une vue contractuelle de haut niveau. Les details exacts de 
 - Quote: `:50053`
 - Export: `:50054`
 - Template: `:50055`
+- Schedule: `:50056`
 
 ## Pattern de reponse
 
@@ -61,11 +62,27 @@ Responsabilites:
 - lignes de template
 - archivage/restauration
 
+## Schedule service
+
+Responsabilites:
+
+- creation d'echeanciers rattaches a un devis
+- stockage de la grille mensuelle des montants par ligne de devis
+- controle des ecarts ligne par ligne et au global
+- validation d'un unique echeancier par devis
+- passage automatique des autres echeanciers du devis en `DENIED`
+
+Particularites:
+
+- depend du service quote pour verifier le devis cible et recuperer les lignes eligibles
+- expose les donnees consolidees necessaires a l'export PDF d'echeancier
+- applique les regles de verrouillage metier selon le statut (`DRAFT`, `NEGOCIATE`, `DENIED`, `VALID`)
+
 ## Export service
 
 Responsabilites:
 
-- assembler les donnees quote + users
+- assembler les donnees quote + users + schedule selon le document demande
 - produire un PDF via Gotenberg
 
 Particularites:

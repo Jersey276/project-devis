@@ -8,7 +8,7 @@ Le projet implémente une architecture microservices orientée domaine:
 
 - Frontend Next.js (App Router)
 - Gateway HTTP (Gin) qui expose l'API REST
-- Services metier gRPC (auth, users, quote, template, export)
+- Services metier gRPC (auth, users, quote, template, schedule, export)
 - Postgres mutualise (1 cluster, plusieurs bases)
 - Gotenberg pour la generation PDF
 
@@ -24,15 +24,18 @@ flowchart LR
   G -->|gRPC 50053| Q[Quote Service]
   G -->|gRPC 50054| E[Export Service]
   G -->|gRPC 50055| T[Template Service]
+  G -->|gRPC 50056| S[Schedule Service]
 
   A --> P[(Postgres)]
   US --> P
   Q --> P
   T --> P
+  S --> P
 
   E -->|HTTP| GT[Gotenberg]
   E -->|gRPC| US
   E -->|gRPC| Q
+  E -->|gRPC| S
 ```
 
 ## Orchestration
@@ -44,6 +47,8 @@ Deux orchestrations Docker Compose coexistent:
 
 En local, la stack inclut `devis-template` et `TEMPLATE_SERVICE_ADDRESS`.
 En production actuelle, `devis-template` n'est pas encore deployee.
+
+Le service `schedule` est defini comme prochaine brique metier dediee pour les echeanciers. Sa documentation cible est decrite dans `docs/services/schedule.md`.
 
 ## Pattern backend commun
 
@@ -65,6 +70,7 @@ Le gateway applique le pattern inverse:
 ## Persistence et migrations
 
 - Les services `auth`, `users`, `quote`, `template` possedent chacun leurs migrations.
+- Le futur service `schedule` suivra le meme modele avec une base dediee et des migrations embarquees.
 - Les migrations sont lancees au demarrage du service.
 - Le volume Postgres est persistant et ne doit pas etre supprime hors reset volontaire.
 
@@ -93,5 +99,6 @@ Les points suivants sont identifies et assumes temporairement:
 - `backend/users/`: profil utilisateur, clients, adresses, taxes
 - `backend/quote/`: devis et lignes de devis
 - `backend/template/`: templates et lignes de template
+- `backend/schedule/`: echeanciers de facturation et grille mensuelle associee
 - `backend/export/`: generation PDF via Gotenberg
 - `docs/`: documentation technique et exploitation
