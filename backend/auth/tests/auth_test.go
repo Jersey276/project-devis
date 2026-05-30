@@ -46,7 +46,6 @@ func findFieldError(fieldErrors []*authGrpc.FormFieldError, field string, code i
 }
 
 const testUserServiceCodeNotFound int32 = 1001
-const testUserServiceCodeNotFound int32 = 1001
 
 // --- Register ---
 
