@@ -51,11 +51,13 @@ function formatAddress(address: BackendAddress, countries: Country[]): string {
 type AddressesTableProps = {
   ownerType: "user" | "client";
   ownerId: string;
+  readOnly?: boolean;
 };
 
 export default function AddressesTable({
   ownerType,
   ownerId,
+  readOnly = false,
 }: AddressesTableProps) {
   const t = useTranslations("address.list");
   const tCommon = useTranslations("common");
@@ -93,11 +95,13 @@ export default function AddressesTable({
   }, []);
 
   function openCreate() {
+    if (readOnly) return;
     setEditing(null);
     setDrawerOpen(true);
   }
 
   function openEdit(address: BackendAddress) {
+    if (readOnly) return;
     setEditing({
       id: address.id,
       name: address.name,
@@ -111,6 +115,7 @@ export default function AddressesTable({
   }
 
   async function confirmDelete() {
+    if (readOnly) return;
     if (!pendingDelete) return;
     const { ok, body } = await archiveAddress(
       buildOwner(ownerType, ownerId),
@@ -131,23 +136,29 @@ export default function AddressesTable({
       label: tCommon("actions.edit"),
       icon: PencilIcon,
       callback: (row) => openEdit(row as BackendAddress),
+      hidden: readOnly,
     },
     {
       type: "callback",
       label: tCommon("actions.delete"),
       icon: Trash2Icon,
       callback: (row) => setPendingDelete(row as BackendAddress),
+      hidden: readOnly,
     },
   ];
 
   return (
     <div className="grid gap-4">
-      <div className="flex justify-end">
-        <Button type="button" onClick={openCreate}>
-          <PlusIcon />
-          {t("addButton")}
-        </Button>
-      </div>
+      {!readOnly ? (
+        <div className="flex justify-end">
+          <Button type="button" onClick={openCreate}>
+            <PlusIcon />
+            {t("addButton")}
+          </Button>
+        </div>
+      ) : (
+        <p className="text-muted-foreground text-sm">{t("readonly")}</p>
+      )}
 
       <DataTable datas={addresses} row_actions={rowActions} sortBy="">
         <DataTableHeader>
@@ -184,14 +195,16 @@ export default function AddressesTable({
         </DataTableBody>
       </DataTable>
 
-      <AddressDialog
-        ownerType={ownerType}
-        ownerId={ownerId}
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-        address={editing}
-        onSaved={reload}
-      />
+      {!readOnly ? (
+        <AddressDialog
+          ownerType={ownerType}
+          ownerId={ownerId}
+          open={drawerOpen}
+          onOpenChange={setDrawerOpen}
+          address={editing}
+          onSaved={reload}
+        />
+      ) : null}
 
       <AlertDialog
         open={pendingDelete !== null}
@@ -208,10 +221,7 @@ export default function AddressesTable({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{tCommon("actions.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={confirmDelete}
-            >
+            <AlertDialogAction variant="destructive" onClick={confirmDelete}>
               {tCommon("actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>

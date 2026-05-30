@@ -26,14 +26,20 @@ export type UserProfile = {
   company: string;
   siren: string;
   vat: string;
+  suspended: boolean;
 };
 
 type UserInfoFormProps = {
   user: UserProfile;
   onSaved?: (user: UserProfile) => void;
+  readOnly?: boolean;
 };
 
-export default function UserInfoForm({ user, onSaved }: UserInfoFormProps) {
+export default function UserInfoForm({
+  user,
+  onSaved,
+  readOnly = false,
+}: UserInfoFormProps) {
   const t = useTranslations("profile.userInfo");
   const tCommon = useTranslations("common");
   const [phone, setPhone] = useState(user.phone ?? "");
@@ -45,6 +51,7 @@ export default function UserInfoForm({ user, onSaved }: UserInfoFormProps) {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (readOnly) return;
     setFieldErrors({});
     setSubmitting(true);
     try {
@@ -70,12 +77,14 @@ export default function UserInfoForm({ user, onSaved }: UserInfoFormProps) {
   }
 
   return (
-    <form
-      className="grid max-w-3xl gap-4"
-      onSubmit={handleSubmit}
-      noValidate
-    >
+    <form className="grid max-w-3xl gap-4" onSubmit={handleSubmit} noValidate>
       <FieldGroup>
+        {readOnly ? (
+          <p className="text-muted-foreground rounded-md border border-dashed px-3 py-2 text-sm">
+            {t("suspendedNotice")}
+          </p>
+        ) : null}
+
         <Field>
           <FieldLabel htmlFor="email">{t("emailLabel")}</FieldLabel>
           <Input
@@ -99,6 +108,7 @@ export default function UserInfoForm({ user, onSaved }: UserInfoFormProps) {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               aria-invalid={!!fieldErrors.phone?.length}
+              disabled={readOnly}
             />
             <FieldError errors={toErrorProps(fieldErrors.phone)} />
           </Field>
@@ -111,6 +121,7 @@ export default function UserInfoForm({ user, onSaved }: UserInfoFormProps) {
               value={company}
               onChange={(e) => setCompany(e.target.value)}
               aria-invalid={!!fieldErrors.company?.length}
+              disabled={readOnly}
             />
             <FieldError errors={toErrorProps(fieldErrors.company)} />
           </Field>
@@ -125,6 +136,7 @@ export default function UserInfoForm({ user, onSaved }: UserInfoFormProps) {
               value={siren}
               onChange={(e) => setSiren(e.target.value)}
               aria-invalid={!!fieldErrors.siren?.length}
+              disabled={readOnly}
             />
             <FieldError errors={toErrorProps(fieldErrors.siren)} />
           </Field>
@@ -137,6 +149,7 @@ export default function UserInfoForm({ user, onSaved }: UserInfoFormProps) {
               value={vat}
               onChange={(e) => setVat(e.target.value)}
               aria-invalid={!!fieldErrors.vat?.length}
+              disabled={readOnly}
             />
             <FieldError errors={toErrorProps(fieldErrors.vat)} />
           </Field>
@@ -144,7 +157,7 @@ export default function UserInfoForm({ user, onSaved }: UserInfoFormProps) {
       </FieldGroup>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={submitting}>
+        <Button type="submit" disabled={submitting || readOnly}>
           {submitting ? tCommon("actions.saving") : tCommon("actions.save")}
         </Button>
       </div>

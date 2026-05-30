@@ -30,6 +30,7 @@
     "quote": "Devis",
     "invoices": "Factures",
     "clients": "Clients",
+    "users": "Utilisateurs",
     "countries": "Pays",
     "taxes": "Taxes",
     "templates": "Templates",
@@ -352,6 +353,7 @@
       },
       "actionsLabel": "Actions",
       "addButton": "Ajouter une adresse",
+      "readonly": "Compte suspendu: les adresses sont en lecture seule.",
       "deleteSuccessToast": "Adresse supprimée.",
       "empty": "Aucune adresse pour le moment.",
       "deleteDialog": {
@@ -469,11 +471,52 @@
         "createSuccessToast": "Taxe ajoutée.",
         "updateSuccessToast": "Taxe mise à jour."
       }
+    },
+    "users": {
+      "title": "Utilisateurs",
+      "columns": {
+        "firstName": "Prénom",
+        "lastName": "Nom",
+        "email": "Adresse mail",
+        "role": "Rôle",
+        "lastLogin": "Dernière connexion"
+      },
+      "roleUser": "user",
+      "roleAdmin": "admin",
+      "neverLoggedIn": "Jamais connecté",
+      "actionsLabel": "Actions",
+      "actions": {
+        "suspend": "Suspendre"
+      },
+      "empty": "Aucun utilisateur pour le moment.",
+      "suspendDialog": {
+        "title": "Suspendre ce compte ?",
+        "description": "L'utilisateur ne pourra plus se connecter tant que le compte est suspendu."
+      },
+      "suspendSuccessToast": "Compte suspendu.",
+      "dialog": {
+        "title": "Modifier le compte",
+        "firstNameLabel": "Prénom",
+        "lastNameLabel": "Nom",
+        "emailLabel": "Adresse mail",
+        "roleLabel": "Rôle",
+        "roleUser": "user",
+        "roleAdmin": "admin",
+        "planLabel": "Plan",
+        "planPlaceholder": "Ex: starter, pro, enterprise",
+        "phoneLabel": "Téléphone",
+        "companyLabel": "Société",
+        "sirenLabel": "SIREN",
+        "vatLabel": "N° de TVA",
+        "updateSuccessToast": "Compte mis à jour."
+      }
     }
   },
   "profile": {
     "title": "Mon profil",
     "badge": "Mon compte",
+    "suspendedBadge": "Compte suspendu",
+    "suspendedNotice": "Votre compte est suspendu. Les modifications sont désactivées.",
     "loadingFull": "Chargement de votre profil…",
     "tabs": {
       "information": "Information",
@@ -483,6 +526,7 @@
     "userInfo": {
       "emailLabel": "Email",
       "emailHint": "L'adresse email se modifie depuis l'onglet Connexion.",
+      "suspendedNotice": "Votre compte est suspendu. Les informations sont en lecture seule.",
       "phoneLabel": "Téléphone",
       "companyLabel": "Société",
       "sirenLabel": "SIREN",
@@ -492,6 +536,7 @@
     "connection": {
       "emailLabel": "Adresse mail",
       "emailHint": "Le changement d'adresse email n'est pas encore disponible.",
+      "suspendedNotice": "Votre compte est suspendu. Le changement de mot de passe est désactivé.",
       "oldPasswordLabel": "Mot de passe actuel",
       "newPasswordLabel": "Nouveau mot de passe",
       "newPasswordHint": "8 caractères minimum.",

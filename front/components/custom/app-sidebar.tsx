@@ -9,6 +9,7 @@ import {
   GlobeIcon,
   PercentIcon,
   QuoteIcon,
+  UsersIcon,
   WrenchIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -33,6 +34,7 @@ type NavKey =
   | "quote"
   | "invoices"
   | "clients"
+  | "users"
   | "countries"
   | "taxes"
   | "templates"
@@ -68,6 +70,13 @@ const items: SidebarItem[] = [
     url: "/clients",
     icon: QuoteIcon,
     modes: ["provider"],
+  },
+  {
+    key: "users",
+    url: "/users",
+    icon: UsersIcon,
+    modes: ["provider"],
+    temp: true,
   },
   {
     key: "countries",

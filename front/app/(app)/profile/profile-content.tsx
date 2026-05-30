@@ -57,35 +57,53 @@ export default function ProfileContent() {
               {user?.email ?? (loading ? tCommon("actions.loading") : "")}
             </CardDescription>
           </div>
-          <Badge variant="outline">{t("badge")}</Badge>
+          <Badge variant={user?.suspended ? "destructive" : "outline"}>
+            {user?.suspended ? t("suspendedBadge") : t("badge")}
+          </Badge>
         </div>
       </CardHeader>
 
       <CardContent>
         {loading || !user ? (
-          <p className="text-muted-foreground text-sm">
-            {t("loadingFull")}
-          </p>
+          <p className="text-muted-foreground text-sm">{t("loadingFull")}</p>
         ) : (
-          <Tabs defaultValue={defaultTab}>
-            <TabsList>
-              <TabsTrigger value="information">{t("tabs.information")}</TabsTrigger>
-              <TabsTrigger value="adresse">{t("tabs.addresses")}</TabsTrigger>
-              <TabsTrigger value="compte">{t("tabs.connection")}</TabsTrigger>
-            </TabsList>
+          <div className="space-y-4">
+            {user.suspended ? (
+              <p className="text-muted-foreground rounded-md border border-dashed px-3 py-2 text-sm">
+                {t("suspendedNotice")}
+              </p>
+            ) : null}
 
-            <TabsContent value="information" className="pt-4">
-              <UserInfoForm user={user} onSaved={setUser} />
-            </TabsContent>
+            <Tabs defaultValue={defaultTab}>
+              <TabsList>
+                <TabsTrigger value="information">
+                  {t("tabs.information")}
+                </TabsTrigger>
+                <TabsTrigger value="adresse">{t("tabs.addresses")}</TabsTrigger>
+                <TabsTrigger value="compte">{t("tabs.connection")}</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="adresse" className="pt-4">
-              <AddressesTable ownerType="user" ownerId={user.user_id} />
-            </TabsContent>
+              <TabsContent value="information" className="pt-4">
+                <UserInfoForm
+                  user={user}
+                  onSaved={setUser}
+                  readOnly={user.suspended}
+                />
+              </TabsContent>
 
-            <TabsContent value="compte" className="pt-4">
-              <ConnectionForm email={user.email} />
-            </TabsContent>
-          </Tabs>
+              <TabsContent value="adresse" className="pt-4">
+                <AddressesTable
+                  ownerType="user"
+                  ownerId={user.user_id}
+                  readOnly={user.suspended}
+                />
+              </TabsContent>
+
+              <TabsContent value="compte" className="pt-4">
+                <ConnectionForm email={user.email} readOnly={user.suspended} />
+              </TabsContent>
+            </Tabs>
+          </div>
         )}
       </CardContent>
     </Card>
