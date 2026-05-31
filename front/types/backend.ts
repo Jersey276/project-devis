@@ -135,6 +135,12 @@ export type BackendScheduleColumnTotal = {
   amount_cents: number;
 };
 
+export type BackendScheduleCell = {
+  quote_line_id: string;
+  month_index: number;
+  amount_cents: number;
+};
+
 export type BackendScheduleDetails = {
   schedule_id: string;
   quote_id: string;
@@ -143,6 +149,7 @@ export type BackendScheduleDetails = {
   start_month: string;
   duration_months: number;
   lines: BackendScheduleLineSummary[];
+  cells?: BackendScheduleCell[];
   column_totals: BackendScheduleColumnTotal[];
   quote_total_cents: number;
   planned_total_cents: number;

@@ -11,14 +11,229 @@ import {
 } from "@/lib/services/schedules";
 import {
   type BackendScheduleDetails,
+  type ScheduleBalanceState,
   scheduleBalanceState,
 } from "@/types/backend";
-import { formatEurosFromCents } from "@/lib/utils";
+import { cn, formatEurosFromCents } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type Params = {
   id: string;
 };
+
+type ScheduleMonthHeader = {
+  year: string;
+  label: string;
+};
+
+type ScheduleYearHeader = {
+  year: string;
+  span: number;
+};
+
+function centsToEuros(cents: number): string {
+  return (cents / 100).toFixed(2);
+}
+
+function parseScheduleMonth(month: string): Date {
+  const [yearPart, monthPart] = month.split("-");
+  const year = Number.parseInt(yearPart ?? "", 10);
+  const monthIndex = Number.parseInt(monthPart ?? "", 10);
+  return new Date(Date.UTC(year, monthIndex - 1, 1));
+}
+
+function buildScheduleMonthHeaders(
+  startMonth: string,
+  durationMonths: number,
+): ScheduleMonthHeader[] {
+  const headers: ScheduleMonthHeader[] = [];
+  const current = parseScheduleMonth(startMonth);
+
+  for (let monthIndex = 0; monthIndex < durationMonths; monthIndex += 1) {
+    headers.push({
+      year: String(current.getUTCFullYear()),
+      label: current.toLocaleString("fr-FR", {
+        month: "long",
+        timeZone: "UTC",
+      }),
+    });
+    current.setUTCMonth(current.getUTCMonth() + 1);
+  }
+
+  return headers;
+}
+
+function buildScheduleYearHeaders(
+  monthHeaders: ScheduleMonthHeader[],
+): ScheduleYearHeader[] {
+  const headers: ScheduleYearHeader[] = [];
+
+  for (const monthHeader of monthHeaders) {
+    const lastHeader = headers.at(-1);
+    if (lastHeader?.year === monthHeader.year) {
+      lastHeader.span += 1;
+      continue;
+    }
+
+    headers.push({ year: monthHeader.year, span: 1 });
+  }
+
+  return headers;
+}
+
+function draftKey(lineId: string, monthIndex: number): string {
+  return `${lineId}::${monthIndex}`;
+}
+
+function buildCellDrafts(
+  schedule: BackendScheduleDetails,
+): Record<string, string> {
+  const drafts: Record<string, string> = {};
+
+  if (Array.isArray(schedule.cells) && schedule.cells.length > 0) {
+    for (const cell of schedule.cells) {
+      drafts[draftKey(cell.quote_line_id, cell.month_index)] = centsToEuros(
+        cell.amount_cents,
+      );
+    }
+    return drafts;
+  }
+
+  // Backward-compatible fallback while details payload does not provide cell-level data.
+  for (const line of schedule.lines) {
+    drafts[draftKey(line.quote_line_id, 1)] = centsToEuros(line.planned_cents);
+  }
+  return drafts;
+}
+
+function balanceStateClasses(state: ScheduleBalanceState): {
+  rowClass: string;
+  stickyCellClass: string;
+} {
+  switch (state) {
+    case "under":
+      return {
+        rowClass: "bg-amber-50/60 hover:bg-amber-100/60",
+        stickyCellClass: "bg-amber-50/60",
+      };
+    case "over":
+      return {
+        rowClass: "bg-rose-50/60 hover:bg-rose-100/60",
+        stickyCellClass: "bg-rose-50/60",
+      };
+    default:
+      return {
+        rowClass: "bg-emerald-50/60 hover:bg-emerald-100/60",
+        stickyCellClass: "bg-emerald-50/60",
+      };
+  }
+}
+
+function eurosStringToCents(value: string): number {
+  return Math.round(Number.parseFloat(value) * 100);
+}
+
+function applyOptimisticCellUpdate(
+  schedule: BackendScheduleDetails,
+  quoteLineId: string,
+  monthIndex: number,
+  amountCents: number,
+  previousAmountCents: number,
+): BackendScheduleDetails {
+  const delta = amountCents - previousAmountCents;
+  if (delta === 0) return schedule;
+
+  const lines = schedule.lines.map((line) =>
+    line.quote_line_id === quoteLineId
+      ? { ...line, planned_cents: line.planned_cents + delta }
+      : line,
+  );
+
+  const existingCells = Array.isArray(schedule.cells) ? schedule.cells : [];
+  const targetCellIndex = existingCells.findIndex(
+    (cell) =>
+      cell.quote_line_id === quoteLineId && cell.month_index === monthIndex,
+  );
+  const cells =
+    targetCellIndex >= 0
+      ? existingCells.map((cell, index) =>
+          index === targetCellIndex
+            ? { ...cell, amount_cents: amountCents }
+            : cell,
+        )
+      : [
+          ...existingCells,
+          {
+            quote_line_id: quoteLineId,
+            month_index: monthIndex,
+            amount_cents: amountCents,
+          },
+        ];
+
+  const targetColumnIndex = schedule.column_totals.findIndex(
+    (column) => column.month_index === monthIndex,
+  );
+  const column_totals =
+    targetColumnIndex >= 0
+      ? schedule.column_totals.map((column, index) =>
+          index === targetColumnIndex
+            ? { ...column, amount_cents: column.amount_cents + delta }
+            : column,
+        )
+      : [
+          ...schedule.column_totals,
+          {
+            month_index: monthIndex,
+            amount_cents: delta,
+          },
+        ];
+
+  return {
+    ...schedule,
+    lines,
+    cells,
+    column_totals,
+    planned_total_cents: schedule.planned_total_cents + delta,
+  };
+}
+
+type ParsedAmountResult =
+  | { ok: true; normalizedValue: string }
+  | { ok: false; reason: "empty" | "invalid"; message?: string };
+
+function parseAmountEur(value: string): ParsedAmountResult {
+  const sanitized = value.trim().replace(",", ".");
+  if (!sanitized) return { ok: false, reason: "empty" };
+  if (!/^\d+(\.\d{1,2})?$/.test(sanitized)) {
+    return {
+      ok: false,
+      reason: "invalid",
+      message:
+        "Montant invalide. Utilisez un nombre positif avec 2 décimales max.",
+    };
+  }
+
+  const amount = Number.parseFloat(sanitized);
+  if (!Number.isFinite(amount) || amount < 0) {
+    return {
+      ok: false,
+      reason: "invalid",
+      message:
+        "Montant invalide. Utilisez un nombre positif avec 2 décimales max.",
+    };
+  }
+
+  return { ok: true, normalizedValue: amount.toFixed(2) };
+}
 
 export default function ScheduleDetailsPage() {
   const params = useParams<Params>();
@@ -26,6 +241,10 @@ export default function ScheduleDetailsPage() {
   const [schedule, setSchedule] = useState<BackendScheduleDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cellDrafts, setCellDrafts] = useState<Record<string, string>>({});
+  const [savedCellDrafts, setSavedCellDrafts] = useState<
+    Record<string, string>
+  >({});
 
   const breadcrumbs = useMemo(
     () => [
@@ -34,6 +253,34 @@ export default function ScheduleDetailsPage() {
     ],
     [scheduleId],
   );
+
+  const monthHeaders = useMemo(
+    () =>
+      schedule
+        ? buildScheduleMonthHeaders(
+            schedule.start_month,
+            schedule.duration_months,
+          )
+        : [],
+    [schedule],
+  );
+
+  const yearHeaders = useMemo(
+    () => buildScheduleYearHeaders(monthHeaders),
+    [monthHeaders],
+  );
+
+  const columnTotalsByMonth = useMemo(() => {
+    if (!schedule) return new Map<number, number>();
+    return new Map(
+      schedule.column_totals.map((column) => [
+        column.month_index,
+        column.amount_cents,
+      ]),
+    );
+  }, [schedule]);
+
+  const isReadOnly = schedule?.status === "VALID";
 
   useEffect(() => {
     let cancelled = false;
@@ -48,7 +295,11 @@ export default function ScheduleDetailsPage() {
         setLoading(false);
         return;
       }
-      setSchedule(body.schedule as BackendScheduleDetails);
+      const loadedSchedule = body.schedule as BackendScheduleDetails;
+      const drafts = buildCellDrafts(loadedSchedule);
+      setSchedule(loadedSchedule);
+      setCellDrafts(drafts);
+      setSavedCellDrafts(drafts);
       setError(null);
       setLoading(false);
     });
@@ -58,7 +309,7 @@ export default function ScheduleDetailsPage() {
   }, [scheduleId]);
 
   async function onValidate() {
-    if (!scheduleId) return;
+    if (!scheduleId || isReadOnly) return;
     const { ok, body } = await validateSchedule(scheduleId);
     if (!ok || !body.success) {
       setError((body.message as string) ?? "Validation impossible.");
@@ -66,28 +317,96 @@ export default function ScheduleDetailsPage() {
     }
     const refreshed = await getSchedule(scheduleId);
     if (refreshed.ok && refreshed.body.success && refreshed.body.schedule) {
-      setSchedule(refreshed.body.schedule as BackendScheduleDetails);
+      const refreshedSchedule = refreshed.body
+        .schedule as BackendScheduleDetails;
+      const drafts = buildCellDrafts(refreshedSchedule);
+      setSchedule(refreshedSchedule);
+      setCellDrafts(drafts);
+      setSavedCellDrafts(drafts);
       setError(null);
     }
   }
 
-  async function setFirstLineToZero() {
-    if (!schedule || schedule.lines.length === 0) return;
-    const first = schedule.lines[0];
+  function onCellDraftChange(
+    quoteLineId: string,
+    monthIndex: number,
+    value: string,
+  ) {
+    setCellDrafts((prev) => ({
+      ...prev,
+      [draftKey(quoteLineId, monthIndex)]: value,
+    }));
+  }
+
+  async function saveCell(quoteLineId: string, monthIndex: number) {
+    if (!schedule || isReadOnly) return;
+
+    const key = draftKey(quoteLineId, monthIndex);
+    const rawAmount = cellDrafts[key] ?? "";
+
+    const parsedAmount = parseAmountEur(rawAmount);
+    if (!parsedAmount.ok) {
+      if (parsedAmount.reason === "empty") {
+        setCellDrafts((prev) => ({
+          ...prev,
+          [key]: savedCellDrafts[key] ?? "",
+        }));
+        setError(null);
+        return;
+      }
+
+      setError(parsedAmount.message ?? "Montant invalide.");
+      return;
+    }
+
+    const savedParsed = parseAmountEur(savedCellDrafts[key] ?? "");
+    if (
+      savedParsed.ok &&
+      savedParsed.normalizedValue === parsedAmount.normalizedValue
+    ) {
+      setCellDrafts((prev) => ({
+        ...prev,
+        [key]: parsedAmount.normalizedValue,
+      }));
+      setError(null);
+      return;
+    }
+
     const { ok, body } = await updateScheduleCell(schedule.schedule_id, {
-      quoteLineId: first.quote_line_id,
-      monthIndex: 1,
-      amountEur: "0.00",
+      quoteLineId,
+      monthIndex,
+      amountEur: parsedAmount.normalizedValue,
     });
     if (!ok || !body.success) {
       setError((body.message as string) ?? "Mise à jour impossible.");
       return;
     }
-    const refreshed = await getSchedule(scheduleId);
-    if (refreshed.ok && refreshed.body.success && refreshed.body.schedule) {
-      setSchedule(refreshed.body.schedule as BackendScheduleDetails);
-      setError(null);
-    }
+
+    const previousAmountCents = savedParsed.ok
+      ? eurosStringToCents(savedParsed.normalizedValue)
+      : 0;
+    const amountCents = eurosStringToCents(parsedAmount.normalizedValue);
+
+    setSchedule((prev) =>
+      prev
+        ? applyOptimisticCellUpdate(
+            prev,
+            quoteLineId,
+            monthIndex,
+            amountCents,
+            previousAmountCents,
+          )
+        : prev,
+    );
+    setCellDrafts((prev) => ({
+      ...prev,
+      [key]: parsedAmount.normalizedValue,
+    }));
+    setSavedCellDrafts((prev) => ({
+      ...prev,
+      [key]: parsedAmount.normalizedValue,
+    }));
+    setError(null);
   }
 
   return (
@@ -96,18 +415,9 @@ export default function ScheduleDetailsPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <CardTitle>Échéancier {scheduleId}</CardTitle>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={setFirstLineToZero}
-            >
-              Cellule #1 → 0,00
-            </Button>
-            <Button type="button" onClick={onValidate}>
-              Valider l&apos;échéancier
-            </Button>
-          </div>
+          <Button type="button" onClick={onValidate} disabled={isReadOnly}>
+            Valider l&apos;échéancier
+          </Button>
         </CardHeader>
         <CardContent>
           {!scheduleId ? (
@@ -136,40 +446,167 @@ export default function ScheduleDetailsPage() {
                 </p>
               </div>
 
-              <div className="rounded-md border">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/40 text-left">
-                      <th className="p-2">Ligne devis</th>
-                      <th className="p-2">Planifié</th>
-                      <th className="p-2">Attendu</th>
-                      <th className="p-2">État</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              <div className="w-full max-w-full rounded-md border">
+                <Table className="min-w-max">
+                  <TableHeader className="bg-muted/40">
+                    <TableRow className="text-left">
+                      <TableHead
+                        rowSpan={2}
+                        className="sticky left-0 z-30 min-w-44 bg-muted/40"
+                      >
+                        Ligne devis
+                      </TableHead>
+                      <TableHead
+                        rowSpan={2}
+                        className="sticky left-44 z-30 min-w-32 bg-muted/40 text-center"
+                      >
+                        Total
+                      </TableHead>
+                      <TableHead
+                        rowSpan={2}
+                        className="sticky left-76 z-30 min-w-32 bg-muted/40 text-center"
+                      >
+                        Restant
+                      </TableHead>
+                      {yearHeaders.map((header) => (
+                        <TableHead
+                          key={`head-year-${header.year}`}
+                          colSpan={header.span}
+                          className="text-center"
+                        >
+                          {header.year}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                    <TableRow className="text-left">
+                      {monthHeaders.map((header, index) => (
+                        <TableHead
+                          key={`head-month-${index + 1}`}
+                          className="text-center uppercase"
+                        >
+                          {header.label}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {schedule.lines.map((line) => {
                       const state = scheduleBalanceState(
                         line.planned_cents,
                         line.expected_cents,
                       );
+                      const stateClasses = balanceStateClasses(state);
                       return (
-                        <tr
+                        <TableRow
                           key={line.quote_line_id}
-                          className="border-b last:border-0"
+                          className={stateClasses.rowClass}
                         >
-                          <td className="p-2">{line.quote_line_id}</td>
-                          <td className="p-2">
-                            {formatEurosFromCents(line.planned_cents)}
-                          </td>
-                          <td className="p-2">
+                          <TableCell
+                            className={cn(
+                              "sticky left-0 z-20 min-w-44",
+                              stateClasses.stickyCellClass,
+                            )}
+                          >
+                            {line.quote_line_id}
+                          </TableCell>
+                          <TableCell
+                            data-testid={`line-total-${line.quote_line_id}`}
+                            className={cn(
+                              "sticky left-44 z-20 min-w-32 text-center",
+                              stateClasses.stickyCellClass,
+                            )}
+                          >
                             {formatEurosFromCents(line.expected_cents)}
-                          </td>
-                          <td className="p-2">{state}</td>
-                        </tr>
+                          </TableCell>
+                          <TableCell
+                            data-testid={`line-remaining-${line.quote_line_id}`}
+                            className={cn(
+                              "sticky left-76 z-20 min-w-32 text-center",
+                              stateClasses.stickyCellClass,
+                            )}
+                          >
+                            {formatEurosFromCents(
+                              line.expected_cents - line.planned_cents,
+                            )}
+                          </TableCell>
+                          {monthHeaders.map((_, index) => {
+                            const monthIndex = index + 1;
+                            return (
+                              <TableCell
+                                key={`${line.quote_line_id}-month-${monthIndex}`}
+                              >
+                                <input
+                                  name={`cell-${line.quote_line_id}-m${monthIndex}`}
+                                  className="h-9 w-24 rounded-md border px-2"
+                                  disabled={isReadOnly}
+                                  value={
+                                    cellDrafts[
+                                      draftKey(line.quote_line_id, monthIndex)
+                                    ] ?? ""
+                                  }
+                                  onChange={(e) =>
+                                    onCellDraftChange(
+                                      line.quote_line_id,
+                                      monthIndex,
+                                      e.target.value,
+                                    )
+                                  }
+                                  onBlur={() => {
+                                    void saveCell(
+                                      line.quote_line_id,
+                                      monthIndex,
+                                    );
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key !== "Enter") return;
+                                    e.preventDefault();
+                                    e.currentTarget.blur();
+                                  }}
+                                />
+                              </TableCell>
+                            );
+                          })}
+                        </TableRow>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </TableBody>
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell className="sticky left-0 z-20 min-w-44 bg-muted/60 font-semibold">
+                        Totaux mensuels
+                      </TableCell>
+                      <TableCell
+                        data-testid="footer-total-quote"
+                        className="sticky left-44 z-20 min-w-32 bg-muted/60 text-center font-semibold"
+                      >
+                        {formatEurosFromCents(schedule.quote_total_cents)}
+                      </TableCell>
+                      <TableCell
+                        data-testid="footer-total-remaining"
+                        className="sticky left-76 z-20 min-w-32 bg-muted/60 text-center font-semibold"
+                      >
+                        {formatEurosFromCents(
+                          schedule.quote_total_cents -
+                            schedule.planned_total_cents,
+                        )}
+                      </TableCell>
+                      {monthHeaders.map((_, index) => {
+                        const monthIndex = index + 1;
+                        return (
+                          <TableCell
+                            key={`footer-month-total-${monthIndex}`}
+                            data-testid={`footer-month-total-${monthIndex}`}
+                            className="text-center font-semibold"
+                          >
+                            {formatEurosFromCents(
+                              columnTotalsByMonth.get(monthIndex) ?? 0,
+                            )}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  </TableFooter>
+                </Table>
               </div>
 
               <p>
