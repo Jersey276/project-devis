@@ -53,6 +53,7 @@ func SchedulesRoutes(r *gin.RouterGroup) {
 	one := r.Group("/:id")
 	one.GET("", func(c *gin.Context) { GetSchedule(c, client) })
 	one.PATCH("/cells", func(c *gin.Context) { UpdateScheduleCell(c, client) })
+	one.PATCH("/status", func(c *gin.Context) { UpdateScheduleStatus(c, client) })
 	one.POST("/validate", func(c *gin.Context) { ValidateSchedule(c, client) })
 }
 

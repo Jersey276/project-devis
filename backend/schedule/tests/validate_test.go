@@ -12,6 +12,10 @@ import (
 
 func TestValidateSchedule_Success(t *testing.T) {
 	srv, mock := setupServer(t)
+	restore := actions.SetQuoteLineExpectedCentsFetcherForTests(func(context.Context, string, string) (map[string]int64, error) {
+		return map[string]int64{"line-1": 1000, "line-2": 500}, nil
+	})
+	t.Cleanup(restore)
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(`SELECT quote_id, status FROM schedules WHERE schedule_id=\$1 AND user_id=\$2 FOR UPDATE`).
@@ -20,9 +24,11 @@ func TestValidateSchedule_Success(t *testing.T) {
 	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM schedules WHERE quote_id=\$1 AND schedule_id<>\$2 AND status='VALID'`).
 		WithArgs("quote-1", "schedule-1").
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(int64(0)))
-	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM \(\s*SELECT sc\.quote_line_id`).
+	mock.ExpectQuery(`SELECT quote_line_id, COALESCE\(SUM\(amount_cents\), 0\) FROM schedule_cells WHERE schedule_id=\$1 GROUP BY quote_line_id`).
 		WithArgs("schedule-1").
-		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(int64(0)))
+		WillReturnRows(sqlmock.NewRows([]string{"quote_line_id", "amount_cents"}).
+			AddRow("line-1", int64(1000)).
+			AddRow("line-2", int64(500)))
 	mock.ExpectExec(`UPDATE schedules SET status='VALID', validated_at=NOW\(\), updated_at=NOW\(\) WHERE schedule_id=\$1 AND user_id=\$2`).
 		WithArgs("schedule-1", "user-1").
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -48,6 +54,10 @@ func TestValidateSchedule_Success(t *testing.T) {
 
 func TestValidateSchedule_InvalidInput(t *testing.T) {
 	srv, mock := setupServer(t)
+	restore := actions.SetQuoteLineExpectedCentsFetcherForTests(func(context.Context, string, string) (map[string]int64, error) {
+		return map[string]int64{}, nil
+	})
+	t.Cleanup(restore)
 
 	resp, err := srv.ValidateSchedule(context.Background(), &scheduleGrpc.ValidateScheduleRequest{
 		ScheduleId: "",
@@ -69,6 +79,10 @@ func TestValidateSchedule_InvalidInput(t *testing.T) {
 
 func TestValidateSchedule_NotFound(t *testing.T) {
 	srv, mock := setupServer(t)
+	restore := actions.SetQuoteLineExpectedCentsFetcherForTests(func(context.Context, string, string) (map[string]int64, error) {
+		return map[string]int64{}, nil
+	})
+	t.Cleanup(restore)
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(`SELECT quote_id, status FROM schedules WHERE schedule_id=\$1 AND user_id=\$2 FOR UPDATE`).
@@ -96,6 +110,10 @@ func TestValidateSchedule_NotFound(t *testing.T) {
 
 func TestValidateSchedule_AlreadyValidated(t *testing.T) {
 	srv, mock := setupServer(t)
+	restore := actions.SetQuoteLineExpectedCentsFetcherForTests(func(context.Context, string, string) (map[string]int64, error) {
+		return map[string]int64{}, nil
+	})
+	t.Cleanup(restore)
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(`SELECT quote_id, status FROM schedules WHERE schedule_id=\$1 AND user_id=\$2 FOR UPDATE`).
@@ -123,6 +141,10 @@ func TestValidateSchedule_AlreadyValidated(t *testing.T) {
 
 func TestValidateSchedule_Unbalanced(t *testing.T) {
 	srv, mock := setupServer(t)
+	restore := actions.SetQuoteLineExpectedCentsFetcherForTests(func(context.Context, string, string) (map[string]int64, error) {
+		return map[string]int64{"line-1": 1000}, nil
+	})
+	t.Cleanup(restore)
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(`SELECT quote_id, status FROM schedules WHERE schedule_id=\$1 AND user_id=\$2 FOR UPDATE`).
@@ -131,9 +153,10 @@ func TestValidateSchedule_Unbalanced(t *testing.T) {
 	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM schedules WHERE quote_id=\$1 AND schedule_id<>\$2 AND status='VALID'`).
 		WithArgs("quote-1", "schedule-1").
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(int64(0)))
-	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM \(\s*SELECT sc\.quote_line_id`).
+	mock.ExpectQuery(`SELECT quote_line_id, COALESCE\(SUM\(amount_cents\), 0\) FROM schedule_cells WHERE schedule_id=\$1 GROUP BY quote_line_id`).
 		WithArgs("schedule-1").
-		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(int64(1)))
+		WillReturnRows(sqlmock.NewRows([]string{"quote_line_id", "amount_cents"}).
+			AddRow("line-1", int64(900)))
 	mock.ExpectRollback()
 
 	resp, err := srv.ValidateSchedule(context.Background(), &scheduleGrpc.ValidateScheduleRequest{
@@ -156,6 +179,10 @@ func TestValidateSchedule_Unbalanced(t *testing.T) {
 
 func TestValidateSchedule_AnotherValidExists(t *testing.T) {
 	srv, mock := setupServer(t)
+	restore := actions.SetQuoteLineExpectedCentsFetcherForTests(func(context.Context, string, string) (map[string]int64, error) {
+		return map[string]int64{}, nil
+	})
+	t.Cleanup(restore)
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(`SELECT quote_id, status FROM schedules WHERE schedule_id=\$1 AND user_id=\$2 FOR UPDATE`).

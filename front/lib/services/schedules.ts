@@ -17,6 +17,10 @@ export type UpdateScheduleCellPayload = {
   amountEur: string;
 };
 
+export type UpdateScheduleStatusPayload = {
+  status: "DRAFT" | "NEGOCIATE" | "DENIED" | "VALID";
+};
+
 export async function listSchedules(quoteId?: string): Promise<ApiResult> {
   const q = quoteId?.trim();
   const path = q
@@ -60,6 +64,18 @@ export async function updateScheduleCell(
 export async function validateSchedule(scheduleId: string): Promise<ApiResult> {
   return apiFetch(`/api/schedules/${encodeURIComponent(scheduleId)}/validate`, {
     method: "POST",
+  });
+}
+
+export async function updateScheduleStatus(
+  scheduleId: string,
+  payload: UpdateScheduleStatusPayload,
+): Promise<ApiResult> {
+  return apiFetch(`/api/schedules/${encodeURIComponent(scheduleId)}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      status: payload.status,
+    }),
   });
 }
 

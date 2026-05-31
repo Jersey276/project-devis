@@ -1,14 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import PageBreadcrumb from "@/components/custom/page-breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  getSchedule,
-  updateScheduleCell,
-  validateSchedule,
-} from "@/lib/services/schedules";
+import { getSchedule, updateScheduleCell } from "@/lib/services/schedules";
 import { exportSchedulePdf } from "@/lib/services/export";
 import {
   type BackendScheduleDetails,
@@ -32,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import ScheduleStatusSelect from "@/components/schedule/schedule-status-select";
 
 type Params = {
   id: string;
@@ -292,57 +289,37 @@ export default function ScheduleDetailsPage() {
   const isReadOnly =
     schedule?.status === "VALID" || schedule?.status === "DENIED";
 
+  const loadSchedule = useCallback(async () => {
+    if (!scheduleId) return;
+    const { ok, body } = await getSchedule(scheduleId);
+    if (!ok || !body.success || !body.schedule) {
+      setError(
+        (body.message as string) ?? "Impossible de charger l'échéancier.",
+      );
+      setSchedule(null);
+      setLoading(false);
+      return;
+    }
+    const loadedSchedule = body.schedule as BackendScheduleDetails;
+    const drafts = buildCellDrafts(loadedSchedule);
+    setSchedule(loadedSchedule);
+    setCellDrafts(drafts);
+    setSavedCellDrafts(drafts);
+    setCellErrors({});
+    setError(null);
+    setLoading(false);
+  }, [scheduleId]);
+
   useEffect(() => {
     let cancelled = false;
     if (!scheduleId) return;
-    getSchedule(scheduleId).then(({ ok, body }) => {
+    loadSchedule().then(() => {
       if (cancelled) return;
-      if (!ok || !body.success || !body.schedule) {
-        setError(
-          (body.message as string) ?? "Impossible de charger l'échéancier.",
-        );
-        setSchedule(null);
-        setLoading(false);
-        return;
-      }
-      const loadedSchedule = body.schedule as BackendScheduleDetails;
-      const drafts = buildCellDrafts(loadedSchedule);
-      setSchedule(loadedSchedule);
-      setCellDrafts(drafts);
-      setSavedCellDrafts(drafts);
-      setCellErrors({});
-      setError(null);
-      setLoading(false);
     });
     return () => {
       cancelled = true;
     };
-  }, [scheduleId]);
-
-  async function onValidate() {
-    if (!scheduleId || isReadOnly) return;
-    const hasConfirmed = window.confirm(
-      "Confirmer la validation ? Cette action est definitive et l'echeancier ne pourra plus etre modifie.",
-    );
-    if (!hasConfirmed) return;
-
-    const { ok, body } = await validateSchedule(scheduleId);
-    if (!ok || !body.success) {
-      setError((body.message as string) ?? "Validation impossible.");
-      return;
-    }
-    const refreshed = await getSchedule(scheduleId);
-    if (refreshed.ok && refreshed.body.success && refreshed.body.schedule) {
-      const refreshedSchedule = refreshed.body
-        .schedule as BackendScheduleDetails;
-      const drafts = buildCellDrafts(refreshedSchedule);
-      setSchedule(refreshedSchedule);
-      setCellDrafts(drafts);
-      setSavedCellDrafts(drafts);
-      setCellErrors({});
-      setError(null);
-    }
-  }
+  }, [loadSchedule, scheduleId]);
 
   async function onExportPdf() {
     if (!scheduleId || isExporting) return;
@@ -577,9 +554,6 @@ export default function ScheduleDetailsPage() {
             >
               {isExporting ? "Export..." : "Exporter PDF"}
             </Button>
-            <Button type="button" onClick={onValidate} disabled={isReadOnly}>
-              Valider l&apos;échéancier
-            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -599,7 +573,14 @@ export default function ScheduleDetailsPage() {
                   <strong>Nom:</strong> {schedule.name}
                 </p>
                 <p>
-                  <strong>Statut:</strong> {schedule.status}
+                  <strong>Statut:</strong>{" "}
+                  <ScheduleStatusSelect
+                    scheduleId={schedule.schedule_id}
+                    value={schedule.status}
+                    className="w-44"
+                    onUpdated={loadSchedule}
+                    onError={setError}
+                  />
                 </p>
                 <p>
                   <strong>Début:</strong> {schedule.start_month}

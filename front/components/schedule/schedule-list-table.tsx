@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   DataTable,
   DataTableBody,
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { listSchedules } from "@/lib/services/schedules";
 import type { BackendScheduleSummary } from "@/types/backend";
 import CreateScheduleDialog from "@/components/schedule/create-schedule-dialog";
+import ScheduleStatusSelect from "@/components/schedule/schedule-status-select";
 
 type ScheduleRow = {
   id: string;
@@ -40,16 +41,20 @@ function toRows(schedules: BackendScheduleSummary[]): ScheduleRow[] {
 export default function ScheduleListTable() {
   const [items, setItems] = useState<ScheduleRow[]>([]);
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function refreshSchedules() {
-    listSchedules().then(({ ok, body }) => {
-      if (!ok || !body.success || !Array.isArray(body.schedules)) {
-        setItems([]);
-        return;
-      }
-      setItems(toRows(body.schedules as BackendScheduleSummary[]));
-    });
-  }
+  const refreshSchedules = useCallback(async () => {
+    const { ok, body } = await listSchedules();
+    if (!ok || !body.success || !Array.isArray(body.schedules)) {
+      setItems([]);
+      setError(
+        (body.message as string) ?? "Impossible de charger les échéanciers.",
+      );
+      return;
+    }
+    setError(null);
+    setItems(toRows(body.schedules as BackendScheduleSummary[]));
+  }, []);
 
   const rowActions = useMemo<DataTableRowAction[]>(
     () => [
@@ -68,8 +73,12 @@ export default function ScheduleListTable() {
       if (cancelled) return;
       if (!ok || !body.success || !Array.isArray(body.schedules)) {
         setItems([]);
+        setError(
+          (body.message as string) ?? "Impossible de charger les échéanciers.",
+        );
         return;
       }
+      setError(null);
       setItems(toRows(body.schedules as BackendScheduleSummary[]));
     });
     return () => {
@@ -84,6 +93,8 @@ export default function ScheduleListTable() {
           Nouvel échéancier
         </Button>
       </div>
+
+      {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
 
       <DataTable
         datas={items}
@@ -125,7 +136,15 @@ export default function ScheduleListTable() {
                 <DataTableCell>{item.id}</DataTableCell>
                 <DataTableCell>{item.name}</DataTableCell>
                 <DataTableCell>{item.quoteId}</DataTableCell>
-                <DataTableCell>{item.status}</DataTableCell>
+                <DataTableCell>
+                  <ScheduleStatusSelect
+                    scheduleId={item.id}
+                    value={item.status as BackendScheduleSummary["status"]}
+                    className="w-44"
+                    onUpdated={refreshSchedules}
+                    onError={setError}
+                  />
+                </DataTableCell>
                 <DataTableCell>{item.startMonth}</DataTableCell>
                 <DataTableCell>{item.durationMonths}</DataTableCell>
                 <DataTableCell>

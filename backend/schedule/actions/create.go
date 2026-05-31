@@ -10,7 +10,20 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Server) CreateSchedule(ctx context.Context, req *scheduleGrpc.CreateScheduleRequest, eligibleLineIDs []string) (resp *scheduleGrpc.CreateScheduleResponse, err error) {
+func (s *Server) CreateSchedule(ctx context.Context, req *scheduleGrpc.CreateScheduleRequest) (resp *scheduleGrpc.CreateScheduleResponse, err error) {
+	eligibleLineIDs, err := fetchEligibleQuoteLineIDs(ctx, req)
+	if err != nil {
+		return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInternalError}, err
+	}
+	return s.createScheduleWithEligibleLines(ctx, req, eligibleLineIDs)
+}
+
+// CreateScheduleWithEligibleLines is test-facing and allows bypassing quote RPC calls.
+func (s *Server) CreateScheduleWithEligibleLines(ctx context.Context, req *scheduleGrpc.CreateScheduleRequest, eligibleLineIDs []string) (resp *scheduleGrpc.CreateScheduleResponse, err error) {
+	return s.createScheduleWithEligibleLines(ctx, req, eligibleLineIDs)
+}
+
+func (s *Server) createScheduleWithEligibleLines(ctx context.Context, req *scheduleGrpc.CreateScheduleRequest, eligibleLineIDs []string) (resp *scheduleGrpc.CreateScheduleResponse, err error) {
 	startedAt := time.Now()
 	defer func() {
 		code := CodeInternalError
@@ -75,6 +88,23 @@ func (s *Server) CreateSchedule(ctx context.Context, req *scheduleGrpc.CreateSch
 	}
 
 	return &scheduleGrpc.CreateScheduleResponse{Success: true, Code: CodeSuccess, ScheduleId: scheduleID}, nil
+}
+
+func fetchEligibleQuoteLineIDs(ctx context.Context, req *scheduleGrpc.CreateScheduleRequest) ([]string, error) {
+	if req == nil {
+		return nil, nil
+	}
+
+	amounts, err := getQuoteLineExpectedCents(ctx, req.UserId, req.QuoteId)
+	if err != nil {
+		return nil, err
+	}
+
+	lineIDs := make([]string, 0, len(amounts))
+	for lineID := range amounts {
+		lineIDs = append(lineIDs, lineID)
+	}
+	return lineIDs, nil
 }
 
 func parseStartMonth(input string) (time.Time, error) {

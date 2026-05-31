@@ -36,7 +36,7 @@ func TestCreateSchedule_Success(t *testing.T) {
 	}
 	mock.ExpectCommit()
 
-	resp, err := srv.CreateSchedule(context.Background(), req, lineIDs)
+	resp, err := srv.CreateScheduleWithEligibleLines(context.Background(), req, lineIDs)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -54,7 +54,7 @@ func TestCreateSchedule_Success(t *testing.T) {
 func TestCreateSchedule_InvalidInput(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	resp, err := srv.CreateSchedule(context.Background(), &scheduleGrpc.CreateScheduleRequest{
+	resp, err := srv.CreateScheduleWithEligibleLines(context.Background(), &scheduleGrpc.CreateScheduleRequest{
 		UserId:         "user-1",
 		QuoteId:        "quote-1",
 		Name:           "",
@@ -78,7 +78,7 @@ func TestCreateSchedule_InvalidInput(t *testing.T) {
 func TestCreateSchedule_NoEligibleLines(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	resp, err := srv.CreateSchedule(context.Background(), &scheduleGrpc.CreateScheduleRequest{
+	resp, err := srv.CreateScheduleWithEligibleLines(context.Background(), &scheduleGrpc.CreateScheduleRequest{
 		UserId:         "user-1",
 		QuoteId:        "quote-1",
 		Name:           "Echeancier principal",
@@ -118,7 +118,7 @@ func TestCreateSchedule_RollsBackOnCellInsertError(t *testing.T) {
 		WillReturnError(fmt.Errorf("insert failed"))
 	mock.ExpectRollback()
 
-	resp, err := srv.CreateSchedule(context.Background(), req, []string{"line-1"})
+	resp, err := srv.CreateScheduleWithEligibleLines(context.Background(), req, []string{"line-1"})
 	if err == nil {
 		t.Fatal("expected error")
 	}

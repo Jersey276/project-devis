@@ -44,12 +44,17 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 		return resp, err
 	}
 
+	expectedByLineID, err := getQuoteLineExpectedCents(ctx, req.UserId, quoteID)
+	if err != nil {
+		resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
+		return resp, err
+	}
+
 	lineRows, err := s.db.QueryContext(ctx, `
-		SELECT sc.quote_line_id, COALESCE(SUM(sc.amount_cents), 0), COALESCE(ROUND(ql.unit_price * ql.quantity), 0)::BIGINT
+		SELECT sc.quote_line_id, COALESCE(SUM(sc.amount_cents), 0)
 		FROM schedule_cells sc
-		JOIN quote_lines ql ON ql.line_id = sc.quote_line_id
 		WHERE sc.schedule_id=$1
-		GROUP BY sc.quote_line_id, ql.quantity, ql.unit_price
+		GROUP BY sc.quote_line_id
 		ORDER BY sc.quote_line_id
 	`, req.ScheduleId)
 	if err != nil {
@@ -62,8 +67,8 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 	plannedTotalCents := int64(0)
 	for lineRows.Next() {
 		var lineID string
-		var plannedCents, lineCents int64
-		if err := lineRows.Scan(&lineID, &plannedCents, &lineCents); err != nil {
+		var plannedCents int64
+		if err := lineRows.Scan(&lineID, &plannedCents); err != nil {
 			resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
 			return resp, err
 		}
@@ -71,7 +76,7 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 		lineSummaries = append(lineSummaries, &scheduleGrpc.ScheduleLineSummary{
 			QuoteLineId:   lineID,
 			PlannedCents:  plannedCents,
-			ExpectedCents: lineCents,
+			ExpectedCents: expectedByLineID[lineID],
 		})
 	}
 	if err := lineRows.Err(); err != nil {
@@ -91,13 +96,8 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 
 	columnTotals := make([]*scheduleGrpc.ScheduleColumnTotal, 0)
 	var quoteTotalCents int64
-	err = s.db.QueryRowContext(ctx,
-		`SELECT COALESCE(SUM(ROUND(unit_price * quantity)), 0)::BIGINT FROM quote_lines WHERE quote_id=$1`,
-		quoteID,
-	).Scan(&quoteTotalCents)
-	if err != nil {
-		resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
-		return resp, err
+	for _, expected := range expectedByLineID {
+		quoteTotalCents += expected
 	}
 
 	for columnRows.Next() {

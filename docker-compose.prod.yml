@@ -45,6 +45,11 @@ services:
     image: ${IMAGE_PREFIX}/gateway:${IMAGE_TAG:-latest}
     environment:
       <<: *common-env
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: devis-schedule
+      DB_NAME: schedule
+      DB_PASSWORD_FILE: /run/secrets/db_password
       AUTH_SERVICE_ADDRESS: devis-auth:50051
       USER_SERVICE_ADDRESS: devis-user:50052
       QUOTE_SERVICE_ADDRESS: devis-quote:50053
@@ -52,6 +57,8 @@ services:
       EXPORT_SERVICE_ADDRESS: devis-export:50054
     ports:
       - "8080:8080"
+    secrets:
+      - db_password
     depends_on:
       - devis-auth
       - devis-user

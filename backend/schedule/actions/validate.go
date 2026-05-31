@@ -63,22 +63,54 @@ func (s *Server) ValidateSchedule(ctx context.Context, req *scheduleGrpc.Validat
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeScheduleValidated}, nil
 	}
 
-	var unbalancedCount int64
-	err = tx.QueryRowContext(ctx, `
-		SELECT COUNT(*) FROM (
-			SELECT sc.quote_line_id
-			FROM schedule_cells sc
-			JOIN quote_lines ql ON ql.line_id = sc.quote_line_id
-			WHERE sc.schedule_id = $1
-			GROUP BY sc.quote_line_id, ql.quantity, ql.unit_price
-			HAVING COALESCE(SUM(sc.amount_cents), 0) <> COALESCE(ROUND(ql.unit_price * CAST(ql.quantity AS NUMERIC)), 0)
-		) AS unbalanced_lines
-	`, req.ScheduleId).Scan(&unbalancedCount)
+	expectedByLineID, err := getQuoteLineExpectedCents(ctx, req.UserId, quoteID)
 	if err != nil {
 		_ = tx.Rollback()
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
-	if unbalancedCount > 0 {
+
+	plannedByLineID := make(map[string]int64)
+	rows, err := tx.QueryContext(ctx,
+		`SELECT quote_line_id, COALESCE(SUM(amount_cents), 0) FROM schedule_cells WHERE schedule_id=$1 GROUP BY quote_line_id`,
+		req.ScheduleId,
+	)
+	if err != nil {
+		_ = tx.Rollback()
+		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var lineID string
+		var planned int64
+		if err := rows.Scan(&lineID, &planned); err != nil {
+			_ = tx.Rollback()
+			return &scheduleGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
+		}
+		plannedByLineID[lineID] = planned
+	}
+	if err := rows.Err(); err != nil {
+		_ = tx.Rollback()
+		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
+	}
+
+	unbalanced := false
+	for lineID, expected := range expectedByLineID {
+		if plannedByLineID[lineID] != expected {
+			unbalanced = true
+			break
+		}
+	}
+	if !unbalanced {
+		for lineID, planned := range plannedByLineID {
+			if _, ok := expectedByLineID[lineID]; !ok && planned != 0 {
+				unbalanced = true
+				break
+			}
+		}
+	}
+
+	if unbalanced {
 		_ = tx.Rollback()
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeScheduleUnbalanced}, nil
 	}
