@@ -54,6 +54,31 @@ func TestExport_QuoteNotFound(t *testing.T) {
 	}
 }
 
+func TestExport_QuoteRefused(t *testing.T) {
+	qc, uc, gt := happyFakes()
+	qc.getQuote = func(_ context.Context, req *quote.GetQuoteRequest) (*quote.GetQuoteResponse, error) {
+		return &quote.GetQuoteResponse{
+			Success: true,
+			Quote: &quote.Quote{
+				QuoteId:   req.QuoteId,
+				UserId:    req.UserId,
+				Name:      "Devis refuse",
+				State:     quote.QuoteState_QUOTE_STATE_DROP,
+				ClientId:  "client-1",
+				AddressId: 42,
+			},
+		}, nil
+	}
+
+	resp, err := quoteexport.Export(context.Background(), qc, uc, gt, validReq())
+	if err != nil {
+		t.Fatalf("unexpected transport error: %v", err)
+	}
+	if resp.Success || resp.Code != codes.QuoteRefused {
+		t.Fatalf("expected QuoteRefused (%d), got success=%v code=%d", codes.QuoteRefused, resp.Success, resp.Code)
+	}
+}
+
 func TestExport_ClientNotFound(t *testing.T) {
 	qc, uc, gt := happyFakes()
 	uc.getClient = func(context.Context, *users.GetClientRequest) (*users.GetClientResponse, error) {

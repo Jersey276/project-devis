@@ -600,6 +600,83 @@ describe("Schedule", () => {
       cy.get("@validateScheduleButton").should("be.disabled");
     });
 
+    it("shows explicit message when validation is refused", () => {
+      cy.login();
+
+      cy.intercept("GET", "/api/schedules/sch-1", {
+        statusCode: 200,
+        body: detailsResponse("DRAFT", 1200),
+      }).as("getSchedule");
+
+      cy.intercept("POST", "/api/schedules/sch-1/validate", {
+        statusCode: 422,
+        body: { success: false, message: "L'échéancier n'est pas équilibré." },
+      }).as("validateScheduleRejected");
+
+      cy.visit("/schedule/sch-1");
+      cy.wait("@getSchedule");
+
+      cy.contains("button", "Valider l'échéancier").click({ force: true });
+
+      cy.wait("@validateScheduleRejected");
+      cy.contains("n'est pas équilibré").should("be.visible");
+      cy.get("@getSchedule.all").should("have.length", 1);
+    });
+
+    it("shows other schedules as DENIED in list after validation", () => {
+      cy.login();
+
+      let validated = false;
+      cy.intercept("GET", "/api/schedules/sch-1", (req) => {
+        req.reply({
+          statusCode: 200,
+          body: detailsResponse(validated ? "VALID" : "DRAFT", 1500),
+        });
+      }).as("getSchedule");
+
+      cy.intercept("POST", "/api/schedules/sch-1/validate", (req) => {
+        validated = true;
+        req.reply({ statusCode: 200, body: { success: true } });
+      }).as("validateSchedule");
+
+      cy.intercept("GET", "/api/schedules", {
+        statusCode: 200,
+        body: {
+          success: true,
+          schedules: [
+            {
+              schedule_id: "sch-1",
+              quote_id: "q-1",
+              status: "VALID",
+              name: "Echeancier principal",
+              start_month: "2026-06",
+              duration_months: 3,
+            },
+            {
+              schedule_id: "sch-2",
+              quote_id: "q-1",
+              status: "DENIED",
+              name: "Echeancier alternatif",
+              start_month: "2026-06",
+              duration_months: 3,
+            },
+          ],
+        },
+      }).as("listSchedulesAfterValidate");
+
+      cy.visit("/schedule/sch-1");
+      cy.wait("@getSchedule");
+      cy.contains("button", "Valider l'échéancier").click({ force: true });
+      cy.wait("@validateSchedule");
+
+      cy.visit("/schedule");
+      cy.wait("@listSchedulesAfterValidate");
+      cy.contains("td", "sch-2")
+        .closest("tr")
+        .contains("td", "DENIED")
+        .should("be.visible");
+    });
+
     it("locks cell editing when schedule is already VALID", () => {
       cy.login();
 
@@ -619,6 +696,27 @@ describe("Schedule", () => {
       cy.get("input[name='cell-line-1-m1']").should("be.disabled");
       cy.contains("button", "Valider l'échéancier").should("be.disabled");
       cy.get("@patchCellWhileValid.all").should("have.length", 0);
+    });
+
+    it("locks cell editing when schedule is DENIED", () => {
+      cy.login();
+
+      cy.intercept("GET", "/api/schedules/sch-1", {
+        statusCode: 200,
+        body: detailsResponse("DENIED", 1200),
+      }).as("getScheduleDenied");
+
+      cy.intercept("PATCH", "/api/schedules/sch-1/cells", {
+        statusCode: 200,
+        body: { success: true },
+      }).as("patchCellWhileDenied");
+
+      cy.visit("/schedule/sch-1");
+      cy.wait("@getScheduleDenied");
+
+      cy.get("input[name='cell-line-1-m1']").should("be.disabled");
+      cy.contains("button", "Valider l'échéancier").should("be.disabled");
+      cy.get("@patchCellWhileDenied.all").should("have.length", 0);
     });
 
     it("surfaces API error on details load", () => {
@@ -646,7 +744,8 @@ describe("Schedule", () => {
         statusCode: 200,
         headers: {
           "content-type": "application/pdf",
-          "content-disposition": 'attachment; filename="echeancier-sch-1.pdf"',
+          "content-disposition":
+            'attachment; filename="echeancier-Echeancier-principal.pdf"',
         },
         body: "fake-pdf",
       }).as("exportSchedulePdf");
@@ -660,7 +759,7 @@ describe("Schedule", () => {
         expect(interception.request.method).to.equal("GET");
         expect(
           interception.response?.headers?.["content-disposition"],
-        ).to.include("echeancier-sch-1.pdf");
+        ).to.include("echeancier-Echeancier-principal.pdf");
       });
       cy.contains("Export PDF impossible.").should("not.exist");
     });
@@ -687,6 +786,35 @@ describe("Schedule", () => {
         .its("request.method")
         .should("eq", "GET");
       cy.contains("Export PDF impossible.").should("be.visible");
+    });
+
+    it("exports schedule as PDF when schedule is VALID", () => {
+      cy.login();
+
+      cy.intercept("GET", "/api/schedules/sch-1", {
+        statusCode: 200,
+        body: detailsResponse("VALID", 1500),
+      }).as("getScheduleValid");
+
+      cy.intercept("GET", "/api/export/schedules/sch-1", {
+        statusCode: 200,
+        headers: {
+          "content-type": "application/pdf",
+          "content-disposition":
+            'attachment; filename="echeancier-Echeancier-principal.pdf"',
+        },
+        body: "fake-pdf",
+      }).as("exportSchedulePdfValid");
+
+      cy.visit("/schedule/sch-1");
+      cy.wait("@getScheduleValid");
+
+      cy.contains("button", "Exporter PDF").should("be.enabled").click();
+
+      cy.wait("@exportSchedulePdfValid")
+        .its("request.method")
+        .should("eq", "GET");
+      cy.contains("Export PDF impossible.").should("not.exist");
     });
   });
 });

@@ -45,6 +45,8 @@ Aucun endpoint, composant UI, migration ou regle metier ne doit etre ajoute sans
 
 ### Backend metier - Service echeancier
 
+<!-- markdownlint-disable MD060 -->
+
 | ID         | Niveau       | Preconditions                                 | Action                                        | Resultat attendu                                                                            | Priorite |
 | ---------- | ------------ | --------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------- | -------- |
 | SCH-BE-001 | Unit/Service | Devis existant avec lignes actives et valides | Creer un echeancier                           | Echeancier cree en `DRAFT`, cellules generees a `0.00` pour chaque ligne x mois             | P0       |
@@ -62,38 +64,24 @@ Aucun endpoint, composant UI, migration ou regle metier ne doit etre ajoute sans
 | SCH-BE-013 | Unit/Service | Echeancier en `NEGOCIATE`                     | Modifier cellule                              | Autorise car statut informatif non final                                                    | P1       |
 | SCH-BE-014 | Unit/Service | Detail echeancier charge                      | Calculer les ecarts ligne                     | Couleur ligne: jaune si inferieur, vert si exact, rouge si superieur au montant ligne devis | P0       |
 | SCH-BE-015 | Unit/Service | Detail echeancier charge                      | Calculer les totaux colonnes                  | Reference globale = total devis, code couleur coherent                                      | P0       |
-| SCH-BE-016 | Unit/Service | Deux validations concurrentes                 | Valider en parallele                          | Un seul `VALID` final, operation atomique                                                   | P0       |
+| SCH-BE-016 | Unit/Service | Deux validations concurrentes                 | Valider en parallele                          | Hors perimetre: un seul utilisateur edite un echeancier a la fois (pas de test concurrent)  | N/A      |
 | SCH-BE-017 | Unit/Service | Echeancier `DRAFT`                            | Export PDF                                    | Autorise                                                                                    | P1       |
 | SCH-BE-018 | Unit/Service | Echeancier `DENIED`                           | Export PDF                                    | Autorise                                                                                    | P1       |
 
+<!-- markdownlint-enable MD060 -->
+
 ### Gateway - Contrat API HTTP
 
-| ID         | Niveau     | Preconditions                         | Action                              | Resultat attendu                                                       | Priorite |
-| ---------- | ---------- | ------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------- | -------- |
-| SCH-GW-001 | Controller | Payload creation valide               | `POST /api/schedules`               | `201` + `success` + `schedule_id`                                      | P0       |
-| SCH-GW-002 | Controller | Payload invalide                      | `POST /api/schedules`               | `400` + message d'erreur standard                                      | P0       |
-| SCH-GW-003 | Controller | `schedule_id` existant                | `GET /api/schedules/:id`            | `200` + structure complete: header, lignes, colonnes, totaux, couleurs | P0       |
-| SCH-GW-004 | Controller | Update cellule invalide               | `PATCH /api/schedules/:id/cells`    | `400`                                                                  | P0       |
-| SCH-GW-005 | Controller | Echeancier finalise                   | `PATCH /api/schedules/:id/cells`    | `409` ou code metier equivalent                                        | P0       |
-| SCH-GW-006 | Controller | Regles de validation non respectees   | `POST /api/schedules/:id/validate`  | `409` + code metier                                                    | P0       |
-| SCH-GW-007 | Controller | Regles de validation respectees       | `POST /api/schedules/:id/validate`  | `200` + `success`                                                      | P0       |
-| SCH-GW-008 | Controller | Echeancier dans n'importe quel statut | `GET /api/schedules/:id/export/pdf` | `200` + `application/pdf`                                              | P1       |
-
-### Front unitaire - Composants et comportements
-
-| ID         | Niveau    | Preconditions                              | Action                           | Resultat attendu                             | Priorite |
-| ---------- | --------- | ------------------------------------------ | -------------------------------- | -------------------------------------------- | -------- |
-| SCH-FE-001 | Component | Modale creation ouverte                    | Saisie incomplete puis submit    | Messages d'erreur sur champs requis          | P0       |
-| SCH-FE-002 | Component | Modale creation depuis listing echeanciers | Ouvrir                           | Champ selection devis visible et obligatoire | P0       |
-| SCH-FE-003 | Component | Detail echeancier charge                   | Rendu tableau                    | Entete annee + mois en francais              | P0       |
-| SCH-FE-004 | Component | Cellule editable                           | Modifier puis blur               | Autosave declenche                           | P0       |
-| SCH-FE-005 | Component | Cellule editable                           | Modifier puis appuyer sur Entree | Autosave declenche                           | P0       |
-| SCH-FE-006 | Component | Ligne insuffisamment repartie              | Rendu                            | Etat visuel jaune                            | P0       |
-| SCH-FE-007 | Component | Ligne exactement repartie                  | Rendu                            | Etat visuel vert                             | P0       |
-| SCH-FE-008 | Component | Ligne en surplus                           | Rendu                            | Etat visuel rouge                            | P0       |
-| SCH-FE-009 | Component | Ligne totaux colonnes                      | Interaction souris/clavier       | Non editable                                 | P0       |
-| SCH-FE-010 | Component | Au moins un ecart existe                   | Affichage actions                | Bouton valider desactive                     | P0       |
-| SCH-FE-011 | Component | Echeancier `DENIED` ou `VALID`             | Rendu detail                     | Toutes les cellules sont en lecture seule    | P0       |
+| ID         | Niveau     | Preconditions                         | Action                             | Resultat attendu                                                       | Priorite |
+| ---------- | ---------- | ------------------------------------- | ---------------------------------- | ---------------------------------------------------------------------- | -------- |
+| SCH-GW-001 | Controller | Payload creation valide               | `POST /api/schedules`              | `201` + `success` + `schedule_id`                                      | P0       |
+| SCH-GW-002 | Controller | Payload invalide                      | `POST /api/schedules`              | `400` + message d'erreur standard                                      | P0       |
+| SCH-GW-003 | Controller | `schedule_id` existant                | `GET /api/schedules/:id`           | `200` + structure complete: header, lignes, colonnes, totaux, couleurs | P0       |
+| SCH-GW-004 | Controller | Update cellule invalide               | `PATCH /api/schedules/:id/cells`   | `400`                                                                  | P0       |
+| SCH-GW-005 | Controller | Echeancier finalise                   | `PATCH /api/schedules/:id/cells`   | `409` ou code metier equivalent                                        | P0       |
+| SCH-GW-006 | Controller | Regles de validation non respectees   | `POST /api/schedules/:id/validate` | `409` + code metier                                                    | P0       |
+| SCH-GW-007 | Controller | Regles de validation respectees       | `POST /api/schedules/:id/validate` | `200` + `success`                                                      | P0       |
+| SCH-GW-008 | Controller | Echeancier dans n'importe quel statut | `GET /api/export/schedules/:id`    | `200` + `application/pdf`                                              | P1       |
 
 ### E2E - Parcours metier Cypress
 
@@ -110,20 +98,26 @@ Aucun endpoint, composant UI, migration ou regle metier ne doit etre ajoute sans
 
 ### PDF - Validation de rendu
 
-| ID          | Niveau      | Preconditions                         | Action      | Resultat attendu                | Priorite |
-| ----------- | ----------- | ------------------------------------- | ----------- | ------------------------------- | -------- |
-| SCH-PDF-001 | Integration | Donnees standard                      | Generer PDF | Orientation paysage             | P1       |
-| SCH-PDF-002 | Integration | Branding configure                    | Generer PDF | Logo present                    | P1       |
-| SCH-PDF-003 | Integration | Mentions legales configurees          | Generer PDF | Mentions presentes              | P1       |
-| SCH-PDF-004 | Integration | Duree longue avec nombreuses colonnes | Generer PDF | Mise en page lisible et paginee | P2       |
+<!-- markdownlint-disable MD060 -->
+
+| ID          | Niveau      | Preconditions                         | Action      | Resultat attendu                                               | Priorite |
+| ----------- | ----------- | ------------------------------------- | ----------- | -------------------------------------------------------------- | -------- |
+| SCH-PDF-001 | Integration | Donnees standard                      | Generer PDF | Orientation paysage                                            | P1       |
+| SCH-PDF-002 | Integration | Branding configure                    | Generer PDF | Logo present                                                   | P1       |
+| SCH-PDF-003 | Integration | Mentions legales configurees          | Generer PDF | Mentions presentes                                             | P1       |
+| SCH-PDF-004 | Integration | Duree longue avec nombreuses colonnes | Generer PDF | Mise en page lisible et paginee                                | P2       |
+| SCH-PDF-005 | Integration | Echeancier nomme                      | Generer PDF | Le nom de fichier PDF contient le nom de l'echeancier          | P1       |
+| SCH-PDF-006 | Integration | Echeancier sans lignes                | Generer PDF | Generation PDF OK (sans panic, document non vide)              | P1       |
+| SCH-PDF-007 | Integration | Echeancier sans totaux mensuels       | Generer PDF | Generation PDF OK (document non vide, totaux globaux presents) | P1       |
+
+<!-- markdownlint-enable MD060 -->
 
 ## Ordre TDD recommande
 
 1. backend metier: `SCH-BE-001` a `SCH-BE-012`
 2. gateway HTTP: `SCH-GW-001` a `SCH-GW-007`
-3. front unitaire: `SCH-FE-001` a `SCH-FE-011`
-4. e2e metier: `SCH-E2E-001` a `SCH-E2E-006`
-5. export PDF et finition: `SCH-PDF-001` a `SCH-PDF-004`, puis `SCH-E2E-007` et `SCH-E2E-008`
+3. e2e metier: `SCH-E2E-001` a `SCH-E2E-006`
+4. export PDF et finition: `SCH-PDF-001` a `SCH-PDF-007`, puis `SCH-E2E-007` et `SCH-E2E-008`
 
 ## Recommandation d'outillage
 
@@ -134,18 +128,12 @@ Aucun endpoint, composant UI, migration ou regle metier ne doit etre ajoute sans
 
 ### Front
 
-Le depot dispose deja de Cypress, mais pas encore de framework de tests unitaires front declare.
+Le depot utilise Cypress pour les parcours front; la strategie retenue est E2E uniquement.
 
 Recommendation:
 
-- ajouter `vitest`
-- ajouter `@testing-library/react`
-- ajouter `@testing-library/user-event`
-- ajouter `jsdom`
-
-Objectif:
-
-- tester la modale, la grille, l'autosave, les etats visuels et le verrouillage en lecture seule sans attendre l'E2E
+- conserver la couverture Cypress des parcours critiques creation, edition, validation, verrouillage et export
+- eviter l'ajout d'une pile de tests unitaires front tant que la strategie E2E-only reste validee
 
 ## Definition Of Done d'un ticket TDD
 

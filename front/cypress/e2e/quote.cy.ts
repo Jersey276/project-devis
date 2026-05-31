@@ -659,6 +659,37 @@ describe("Quote", () => {
       cy.contains("button", "Continuer").should("not.exist");
     });
 
+    it("blocks PDF export when quote is refused", () => {
+      cy.login();
+      cy.intercept("GET", "/api/quotes/q-1", {
+        statusCode: 200,
+        body: {
+          success: true,
+          quote: quote({ state: "drop" }),
+          lines: [],
+        },
+      }).as("getDroppedQuote");
+      cy.intercept("GET", "/api/export/quotes/q-1", {
+        statusCode: 409,
+        body: {
+          success: false,
+          message: "Le devis refusé ne peut pas être exporté.",
+          code: 3006,
+        },
+      }).as("exportDroppedQuote");
+
+      cy.visit("/quote/q-1");
+      cy.wait("@getDroppedQuote");
+
+      cy.get("[data-quote-state='drop']").should("exist");
+      cy.contains("button", "Exporter").click();
+
+      cy.wait("@exportDroppedQuote")
+        .its("response.statusCode")
+        .should("eq", 409);
+      cy.get("[data-sonner-toaster]").should("contain", "Échec de l'export.");
+    });
+
     it("creates a schedule from the quote editor button", () => {
       cy.login();
       stubAvailableTaxes();

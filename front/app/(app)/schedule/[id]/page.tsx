@@ -289,7 +289,8 @@ export default function ScheduleDetailsPage() {
     );
   }, [schedule]);
 
-  const isReadOnly = schedule?.status === "VALID";
+  const isReadOnly =
+    schedule?.status === "VALID" || schedule?.status === "DENIED";
 
   useEffect(() => {
     let cancelled = false;

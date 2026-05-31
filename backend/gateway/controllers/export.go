@@ -19,6 +19,7 @@ const (
 	ExportCodeInternalError     int32 = 3003
 	ExportCodeInvalidInput      int32 = 3004
 	ExportCodeDependencyMissing int32 = 3005
+	ExportCodeQuoteRefused      int32 = 3006
 
 	// 8 MiB — generous headroom for realistic quote PDFs (typical: 50 KiB–1 MiB).
 	// If we start embedding heavy media we'll switch to server-streaming gRPC
@@ -32,6 +33,7 @@ var exportErrors = &serviceErrors{
 		ExportCodeInvalidInput:      {http.StatusBadRequest, "Requête invalide."},
 		ExportCodeInternalError:     {http.StatusInternalServerError, "Une erreur interne est survenue."},
 		ExportCodeDependencyMissing: {http.StatusUnprocessableEntity, "Le devis fait référence à un client ou une adresse introuvable."},
+		ExportCodeQuoteRefused:      {http.StatusConflict, "Le devis refusé ne peut pas être exporté."},
 	},
 	unavailableMessage: "Service export indisponible.",
 }

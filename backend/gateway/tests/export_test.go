@@ -46,10 +46,31 @@ func setupExportRouter(exportClient export.ExportServiceClient) *gin.Engine {
 		c.Set("user_id", "user-test")
 		c.Next()
 	})
+	r.GET("/export/quotes/:id", func(c *gin.Context) {
+		controllers.ExportQuote(c, exportClient)
+	})
 	r.GET("/export/schedules/:id", func(c *gin.Context) {
 		controllers.ExportSchedule(c, exportClient)
 	})
 	return r
+}
+
+func TestExportQuote_QuoteRefused(t *testing.T) {
+	exportClient := &mockExportClient{
+		quoteResponse: &export.ExportQuoteResponse{Success: false, Code: controllers.ExportCodeQuoteRefused},
+	}
+	r := setupExportRouter(exportClient)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/export/quotes/quote-1", nil)
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusConflict {
+		t.Fatalf("expected 409, got %d", w.Code)
+	}
+	if exportClient.lastQuoteReq == nil || exportClient.lastQuoteReq.QuoteId != "quote-1" || exportClient.lastQuoteReq.UserId != "user-test" {
+		t.Fatalf("unexpected quote export request: %+v", exportClient.lastQuoteReq)
+	}
 }
 
 func TestExportSchedule_Success(t *testing.T) {

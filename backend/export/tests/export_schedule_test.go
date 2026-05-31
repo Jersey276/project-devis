@@ -109,4 +109,106 @@ func TestExportSchedule_Success(t *testing.T) {
 	if !strings.HasPrefix(resp.Filename, "echeancier-") || !strings.HasSuffix(resp.Filename, ".pdf") {
 		t.Fatalf("expected filename like echeancier-*.pdf, got %q", resp.Filename)
 	}
+	if !strings.Contains(resp.Filename, "Planning-principal") {
+		t.Fatalf("expected schedule name in filename, got %q", resp.Filename)
+	}
+}
+
+func TestExportSchedule_Success_WithEmptyLines(t *testing.T) {
+	sc, qc, gt := happyScheduleFakes()
+	sc.getSchedule = func(_ context.Context, req *schedulepb.GetScheduleRequest) (*schedulepb.GetScheduleResponse, error) {
+		return &schedulepb.GetScheduleResponse{
+			Success: true,
+			Code:    0,
+			Schedule: &schedulepb.ScheduleDetails{
+				ScheduleId:        req.ScheduleId,
+				QuoteId:           "quote-1",
+				Status:            "DRAFT",
+				Name:              "Sans lignes",
+				StartMonth:        "2026-06",
+				DurationMonths:    3,
+				Lines:             []*schedulepb.ScheduleLineSummary{},
+				ColumnTotals:      []*schedulepb.ScheduleColumnTotal{{MonthIndex: 1, AmountCents: 0}},
+				QuoteTotalCents:   0,
+				PlannedTotalCents: 0,
+			},
+		}, nil
+	}
+
+	resp, err := scheduleexport.Export(context.Background(), sc, qc, gt, validScheduleReq())
+	if err != nil {
+		t.Fatalf("unexpected transport error: %v", err)
+	}
+	if !resp.Success || resp.Code != codes.Success {
+		t.Fatalf("expected Success, got success=%v code=%d", resp.Success, resp.Code)
+	}
+	if len(resp.Pdf) == 0 {
+		t.Fatal("expected non-empty PDF bytes")
+	}
+}
+
+func TestExportSchedule_Success_WithEmptyMonthlyTotals(t *testing.T) {
+	sc, qc, gt := happyScheduleFakes()
+	sc.getSchedule = func(_ context.Context, req *schedulepb.GetScheduleRequest) (*schedulepb.GetScheduleResponse, error) {
+		return &schedulepb.GetScheduleResponse{
+			Success: true,
+			Code:    0,
+			Schedule: &schedulepb.ScheduleDetails{
+				ScheduleId:        req.ScheduleId,
+				QuoteId:           "quote-1",
+				Status:            "DRAFT",
+				Name:              "Sans colonnes",
+				StartMonth:        "2026-06",
+				DurationMonths:    3,
+				Lines:             []*schedulepb.ScheduleLineSummary{{QuoteLineId: "l1", PlannedCents: 0, ExpectedCents: 10000}},
+				ColumnTotals:      []*schedulepb.ScheduleColumnTotal{},
+				QuoteTotalCents:   10000,
+				PlannedTotalCents: 0,
+			},
+		}, nil
+	}
+
+	resp, err := scheduleexport.Export(context.Background(), sc, qc, gt, validScheduleReq())
+	if err != nil {
+		t.Fatalf("unexpected transport error: %v", err)
+	}
+	if !resp.Success || resp.Code != codes.Success {
+		t.Fatalf("expected Success, got success=%v code=%d", resp.Success, resp.Code)
+	}
+	if len(resp.Pdf) == 0 {
+		t.Fatal("expected non-empty PDF bytes")
+	}
+}
+
+func TestExportSchedule_Success_WhenDenied(t *testing.T) {
+	sc, qc, gt := happyScheduleFakes()
+	sc.getSchedule = func(_ context.Context, req *schedulepb.GetScheduleRequest) (*schedulepb.GetScheduleResponse, error) {
+		return &schedulepb.GetScheduleResponse{
+			Success: true,
+			Code:    0,
+			Schedule: &schedulepb.ScheduleDetails{
+				ScheduleId:        req.ScheduleId,
+				QuoteId:           "quote-1",
+				Status:            "DENIED",
+				Name:              "Version refusee",
+				StartMonth:        "2026-06",
+				DurationMonths:    3,
+				Lines:             []*schedulepb.ScheduleLineSummary{{QuoteLineId: "l1", PlannedCents: 10000, ExpectedCents: 10000}},
+				ColumnTotals:      []*schedulepb.ScheduleColumnTotal{{MonthIndex: 1, AmountCents: 10000}},
+				QuoteTotalCents:   10000,
+				PlannedTotalCents: 10000,
+			},
+		}, nil
+	}
+
+	resp, err := scheduleexport.Export(context.Background(), sc, qc, gt, validScheduleReq())
+	if err != nil {
+		t.Fatalf("unexpected transport error: %v", err)
+	}
+	if !resp.Success || resp.Code != codes.Success {
+		t.Fatalf("expected Success for DENIED export, got success=%v code=%d", resp.Success, resp.Code)
+	}
+	if len(resp.Pdf) == 0 {
+		t.Fatal("expected non-empty PDF bytes")
+	}
 }
