@@ -338,6 +338,94 @@ export default function ScheduleDetailsPage() {
     }));
   }
 
+  function focusCellInput(lineIndex: number, monthIndex: number) {
+    if (!schedule) return;
+    const line = schedule.lines[lineIndex];
+    if (!line) return;
+    const input = document.querySelector<HTMLInputElement>(
+      `input[name='cell-${line.quote_line_id}-m${monthIndex}']`,
+    );
+    input?.focus();
+    input?.select();
+  }
+
+  function handleCellKeyDown(
+    e: React.KeyboardEvent<HTMLInputElement>,
+    lineIndex: number,
+    monthIndex: number,
+  ) {
+    if (!schedule || isReadOnly) return;
+
+    const maxLineIndex = schedule.lines.length - 1;
+    const maxMonthIndex = schedule.duration_months;
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.currentTarget.blur();
+      if (lineIndex < maxLineIndex) {
+        setTimeout(() => {
+          focusCellInput(lineIndex + 1, monthIndex);
+        }, 0);
+      }
+      return;
+    }
+
+    if (e.key === "Tab") {
+      e.preventDefault();
+
+      if (e.shiftKey) {
+        if (monthIndex > 1) {
+          focusCellInput(lineIndex, monthIndex - 1);
+          return;
+        }
+        if (lineIndex > 0) {
+          focusCellInput(lineIndex - 1, maxMonthIndex);
+        }
+        return;
+      }
+
+      if (monthIndex < maxMonthIndex) {
+        focusCellInput(lineIndex, monthIndex + 1);
+        return;
+      }
+      if (lineIndex < maxLineIndex) {
+        focusCellInput(lineIndex + 1, 1);
+      }
+      return;
+    }
+
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      if (monthIndex < maxMonthIndex) {
+        focusCellInput(lineIndex, monthIndex + 1);
+      }
+      return;
+    }
+
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      if (monthIndex > 1) {
+        focusCellInput(lineIndex, monthIndex - 1);
+      }
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (lineIndex < maxLineIndex) {
+        focusCellInput(lineIndex + 1, monthIndex);
+      }
+      return;
+    }
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (lineIndex > 0) {
+        focusCellInput(lineIndex - 1, monthIndex);
+      }
+    }
+  }
+
   async function saveCell(quoteLineId: string, monthIndex: number) {
     if (!schedule || isReadOnly) return;
 
@@ -446,8 +534,11 @@ export default function ScheduleDetailsPage() {
                 </p>
               </div>
 
-              <div className="w-full max-w-full rounded-md border">
-                <Table className="min-w-max">
+              <div className="w-full max-w-full min-w-0 overflow-x-hidden rounded-md border">
+                <Table
+                  className="min-w-max"
+                  containerClassName="max-w-full overflow-x-auto overflow-y-hidden"
+                >
                   <TableHeader className="bg-muted/40">
                     <TableRow className="text-left">
                       <TableHead
@@ -490,7 +581,7 @@ export default function ScheduleDetailsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {schedule.lines.map((line) => {
+                    {schedule.lines.map((line, lineIndex) => {
                       const state = scheduleBalanceState(
                         line.planned_cents,
                         line.expected_cents,
@@ -558,9 +649,7 @@ export default function ScheduleDetailsPage() {
                                     );
                                   }}
                                   onKeyDown={(e) => {
-                                    if (e.key !== "Enter") return;
-                                    e.preventDefault();
-                                    e.currentTarget.blur();
+                                    handleCellKeyDown(e, lineIndex, monthIndex);
                                   }}
                                 />
                               </TableCell>

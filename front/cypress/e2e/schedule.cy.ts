@@ -26,7 +26,25 @@ describe("Schedule", () => {
     };
   }
 
-  function detailsResponse(status = "DRAFT", planned = 1400) {
+  function detailsResponse(
+    status = "DRAFT",
+    planned = 1400,
+    options?: { durationMonths?: number; lineCount?: number },
+  ) {
+    const durationMonths = options?.durationMonths ?? 3;
+    const lineCount = options?.lineCount ?? 1;
+    const lines = Array.from({ length: lineCount }, (_, index) => ({
+      quote_line_id: `line-${index + 1}`,
+      planned_cents: planned,
+      expected_cents: 1500,
+    }));
+
+    const cells = Array.from({ length: lineCount }, (_, index) => ({
+      quote_line_id: `line-${index + 1}`,
+      month_index: 1,
+      amount_cents: planned,
+    }));
+
     return {
       success: true,
       schedule: {
@@ -35,24 +53,12 @@ describe("Schedule", () => {
         status,
         name: "Echeancier principal",
         start_month: "2026-06",
-        duration_months: 3,
-        lines: [
-          {
-            quote_line_id: "line-1",
-            planned_cents: planned,
-            expected_cents: 1500,
-          },
-        ],
-        cells: [
-          {
-            quote_line_id: "line-1",
-            month_index: 1,
-            amount_cents: planned,
-          },
-        ],
-        column_totals: [{ month_index: 1, amount_cents: planned }],
-        quote_total_cents: 1500,
-        planned_total_cents: planned,
+        duration_months: durationMonths,
+        lines,
+        cells,
+        column_totals: [{ month_index: 1, amount_cents: planned * lineCount }],
+        quote_total_cents: 1500 * lineCount,
+        planned_total_cents: planned * lineCount,
       },
     };
   }
@@ -468,6 +474,64 @@ describe("Schedule", () => {
           amount_eur: "11.11",
         });
       });
+    });
+
+    it("navigates between cells with arrows and tab keys", () => {
+      cy.login();
+
+      cy.intercept("GET", "/api/schedules/sch-1", {
+        statusCode: 200,
+        body: detailsResponse("DRAFT", 1400, { lineCount: 2, durationMonths: 3 }),
+      }).as("getSchedule");
+
+      cy.intercept("PATCH", "/api/schedules/sch-1/cells", {
+        statusCode: 200,
+        body: { success: true },
+      }).as("patchCellNav");
+
+      cy.visit("/schedule/sch-1");
+      cy.wait("@getSchedule");
+
+      cy.get("input[name='cell-line-1-m1']").focus().type("{rightarrow}");
+      cy.focused().should("have.attr", "name", "cell-line-1-m2");
+
+      cy.focused().type("{downarrow}");
+      cy.focused().should("have.attr", "name", "cell-line-2-m2");
+
+      cy.focused().type("{leftarrow}");
+      cy.focused().should("have.attr", "name", "cell-line-2-m1");
+
+      cy.focused().type("{uparrow}");
+      cy.focused().should("have.attr", "name", "cell-line-1-m1");
+
+      cy.focused().trigger("keydown", { key: "Tab" });
+      cy.focused().should("have.attr", "name", "cell-line-1-m2");
+
+      cy.focused().trigger("keydown", { key: "Tab", shiftKey: true });
+      cy.focused().should("have.attr", "name", "cell-line-1-m1");
+
+      cy.get("@patchCellNav.all").should("have.length", 0);
+    });
+
+    it("keeps horizontal overflow inside table container", () => {
+      cy.login();
+      cy.viewport(1024, 768);
+
+      cy.intercept("GET", "/api/schedules/sch-1", {
+        statusCode: 200,
+        body: detailsResponse("DRAFT", 1400, { durationMonths: 18 }),
+      }).as("getScheduleWide");
+
+      cy.visit("/schedule/sch-1");
+      cy.wait("@getScheduleWide");
+
+      cy.get("[data-slot='table-container']").then(($el) => {
+        const container = $el[0];
+        expect(container.scrollWidth).to.be.greaterThan(container.clientWidth);
+      });
+
+      cy.get("[data-slot='table-container']").scrollTo("right");
+      cy.get("[data-testid='footer-month-total-18']").should("be.visible");
     });
 
     it("rejects invalid cell value and does not send PATCH", () => {
