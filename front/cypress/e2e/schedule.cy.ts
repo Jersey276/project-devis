@@ -656,7 +656,12 @@ describe("Schedule", () => {
 
       cy.contains("button", "Exporter PDF").click();
 
-      cy.wait("@exportSchedulePdf").its("request.method").should("eq", "GET");
+      cy.wait("@exportSchedulePdf").then((interception) => {
+        expect(interception.request.method).to.equal("GET");
+        expect(
+          interception.response?.headers?.["content-disposition"],
+        ).to.include("echeancier-sch-1.pdf");
+      });
       cy.contains("Export PDF impossible.").should("not.exist");
     });
 
