@@ -12,8 +12,10 @@ import {
   DataTableRowActions,
   DataTableSortableHead,
 } from "@/components/custom/data-table";
+import { Button } from "@/components/ui/button";
 import { listSchedules } from "@/lib/services/schedules";
 import type { BackendScheduleSummary } from "@/types/backend";
+import CreateScheduleDialog from "@/components/schedule/create-schedule-dialog";
 
 type ScheduleRow = {
   id: string;
@@ -37,6 +39,17 @@ function toRows(schedules: BackendScheduleSummary[]): ScheduleRow[] {
 
 export default function ScheduleListTable() {
   const [items, setItems] = useState<ScheduleRow[]>([]);
+  const [open, setOpen] = useState(false);
+
+  function refreshSchedules() {
+    listSchedules().then(({ ok, body }) => {
+      if (!ok || !body.success || !Array.isArray(body.schedules)) {
+        setItems([]);
+        return;
+      }
+      setItems(toRows(body.schedules as BackendScheduleSummary[]));
+    });
+  }
 
   const rowActions = useMemo<DataTableRowAction[]>(
     () => [
@@ -65,54 +78,70 @@ export default function ScheduleListTable() {
   }, []);
 
   return (
-    <DataTable
-      datas={items}
-      sortBy="startMonth"
-      sortDirection="desc"
-      row_actions={rowActions}
-    >
-      <DataTableHeader>
-        <DataTableRow>
-          <DataTableSortableHead name="id">ID</DataTableSortableHead>
-          <DataTableSortableHead name="name">Nom</DataTableSortableHead>
-          <DataTableSortableHead name="quoteId">Devis</DataTableSortableHead>
-          <DataTableSortableHead name="status">Statut</DataTableSortableHead>
-          <DataTableSortableHead name="startMonth">Début</DataTableSortableHead>
-          <DataTableSortableHead name="durationMonths">
-            Durée (mois)
-          </DataTableSortableHead>
-          <DataTableHead>Actions</DataTableHead>
-        </DataTableRow>
-      </DataTableHeader>
-      <DataTableBody>
-        {items.length === 0 ? (
+    <>
+      <div className="mb-4 flex justify-end">
+        <Button type="button" onClick={() => setOpen(true)}>
+          Nouvel échéancier
+        </Button>
+      </div>
+
+      <DataTable
+        datas={items}
+        sortBy="startMonth"
+        sortDirection="desc"
+        row_actions={rowActions}
+      >
+        <DataTableHeader>
           <DataTableRow>
-            <DataTableCell className="text-muted-foreground">
-              Aucun échéancier.
-            </DataTableCell>
-            <DataTableCell> </DataTableCell>
-            <DataTableCell> </DataTableCell>
-            <DataTableCell> </DataTableCell>
-            <DataTableCell> </DataTableCell>
-            <DataTableCell> </DataTableCell>
-            <DataTableCell> </DataTableCell>
+            <DataTableSortableHead name="id">ID</DataTableSortableHead>
+            <DataTableSortableHead name="name">Nom</DataTableSortableHead>
+            <DataTableSortableHead name="quoteId">Devis</DataTableSortableHead>
+            <DataTableSortableHead name="status">Statut</DataTableSortableHead>
+            <DataTableSortableHead name="startMonth">
+              Début
+            </DataTableSortableHead>
+            <DataTableSortableHead name="durationMonths">
+              Durée (mois)
+            </DataTableSortableHead>
+            <DataTableHead>Actions</DataTableHead>
           </DataTableRow>
-        ) : (
-          items.map((item) => (
-            <DataTableRow key={item.id}>
-              <DataTableCell>{item.id}</DataTableCell>
-              <DataTableCell>{item.name}</DataTableCell>
-              <DataTableCell>{item.quoteId}</DataTableCell>
-              <DataTableCell>{item.status}</DataTableCell>
-              <DataTableCell>{item.startMonth}</DataTableCell>
-              <DataTableCell>{item.durationMonths}</DataTableCell>
-              <DataTableCell>
-                <DataTableRowActions id={item.id} row={item} />
+        </DataTableHeader>
+        <DataTableBody>
+          {items.length === 0 ? (
+            <DataTableRow>
+              <DataTableCell className="text-muted-foreground">
+                Aucun échéancier.
               </DataTableCell>
+              <DataTableCell> </DataTableCell>
+              <DataTableCell> </DataTableCell>
+              <DataTableCell> </DataTableCell>
+              <DataTableCell> </DataTableCell>
+              <DataTableCell> </DataTableCell>
+              <DataTableCell> </DataTableCell>
             </DataTableRow>
-          ))
-        )}
-      </DataTableBody>
-    </DataTable>
+          ) : (
+            items.map((item) => (
+              <DataTableRow key={item.id}>
+                <DataTableCell>{item.id}</DataTableCell>
+                <DataTableCell>{item.name}</DataTableCell>
+                <DataTableCell>{item.quoteId}</DataTableCell>
+                <DataTableCell>{item.status}</DataTableCell>
+                <DataTableCell>{item.startMonth}</DataTableCell>
+                <DataTableCell>{item.durationMonths}</DataTableCell>
+                <DataTableCell>
+                  <DataTableRowActions id={item.id} row={item} />
+                </DataTableCell>
+              </DataTableRow>
+            ))
+          )}
+        </DataTableBody>
+      </DataTable>
+
+      <CreateScheduleDialog
+        open={open}
+        onOpenChange={setOpen}
+        onCreated={refreshSchedules}
+      />
+    </>
   );
 }

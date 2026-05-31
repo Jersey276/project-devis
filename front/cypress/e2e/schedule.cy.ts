@@ -1,4 +1,15 @@
 describe("Schedule", () => {
+  function selectStartMonth(year: string, monthLabel: string) {
+    cy.get("#schedule-start-month").click();
+    cy.get("[data-slot='schedule-start-year-trigger']").click();
+    cy.contains("[data-slot='select-item']", year).click({ force: true });
+    cy.get("[data-slot='schedule-start-month-trigger']").click();
+    cy.contains("[data-slot='select-item']", monthLabel).click({
+      force: true,
+    });
+    cy.contains("button", "Valider").click();
+  }
+
   function listResponse() {
     return {
       success: true,
@@ -69,6 +80,292 @@ describe("Schedule", () => {
       cy.wait("@listSchedulesEmpty");
 
       cy.contains("Aucun échéancier.").should("be.visible");
+    });
+
+    it("creates a schedule then refreshes list", () => {
+      cy.login();
+
+      let created = false;
+      cy.intercept("GET", "/api/schedules", (req) => {
+        req.reply({
+          statusCode: 200,
+          body: created
+            ? {
+                success: true,
+                schedules: [
+                  {
+                    schedule_id: "sch-new",
+                    quote_id: "q-9",
+                    status: "DRAFT",
+                    name: "Nouveau planning",
+                    start_month: "2026-10",
+                    duration_months: 6,
+                  },
+                ],
+              }
+            : { success: true, schedules: [] },
+        });
+      }).as("listSchedules");
+
+      cy.intercept("POST", "/api/schedules", (req) => {
+        created = true;
+        req.reply({
+          statusCode: 201,
+          body: { success: true, schedule_id: "sch-new" },
+        });
+      }).as("createSchedule");
+
+      cy.intercept("GET", "/api/quotes", {
+        statusCode: 200,
+        body: {
+          success: true,
+          quotes: [
+            {
+              quote_id: "q-9",
+              user_id: "u-1",
+              name: "Devis Alpha",
+              archived_at: null,
+              state: "draft",
+              client_id: "c-9",
+              address_id: 1,
+              user_address_id: 1,
+              created_at: "2026-01-01T00:00:00Z",
+              updated_at: "2026-01-01T00:00:00Z",
+            },
+          ],
+        },
+      }).as("listQuotes");
+
+      cy.intercept("GET", "/api/users/clients", {
+        statusCode: 200,
+        body: {
+          success: true,
+          clients: [
+            {
+              client_id: "c-9",
+              user_id: "u-1",
+              first_name: "Jean",
+              last_name: "Dupont",
+              email: "jean@example.com",
+              phone: "",
+              company: "",
+              siren: "",
+              vat: "",
+              archived: false,
+            },
+          ],
+        },
+      }).as("listClients");
+
+      cy.visit("/schedule");
+      cy.wait("@listSchedules");
+
+      cy.contains("button", "Nouvel échéancier").click();
+      cy.wait("@listQuotes");
+      cy.wait("@listClients");
+      cy.get("input[name='quote_id']").click();
+      cy.contains(
+        "[data-slot='combobox-item']",
+        "Devis Alpha (Jean Dupont)",
+      ).click({ force: true });
+      cy.get("input[name='name']").type("Nouveau planning");
+      selectStartMonth("2026", "Octobre");
+      cy.get("input[name='duration_months']").type("6");
+      cy.contains("button", "Créer").click();
+
+      cy.wait("@createSchedule").then(({ request }) => {
+        expect(request.body).to.deep.equal({
+          quote_id: "q-9",
+          name: "Nouveau planning",
+          start_month: "2026-10",
+          duration_months: 6,
+        });
+      });
+      cy.wait("@listSchedules");
+      cy.contains("td", "sch-new").should("be.visible");
+    });
+
+    it("shows validation message on create failure", () => {
+      cy.login();
+      cy.intercept("GET", "/api/schedules", {
+        statusCode: 200,
+        body: { success: true, schedules: [] },
+      }).as("listSchedules");
+      cy.intercept("POST", "/api/schedules", {
+        statusCode: 422,
+        body: { success: false, message: "Données invalides." },
+      }).as("createScheduleInvalid");
+      cy.intercept("GET", "/api/quotes", {
+        statusCode: 200,
+        body: {
+          success: true,
+          quotes: [
+            {
+              quote_id: "q-1",
+              user_id: "u-1",
+              name: "Devis Beta",
+              archived_at: null,
+              state: "draft",
+              client_id: "c-1",
+              address_id: 1,
+              user_address_id: 1,
+              created_at: "2026-01-01T00:00:00Z",
+              updated_at: "2026-01-01T00:00:00Z",
+            },
+          ],
+        },
+      }).as("listQuotes");
+      cy.intercept("GET", "/api/users/clients", {
+        statusCode: 200,
+        body: {
+          success: true,
+          clients: [
+            {
+              client_id: "c-1",
+              user_id: "u-1",
+              first_name: "Marie",
+              last_name: "Martin",
+              email: "marie@example.com",
+              phone: "",
+              company: "",
+              siren: "",
+              vat: "",
+              archived: false,
+            },
+          ],
+        },
+      }).as("listClients");
+
+      cy.visit("/schedule");
+      cy.wait("@listSchedules");
+
+      cy.contains("button", "Nouvel échéancier").click();
+      cy.wait("@listQuotes");
+      cy.wait("@listClients");
+      cy.get("input[name='quote_id']").click();
+      cy.contains(
+        "[data-slot='combobox-item']",
+        "Devis Beta (Marie Martin)",
+      ).click({ force: true });
+      cy.get("input[name='name']").type("Bad");
+      selectStartMonth("2026", "Septembre");
+      cy.get("input[name='duration_months']").type("0");
+      cy.contains("button", "Créer").click();
+
+      cy.wait("@createScheduleInvalid");
+      cy.contains("Données invalides.").should("be.visible");
+    });
+
+    it("sorts quote options by quote name and excludes quotes already VALID", () => {
+      cy.login();
+
+      cy.intercept("GET", "/api/schedules", {
+        statusCode: 200,
+        body: {
+          success: true,
+          schedules: [
+            {
+              schedule_id: "sch-valid",
+              quote_id: "q-valid",
+              status: "VALID",
+              name: "Déjà validé",
+              start_month: "2026-06",
+              duration_months: 3,
+            },
+          ],
+        },
+      }).as("listSchedules");
+
+      cy.intercept("GET", "/api/quotes", {
+        statusCode: 200,
+        body: {
+          success: true,
+          quotes: [
+            {
+              quote_id: "q-beta",
+              user_id: "u-1",
+              name: "Beta",
+              archived_at: null,
+              state: "draft",
+              client_id: "c-1",
+              address_id: 1,
+              user_address_id: 1,
+              created_at: "2026-01-01T00:00:00Z",
+              updated_at: "2026-01-01T00:00:00Z",
+            },
+            {
+              quote_id: "q-valid",
+              user_id: "u-1",
+              name: "Gamma",
+              archived_at: null,
+              state: "draft",
+              client_id: "c-2",
+              address_id: 1,
+              user_address_id: 1,
+              created_at: "2026-01-01T00:00:00Z",
+              updated_at: "2026-01-01T00:00:00Z",
+            },
+            {
+              quote_id: "q-alpha",
+              user_id: "u-1",
+              name: "Alpha",
+              archived_at: null,
+              state: "draft",
+              client_id: "c-1",
+              address_id: 1,
+              user_address_id: 1,
+              created_at: "2026-01-01T00:00:00Z",
+              updated_at: "2026-01-01T00:00:00Z",
+            },
+          ],
+        },
+      }).as("listQuotes");
+
+      cy.intercept("GET", "/api/users/clients", {
+        statusCode: 200,
+        body: {
+          success: true,
+          clients: [
+            {
+              client_id: "c-1",
+              user_id: "u-1",
+              first_name: "Jean",
+              last_name: "Dupont",
+              email: "jean@example.com",
+              phone: "",
+              company: "",
+              siren: "",
+              vat: "",
+              archived: false,
+            },
+            {
+              client_id: "c-2",
+              user_id: "u-1",
+              first_name: "Marie",
+              last_name: "Martin",
+              email: "marie@example.com",
+              phone: "",
+              company: "",
+              siren: "",
+              vat: "",
+              archived: false,
+            },
+          ],
+        },
+      }).as("listClients");
+
+      cy.visit("/schedule");
+      cy.wait("@listSchedules");
+
+      cy.contains("button", "Nouvel échéancier").click();
+      cy.wait("@listQuotes");
+      cy.wait("@listClients");
+      cy.get("input[name='quote_id']").click();
+
+      cy.get("[data-slot='combobox-item']").should("have.length", 2);
+      cy.get("[data-slot='combobox-item']").eq(0).should("contain", "Alpha");
+      cy.get("[data-slot='combobox-item']").eq(1).should("contain", "Beta");
+      cy.contains("[data-slot='combobox-item']", "Gamma").should("not.exist");
     });
   });
 
