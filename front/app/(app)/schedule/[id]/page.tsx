@@ -17,6 +17,12 @@ import {
 import { cn, formatEurosFromCents } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { AlertCircle } from "lucide-react";
+import {
   Table,
   TableBody,
   TableCell,
@@ -245,6 +251,7 @@ export default function ScheduleDetailsPage() {
   const [savedCellDrafts, setSavedCellDrafts] = useState<
     Record<string, string>
   >({});
+  const [cellErrors, setCellErrors] = useState<Record<string, string>>({});
 
   const breadcrumbs = useMemo(
     () => [
@@ -300,6 +307,7 @@ export default function ScheduleDetailsPage() {
       setSchedule(loadedSchedule);
       setCellDrafts(drafts);
       setSavedCellDrafts(drafts);
+      setCellErrors({});
       setError(null);
       setLoading(false);
     });
@@ -323,6 +331,7 @@ export default function ScheduleDetailsPage() {
       setSchedule(refreshedSchedule);
       setCellDrafts(drafts);
       setSavedCellDrafts(drafts);
+      setCellErrors({});
       setError(null);
     }
   }
@@ -332,10 +341,17 @@ export default function ScheduleDetailsPage() {
     monthIndex: number,
     value: string,
   ) {
+    const key = draftKey(quoteLineId, monthIndex);
     setCellDrafts((prev) => ({
       ...prev,
-      [draftKey(quoteLineId, monthIndex)]: value,
+      [key]: value,
     }));
+    setCellErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   }
 
   function focusCellInput(lineIndex: number, monthIndex: number) {
@@ -439,11 +455,21 @@ export default function ScheduleDetailsPage() {
           ...prev,
           [key]: savedCellDrafts[key] ?? "",
         }));
+        setCellErrors((prev) => {
+          if (!prev[key]) return prev;
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
         setError(null);
         return;
       }
 
-      setError(parsedAmount.message ?? "Montant invalide.");
+      setCellErrors((prev) => ({
+        ...prev,
+        [key]: parsedAmount.message ?? "Montant invalide.",
+      }));
+      setError(null);
       return;
     }
 
@@ -456,6 +482,12 @@ export default function ScheduleDetailsPage() {
         ...prev,
         [key]: parsedAmount.normalizedValue,
       }));
+      setCellErrors((prev) => {
+        if (!prev[key]) return prev;
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
       setError(null);
       return;
     }
@@ -466,7 +498,12 @@ export default function ScheduleDetailsPage() {
       amountEur: parsedAmount.normalizedValue,
     });
     if (!ok || !body.success) {
-      setError((body.message as string) ?? "Mise à jour impossible.");
+      const message = (body.message as string) ?? "Mise à jour impossible.";
+      setCellErrors((prev) => ({
+        ...prev,
+        [key]: message,
+      }));
+      setError(null);
       return;
     }
 
@@ -494,6 +531,12 @@ export default function ScheduleDetailsPage() {
       ...prev,
       [key]: parsedAmount.normalizedValue,
     }));
+    setCellErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
     setError(null);
   }
 
@@ -622,36 +665,67 @@ export default function ScheduleDetailsPage() {
                           </TableCell>
                           {monthHeaders.map((_, index) => {
                             const monthIndex = index + 1;
+                            const key = draftKey(
+                              line.quote_line_id,
+                              monthIndex,
+                            );
+                            const cellError = cellErrors[key];
                             return (
                               <TableCell
                                 key={`${line.quote_line_id}-month-${monthIndex}`}
                               >
-                                <input
-                                  name={`cell-${line.quote_line_id}-m${monthIndex}`}
-                                  className="h-9 w-24 rounded-md border px-2"
-                                  disabled={isReadOnly}
-                                  value={
-                                    cellDrafts[
-                                      draftKey(line.quote_line_id, monthIndex)
-                                    ] ?? ""
-                                  }
-                                  onChange={(e) =>
-                                    onCellDraftChange(
-                                      line.quote_line_id,
-                                      monthIndex,
-                                      e.target.value,
-                                    )
-                                  }
-                                  onBlur={() => {
-                                    void saveCell(
-                                      line.quote_line_id,
-                                      monthIndex,
-                                    );
-                                  }}
-                                  onKeyDown={(e) => {
-                                    handleCellKeyDown(e, lineIndex, monthIndex);
-                                  }}
-                                />
+                                <div className="relative inline-flex items-center">
+                                  <input
+                                    name={`cell-${line.quote_line_id}-m${monthIndex}`}
+                                    className={cn(
+                                      "h-9 w-24 rounded-md border px-2",
+                                      cellError
+                                        ? "border-destructive pr-8 focus-visible:ring-destructive"
+                                        : null,
+                                    )}
+                                    aria-invalid={Boolean(cellError)}
+                                    disabled={isReadOnly}
+                                    value={cellDrafts[key] ?? ""}
+                                    onChange={(e) =>
+                                      onCellDraftChange(
+                                        line.quote_line_id,
+                                        monthIndex,
+                                        e.target.value,
+                                      )
+                                    }
+                                    onBlur={() => {
+                                      void saveCell(
+                                        line.quote_line_id,
+                                        monthIndex,
+                                      );
+                                    }}
+                                    onKeyDown={(e) => {
+                                      handleCellKeyDown(
+                                        e,
+                                        lineIndex,
+                                        monthIndex,
+                                      );
+                                    }}
+                                  />
+                                  {cellError ? (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          type="button"
+                                          data-testid={`cell-error-${line.quote_line_id}-m${monthIndex}`}
+                                          className="text-destructive absolute right-2 inline-flex h-4 w-4 items-center justify-center"
+                                          aria-label={cellError}
+                                          title={cellError}
+                                        >
+                                          <AlertCircle className="h-4 w-4" />
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" sideOffset={6}>
+                                        {cellError}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ) : null}
+                                </div>
                               </TableCell>
                             );
                           })}

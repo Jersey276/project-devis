@@ -481,7 +481,10 @@ describe("Schedule", () => {
 
       cy.intercept("GET", "/api/schedules/sch-1", {
         statusCode: 200,
-        body: detailsResponse("DRAFT", 1400, { lineCount: 2, durationMonths: 3 }),
+        body: detailsResponse("DRAFT", 1400, {
+          lineCount: 2,
+          durationMonths: 3,
+        }),
       }).as("getSchedule");
 
       cy.intercept("PATCH", "/api/schedules/sch-1/cells", {
@@ -553,7 +556,14 @@ describe("Schedule", () => {
       cy.get("input[name='cell-line-1-m1']").clear().type("-12").blur();
 
       cy.get("@patchCellInvalid.all").should("have.length", 0);
-      cy.contains("Montant invalide").should("be.visible");
+      cy.get("input[name='cell-line-1-m1']").should(
+        "have.attr",
+        "aria-invalid",
+        "true",
+      );
+      cy.get("[data-testid='cell-error-line-1-m1']")
+        .should("have.attr", "aria-label")
+        .and("include", "Montant invalide");
     });
 
     it("validates schedule then refreshes status", () => {
