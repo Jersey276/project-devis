@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"os"
+	"time"
 
 	schedule "gateway/schedule"
 
@@ -58,18 +59,29 @@ func SchedulesRoutes(r *gin.RouterGroup) {
 // ─── Handlers ────────────────────────────────────────────────────────────────
 
 func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient) {
+	startedAt := time.Now()
+	grpcCode := int32(0)
+	success := false
+	defer func() {
+		recordScheduleHTTP("list_schedules", success, grpcCode, startedAt)
+	}()
+
 	resp, err := client.ListSchedules(c.Request.Context(), &schedule.ListSchedulesRequest{
 		UserId:  userIDFromCtx(c),
 		QuoteId: c.Query("quote_id"),
 	})
 	if err != nil {
+		grpcCode = ScheduleCodeInternalError
 		scheduleErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
+		grpcCode = resp.Code
 		scheduleErrors.reply(c, resp.Code)
 		return
 	}
+	grpcCode = resp.Code
+	success = true
 	out := make([]gin.H, 0, len(resp.Schedules))
 	for _, s := range resp.Schedules {
 		out = append(out, gin.H{
@@ -85,6 +97,13 @@ func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient) {
 }
 
 func CreateSchedule(c *gin.Context, client schedule.ScheduleServiceClient) {
+	startedAt := time.Now()
+	grpcCode := int32(0)
+	success := false
+	defer func() {
+		recordScheduleHTTP("create_schedule", success, grpcCode, startedAt)
+	}()
+
 	var input struct {
 		QuoteID        string `json:"quote_id" binding:"required"`
 		Name           string `json:"name" binding:"required"`
@@ -92,6 +111,7 @@ func CreateSchedule(c *gin.Context, client schedule.ScheduleServiceClient) {
 		DurationMonths int32  `json:"duration_months" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
+		grpcCode = ScheduleCodeInvalidInput
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
 		return
 	}
@@ -103,29 +123,44 @@ func CreateSchedule(c *gin.Context, client schedule.ScheduleServiceClient) {
 		DurationMonths: input.DurationMonths,
 	})
 	if err != nil {
+		grpcCode = ScheduleCodeInternalError
 		scheduleErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
+		grpcCode = resp.Code
 		scheduleErrors.reply(c, resp.Code)
 		return
 	}
+	grpcCode = resp.Code
+	success = true
 	c.JSON(http.StatusCreated, gin.H{"success": true, "schedule_id": resp.ScheduleId})
 }
 
 func GetSchedule(c *gin.Context, client schedule.ScheduleServiceClient) {
+	startedAt := time.Now()
+	grpcCode := int32(0)
+	success := false
+	defer func() {
+		recordScheduleHTTP("get_schedule", success, grpcCode, startedAt)
+	}()
+
 	resp, err := client.GetSchedule(c.Request.Context(), &schedule.GetScheduleRequest{
 		ScheduleId: c.Param("id"),
 		UserId:     userIDFromCtx(c),
 	})
 	if err != nil {
+		grpcCode = ScheduleCodeInternalError
 		scheduleErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
+		grpcCode = resp.Code
 		scheduleErrors.reply(c, resp.Code)
 		return
 	}
+	grpcCode = resp.Code
+	success = true
 	s := resp.Schedule
 	lines := make([]gin.H, 0, len(s.Lines))
 	for _, l := range s.Lines {
@@ -145,27 +180,35 @@ func GetSchedule(c *gin.Context, client schedule.ScheduleServiceClient) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"schedule": gin.H{
-			"schedule_id":        s.ScheduleId,
-			"quote_id":           s.QuoteId,
-			"status":             s.Status,
-			"name":               s.Name,
-			"start_month":        s.StartMonth,
-			"duration_months":    s.DurationMonths,
-			"lines":              lines,
-			"column_totals":      cols,
-			"quote_total_cents":  s.QuoteTotalCents,
+			"schedule_id":         s.ScheduleId,
+			"quote_id":            s.QuoteId,
+			"status":              s.Status,
+			"name":                s.Name,
+			"start_month":         s.StartMonth,
+			"duration_months":     s.DurationMonths,
+			"lines":               lines,
+			"column_totals":       cols,
+			"quote_total_cents":   s.QuoteTotalCents,
 			"planned_total_cents": s.PlannedTotalCents,
 		},
 	})
 }
 
 func UpdateScheduleCell(c *gin.Context, client schedule.ScheduleServiceClient) {
+	startedAt := time.Now()
+	grpcCode := int32(0)
+	success := false
+	defer func() {
+		recordScheduleHTTP("update_schedule_cell", success, grpcCode, startedAt)
+	}()
+
 	var input struct {
 		QuoteLineID string `json:"quote_line_id" binding:"required"`
 		MonthIndex  int32  `json:"month_index" binding:"required"`
 		AmountEur   string `json:"amount_eur" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
+		grpcCode = ScheduleCodeInvalidInput
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
 		return
 	}
@@ -177,28 +220,43 @@ func UpdateScheduleCell(c *gin.Context, client schedule.ScheduleServiceClient) {
 		AmountEur:   input.AmountEur,
 	})
 	if err != nil {
+		grpcCode = ScheduleCodeInternalError
 		scheduleErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
+		grpcCode = resp.Code
 		scheduleErrors.reply(c, resp.Code)
 		return
 	}
+	grpcCode = resp.Code
+	success = true
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
 func ValidateSchedule(c *gin.Context, client schedule.ScheduleServiceClient) {
+	startedAt := time.Now()
+	grpcCode := int32(0)
+	success := false
+	defer func() {
+		recordScheduleHTTP("validate_schedule", success, grpcCode, startedAt)
+	}()
+
 	resp, err := client.ValidateSchedule(c.Request.Context(), &schedule.ValidateScheduleRequest{
 		ScheduleId: c.Param("id"),
 		UserId:     userIDFromCtx(c),
 	})
 	if err != nil {
+		grpcCode = ScheduleCodeInternalError
 		scheduleErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
+		grpcCode = resp.Code
 		scheduleErrors.reply(c, resp.Code)
 		return
 	}
+	grpcCode = resp.Code
+	success = true
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }

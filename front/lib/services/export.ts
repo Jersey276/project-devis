@@ -6,3 +6,10 @@ export async function exportQuotePdf(quoteId: string): Promise<void> {
     `devis-${quoteId}.pdf`,
   );
 }
+
+export async function exportSchedulePdf(scheduleId: string): Promise<void> {
+  await downloadBlob(
+    `/api/export/schedules/${encodeURIComponent(scheduleId)}`,
+    `echeancier-${scheduleId}.pdf`,
+  );
+}

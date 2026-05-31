@@ -9,6 +9,7 @@ import {
   updateScheduleCell,
   validateSchedule,
 } from "@/lib/services/schedules";
+import { exportSchedulePdf } from "@/lib/services/export";
 import {
   type BackendScheduleDetails,
   type ScheduleBalanceState,
@@ -252,6 +253,7 @@ export default function ScheduleDetailsPage() {
     Record<string, string>
   >({});
   const [cellErrors, setCellErrors] = useState<Record<string, string>>({});
+  const [isExporting, setIsExporting] = useState(false);
 
   const breadcrumbs = useMemo(
     () => [
@@ -318,6 +320,11 @@ export default function ScheduleDetailsPage() {
 
   async function onValidate() {
     if (!scheduleId || isReadOnly) return;
+    const hasConfirmed = window.confirm(
+      "Confirmer la validation ? Cette action est definitive et l'echeancier ne pourra plus etre modifie.",
+    );
+    if (!hasConfirmed) return;
+
     const { ok, body } = await validateSchedule(scheduleId);
     if (!ok || !body.success) {
       setError((body.message as string) ?? "Validation impossible.");
@@ -333,6 +340,20 @@ export default function ScheduleDetailsPage() {
       setSavedCellDrafts(drafts);
       setCellErrors({});
       setError(null);
+    }
+  }
+
+  async function onExportPdf() {
+    if (!scheduleId || isExporting) return;
+
+    setIsExporting(true);
+    try {
+      await exportSchedulePdf(scheduleId);
+      setError(null);
+    } catch {
+      setError("Export PDF impossible.");
+    } finally {
+      setIsExporting(false);
     }
   }
 
@@ -546,9 +567,19 @@ export default function ScheduleDetailsPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <CardTitle>Échéancier {scheduleId}</CardTitle>
-          <Button type="button" onClick={onValidate} disabled={isReadOnly}>
-            Valider l&apos;échéancier
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onExportPdf}
+              disabled={isExporting || loading || !scheduleId}
+            >
+              {isExporting ? "Export..." : "Exporter PDF"}
+            </Button>
+            <Button type="button" onClick={onValidate} disabled={isReadOnly}>
+              Valider l&apos;échéancier
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {!scheduleId ? (

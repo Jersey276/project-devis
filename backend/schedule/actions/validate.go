@@ -4,11 +4,23 @@ import (
 	"context"
 	"database/sql"
 	"strings"
+	"time"
 
 	scheduleGrpc "project-devis-schedule/services/grpc"
 )
 
-func (s *Server) ValidateSchedule(ctx context.Context, req *scheduleGrpc.ValidateScheduleRequest) (*scheduleGrpc.GenericResponse, error) {
+func (s *Server) ValidateSchedule(ctx context.Context, req *scheduleGrpc.ValidateScheduleRequest) (resp *scheduleGrpc.GenericResponse, err error) {
+	startedAt := time.Now()
+	defer func() {
+		code := CodeInternalError
+		success := false
+		if resp != nil {
+			code = resp.Code
+			success = resp.Success
+		}
+		recordOperation("validate_schedule", success, code, startedAt, err)
+	}()
+
 	if req == nil || strings.TrimSpace(req.ScheduleId) == "" || strings.TrimSpace(req.UserId) == "" {
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeInvalidInput}, nil
 	}

@@ -7,8 +7,10 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	export "gateway/export"
+	schedule "gateway/schedule"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -39,11 +41,11 @@ var exportErrors = &serviceErrors{
 
 // ExportRoutes wires the /export API group against the export gRPC service.
 func ExportRoutes(r *gin.RouterGroup) {
-	address := os.Getenv("EXPORT_SERVICE_ADDRESS")
-	if address == "" {
-		address = "localhost:50054"
+	exportAddress := os.Getenv("EXPORT_SERVICE_ADDRESS")
+	if exportAddress == "" {
+		exportAddress = "localhost:50054"
 	}
-	conn, err := grpc.NewClient(address,
+	exportConn, err := grpc.NewClient(exportAddress,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultCallOptions(
 			grpc.MaxCallRecvMsgSize(maxExportMessageBytes),
@@ -53,9 +55,22 @@ func ExportRoutes(r *gin.RouterGroup) {
 	if err != nil {
 		log.Fatalf("Failed to connect to export gRPC server: %v", err)
 	}
-	client := export.NewExportServiceClient(conn)
+	exportClient := export.NewExportServiceClient(exportConn)
 
-	r.GET("/quotes/:id", func(c *gin.Context) { ExportQuote(c, client) })
+	scheduleAddress := os.Getenv("SCHEDULE_SERVICE_ADDRESS")
+	if scheduleAddress == "" {
+		scheduleAddress = "localhost:50056"
+	}
+	scheduleConn, err := grpc.NewClient(scheduleAddress,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Fatalf("Failed to connect to schedule gRPC server: %v", err)
+	}
+	scheduleClient := schedule.NewScheduleServiceClient(scheduleConn)
+
+	r.GET("/quotes/:id", func(c *gin.Context) { ExportQuote(c, exportClient) })
+	r.GET("/schedules/:id", func(c *gin.Context) { ExportSchedule(c, exportClient, scheduleClient) })
 }
 
 func ExportQuote(c *gin.Context, client export.ExportServiceClient) {
@@ -73,6 +88,50 @@ func ExportQuote(c *gin.Context, client export.ExportServiceClient) {
 	}
 	c.Header("Content-Disposition", contentDispositionAttachment(resp.Filename))
 	c.Data(http.StatusOK, "application/pdf", resp.Pdf)
+}
+
+func ExportSchedule(c *gin.Context, exportClient export.ExportServiceClient, scheduleClient schedule.ScheduleServiceClient) {
+	startedAt := time.Now()
+	userID := userIDFromCtx(c)
+	scheduleID := c.Param("id")
+
+	scheduleResp, err := scheduleClient.GetSchedule(c.Request.Context(), &schedule.GetScheduleRequest{
+		ScheduleId: scheduleID,
+		UserId:     userID,
+	})
+	if err != nil {
+		log.Printf("schedule export lookup failed schedule_id=%s user_id=%s err=%v", scheduleID, userID, err)
+		exportErrors.unavailable(c)
+		return
+	}
+	if !scheduleResp.Success || scheduleResp.Schedule == nil {
+		if !scheduleResp.Success && scheduleResp.Code == ScheduleCodeNotFound {
+			exportErrors.reply(c, ExportCodeNotFound)
+			return
+		}
+		exportErrors.reply(c, ExportCodeInternalError)
+		return
+	}
+
+	exportResp, err := exportClient.ExportQuote(c.Request.Context(), &export.ExportQuoteRequest{
+		QuoteId: scheduleResp.Schedule.QuoteId,
+		UserId:  userID,
+	})
+	if err != nil {
+		log.Printf("schedule export pdf failed schedule_id=%s quote_id=%s user_id=%s err=%v", scheduleID, scheduleResp.Schedule.QuoteId, userID, err)
+		exportErrors.unavailable(c)
+		return
+	}
+	if !exportResp.Success {
+		exportErrors.reply(c, exportResp.Code)
+		return
+	}
+
+	filename := fmt.Sprintf("echeancier-%s.pdf", scheduleID)
+	c.Header("Content-Disposition", contentDispositionAttachment(filename))
+	c.Data(http.StatusOK, "application/pdf", exportResp.Pdf)
+
+	log.Printf("schedule export pdf success schedule_id=%s quote_id=%s user_id=%s duration_ms=%d", scheduleID, scheduleResp.Schedule.QuoteId, userID, time.Since(startedAt).Milliseconds())
 }
 
 // Emits both the legacy `filename="…"` (non-ASCII stripped) and the

@@ -10,7 +10,18 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Server) CreateSchedule(ctx context.Context, req *scheduleGrpc.CreateScheduleRequest, eligibleLineIDs []string) (*scheduleGrpc.CreateScheduleResponse, error) {
+func (s *Server) CreateSchedule(ctx context.Context, req *scheduleGrpc.CreateScheduleRequest, eligibleLineIDs []string) (resp *scheduleGrpc.CreateScheduleResponse, err error) {
+	startedAt := time.Now()
+	defer func() {
+		code := CodeInternalError
+		success := false
+		if resp != nil {
+			code = resp.Code
+			success = resp.Success
+		}
+		recordOperation("create_schedule", success, code, startedAt, err)
+	}()
+
 	if req == nil {
 		return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInvalidInput}, nil
 	}

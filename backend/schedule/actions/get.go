@@ -10,22 +10,38 @@ import (
 )
 
 func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleRequest) (*scheduleGrpc.GetScheduleResponse, error) {
+	startedAt := time.Now()
+	var resp *scheduleGrpc.GetScheduleResponse
+	var err error
+	defer func() {
+		code := CodeInternalError
+		success := false
+		if resp != nil {
+			code = resp.Code
+			success = resp.Success
+		}
+		recordOperation("get_schedule", success, code, startedAt, err)
+	}()
+
 	if req == nil || strings.TrimSpace(req.ScheduleId) == "" || strings.TrimSpace(req.UserId) == "" {
-		return &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInvalidInput}, nil
+		resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInvalidInput}
+		return resp, nil
 	}
 
 	var quoteID, status, name string
 	var startMonth time.Time
 	var durationMonths int32
-	err := s.db.QueryRowContext(ctx,
+	err = s.db.QueryRowContext(ctx,
 		`SELECT quote_id, status, name, start_month, duration_months FROM schedules WHERE schedule_id=$1 AND user_id=$2`,
 		req.ScheduleId, req.UserId,
 	).Scan(&quoteID, &status, &name, &startMonth, &durationMonths)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeNotFound}, nil
+			resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeNotFound}
+			return resp, nil
 		}
-		return &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}, err
+		resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
+		return resp, err
 	}
 
 	lineRows, err := s.db.QueryContext(ctx, `
@@ -37,7 +53,8 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 		ORDER BY sc.quote_line_id
 	`, req.ScheduleId)
 	if err != nil {
-		return &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}, err
+		resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
+		return resp, err
 	}
 	defer lineRows.Close()
 
@@ -47,7 +64,8 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 		var lineID string
 		var plannedCents, lineCents int64
 		if err := lineRows.Scan(&lineID, &plannedCents, &lineCents); err != nil {
-			return &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}, err
+			resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
+			return resp, err
 		}
 		plannedTotalCents += plannedCents
 		lineSummaries = append(lineSummaries, &scheduleGrpc.ScheduleLineSummary{
@@ -57,7 +75,8 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 		})
 	}
 	if err := lineRows.Err(); err != nil {
-		return &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}, err
+		resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
+		return resp, err
 	}
 
 	columnRows, err := s.db.QueryContext(ctx,
@@ -65,7 +84,8 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 		req.ScheduleId,
 	)
 	if err != nil {
-		return &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}, err
+		resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
+		return resp, err
 	}
 	defer columnRows.Close()
 
@@ -76,14 +96,16 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 		quoteID,
 	).Scan(&quoteTotalCents)
 	if err != nil {
-		return &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}, err
+		resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
+		return resp, err
 	}
 
 	for columnRows.Next() {
 		var monthIndex int32
 		var amountCents int64
 		if err := columnRows.Scan(&monthIndex, &amountCents); err != nil {
-			return &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}, err
+			resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
+			return resp, err
 		}
 		columnTotals = append(columnTotals, &scheduleGrpc.ScheduleColumnTotal{
 			MonthIndex:  monthIndex,
@@ -91,23 +113,26 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 		})
 	}
 	if err := columnRows.Err(); err != nil {
-		return &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}, err
+		resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
+		return resp, err
 	}
 
-	return &scheduleGrpc.GetScheduleResponse{
+	resp = &scheduleGrpc.GetScheduleResponse{
 		Success: true,
 		Code:    CodeSuccess,
 		Schedule: &scheduleGrpc.ScheduleDetails{
-			ScheduleId:       req.ScheduleId,
-			QuoteId:          quoteID,
-			Status:           status,
-			Name:             name,
-			StartMonth:       startMonth.Format("2006-01"),
-			DurationMonths:   durationMonths,
-			Lines:            lineSummaries,
-			ColumnTotals:     columnTotals,
+			ScheduleId:        req.ScheduleId,
+			QuoteId:           quoteID,
+			Status:            status,
+			Name:              name,
+			StartMonth:        startMonth.Format("2006-01"),
+			DurationMonths:    durationMonths,
+			Lines:             lineSummaries,
+			ColumnTotals:      columnTotals,
 			QuoteTotalCents:   quoteTotalCents,
 			PlannedTotalCents: plannedTotalCents,
 		},
-	}, nil
+	}
+
+	return resp, nil
 }
