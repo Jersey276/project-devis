@@ -633,5 +633,55 @@ describe("Schedule", () => {
 
       cy.contains("introuvable").should("be.visible");
     });
+
+    it("exports schedule as PDF", () => {
+      cy.login();
+
+      cy.intercept("GET", "/api/schedules/sch-1", {
+        statusCode: 200,
+        body: detailsResponse("DRAFT", 1400),
+      }).as("getSchedule");
+
+      cy.intercept("GET", "/api/export/schedules/sch-1", {
+        statusCode: 200,
+        headers: {
+          "content-type": "application/pdf",
+          "content-disposition": 'attachment; filename="echeancier-sch-1.pdf"',
+        },
+        body: "fake-pdf",
+      }).as("exportSchedulePdf");
+
+      cy.visit("/schedule/sch-1");
+      cy.wait("@getSchedule");
+
+      cy.contains("button", "Exporter PDF").click();
+
+      cy.wait("@exportSchedulePdf").its("request.method").should("eq", "GET");
+      cy.contains("Export PDF impossible.").should("not.exist");
+    });
+
+    it("shows error when schedule PDF export fails", () => {
+      cy.login();
+
+      cy.intercept("GET", "/api/schedules/sch-1", {
+        statusCode: 200,
+        body: detailsResponse("DRAFT", 1400),
+      }).as("getSchedule");
+
+      cy.intercept("GET", "/api/export/schedules/sch-1", {
+        statusCode: 500,
+        body: { success: false, message: "Une erreur interne est survenue." },
+      }).as("exportSchedulePdfError");
+
+      cy.visit("/schedule/sch-1");
+      cy.wait("@getSchedule");
+
+      cy.contains("button", "Exporter PDF").click();
+
+      cy.wait("@exportSchedulePdfError")
+        .its("request.method")
+        .should("eq", "GET");
+      cy.contains("Export PDF impossible.").should("be.visible");
+    });
   });
 });

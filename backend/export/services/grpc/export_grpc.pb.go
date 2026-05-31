@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v7.34.0
-// source: export.proto
+// source: services/grpc/export.proto
 
 package grpc
 
@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ExportService_ExportQuote_FullMethodName = "/export.ExportService/ExportQuote"
+	ExportService_ExportQuote_FullMethodName    = "/export.ExportService/ExportQuote"
+	ExportService_ExportSchedule_FullMethodName = "/export.ExportService/ExportSchedule"
 )
 
 // ExportServiceClient is the client API for ExportService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ExportServiceClient interface {
 	ExportQuote(ctx context.Context, in *ExportQuoteRequest, opts ...grpc.CallOption) (*ExportQuoteResponse, error)
+	ExportSchedule(ctx context.Context, in *ExportScheduleRequest, opts ...grpc.CallOption) (*ExportQuoteResponse, error)
 }
 
 type exportServiceClient struct {
@@ -47,11 +49,22 @@ func (c *exportServiceClient) ExportQuote(ctx context.Context, in *ExportQuoteRe
 	return out, nil
 }
 
+func (c *exportServiceClient) ExportSchedule(ctx context.Context, in *ExportScheduleRequest, opts ...grpc.CallOption) (*ExportQuoteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExportQuoteResponse)
+	err := c.cc.Invoke(ctx, ExportService_ExportSchedule_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ExportServiceServer is the server API for ExportService service.
 // All implementations must embed UnimplementedExportServiceServer
 // for forward compatibility.
 type ExportServiceServer interface {
 	ExportQuote(context.Context, *ExportQuoteRequest) (*ExportQuoteResponse, error)
+	ExportSchedule(context.Context, *ExportScheduleRequest) (*ExportQuoteResponse, error)
 	mustEmbedUnimplementedExportServiceServer()
 }
 
@@ -64,6 +77,9 @@ type UnimplementedExportServiceServer struct{}
 
 func (UnimplementedExportServiceServer) ExportQuote(context.Context, *ExportQuoteRequest) (*ExportQuoteResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ExportQuote not implemented")
+}
+func (UnimplementedExportServiceServer) ExportSchedule(context.Context, *ExportScheduleRequest) (*ExportQuoteResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ExportSchedule not implemented")
 }
 func (UnimplementedExportServiceServer) mustEmbedUnimplementedExportServiceServer() {}
 func (UnimplementedExportServiceServer) testEmbeddedByValue()                       {}
@@ -104,6 +120,24 @@ func _ExportService_ExportQuote_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ExportService_ExportSchedule_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExportScheduleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExportServiceServer).ExportSchedule(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExportService_ExportSchedule_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExportServiceServer).ExportSchedule(ctx, req.(*ExportScheduleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ExportService_ServiceDesc is the grpc.ServiceDesc for ExportService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -115,7 +149,11 @@ var ExportService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "ExportQuote",
 			Handler:    _ExportService_ExportQuote_Handler,
 		},
+		{
+			MethodName: "ExportSchedule",
+			Handler:    _ExportService_ExportSchedule_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "export.proto",
+	Metadata: "services/grpc/export.proto",
 }
