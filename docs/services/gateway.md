@@ -18,6 +18,7 @@ Facade HTTP publique du backend.
 - auth: `controllers.AuthRoutes`
 - users: `controllers.UserRoutes`
 - quotes: `controllers.QuotesRoutes`
+- schedules: `controllers.SchedulesRoutes`
 - export: `controllers.ExportRoutes`
 - templates: `controllers.TemplateRoutes`
 
@@ -28,6 +29,7 @@ Variables inter-services:
 - `AUTH_SERVICE_ADDRESS`
 - `USER_SERVICE_ADDRESS`
 - `QUOTE_SERVICE_ADDRESS`
+- `SCHEDULE_SERVICE_ADDRESS`
 - `EXPORT_SERVICE_ADDRESS`
 - `TEMPLATE_SERVICE_ADDRESS` (local/dev)
 
@@ -48,6 +50,7 @@ Variables inter-services:
 | `AUTH_SERVICE_ADDRESS`     | client gRPC auth                     | oui           | oui           |
 | `USER_SERVICE_ADDRESS`     | client gRPC users                    | oui           | oui           |
 | `QUOTE_SERVICE_ADDRESS`    | client gRPC quote                    | oui           | oui           |
+| `SCHEDULE_SERVICE_ADDRESS` | client gRPC schedule                 | a ajouter     | a ajouter     |
 | `EXPORT_SERVICE_ADDRESS`   | client gRPC export                   | oui           | oui           |
 | `TEMPLATE_SERVICE_ADDRESS` | client gRPC template                 | oui           | non           |
 | `ENV`                      | cookie `secure` dans auth controller | non (compose) | non (compose) |
@@ -75,7 +78,18 @@ Comportement en cas de session invalidee:
 - JSON standard avec `success`, `message`, `code`
 - cas export: `application/pdf`
 
+## Extension cible pour les echeanciers
+
+Le gateway devra ajouter un controleur dedie aux echeanciers afin de:
+
+- exposer les routes `/api/schedules/*`
+- mapper les codes metier du service schedule vers des statuts HTTP coherents
+- deleguer l'export PDF d'echeancier au service export
+
+L'integration cible est detaillee dans `docs/services/schedule.md` et `docs/contracts/http-gateway.md`.
+
 ## Risques connus
 
 - cookie `secure` conditionne par `ENV=production`
 - routes templates exposees alors que la cible n'est pas encore en compose prod
+- routes schedules a ajouter en meme temps que `SCHEDULE_SERVICE_ADDRESS` et le deploiement du service dedie

@@ -10,6 +10,7 @@
 - `/api/auth/*`
 - `/api/users/*`
 - `/api/quotes/*`
+- `/api/schedules/*`
 - `/api/export/*`
 - `/api/templates/*`
 
@@ -17,7 +18,7 @@
 
 Routes protegees:
 
-- `users`, `quotes`, `export`, `templates`
+- `users`, `quotes`, `schedules`, `export`, `templates`
 
 Mecanismes acceptes par le middleware:
 
@@ -40,7 +41,7 @@ Champs optionnels selon endpoint:
 
 - `field_errors`
 - `token`, `refresh_token`
-- payload metier (`user`, `quotes`, `template`, etc.)
+- payload metier (`user`, `quotes`, `schedules`, `template`, etc.)
 
 ## Mapping d'erreurs
 
@@ -51,6 +52,7 @@ References:
 - auth: `backend/gateway/controllers/auth.go`
 - users: `backend/gateway/controllers/users.go`
 - quotes: `backend/gateway/controllers/quotes.go`
+- schedules: `backend/gateway/controllers/schedules.go`
 - templates: `backend/gateway/controllers/templates.go`
 - export: `backend/gateway/controllers/export.go`
 
@@ -79,6 +81,23 @@ References:
 - `GET/PUT/DELETE /api/quotes/:id`
 - transitions: archive, restore, drop, continue
 - lignes: `/api/quotes/:id/lines/*`
+
+## Endpoints schedules cibles
+
+- `POST /api/schedules`
+- `GET /api/schedules?quote_id=:quoteId`
+- `GET /api/schedules/:id`
+- `PATCH /api/schedules/:id/cells`
+- `POST /api/schedules/:id/validate`
+- `GET /api/schedules/:id/export/pdf`
+
+Regles principales associees:
+
+- creation rattachee a un devis existant
+- edition cellule interdite pour les statuts `DENIED` et `VALID`
+- validation autorisee uniquement si toutes les lignes devis actives et valides sont exactement equilibrees
+- un seul echeancier `VALID` par devis
+- l'export PDF reste autorise quel que soit le statut
 
 ## Endpoints templates principaux
 

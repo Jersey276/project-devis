@@ -6,6 +6,7 @@ import (
 	"google.golang.org/grpc"
 
 	"project-devis-export/quote"
+	schedulepb "project-devis-export/services/schedule"
 	"project-devis-export/users"
 )
 
@@ -27,6 +28,15 @@ type fakeUsers struct {
 	listAddresses func(context.Context, *users.ListAddressesRequest) (*users.ListAddressesResponse, error)
 	getClient     func(context.Context, *users.GetClientRequest) (*users.GetClientResponse, error)
 	getAddress    func(context.Context, *users.GetAddressRequest) (*users.GetAddressResponse, error)
+}
+
+type fakeSchedule struct {
+	schedulepb.ScheduleServiceClient
+	getSchedule func(context.Context, *schedulepb.GetScheduleRequest) (*schedulepb.GetScheduleResponse, error)
+}
+
+func (f *fakeSchedule) GetSchedule(ctx context.Context, in *schedulepb.GetScheduleRequest, _ ...grpc.CallOption) (*schedulepb.GetScheduleResponse, error) {
+	return f.getSchedule(ctx, in)
 }
 
 func (f *fakeUsers) GetUser(ctx context.Context, in *users.GetUserRequest, _ ...grpc.CallOption) (*users.GetUserResponse, error) {

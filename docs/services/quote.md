@@ -34,6 +34,18 @@ Gerer le cycle de vie des devis:
   - taxes users
   - calcul de `total_ttc`
 
+## Integration avec le service schedule
+
+Le service quote reste la source metier des devis et des lignes exploitees par les echeanciers.
+
+Pour le domaine echeancier, le service quote doit fournir au minimum:
+
+- l'existence et l'accessibilite d'un devis cible
+- les lignes de devis eligibles a la planification
+- le referentiel de montant par ligne et au global
+
+Le service quote ne doit pas porter lui-meme la logique de stockage ni de validation des echeanciers. Cette responsabilite est delegee au service `schedule`.
+
 ## Points d'attention
 
 - Le calcul TTC depend de la qualite des donnees `quantity` (string parsee)

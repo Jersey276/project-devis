@@ -49,7 +49,10 @@ export function quoteListState(quote: BackendQuote): QuoteListState {
   return quote.state ?? "draft";
 }
 
-export type BackendTemplateType = "quote_document" | "quote_line" | "document_design";
+export type BackendTemplateType =
+  | "quote_document"
+  | "quote_line"
+  | "document_design";
 export type BackendTemplateTargetResource = "quote" | "invoice" | "schedule";
 
 export type BackendTemplate = {
@@ -109,3 +112,56 @@ export type BackendAddress = {
   phone: string;
   archived: boolean;
 };
+
+export type BackendScheduleStatus = "DRAFT" | "NEGOCIATE" | "DENIED" | "VALID";
+
+export type BackendScheduleSummary = {
+  schedule_id: string;
+  quote_id: string;
+  status: BackendScheduleStatus;
+  name: string;
+  start_month: string;
+  duration_months: number;
+};
+
+export type BackendScheduleLineSummary = {
+  quote_line_id: string;
+  planned_cents: number;
+  expected_cents: number;
+};
+
+export type BackendScheduleColumnTotal = {
+  month_index: number;
+  amount_cents: number;
+};
+
+export type BackendScheduleCell = {
+  quote_line_id: string;
+  month_index: number;
+  amount_cents: number;
+};
+
+export type BackendScheduleDetails = {
+  schedule_id: string;
+  quote_id: string;
+  status: BackendScheduleStatus;
+  name: string;
+  start_month: string;
+  duration_months: number;
+  lines: BackendScheduleLineSummary[];
+  cells?: BackendScheduleCell[];
+  column_totals: BackendScheduleColumnTotal[];
+  quote_total_cents: number;
+  planned_total_cents: number;
+};
+
+export type ScheduleBalanceState = "under" | "balanced" | "over";
+
+export function scheduleBalanceState(
+  plannedCents: number,
+  expectedCents: number,
+): ScheduleBalanceState {
+  if (plannedCents < expectedCents) return "under";
+  if (plannedCents > expectedCents) return "over";
+  return "balanced";
+}

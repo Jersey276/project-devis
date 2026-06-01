@@ -7,3 +7,6 @@ import _ "embed"
 
 //go:embed quote.html
 var QuoteHTML []byte
+
+//go:embed schedule.html
+var ScheduleHTML []byte

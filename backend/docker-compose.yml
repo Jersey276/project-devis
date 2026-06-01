@@ -32,19 +32,28 @@ services:
         SERVICE_NAME: gateway
     environment:
       TZ: Europe/Paris
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: devis-schedule
+      DB_NAME: schedule
+      DB_PASSWORD_FILE: /run/secrets/db_password
       AUTH_SERVICE_ADDRESS: devis-auth:50051
       USER_SERVICE_ADDRESS: devis-user:50052
       QUOTE_SERVICE_ADDRESS: devis-quote:50053
       EXPORT_SERVICE_ADDRESS: devis-export:50054
       TEMPLATE_SERVICE_ADDRESS: devis-template:50055
+      SCHEDULE_SERVICE_ADDRESS: devis-schedule:50056
     ports:
       - "8080:8080"
+    secrets:
+      - db_password
     depends_on:
       - devis-auth
       - devis-user
       - devis-quote
       - devis-export
       - devis-template
+      - devis-schedule
 
   devis-auth:
     <<: *db-service
@@ -90,6 +99,18 @@ services:
       <<: *db-env
       DB_USER: devis-quote
       DB_NAME: quote
+
+  devis-schedule:
+    <<: *db-service
+    build:
+      <<: *service-build
+      args:
+        SERVICE_NAME: schedule
+    environment:
+      <<: *db-env
+      DB_USER: devis-schedule
+      DB_NAME: schedule
+      QUOTE_SERVICE_ADDRESS: devis-quote:50053
 
   devis-template:
     <<: *db-service

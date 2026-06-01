@@ -71,7 +71,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [auth, users, quote, gateway, export]
+        service: [auth, users, quote, gateway, export, schedule]
     defaults:
       run:
         working-directory: backend/${{ matrix.service }}

@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Échéancier {{.ScheduleName}}</title>
+    <style>
+      :root {
+        --ink: #0b1321;
+        --muted: #5b6470;
+        --line: #d8dee9;
+        --bg-soft: #f4f7fb;
+        --accent: #0b7a75;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 28px;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        color: var(--ink);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+
+      .subtitle {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .meta {
+        margin-top: 16px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(120px, 1fr));
+        gap: 10px;
+      }
+
+      .meta-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px;
+      }
+
+      .meta-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+      }
+
+      .meta-value {
+        margin-top: 6px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      h2 {
+        margin: 22px 0 10px;
+        font-size: 16px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+
+      th {
+        background: var(--bg-soft);
+        text-align: left;
+      }
+
+      .num {
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .total-row td {
+        font-weight: 700;
+      }
+
+      .chip {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        color: white;
+        background: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Échéancier {{.ShortID}}</h1>
+      <p class="subtitle">{{.ScheduleName}}</p>
+    </header>
+
+    <section class="meta">
+      <article class="meta-card">
+        <div class="meta-label">Statut</div>
+        <div class="meta-value"><span class="chip">{{.Status}}</span></div>
+      </article>
+      <article class="meta-card">
+        <div class="meta-label">Début</div>
+        <div class="meta-value">{{.StartMonth}}</div>
+      </article>
+      <article class="meta-card">
+        <div class="meta-label">Durée</div>
+        <div class="meta-value">{{.DurationMonths}} mois</div>
+      </article>
+      <article class="meta-card">
+        <div class="meta-label">Devis lié</div>
+        <div class="meta-value">{{.QuoteID}}</div>
+      </article>
+    </section>
+
+    <h2>Répartition par ligne</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Ligne</th>
+          <th class="num">Prévu</th>
+          <th class="num">Planifié</th>
+          <th class="num">Restant</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Lines}}
+        <tr>
+          <td>{{.Name}}</td>
+          <td class="num">{{.Expected}}</td>
+          <td class="num">{{.Planned}}</td>
+          <td class="num">{{.Remaining}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+
+    <h2>Totaux mensuels</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Mois</th>
+          <th class="num">Montant</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .MonthlyTotals}}
+        <tr>
+          <td>{{.Label}}</td>
+          <td class="num">{{.Amount}}</td>
+        </tr>
+        {{end}}
+        <tr class="total-row">
+          <td>Total planifié</td>
+          <td class="num">{{.PlannedTotal}}</td>
+        </tr>
+        <tr class="total-row">
+          <td>Total devis</td>
+          <td class="num">{{.QuoteTotal}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>

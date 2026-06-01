@@ -38,6 +38,10 @@ func setupRouter() *gin.Engine {
 	templates.Use(middleware.AuthRequired())
 	controllers.TemplateRoutes(templates)
 
+	schedules := api.Group("/schedules")
+	schedules.Use(middleware.AuthRequired())
+	controllers.SchedulesRoutes(schedules)
+
 	// controllers.ProjectRoutes(api.Group("/project"))
 	// controllers.PaymentRoutes(api.Group("/payments"))
 

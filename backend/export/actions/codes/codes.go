@@ -8,6 +8,8 @@ const (
 	// (client, address) does not. Distinct from NotFound so the gateway can
 	// render a different message.
 	DependencyMissing int32 = 3005
-	InternalError     int32 = 3003
-	InvalidInput      int32 = 3004
+	// QuoteRefused: the quote is in DROP (refused) state and cannot be exported.
+	QuoteRefused  int32 = 3006
+	InternalError int32 = 3003
+	InvalidInput  int32 = 3004
 )

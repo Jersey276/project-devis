@@ -31,6 +31,17 @@ Cypress.Commands.add("login", (token = "fake-token") => {
       user: { user_id: "test-user", email: "test@test.fr" },
     },
   });
+  cy.intercept("GET", "/api/auth/me", {
+    statusCode: 200,
+    body: {
+      success: true,
+      auth: {
+        user_id: "test-user",
+        email: "test@test.fr",
+        role: "admin",
+      },
+    },
+  });
   cy.intercept("POST", "/api/auth/refresh", {
     statusCode: 200,
     body: { success: true },

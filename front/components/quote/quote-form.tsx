@@ -25,7 +25,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { DownloadIcon, BookmarkIcon, Loader2Icon } from "lucide-react";
+import {
+  DownloadIcon,
+  BookmarkIcon,
+  Loader2Icon,
+  CalendarIcon,
+} from "lucide-react";
 import QuoteStepBasicInfo from "@/components/quote/steps/quote-step-basic-info";
 import QuoteStepItems, {
   type QuoteItemRow as RenderedRow,
@@ -64,6 +69,7 @@ import {
   type BackendTax,
 } from "@/types/backend";
 import SaveTemplateDialog from "@/components/template/save-template-dialog";
+import CreateScheduleDialog from "@/components/schedule/create-schedule-dialog";
 
 type FormItem = RenderedRow & { position: number };
 
@@ -148,6 +154,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const [transitioning, setTransitioning] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
+  const [createScheduleOpen, setCreateScheduleOpen] = useState(false);
 
   const templateIdFromQuery = useMemo(
     () => searchParams.get("template") ?? null,
@@ -912,6 +919,16 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             {t("saveAsTemplateButton")}
           </Button>
         )}
+        {!isCreate && !isCustomer && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setCreateScheduleOpen(true)}
+          >
+            <CalendarIcon className="size-4" />
+            Créer un échéancier
+          </Button>
+        )}
         {showDropButton && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -1066,6 +1083,13 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         onOpenChange={setSaveTemplateOpen}
         defaultName={projectName}
         onSave={handleSaveQuoteAsTemplate}
+      />
+
+      <CreateScheduleDialog
+        open={createScheduleOpen}
+        onOpenChange={setCreateScheduleOpen}
+        initialQuoteId={quoteId}
+        lockQuote
       />
     </Card>
   );

@@ -28,9 +28,15 @@ import {
   type QuoteListState,
   quoteListState,
 } from "@/types/backend";
-import { BookmarkIcon, DownloadIcon, PencilIcon } from "lucide-react";
+import {
+  BookmarkIcon,
+  CalendarIcon,
+  DownloadIcon,
+  PencilIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import SaveTemplateDialog from "@/components/template/save-template-dialog";
+import CreateScheduleDialog from "@/components/schedule/create-schedule-dialog";
 
 type QuoteListItem = {
   id: string;
@@ -48,6 +54,8 @@ export default function QuoteListTable() {
     null,
   );
   const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false);
+  const [scheduleQuoteId, setScheduleQuoteId] = useState<string | null>(null);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
 
   const saveTemplateDefaultName = useMemo(
     () =>
@@ -128,6 +136,17 @@ export default function QuoteListTable() {
             console.error("export quote pdf failed", err);
             toast.error(t("exportFailedToast"));
           });
+        },
+      },
+      {
+        type: "callback",
+        label: "Créer un échéancier",
+        icon: CalendarIcon,
+        hidden: isCustomer,
+        callback: (row) => {
+          const id = (row as { id: string }).id;
+          setScheduleQuoteId(id);
+          setScheduleDialogOpen(true);
         },
       },
       {
@@ -227,6 +246,13 @@ export default function QuoteListTable() {
         onOpenChange={setSaveTemplateDialogOpen}
         defaultName={saveTemplateDefaultName}
         onSave={handleConfirmSaveAsTemplate}
+      />
+
+      <CreateScheduleDialog
+        open={scheduleDialogOpen}
+        onOpenChange={setScheduleDialogOpen}
+        initialQuoteId={scheduleQuoteId ?? undefined}
+        lockQuote
       />
     </>
   );

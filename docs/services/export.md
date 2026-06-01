@@ -19,6 +19,7 @@ Produire des documents PDF (devis) a partir des donnees metier.
 
 - `QUOTE_SERVICE_ADDRESS`
 - `USER_SERVICE_ADDRESS`
+- `SCHEDULE_SERVICE_ADDRESS` pour l'export PDF d'echeancier
 - `GOTENBERG_ADDRESS`
 
 ## Particularites
@@ -31,6 +32,12 @@ Produire des documents PDF (devis) a partir des donnees metier.
 - endpoint HTTP principal: `GET /api/export/quotes/:id`
 - type de reponse: `application/pdf`
 - header `Content-Disposition` enrichi (filename + filename\*)
+
+Extension cible pour les echeanciers:
+
+- `GET /api/schedules/:id/export/pdf`
+- le service export devra recuperer les donnees consolidees aupres du service `schedule`
+- le rendu PDF devra rester en paysage, avec logo et mentions legales
 
 ## Risques/contraintes
 
@@ -48,11 +55,12 @@ Produire des documents PDF (devis) a partir des donnees metier.
 
 ### Variables consommees par le code (`main.go`)
 
-| Variable                | Usage                 | Definie local | Definie prod |
-| ----------------------- | --------------------- | ------------- | ------------ |
-| `QUOTE_SERVICE_ADDRESS` | client gRPC quote     | oui           | oui          |
-| `USER_SERVICE_ADDRESS`  | client gRPC users     | oui           | oui          |
-| `GOTENBERG_ADDRESS`     | client HTTP gotenberg | oui           | oui          |
+| Variable                   | Usage                 | Definie local | Definie prod |
+| -------------------------- | --------------------- | ------------- | ------------ |
+| `QUOTE_SERVICE_ADDRESS`    | client gRPC quote     | oui           | oui          |
+| `USER_SERVICE_ADDRESS`     | client gRPC users     | oui           | oui          |
+| `SCHEDULE_SERVICE_ADDRESS` | client gRPC schedule  | a ajouter     | a ajouter    |
+| `GOTENBERG_ADDRESS`        | client HTTP gotenberg | oui           | oui          |
 
 ### Variables injectees par compose (non lues directement par le code export)
 
