@@ -10,6 +10,14 @@ describe("Schedule", () => {
     cy.contains("button", "Valider").click();
   }
 
+  function openStatusSelect() {
+    cy.get("[data-slot='select-trigger']").click({ force: true });
+  }
+
+  function chooseStatusOption(label: string) {
+    cy.contains("[data-slot='select-item']", label).click({ force: true });
+  }
+
   function listResponse() {
     return {
       success: true,
@@ -77,9 +85,65 @@ describe("Schedule", () => {
       cy.contains("td", "sch-1").should("be.visible");
       cy.contains("td", "Echeancier principal").should("be.visible");
       cy.contains("td", "q-1").should("be.visible");
-      cy.contains("td", "DRAFT").should("be.visible");
+      cy.contains("Brouillon").should("be.visible");
       cy.contains("td", "2026-06").should("be.visible");
       cy.contains("td", "3").should("be.visible");
+    });
+
+    it("changes schedule status from the list with confirmation for denied", () => {
+      cy.login();
+
+      let currentStatus = "DRAFT";
+      cy.intercept("GET", "/api/schedules", (req) => {
+        req.reply({
+          statusCode: 200,
+          body: {
+            success: true,
+            schedules: [
+              {
+                schedule_id: "sch-1",
+                quote_id: "q-1",
+                status: currentStatus,
+                name: "Echeancier principal",
+                start_month: "2026-06",
+                duration_months: 3,
+              },
+            ],
+          },
+        });
+      }).as("listSchedules");
+
+      cy.intercept("PATCH", "/api/schedules/sch-1/status", (req) => {
+        currentStatus = req.body.status;
+        req.reply({
+          statusCode: 200,
+          body: { success: true, status: req.body.status },
+        });
+      }).as("updateScheduleStatus");
+
+      cy.on("window:confirm", (message) => {
+        expect(message).to.include("Confirmer le refus");
+        return true;
+      });
+
+      cy.visit("/schedule");
+      cy.wait("@listSchedules");
+
+      cy.contains("td", "sch-1")
+        .closest("tr")
+        .within(() => {
+          cy.get("[data-slot='select-trigger']").click({ force: true });
+        });
+      chooseStatusOption("Refusé");
+
+      cy.wait("@updateScheduleStatus").then(({ request }) => {
+        expect(request.body).to.deep.equal({ status: "DENIED" });
+      });
+      cy.wait("@listSchedules");
+      cy.contains("td", "sch-1")
+        .closest("tr")
+        .contains("Refusé")
+        .should("be.visible");
     });
 
     it("shows empty state when API returns no schedules", () => {
@@ -396,7 +460,7 @@ describe("Schedule", () => {
       cy.contains("Échéancier sch-1").should("be.visible");
       cy.contains("Nom:").should("be.visible");
       cy.contains("Statut:").should("be.visible");
-      cy.contains("DRAFT").should("be.visible");
+      cy.contains("Brouillon").should("be.visible");
       cy.contains("2026").should("be.visible");
       cy.contains("juin").should("be.visible");
       cy.contains("juillet").should("be.visible");
@@ -566,7 +630,7 @@ describe("Schedule", () => {
         .and("include", "Montant invalide");
     });
 
-    it("validates schedule then refreshes status", () => {
+    it("changes status to VALID from details then refreshes", () => {
       cy.login();
 
       let scheduleValidated = false;
@@ -580,27 +644,35 @@ describe("Schedule", () => {
         });
       }).as("getSchedule");
 
-      cy.intercept("POST", "/api/schedules/sch-1/validate", (req) => {
+      cy.intercept("PATCH", "/api/schedules/sch-1/status", (req) => {
         scheduleValidated = true;
-        req.reply({ statusCode: 200, body: { success: true } });
-      }).as("validateSchedule");
+        req.reply({
+          statusCode: 200,
+          body: { success: true, status: "VALID" },
+        });
+      }).as("updateScheduleStatus");
+
+      cy.on("window:confirm", (message) => {
+        expect(message).to.include("Confirmer la validation");
+        return true;
+      });
 
       cy.visit("/schedule/sch-1");
       cy.wait("@getSchedule");
       cy.contains("line-1").should("be.visible");
 
-      cy.contains("button", "Valider l'échéancier")
-        .should("be.visible")
-        .as("validateScheduleButton");
-      cy.get("@validateScheduleButton").click({ force: true });
+      openStatusSelect();
+      chooseStatusOption("Validé");
 
-      cy.wait("@validateSchedule");
+      cy.wait("@updateScheduleStatus").then(({ request }) => {
+        expect(request.body).to.deep.equal({ status: "VALID" });
+      });
       cy.wait("@getScheduleAfterValidate");
       cy.get("input[name='cell-line-1-m1']").should("be.disabled");
-      cy.get("@validateScheduleButton").should("be.disabled");
+      cy.contains("Validé").should("be.visible");
     });
 
-    it("shows explicit message when validation is refused", () => {
+    it("shows explicit message when status update to VALID is refused", () => {
       cy.login();
 
       cy.intercept("GET", "/api/schedules/sch-1", {
@@ -608,17 +680,23 @@ describe("Schedule", () => {
         body: detailsResponse("DRAFT", 1200),
       }).as("getSchedule");
 
-      cy.intercept("POST", "/api/schedules/sch-1/validate", {
+      cy.intercept("PATCH", "/api/schedules/sch-1/status", {
         statusCode: 422,
         body: { success: false, message: "L'échéancier n'est pas équilibré." },
-      }).as("validateScheduleRejected");
+      }).as("updateScheduleStatusRejected");
+
+      cy.on("window:confirm", (message) => {
+        expect(message).to.include("Confirmer la validation");
+        return true;
+      });
 
       cy.visit("/schedule/sch-1");
       cy.wait("@getSchedule");
 
-      cy.contains("button", "Valider l'échéancier").click({ force: true });
+      openStatusSelect();
+      chooseStatusOption("Validé");
 
-      cy.wait("@validateScheduleRejected");
+      cy.wait("@updateScheduleStatusRejected");
       cy.contains("n'est pas équilibré").should("be.visible");
       cy.get("@getSchedule.all").should("have.length", 1);
     });
@@ -634,10 +712,15 @@ describe("Schedule", () => {
         });
       }).as("getSchedule");
 
-      cy.intercept("POST", "/api/schedules/sch-1/validate", (req) => {
+      cy.intercept("PATCH", "/api/schedules/sch-1/status", (req) => {
         validated = true;
-        req.reply({ statusCode: 200, body: { success: true } });
-      }).as("validateSchedule");
+        req.reply({
+          statusCode: 200,
+          body: { success: true, status: "VALID" },
+        });
+      }).as("updateScheduleStatus");
+
+      cy.on("window:confirm", () => true);
 
       cy.intercept("GET", "/api/schedules", {
         statusCode: 200,
@@ -666,14 +749,15 @@ describe("Schedule", () => {
 
       cy.visit("/schedule/sch-1");
       cy.wait("@getSchedule");
-      cy.contains("button", "Valider l'échéancier").click({ force: true });
-      cy.wait("@validateSchedule");
+      openStatusSelect();
+      chooseStatusOption("Validé");
+      cy.wait("@updateScheduleStatus");
 
       cy.visit("/schedule");
       cy.wait("@listSchedulesAfterValidate");
       cy.contains("td", "sch-2")
         .closest("tr")
-        .contains("td", "DENIED")
+        .contains("Refusé")
         .should("be.visible");
     });
 
@@ -694,7 +778,7 @@ describe("Schedule", () => {
       cy.wait("@getScheduleValid");
 
       cy.get("input[name='cell-line-1-m1']").should("be.disabled");
-      cy.contains("button", "Valider l'échéancier").should("be.disabled");
+      cy.contains("Validé").should("be.visible");
       cy.get("@patchCellWhileValid.all").should("have.length", 0);
     });
 
@@ -715,7 +799,7 @@ describe("Schedule", () => {
       cy.wait("@getScheduleDenied");
 
       cy.get("input[name='cell-line-1-m1']").should("be.disabled");
-      cy.contains("button", "Valider l'échéancier").should("be.disabled");
+      cy.contains("Refusé").should("be.visible");
       cy.get("@patchCellWhileDenied.all").should("have.length", 0);
     });
 
