@@ -93,15 +93,21 @@ export default function QuoteListTable() {
       }
       const templateId = tplRes.body.template_id as string;
       const sorted = [...lines].sort((a, b) => a.position - b.position);
+      const lineIdMap = new Map<string, string>();
       for (const [idx, line] of sorted.entries()) {
+        const templateParentId = line.data.parent_line_id
+          ? (lineIdMap.get(line.data.parent_line_id) ??
+            line.data.parent_line_id)
+          : undefined;
         const lineRes = await createTemplateLine(templateId, {
-          type: "simple",
+          type: line.type,
           name: line.name,
           quantity: Number(line.quantity),
           unit: line.unit ?? undefined,
           unitPriceEuros: line.unit_price / 100,
           position: idx,
           taxId: line.tax_id ?? null,
+          data: { ...line.data, parent_line_id: templateParentId },
         });
         if (!lineRes.ok || !lineRes.body.success) {
           await deleteTemplate(templateId);
@@ -110,6 +116,7 @@ export default function QuoteListTable() {
           );
           return false;
         }
+        lineIdMap.set(line.line_id, lineRes.body.line_id as string);
       }
       toast.success(t("saveAsTemplateSuccessToast"));
       return true;

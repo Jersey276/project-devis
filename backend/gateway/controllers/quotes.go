@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	quote "gateway/quote"
 	users "gateway/users"
@@ -146,7 +147,8 @@ func ListQuotes(c *gin.Context, client quote.QuoteServiceClient, usersClient use
 	out := make([]gin.H, 0, len(quotesResp.Quotes))
 	for _, q := range quotesResp.Quotes {
 		m := marshalQuote(q)
-		m["total_ttc"] = totals[q.QuoteId]
+		m["total_ttc"] = totals[q.QuoteId].principal
+		m["option_total_ttc"] = totals[q.QuoteId].option
 		out = append(out, m)
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "quotes": out})
@@ -168,10 +170,37 @@ func distinctTaxIds(lines []*quote.QuoteLine) []int32 {
 	return ids
 }
 
-// computeQuoteTotals folds quote_lines into per-quote TTC totals in cents.
-// Round once per line — matches the per-line breakdown of quote-form.tsx and
-// the canonical PDF total. Lines with tax_id=0 ("no tax") contribute HT only.
-func computeQuoteTotals(lines []*quote.QuoteLine, taxes []*users.Tax) map[string]int64 {
+type quoteLineData struct {
+	Kind         string        `json:"kind"`
+	Description  string        `json:"description"`
+	Option       *bool         `json:"option"`
+	ParentLineID string        `json:"parent_line_id"`
+	Sublines     []quoteSubline `json:"sublines"`
+}
+
+type quoteSubline struct {
+	Name      string `json:"name"`
+	Quantity  string `json:"quantity"`
+	Unit      string `json:"unit"`
+	UnitPrice int64  `json:"unit_price"`
+	Option    *bool  `json:"option"`
+}
+
+type quoteTotals struct {
+	principal int64
+	option    int64
+}
+
+func parseLineData(raw string) quoteLineData {
+	var data quoteLineData
+	if err := json.Unmarshal([]byte(raw), &data); err != nil {
+		return quoteLineData{}
+	}
+	data.Kind = strings.TrimSpace(data.Kind)
+	return data
+}
+
+func computeQuoteTotals(lines []*quote.QuoteLine, taxes []*users.Tax) map[string]quoteTotals {
 	rates := make(map[int32]float64, len(taxes)+1)
 	for _, t := range taxes {
 		r, err := strconv.ParseFloat(t.Rate, 64)
@@ -181,15 +210,96 @@ func computeQuoteTotals(lines []*quote.QuoteLine, taxes []*users.Tax) map[string
 		rates[t.Id] = r
 	}
 
-	totals := map[string]int64{}
-	for _, l := range lines {
-		qty, err := strconv.ParseFloat(l.Quantity, 64)
+	byID := make(map[string]*quote.QuoteLine, len(lines))
+	children := make(map[string][]*quote.QuoteLine, len(lines))
+	for _, line := range lines {
+		byID[line.LineId] = line
+		data := parseLineData(line.Data)
+		if data.ParentLineID != "" {
+			children[data.ParentLineID] = append(children[data.ParentLineID], line)
+		}
+	}
+
+	visited := make(map[string]struct{}, len(lines))
+	var evalLine func(line *quote.QuoteLine) quoteTotals
+	evalLine = func(line *quote.QuoteLine) quoteTotals {
+		if line == nil {
+			return quoteTotals{}
+		}
+		if _, ok := visited[line.LineId]; ok {
+			return quoteTotals{}
+		}
+		visited[line.LineId] = struct{}{}
+
+		data := parseLineData(line.Data)
+		kind := data.Kind
+		if kind == "" {
+			if line.Type == "multiple" {
+				kind = "detailed"
+			} else {
+				kind = "line"
+			}
+		}
+
+		if kind == "text" || kind == "group" {
+			var total quoteTotals
+			for _, child := range children[line.LineId] {
+				childTotal := evalLine(child)
+				total.principal += childTotal.principal
+				total.option += childTotal.option
+			}
+			return total
+		}
+
+		if kind == "detailed" {
+			var total quoteTotals
+			for _, sub := range data.Sublines {
+				qty, err := strconv.ParseFloat(sub.Quantity, 64)
+				if err != nil {
+					continue
+				}
+				amount := int64(math.Round(qty * float64(sub.UnitPrice) * (1 + rates[line.TaxId]/100)))
+				if sub.Option != nil && *sub.Option {
+					total.option += amount
+				} else {
+					total.principal += amount
+				}
+			}
+			return total
+		}
+
+		qty, err := strconv.ParseFloat(line.Quantity, 64)
 		if err != nil {
+			return quoteTotals{}
+		}
+		amount := int64(math.Round(qty * float64(line.UnitPrice) * (1 + rates[line.TaxId]/100)))
+		var total quoteTotals
+		if data.Option != nil && *data.Option {
+			total.option = amount
+		} else {
+			total.principal = amount
+		}
+		for _, child := range children[line.LineId] {
+			childTotal := evalLine(child)
+			total.principal += childTotal.principal
+			total.option += childTotal.option
+		}
+		return total
+	}
+
+	totals := map[string]quoteTotals{}
+	for _, line := range lines {
+		data := parseLineData(line.Data)
+		if data.ParentLineID != "" {
 			continue
 		}
-		rate := rates[l.TaxId]
-		totals[l.QuoteId] += int64(math.Round(qty * float64(l.UnitPrice) * (1 + rate/100)))
+		total := evalLine(line)
+		cur := totals[line.QuoteId]
+		cur.principal += total.principal
+		cur.option += total.option
+		totals[line.QuoteId] = cur
 	}
+	_ = byID
 	return totals
 }
 

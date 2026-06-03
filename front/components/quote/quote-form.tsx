@@ -34,6 +34,7 @@ import {
 import QuoteStepBasicInfo from "@/components/quote/steps/quote-step-basic-info";
 import QuoteStepItems, {
   type QuoteItemRow as RenderedRow,
+  type QuoteTotals,
 } from "@/components/quote/steps/quote-step-items";
 import QuoteStepSummary from "@/components/quote/steps/quote-step-summary";
 import {
@@ -67,11 +68,147 @@ import {
   type BackendQuoteLine,
   type BackendQuoteState,
   type BackendTax,
+  type QuoteLineData,
 } from "@/types/backend";
 import SaveTemplateDialog from "@/components/template/save-template-dialog";
 import CreateScheduleDialog from "@/components/schedule/create-schedule-dialog";
 
 type FormItem = RenderedRow & { position: number };
+
+function normalizeLineData(
+  data: QuoteLineData | undefined,
+  lineType: BackendQuoteLine["type"],
+): QuoteLineData {
+  return {
+    ...data,
+    kind: data?.kind ?? (lineType === "multiple" ? "detailed" : "line"),
+  };
+}
+
+function lineKind(item: FormItem): QuoteLineData["kind"] {
+  return item.data.kind ?? (item.data.sublines?.length ? "detailed" : "line");
+}
+
+function leafAmount(item: FormItem): number {
+  const kind = lineKind(item);
+  if (kind === "text" || kind === "group") return 0;
+  if (kind === "detailed") {
+    return (item.data.sublines ?? []).reduce((acc, subline) => {
+      const quantity = Number(subline.quantity);
+      if (!Number.isFinite(quantity)) return acc;
+      return acc + quantity * (subline.unit_price / 100);
+    }, 0);
+  }
+  return item.quantity * item.unitPriceEuros;
+}
+
+function lineTaxAmount(amount: number, taxRate: number): number {
+  return amount * (1 + taxRate / 100);
+}
+
+function computeTotals(
+  items: FormItem[],
+  taxById: Map<number, BackendTax>,
+): QuoteTotals {
+  const childrenByParent = new Map<string, FormItem[]>();
+  for (const item of items) {
+    const parentId = item.data.parent_line_id;
+    if (!parentId) continue;
+    const current = childrenByParent.get(parentId) ?? [];
+    current.push(item);
+    childrenByParent.set(parentId, current);
+  }
+
+  const visited = new Set<string>();
+
+  const evalItem = (
+    item: FormItem,
+    taxIdOverride?: number | null,
+  ): { principal: number; option: number; breakdown: Map<number, number> } => {
+    if (visited.has(item.lineId)) {
+      return { principal: 0, option: 0, breakdown: new Map() };
+    }
+    visited.add(item.lineId);
+
+    const kind = lineKind(item);
+    const taxId = taxIdOverride ?? item.taxId;
+    const taxRate = taxId != null ? Number(taxById.get(taxId)?.rate ?? 0) : 0;
+    const breakdown = new Map<number, number>();
+    let principal = 0;
+    let option = 0;
+
+    if (kind === "detailed") {
+      for (const subline of item.data.sublines ?? []) {
+        const quantity = Number(subline.quantity);
+        if (!Number.isFinite(quantity)) continue;
+        const baseAmount = quantity * (subline.unit_price / 100);
+        const taxAmount = baseAmount * (taxRate / 100);
+        if (subline.option) {
+          option += baseAmount;
+        } else {
+          principal += baseAmount;
+          if (taxId != null) {
+            breakdown.set(taxId, (breakdown.get(taxId) ?? 0) + taxAmount);
+          }
+        }
+      }
+    } else {
+      const baseAmount = leafAmount(item);
+      const taxAmount = baseAmount * (taxRate / 100);
+      if (item.data.option) {
+        option += baseAmount;
+      } else {
+        principal += baseAmount;
+        if (taxId != null) {
+          breakdown.set(taxId, (breakdown.get(taxId) ?? 0) + taxAmount);
+        }
+      }
+    }
+
+    for (const child of childrenByParent.get(item.lineId) ?? []) {
+      const childTotals = evalItem(child);
+      principal += childTotals.principal;
+      option += childTotals.option;
+      for (const [childTaxId, childAmount] of childTotals.breakdown.entries()) {
+        breakdown.set(
+          childTaxId,
+          (breakdown.get(childTaxId) ?? 0) + childAmount,
+        );
+      }
+    }
+
+    return { principal, option, breakdown };
+  };
+
+  const principalBreakdown = new Map<
+    number,
+    { tax: BackendTax; amount: number }
+  >();
+  let ht = 0;
+  let optionHt = 0;
+
+  for (const item of items) {
+    if (item.data.parent_line_id) continue;
+    const result = evalItem(item);
+    ht += result.principal;
+    optionHt += result.option;
+    for (const [taxId, amount] of result.breakdown.entries()) {
+      const tax = taxById.get(taxId);
+      if (!tax) continue;
+      const current = principalBreakdown.get(taxId);
+      principalBreakdown.set(taxId, {
+        tax,
+        amount: (current?.amount ?? 0) + amount,
+      });
+    }
+  }
+
+  const breakdown = Array.from(principalBreakdown.values()).sort(
+    (a, b) => Number(a.tax.rate) - Number(b.tax.rate),
+  );
+  const ttc = ht + breakdown.reduce((acc, entry) => acc + entry.amount, 0);
+  return { ht, breakdown, optionHt, optionTtc: optionHt, ttc };
+}
 
 type QuoteFormProps = {
   quoteId?: string;
@@ -95,23 +232,26 @@ const STATE_BADGE_VARIANT: Record<
 function rowFromBackendLine(line: BackendQuoteLine): FormItem {
   return {
     lineId: line.line_id,
+    type: line.type,
     name: line.name,
     quantity: Number(line.quantity),
     unitPriceEuros: line.unit_price / 100,
     position: line.position,
     taxId: line.tax_id ?? null,
+    data: normalizeLineData(line.data, line.type),
     saveStatus: "idle",
   };
 }
 
 function lineDraftFromRow(row: FormItem): LineDraft {
   return {
-    type: "simple",
+    type: row.type,
     name: row.name,
     quantity: row.quantity,
     unitPriceEuros: row.unitPriceEuros,
     position: row.position,
     taxId: row.taxId,
+    data: row.data,
   };
 }
 
@@ -340,30 +480,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     [availableTaxes],
   );
 
-  const totals = useMemo(() => {
-    const ht = items.reduce(
-      (acc, item) => acc + item.quantity * item.unitPriceEuros,
-      0,
-    );
-    const breakdown = new Map<number, { tax: BackendTax; amount: number }>();
-    for (const item of items) {
-      if (item.taxId == null) continue;
-      const tax = taxById.get(item.taxId);
-      if (!tax) continue;
-      const lineHT = item.quantity * item.unitPriceEuros;
-      const taxAmount = (lineHT * Number(tax.rate)) / 100;
-      const cur = breakdown.get(tax.id);
-      breakdown.set(tax.id, {
-        tax,
-        amount: (cur?.amount ?? 0) + taxAmount,
-      });
-    }
-    const sortedBreakdown = Array.from(breakdown.values()).sort(
-      (a, b) => Number(a.tax.rate) - Number(b.tax.rate),
-    );
-    const ttc = ht + sortedBreakdown.reduce((acc, b) => acc + b.amount, 0);
-    return { ht, breakdown: sortedBreakdown, ttc };
-  }, [items, taxById]);
+  const totals = useMemo(() => computeTotals(items, taxById), [items, taxById]);
 
   // ────────────────────────────────────────────────────────────
   // Step 1 handlers
@@ -429,13 +546,14 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
               await Promise.all(
                 sorted.map((tl, idx) =>
                   createLine(newId, {
-                    type: "simple",
+                    type: tl.type,
                     name: tl.name,
                     quantity: Number(tl.quantity),
                     unit: tl.unit ?? undefined,
                     unitPriceEuros: tl.unit_price / 100,
                     position: idx,
                     taxId: tl.tax_id ?? null,
+                    data: tl.data,
                   }),
                 ),
               );
@@ -579,14 +697,19 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         return false;
       }
       const templateId = body.template_id as string;
+      const lineIdMap = new Map<string, string>();
       for (const [idx, row] of itemsRef.current.entries()) {
+        const templateParentId = row.data.parent_line_id
+          ? (lineIdMap.get(row.data.parent_line_id) ?? row.data.parent_line_id)
+          : undefined;
         const lineRes = await createTemplateLine(templateId, {
-          type: "simple",
+          type: row.type,
           name: row.name,
           quantity: row.quantity,
           unitPriceEuros: row.unitPriceEuros,
           position: idx,
           taxId: row.taxId,
+          data: { ...row.data, parent_line_id: templateParentId },
         });
         if (!lineRes.ok || !lineRes.body.success) {
           await deleteTemplate(templateId);
@@ -596,6 +719,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           );
           return false;
         }
+        lineIdMap.set(row.lineId, lineRes.body.line_id as string);
       }
       toast.success(t("saveAsTemplateSuccessToast"));
       return true;
@@ -620,12 +744,13 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       }
       const templateId = body.template_id as string;
       const lineRes = await createTemplateLine(templateId, {
-        type: "simple",
+        type: row.type,
         name: row.name,
         quantity: row.quantity,
         unitPriceEuros: row.unitPriceEuros,
         position: 0,
         taxId: row.taxId,
+        data: { ...row.data, parent_line_id: undefined },
       });
       if (!lineRes.ok || !lineRes.body.success) {
         await deleteTemplate(templateId);
@@ -654,36 +779,54 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         const lines = (body.lines as BackendTemplateLine[]).sort(
           (a, b) => a.position - b.position,
         );
-        const tl = lines[0];
-        const draft: LineDraft = {
-          type: "simple",
-          name: tl.name,
-          quantity: Number(tl.quantity),
-          unit: tl.unit ?? undefined,
-          unitPriceEuros: tl.unit_price / 100,
-          position: itemsRef.current.length,
-          taxId: tl.tax_id ?? null,
-        };
-        const createRes = await createLine(quoteId, draft);
-        if (createRes.ok && createRes.body.success) {
+        const lineIdMap = new Map<string, string>();
+        for (const tl of lines) {
+          const draft: LineDraft = {
+            type: tl.type === "multiple" ? "multiple" : "simple",
+            name: tl.name,
+            quantity: Number(tl.quantity),
+            unit: tl.unit ?? undefined,
+            unitPriceEuros: tl.unit_price / 100,
+            position: itemsRef.current.length + lineIdMap.size,
+            taxId: tl.tax_id ?? null,
+            data: {
+              ...tl.data,
+              parent_line_id: tl.data.parent_line_id
+                ? (lineIdMap.get(tl.data.parent_line_id) ??
+                  tl.data.parent_line_id)
+                : undefined,
+            },
+          };
+          const createRes = await createLine(quoteId, draft);
+          if (!createRes.ok || !createRes.body.success) {
+            toast.error(
+              (createRes.body.message as string) ??
+                t("errors.lineAddFromTemplateFailedToast"),
+            );
+            break;
+          }
           const newLineId = createRes.body.line_id as string;
+          lineIdMap.set(tl.line_id, newLineId);
           setItems((prev) => [
             ...prev,
             {
               lineId: newLineId,
+              type: tl.type === "multiple" ? "multiple" : "simple",
               name: tl.name,
               quantity: Number(tl.quantity),
               unitPriceEuros: tl.unit_price / 100,
               position: prev.length,
               taxId: tl.tax_id ?? null,
+              data: {
+                ...draft.data,
+                kind:
+                  draft.data?.kind ??
+                  (tl.type === "multiple" ? "detailed" : "line"),
+              },
               saveStatus: "idle",
+              type: row.type,
             },
           ]);
-        } else {
-          toast.error(
-            (createRes.body.message as string) ??
-              t("errors.lineAddFromTemplateFailedToast"),
-          );
         }
       } finally {
         setAdding(false);
@@ -703,6 +846,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         unitPriceEuros: 0,
         position: itemsRef.current.length,
         taxId: defaultTaxId,
+        data: {},
       };
       const { ok, body } = await createLine(quoteId, draft);
       if (ok && body.success) {
@@ -711,11 +855,13 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           ...prev,
           {
             lineId: newLineId,
+            type: "simple",
             name: "",
             quantity: 1,
             unitPriceEuros: 0,
             position: prev.length,
             taxId: defaultTaxId,
+            data: {},
             saveStatus: "idle",
           },
         ]);
@@ -778,6 +924,30 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const handleTaxChange = useCallback(
     (lineId: string, taxId: number | null) => {
       setRow(lineId, { taxId });
+      scheduleLineSave(lineId);
+    },
+    [scheduleLineSave, setRow],
+  );
+
+  const handleDescriptionChange = useCallback(
+    (lineId: string, value: string) => {
+      const current = itemsRef.current.find((row) => row.lineId === lineId);
+      if (!current) return;
+      setRow(lineId, {
+        data: { ...current.data, description: value },
+      });
+      scheduleLineSave(lineId);
+    },
+    [scheduleLineSave, setRow],
+  );
+
+  const handleOptionChange = useCallback(
+    (lineId: string, value: boolean) => {
+      const current = itemsRef.current.find((row) => row.lineId === lineId);
+      if (!current) return;
+      setRow(lineId, {
+        data: { ...current.data, option: value },
+      });
       scheduleLineSave(lineId);
     },
     [scheduleLineSave, setRow],
@@ -1024,6 +1194,8 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             onQuantityChange={handleQuantityChange}
             onUnitPriceChange={handleUnitPriceChange}
             onTaxChange={handleTaxChange}
+            onDescriptionChange={handleDescriptionChange}
+            onOptionChange={handleOptionChange}
             onRemoveItem={handleRemoveItem}
             onAddItem={handleAddItem}
             onSaveLineAsTemplate={
