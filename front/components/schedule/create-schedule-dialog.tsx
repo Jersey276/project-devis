@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -87,6 +87,7 @@ export default function CreateScheduleDialog({
   const [startYear, setStartYear] = useState("");
   const [startMonthValue, setStartMonthValue] = useState("");
   const [durationMonths, setDurationMonths] = useState("");
+  const durationMonthsRef = useRef("");
   const [startMonthPickerOpen, setStartMonthPickerOpen] = useState(false);
 
   const effectiveQuoteId = lockQuote ? (initialQuoteId ?? "") : quoteId;
@@ -135,7 +136,7 @@ export default function CreateScheduleDialog({
   async function onCreateSchedule() {
     setErrorMessage("");
     setCreating(true);
-    const months = Number(durationMonths.trim());
+    const months = Number(durationMonthsRef.current);
 
     const { ok, body } = await createSchedule({
       quoteId: effectiveQuoteId,
@@ -154,6 +155,7 @@ export default function CreateScheduleDialog({
     setStartYear("");
     setStartMonthValue("");
     setDurationMonths("");
+    durationMonthsRef.current = "";
     setCreating(false);
     onOpenChange(false);
     onCreated?.();
@@ -168,6 +170,7 @@ export default function CreateScheduleDialog({
       setStartYear("");
       setStartMonthValue("");
       setDurationMonths("");
+      durationMonthsRef.current = "";
       setStartMonthPickerOpen(false);
       if (!lockQuote) setQuoteId("");
     }
@@ -254,7 +257,10 @@ export default function CreateScheduleDialog({
               type="number"
               min={1}
               value={durationMonths}
-              onChange={(e) => setDurationMonths(e.target.value)}
+              onChange={(e) => {
+                durationMonthsRef.current = e.target.value;
+                setDurationMonths(e.target.value);
+              }}
             />
           </Field>
 
