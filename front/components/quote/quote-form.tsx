@@ -600,7 +600,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
               await Promise.all(
                 sorted.map((tl, idx) =>
                   createLine(newId, {
-                    type: tl.type,
+                    type: tl.type === "multiple" ? "multiple" : "simple",
                     name: tl.name,
                     quantity: Number(tl.quantity),
                     unit: tl.unit ?? undefined,
