@@ -3,6 +3,7 @@ import type {
   BackendQuote,
   BackendQuoteLine,
   BackendQuoteLineType,
+  QuoteLineData,
 } from "@/types/backend";
 
 export type LineDraft = {
@@ -13,6 +14,7 @@ export type LineDraft = {
   unitPriceEuros: number;
   position: number;
   taxId: number | null;
+  data?: QuoteLineData;
 };
 
 function toCents(euros: number): number {
@@ -26,7 +28,7 @@ function toLinePayload(draft: LineDraft) {
     quantity: String(draft.quantity),
     unit: draft.unit ?? "",
     unit_price: toCents(draft.unitPriceEuros),
-    data: {},
+    data: draft.data ?? {},
     position: draft.position,
     tax_id: draft.taxId ?? 0,
   };
@@ -141,6 +143,7 @@ export function lineFromBackend(line: BackendQuoteLine): LineDraft & {
     unitPriceEuros: line.unit_price / 100,
     position: line.position,
     taxId: line.tax_id ?? null,
+    data: line.data,
   };
 }
 

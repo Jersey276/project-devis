@@ -32,6 +32,7 @@ import type {
   BackendTax,
   BackendTemplate,
   BackendTemplateLine,
+  QuoteLineData,
 } from "@/types/backend";
 
 type Props = {
@@ -63,6 +64,7 @@ export default function EditLineTemplateSheet({
   const [quantity, setQuantity] = useState(1);
   const [unitPriceEuros, setUnitPriceEuros] = useState(0);
   const [taxId, setTaxId] = useState<number | null>(null);
+  const [lineData, setLineData] = useState<QuoteLineData>({ kind: "line" });
 
   useEffect(() => {
     if (!open) return;
@@ -93,12 +95,14 @@ export default function EditLineTemplateSheet({
           setQuantity(Number(line.quantity));
           setUnitPriceEuros(line.unit_price / 100);
           setTaxId(line.tax_id ?? null);
+          setLineData(line.data);
         } else {
           setLineId(null);
           setLineName("");
           setQuantity(1);
           setUnitPriceEuros(0);
           setTaxId(null);
+          setLineData({ kind: "line" });
         }
       },
     );
@@ -135,6 +139,7 @@ export default function EditLineTemplateSheet({
           unitPriceEuros,
           position: 0,
           taxId,
+          data: lineData,
         });
         if (!lineRes.ok || !lineRes.body.success) {
           toast.error(t("saveFailedToast"));

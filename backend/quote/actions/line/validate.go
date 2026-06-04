@@ -12,6 +12,14 @@ const (
 	TypeMultiple = "multiple"
 )
 
+type lineDataPayload struct {
+	Kind         string   `json:"kind,omitempty"`
+	Description  string   `json:"description,omitempty"`
+	Option       *bool    `json:"option,omitempty"`
+	ParentLineID string   `json:"parent_line_id,omitempty"`
+	Sublines     []subline `json:"sublines,omitempty"`
+}
+
 // ValidateData ensures the JSON payload matches the schema for the given line type.
 // Returns the canonical JSON (defaulting Simple to "{}") if valid.
 func ValidateData(lineType, data string) (string, error) {
@@ -27,16 +35,29 @@ func ValidateData(lineType, data string) (string, error) {
 
 func validateSimple(data string) (string, error) {
 	if data == "" || data == "null" {
-		return "{}", nil
+		return `{"kind":"line"}`, nil
 	}
-	var payload map[string]any
-	if err := json.Unmarshal([]byte(data), &payload); err != nil {
-		return "", fmt.Errorf("simple line data must be a JSON object: %w", err)
+	var payload lineDataPayload
+	dec := json.NewDecoder(strings.NewReader(data))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&payload); err != nil {
+		return "", fmt.Errorf("simple line data invalid: %w", err)
 	}
-	if len(payload) != 0 {
-		return "", fmt.Errorf("simple line data must be empty")
+	if payload.Kind == "" {
+		payload.Kind = "line"
 	}
-	return "{}", nil
+	if payload.Kind != "line" && payload.Kind != "text" && payload.Kind != "group" && payload.Kind != "subline" {
+		return "", fmt.Errorf("simple line data has invalid kind %q", payload.Kind)
+	}
+	// Description can be empty on creation; it is filled in by the user later.
+	if payload.Kind == "subline" && payload.ParentLineID == "" {
+		return "", fmt.Errorf("subline parent_line_id is required")
+	}
+	clean, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+	return string(clean), nil
 }
 
 type subline struct {
@@ -44,10 +65,13 @@ type subline struct {
 	Quantity  string  `json:"quantity"`
 	Unit      *string `json:"unit,omitempty"`
 	UnitPrice int64   `json:"unit_price"`
+	Option    *bool   `json:"option,omitempty"`
 }
 
 type multiplePayload struct {
-	Sublines []subline `json:"sublines"`
+	Kind        string    `json:"kind,omitempty"`
+	Description string    `json:"description,omitempty"`
+	Sublines    []subline `json:"sublines,omitempty"`
 }
 
 func validateMultiple(data string) (string, error) {
@@ -60,8 +84,11 @@ func validateMultiple(data string) (string, error) {
 	if err := dec.Decode(&payload); err != nil {
 		return "", fmt.Errorf("multiple line data invalid: %w", err)
 	}
-	if len(payload.Sublines) == 0 {
-		return "", fmt.Errorf("multiple line must have at least one subline")
+	if payload.Kind == "" {
+		payload.Kind = "detailed"
+	}
+	if payload.Kind != "detailed" {
+		return "", fmt.Errorf("multiple line data has invalid kind %q", payload.Kind)
 	}
 	for i, s := range payload.Sublines {
 		if s.Name == "" {
@@ -75,6 +102,10 @@ func validateMultiple(data string) (string, error) {
 		}
 		if s.UnitPrice < 0 {
 			return "", fmt.Errorf("subline %d: unit_price must be >= 0", i)
+		}
+		if payload.Sublines[i].Option == nil {
+			defaultOption := false
+			payload.Sublines[i].Option = &defaultOption
 		}
 	}
 

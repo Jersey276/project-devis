@@ -217,7 +217,28 @@
         "lineNamePlaceholder": "Prestation",
         "deleteAria": "Supprimer la ligne",
         "addAria": "Ajouter une ligne",
+        "addTypeAria": "Ajouter un autre type de ligne",
+        "addLineInGroup": "Ajouter une ligne dans ce groupe",
+        "addLineInGroupAria": "Ajouter une ligne dans le groupe",
+        "addChildTypeAria": "Ajouter un autre type de ligne dans ce groupe",
         "addFromTemplateAria": "Ajouter depuis un template",
+        "lineKinds": {
+          "line": "Ligne simple",
+          "text": "Ligne texte",
+          "group": "Groupe",
+          "detailed": "Ligne détaillée",
+          "subline": "Sous-ligne"
+        },
+        "sublines": {
+          "name": "Désignation",
+          "quantity": "Quantité",
+          "unit": "Unité",
+          "unitPrice": "PU HT (€)",
+          "option": "Option",
+          "unitPlaceholder": "m², ml…",
+          "addAria": "Ajouter une sous-ligne",
+          "deleteAria": "Supprimer la sous-ligne"
+        },
         "saveAsTemplate": "Enregistrer comme template",
         "deleteLine": "Supprimer la ligne",
         "savingAria": "Enregistrement en cours",

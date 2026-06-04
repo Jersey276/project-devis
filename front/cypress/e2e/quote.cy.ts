@@ -378,6 +378,7 @@ describe("Quote", () => {
       cy.visit("/quote/q-1?step=2");
       cy.wait("@getQuote");
       cy.get("[aria-label='Ajouter une ligne']").click();
+      cy.contains("[role='menuitem']", "Ligne simple").click();
 
       cy.wait("@createLine").then((interception) => {
         expect(interception.request.body).to.deep.equal({
@@ -501,6 +502,7 @@ describe("Quote", () => {
       cy.wait("@getQuote");
       cy.wait("@listAvailableTaxes");
       cy.get("[aria-label='Ajouter une ligne']").click();
+      cy.contains("[role='menuitem']", "Ligne simple").click();
 
       cy.wait("@createLine").then((interception) => {
         expect(interception.request.body).to.include({ tax_id: 100 });

@@ -4,13 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"project-devis-quote/actions"
 	quoteGrpc "project-devis-quote/services/grpc"
+
+	"github.com/DATA-DOG/go-sqlmock"
 )
 
 const (
-	multipleData = `{"sublines":[{"name":"a","quantity":"1","unit_price":1000}]}`
+	multipleData = `{"kind":"detailed","sublines":[{"name":"a","quantity":"1","unit_price":1000,"option":false}]}`
 )
 
 func TestCreateLine_SimpleSuccess(t *testing.T) {
@@ -18,7 +19,7 @@ func TestCreateLine_SimpleSuccess(t *testing.T) {
 
 	expectEditableCheck(mock, "q-1", "user-1", "draft")
 	mock.ExpectExec(`INSERT INTO quote_lines`).
-		WithArgs(sqlmock.AnyArg(), "q-1", "simple", "Item", "2", "u", int64(1500), "{}", int32(0), nil).
+		WithArgs(sqlmock.AnyArg(), "q-1", "simple", "Item", "2", "u", int64(1500), `{"kind":"line"}`, int32(0), nil).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.CreateQuoteLine(context.Background(), &quoteGrpc.CreateQuoteLineRequest{
@@ -29,7 +30,7 @@ func TestCreateLine_SimpleSuccess(t *testing.T) {
 		Quantity:  "2",
 		Unit:      "u",
 		UnitPrice: 1500,
-		Data:      "{}",
+		Data:      `{"kind":"line"}`,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -93,8 +94,14 @@ func TestCreateLine_InvalidType(t *testing.T) {
 	}
 }
 
-func TestCreateLine_InvalidData_MultipleNoSublines(t *testing.T) {
+func TestCreateLine_MultipleEmptySublines(t *testing.T) {
+	// Empty sublines are now valid — a detailed line can be created before sublines are added.
 	srv, mock := setupServer(t)
+
+	expectEditableCheck(mock, "q-1", "user-1", "draft")
+	mock.ExpectExec(`INSERT INTO quote_lines`).
+		WithArgs(sqlmock.AnyArg(), "q-1", "multiple", "X", "1", nil, int64(0), `{"kind":"detailed"}`, int32(0), nil).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.CreateQuoteLine(context.Background(), &quoteGrpc.CreateQuoteLineRequest{
 		QuoteId:  "q-1",
@@ -107,11 +114,8 @@ func TestCreateLine_InvalidData_MultipleNoSublines(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if resp.Success {
-		t.Fatal("expected failure for empty sublines")
-	}
-	if resp.Code != actions.CodeInvalidLineData {
-		t.Fatalf("expected CodeInvalidLineData, got %d", resp.Code)
+	if !resp.Success {
+		t.Fatalf("expected success for empty sublines, got code %d", resp.Code)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unexpected DB calls: %v", err)
@@ -148,7 +152,7 @@ func TestCreateLine_OwnerNotFound(t *testing.T) {
 		Type:     "simple",
 		Name:     "X",
 		Quantity: "1",
-		Data:     "{}",
+		Data:     `{"kind":"line"}`,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -172,7 +176,7 @@ func TestCreateLine_BlockedWhenFinalized(t *testing.T) {
 		Type:     "simple",
 		Name:     "X",
 		Quantity: "1",
-		Data:     "{}",
+		Data:     `{"kind":"line"}`,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -195,7 +199,7 @@ func TestCreateLine_NegativeUnitPrice(t *testing.T) {
 		Name:      "X",
 		Quantity:  "1",
 		UnitPrice: -100,
-		Data:      "{}",
+		Data:      `{"kind":"line"}`,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -214,7 +218,7 @@ func TestCreateLine_NonNumericQuantity(t *testing.T) {
 		Type:     "simple",
 		Name:     "X",
 		Quantity: "abc",
-		Data:     "{}",
+		Data:     `{"kind":"line"}`,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -230,7 +234,7 @@ func TestGetLine_Success(t *testing.T) {
 	mock.ExpectQuery(`SELECT l.line_id, l.quote_id`).
 		WithArgs("l-1", "user-1").
 		WillReturnRows(sqlmock.NewRows([]string{"line_id", "quote_id", "type", "name", "quantity", "unit", "unit_price", "data", "position", "tax_id"}).
-			AddRow("l-1", "q-1", "simple", "Item", "2", "u", int64(1500), "{}", int32(0), int32(0)))
+			AddRow("l-1", "q-1", "simple", "Item", "2", "u", int64(1500), `{"kind":"line"}`, int32(0), int32(0)))
 
 	resp, err := srv.GetQuoteLine(context.Background(), &quoteGrpc.GetQuoteLineRequest{
 		LineId: "l-1",
@@ -279,7 +283,7 @@ func TestListLines_Success(t *testing.T) {
 	mock.ExpectQuery(`SELECT line_id, quote_id, type, name`).
 		WithArgs("q-1").
 		WillReturnRows(sqlmock.NewRows([]string{"line_id", "quote_id", "type", "name", "quantity", "unit", "unit_price", "data", "position", "tax_id"}).
-			AddRow("l-1", "q-1", "simple", "A", "1", "", int64(100), "{}", int32(0), int32(0)).
+			AddRow("l-1", "q-1", "simple", "A", "1", "", int64(100), `{"kind":"line"}`, int32(0), int32(0)).
 			AddRow("l-2", "q-1", "multiple", "B", "1", "", int64(0), multipleData, int32(1), int32(0)))
 
 	resp, err := srv.ListQuoteLines(context.Background(), &quoteGrpc.ListQuoteLinesRequest{
@@ -321,7 +325,7 @@ func TestUpdateLine_Success(t *testing.T) {
 
 	expectLineParentEditable(mock, "l-1", "user-1", "draft")
 	mock.ExpectExec(`UPDATE quote_lines\s+SET type`).
-		WithArgs("simple", "Item v2", "3", "u", int64(2000), "{}", int32(2), nil, "l-1").
+		WithArgs("simple", "Item v2", "3", "u", int64(2000), `{"kind":"line"}`, int32(2), nil, "l-1").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	resp, err := srv.UpdateQuoteLine(context.Background(), &quoteGrpc.UpdateQuoteLineRequest{
@@ -332,7 +336,7 @@ func TestUpdateLine_Success(t *testing.T) {
 		Quantity:  "3",
 		Unit:      "u",
 		UnitPrice: 2000,
-		Data:      "{}",
+		Data:      `{"kind":"line"}`,
 		Position:  2,
 	})
 	if err != nil {
@@ -354,7 +358,7 @@ func TestUpdateLine_LineNotFound(t *testing.T) {
 		Type:     "simple",
 		Name:     "X",
 		Quantity: "1",
-		Data:     "{}",
+		Data:     `{"kind":"line"}`,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -375,7 +379,7 @@ func TestUpdateLine_BlockedWhenFinalized(t *testing.T) {
 		Type:     "simple",
 		Name:     "X",
 		Quantity: "1",
-		Data:     "{}",
+		Data:     `{"kind":"line"}`,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

@@ -29,6 +29,7 @@ import type {
   BackendTax,
   BackendTemplate,
   BackendTemplateLine,
+  QuoteLineData,
 } from "@/types/backend";
 
 type LocalItem = QuoteItemRow & { position: number };
@@ -45,11 +46,13 @@ type Props = {
 function rowFromLine(line: BackendTemplateLine): LocalItem {
   return {
     lineId: line.line_id,
+    type: line.type === "multiple" ? "multiple" : "simple",
     name: line.name,
     quantity: Number(line.quantity),
     unitPriceEuros: line.unit_price / 100,
     taxId: line.tax_id ?? null,
     position: line.position,
+    data: line.data,
     saveStatus: "idle",
   };
 }
@@ -125,7 +128,7 @@ export default function EditQuoteTemplateSheet({
       (acc, item) => acc + item.quantity * item.unitPriceEuros,
       0,
     );
-    return { ht, breakdown: [], ttc: ht };
+    return { ht, optionHt: 0, optionTtc: 0, breakdown: [], ttc: ht };
   }, [items]);
 
   function setRow(lineId: string, patch: Partial<LocalItem>) {
@@ -134,16 +137,24 @@ export default function EditQuoteTemplateSheet({
     );
   }
 
-  function handleAddItem() {
+  function handleAddItem(kind: QuoteLineData["kind"] = "line") {
     setAdding(true);
+    const isDetailed = kind === "detailed";
+    const isTextOrGroup = kind === "text" || kind === "group";
     const newItem: LocalItem = {
       lineId: newTempId(),
+      type: isDetailed ? "multiple" : "simple",
       name: "",
-      quantity: 1,
+      quantity: isTextOrGroup ? 0 : 1,
       unitPriceEuros: 0,
       taxId: null,
       position: itemsRef.current.length,
       saveStatus: "idle",
+      data: {
+        ...(kind !== "line" && { kind }),
+        ...(isDetailed && { sublines: [] }),
+        ...(kind === "text" && { description: "" }),
+      },
     };
     setItems((prev) => [...prev, newItem]);
     setAdding(false);
@@ -156,19 +167,35 @@ export default function EditQuoteTemplateSheet({
   async function handleAddItemFromTemplate(sourceTemplateId: string) {
     const { ok, body } = await listTemplateLines(sourceTemplateId);
     if (!ok || !Array.isArray(body.lines) || body.lines.length === 0) return;
-    const line = (body.lines as BackendTemplateLine[])[0];
-    setItems((prev) => [
-      ...prev,
-      {
-        lineId: newTempId(),
-        name: line.name,
-        quantity: Number(line.quantity),
-        unitPriceEuros: line.unit_price / 100,
-        taxId: line.tax_id ?? null,
-        position: prev.length,
-        saveStatus: "idle",
-      },
-    ]);
+    const lines = (body.lines as BackendTemplateLine[]).sort(
+      (a, b) => a.position - b.position,
+    );
+    const lineIdMap = new Map<string, string>();
+    setItems((prev) => {
+      const next = [...prev];
+      for (const line of lines) {
+        const tempId = newTempId();
+        lineIdMap.set(line.line_id, tempId);
+        next.push({
+          lineId: tempId,
+          type: line.type === "multiple" ? "multiple" : "simple",
+          name: line.name,
+          quantity: Number(line.quantity),
+          unitPriceEuros: line.unit_price / 100,
+          taxId: line.tax_id ?? null,
+          position: next.length,
+          data: {
+            ...line.data,
+            parent_line_id: line.data.parent_line_id
+              ? (lineIdMap.get(line.data.parent_line_id) ??
+                line.data.parent_line_id)
+              : undefined,
+          },
+          saveStatus: "idle",
+        });
+      }
+      return next;
+    });
   }
 
   async function handleSave() {
@@ -193,12 +220,13 @@ export default function EditQuoteTemplateSheet({
         ...deletedIds.map((id) => deleteTemplateLine(templateId, id)),
         ...items.map((item, idx) => {
           const draft = {
-            type: "simple",
+            type: item.type,
             name: item.name,
             quantity: item.quantity,
             unitPriceEuros: item.unitPriceEuros,
             position: idx,
             taxId: item.taxId,
+            data: item.data,
           };
           if (item.lineId.startsWith("temp-")) {
             return createTemplateLine(templateId, draft);
@@ -261,6 +289,22 @@ export default function EditQuoteTemplateSheet({
                 setRow(id, { unitPriceEuros: Number.isFinite(v) ? v : 0 })
               }
               onTaxChange={(id, tid) => setRow(id, { taxId: tid })}
+              onDescriptionChange={(id, v) =>
+                setRow(id, {
+                  data: {
+                    ...itemsRef.current.find((row) => row.lineId === id)?.data,
+                    description: v,
+                  },
+                })
+              }
+              onOptionChange={(id, v) =>
+                setRow(id, {
+                  data: {
+                    ...itemsRef.current.find((row) => row.lineId === id)?.data,
+                    option: v,
+                  },
+                })
+              }
               onRemoveItem={handleRemoveItem}
               onAddItem={handleAddItem}
               onAddItemFromTemplate={handleAddItemFromTemplate}

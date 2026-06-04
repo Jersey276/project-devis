@@ -17,6 +17,24 @@ export type BackendQuote = {
 
 export type BackendQuoteLineType = "simple" | "multiple";
 
+export type QuoteLineKind = "line" | "text" | "group" | "detailed" | "subline";
+
+export type QuoteLineData = {
+  kind?: QuoteLineKind;
+  description?: string;
+  option?: boolean;
+  parent_line_id?: string;
+  sublines?: Array<{
+    name: string;
+    quantity: string;
+    unit?: string;
+    unit_price: number;
+    option?: boolean;
+    /** Frontend-only stable React key — stripped before API calls. */
+    _key?: string;
+  }>;
+};
+
 export type BackendQuoteLine = {
   line_id: string;
   quote_id: string;
@@ -25,7 +43,7 @@ export type BackendQuoteLine = {
   quantity: string;
   unit: string;
   unit_price: number;
-  data: Record<string, unknown>;
+  data: QuoteLineData;
   position: number;
   tax_id: number | null;
 };
@@ -76,7 +94,7 @@ export type BackendTemplateLine = {
   quantity: string;
   unit: string | null;
   unit_price: number;
-  data: Record<string, unknown>;
+  data: QuoteLineData;
   position: number;
   tax_id: number | null;
   created_at: string;

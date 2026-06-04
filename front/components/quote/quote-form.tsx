@@ -34,6 +34,7 @@ import {
 import QuoteStepBasicInfo from "@/components/quote/steps/quote-step-basic-info";
 import QuoteStepItems, {
   type QuoteItemRow as RenderedRow,
+  type QuoteTotals,
 } from "@/components/quote/steps/quote-step-items";
 import QuoteStepSummary from "@/components/quote/steps/quote-step-summary";
 import {
@@ -67,11 +68,155 @@ import {
   type BackendQuoteLine,
   type BackendQuoteState,
   type BackendTax,
+  type QuoteLineData,
 } from "@/types/backend";
 import SaveTemplateDialog from "@/components/template/save-template-dialog";
 import CreateScheduleDialog from "@/components/schedule/create-schedule-dialog";
 
 type FormItem = RenderedRow & { position: number };
+
+let _nextSublineKeyVal = 0;
+function nextSublineKey(): string {
+  return String(++_nextSublineKeyVal);
+}
+
+function normalizeLineData(
+  data: QuoteLineData | undefined,
+  lineType: BackendQuoteLine["type"],
+): QuoteLineData {
+  return {
+    ...data,
+    kind: data?.kind ?? (lineType === "multiple" ? "detailed" : "line"),
+    sublines: data?.sublines?.map((s) =>
+      s._key ? s : { ...s, _key: nextSublineKey() },
+    ),
+  };
+}
+
+function lineKind(item: FormItem): QuoteLineData["kind"] {
+  return item.data.kind ?? (item.data.sublines?.length ? "detailed" : "line");
+}
+
+function leafAmount(item: FormItem): number {
+  const kind = lineKind(item);
+  if (kind === "text" || kind === "group") return 0;
+  if (kind === "detailed") {
+    return (item.data.sublines ?? []).reduce((acc, subline) => {
+      const quantity = Number(subline.quantity);
+      if (!Number.isFinite(quantity)) return acc;
+      return acc + quantity * (subline.unit_price / 100);
+    }, 0);
+  }
+  return item.quantity * item.unitPriceEuros;
+}
+
+function lineTaxAmount(amount: number, taxRate: number): number {
+  return amount * (1 + taxRate / 100);
+}
+
+function computeTotals(
+  items: FormItem[],
+  taxById: Map<number, BackendTax>,
+): QuoteTotals {
+  const childrenByParent = new Map<string, FormItem[]>();
+  for (const item of items) {
+    const parentId = item.data.parent_line_id;
+    if (!parentId) continue;
+    const current = childrenByParent.get(parentId) ?? [];
+    current.push(item);
+    childrenByParent.set(parentId, current);
+  }
+
+  const visited = new Set<string>();
+
+  const evalItem = (
+    item: FormItem,
+    taxIdOverride?: number | null,
+  ): { principal: number; option: number; breakdown: Map<number, number> } => {
+    if (visited.has(item.lineId)) {
+      return { principal: 0, option: 0, breakdown: new Map() };
+    }
+    visited.add(item.lineId);
+
+    const kind = lineKind(item);
+    const taxId = taxIdOverride ?? item.taxId;
+    const taxRate = taxId != null ? Number(taxById.get(taxId)?.rate ?? 0) : 0;
+    const breakdown = new Map<number, number>();
+    let principal = 0;
+    let option = 0;
+
+    if (kind === "detailed") {
+      for (const subline of item.data.sublines ?? []) {
+        const quantity = Number(subline.quantity);
+        if (!Number.isFinite(quantity)) continue;
+        const baseAmount = quantity * (subline.unit_price / 100);
+        const taxAmount = baseAmount * (taxRate / 100);
+        if (subline.option) {
+          option += baseAmount;
+        } else {
+          principal += baseAmount;
+          if (taxId != null) {
+            breakdown.set(taxId, (breakdown.get(taxId) ?? 0) + taxAmount);
+          }
+        }
+      }
+    } else {
+      const baseAmount = leafAmount(item);
+      const taxAmount = baseAmount * (taxRate / 100);
+      if (item.data.option) {
+        option += baseAmount;
+      } else {
+        principal += baseAmount;
+        if (taxId != null) {
+          breakdown.set(taxId, (breakdown.get(taxId) ?? 0) + taxAmount);
+        }
+      }
+    }
+
+    for (const child of childrenByParent.get(item.lineId) ?? []) {
+      const childTotals = evalItem(child);
+      principal += childTotals.principal;
+      option += childTotals.option;
+      for (const [childTaxId, childAmount] of childTotals.breakdown.entries()) {
+        breakdown.set(
+          childTaxId,
+          (breakdown.get(childTaxId) ?? 0) + childAmount,
+        );
+      }
+    }
+
+    return { principal, option, breakdown };
+  };
+
+  const principalBreakdown = new Map<
+    number,
+    { tax: BackendTax; amount: number }
+  >();
+  let ht = 0;
+  let optionHt = 0;
+
+  for (const item of items) {
+    if (item.data.parent_line_id) continue;
+    const result = evalItem(item);
+    ht += result.principal;
+    optionHt += result.option;
+    for (const [taxId, amount] of result.breakdown.entries()) {
+      const tax = taxById.get(taxId);
+      if (!tax) continue;
+      const current = principalBreakdown.get(taxId);
+      principalBreakdown.set(taxId, {
+        tax,
+        amount: (current?.amount ?? 0) + amount,
+      });
+    }
+  }
+
+  const breakdown = Array.from(principalBreakdown.values()).sort(
+    (a, b) => Number(a.tax.rate) - Number(b.tax.rate),
+  );
+  const ttc = ht + breakdown.reduce((acc, entry) => acc + entry.amount, 0);
+  return { ht, breakdown, optionHt, optionTtc: optionHt, ttc };
+}
 
 type QuoteFormProps = {
   quoteId?: string;
@@ -95,23 +240,72 @@ const STATE_BADGE_VARIANT: Record<
 function rowFromBackendLine(line: BackendQuoteLine): FormItem {
   return {
     lineId: line.line_id,
+    type: line.type,
     name: line.name,
     quantity: Number(line.quantity),
     unitPriceEuros: line.unit_price / 100,
     position: line.position,
     taxId: line.tax_id ?? null,
+    data: normalizeLineData(line.data, line.type),
     saveStatus: "idle",
   };
 }
 
 function lineDraftFromRow(row: FormItem): LineDraft {
+  const { data } = row;
   return {
-    type: "simple",
+    type: row.type,
     name: row.name,
     quantity: row.quantity,
     unitPriceEuros: row.unitPriceEuros,
     position: row.position,
     taxId: row.taxId,
+    data: {
+      ...data,
+      sublines: data.sublines
+        ?.filter((s) => s.name.trim() !== "" && s.quantity.trim() !== "")
+        .map(({ _key: _, ...rest }) => rest),
+    },
+  };
+}
+
+function buildLineDraft(
+  kind: QuoteLineData["kind"],
+  opts: { position: number; taxId: number | null; parentLineId?: string },
+): LineDraft {
+  const isDetailed = kind === "detailed";
+  const isTextOrGroup = kind === "text" || kind === "group";
+  return {
+    type: isDetailed ? "multiple" : "simple",
+    name: "",
+    quantity: isTextOrGroup ? 0 : 1,
+    unitPriceEuros: 0,
+    position: opts.position,
+    taxId: isTextOrGroup ? null : opts.taxId,
+    data: {
+      ...(kind !== "line" && { kind }),
+      ...(opts.parentLineId && { parent_line_id: opts.parentLineId }),
+      ...(isDetailed && { sublines: [] }),
+      ...(kind === "text" && { description: "" }),
+    },
+  };
+}
+
+function newItemFromDraft(
+  lineId: string,
+  draft: LineDraft,
+  position: number,
+): FormItem {
+  return {
+    lineId,
+    type: draft.type,
+    name: "",
+    quantity: draft.quantity,
+    unitPriceEuros: 0,
+    position,
+    taxId: draft.taxId,
+    data: draft.data ?? {},
+    saveStatus: "idle",
   };
 }
 
@@ -340,30 +534,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     [availableTaxes],
   );
 
-  const totals = useMemo(() => {
-    const ht = items.reduce(
-      (acc, item) => acc + item.quantity * item.unitPriceEuros,
-      0,
-    );
-    const breakdown = new Map<number, { tax: BackendTax; amount: number }>();
-    for (const item of items) {
-      if (item.taxId == null) continue;
-      const tax = taxById.get(item.taxId);
-      if (!tax) continue;
-      const lineHT = item.quantity * item.unitPriceEuros;
-      const taxAmount = (lineHT * Number(tax.rate)) / 100;
-      const cur = breakdown.get(tax.id);
-      breakdown.set(tax.id, {
-        tax,
-        amount: (cur?.amount ?? 0) + taxAmount,
-      });
-    }
-    const sortedBreakdown = Array.from(breakdown.values()).sort(
-      (a, b) => Number(a.tax.rate) - Number(b.tax.rate),
-    );
-    const ttc = ht + sortedBreakdown.reduce((acc, b) => acc + b.amount, 0);
-    return { ht, breakdown: sortedBreakdown, ttc };
-  }, [items, taxById]);
+  const totals = useMemo(() => computeTotals(items, taxById), [items, taxById]);
 
   // ────────────────────────────────────────────────────────────
   // Step 1 handlers
@@ -429,13 +600,14 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
               await Promise.all(
                 sorted.map((tl, idx) =>
                   createLine(newId, {
-                    type: "simple",
+                    type: tl.type === "multiple" ? "multiple" : "simple",
                     name: tl.name,
                     quantity: Number(tl.quantity),
                     unit: tl.unit ?? undefined,
                     unitPriceEuros: tl.unit_price / 100,
                     position: idx,
                     taxId: tl.tax_id ?? null,
+                    data: tl.data,
                   }),
                 ),
               );
@@ -579,14 +751,19 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         return false;
       }
       const templateId = body.template_id as string;
+      const lineIdMap = new Map<string, string>();
       for (const [idx, row] of itemsRef.current.entries()) {
+        const templateParentId = row.data.parent_line_id
+          ? (lineIdMap.get(row.data.parent_line_id) ?? row.data.parent_line_id)
+          : undefined;
         const lineRes = await createTemplateLine(templateId, {
-          type: "simple",
+          type: row.type,
           name: row.name,
           quantity: row.quantity,
           unitPriceEuros: row.unitPriceEuros,
           position: idx,
           taxId: row.taxId,
+          data: { ...row.data, parent_line_id: templateParentId },
         });
         if (!lineRes.ok || !lineRes.body.success) {
           await deleteTemplate(templateId);
@@ -596,6 +773,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           );
           return false;
         }
+        lineIdMap.set(row.lineId, lineRes.body.line_id as string);
       }
       toast.success(t("saveAsTemplateSuccessToast"));
       return true;
@@ -620,12 +798,13 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       }
       const templateId = body.template_id as string;
       const lineRes = await createTemplateLine(templateId, {
-        type: "simple",
+        type: row.type,
         name: row.name,
         quantity: row.quantity,
         unitPriceEuros: row.unitPriceEuros,
         position: 0,
         taxId: row.taxId,
+        data: { ...row.data, parent_line_id: undefined },
       });
       if (!lineRes.ok || !lineRes.body.success) {
         await deleteTemplate(templateId);
@@ -654,35 +833,116 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         const lines = (body.lines as BackendTemplateLine[]).sort(
           (a, b) => a.position - b.position,
         );
-        const tl = lines[0];
-        const draft: LineDraft = {
-          type: "simple",
-          name: tl.name,
-          quantity: Number(tl.quantity),
-          unit: tl.unit ?? undefined,
-          unitPriceEuros: tl.unit_price / 100,
-          position: itemsRef.current.length,
-          taxId: tl.tax_id ?? null,
-        };
-        const createRes = await createLine(quoteId, draft);
-        if (createRes.ok && createRes.body.success) {
+        const lineIdMap = new Map<string, string>();
+        for (const tl of lines) {
+          const draft: LineDraft = {
+            type: tl.type === "multiple" ? "multiple" : "simple",
+            name: tl.name,
+            quantity: Number(tl.quantity),
+            unit: tl.unit ?? undefined,
+            unitPriceEuros: tl.unit_price / 100,
+            position: itemsRef.current.length + lineIdMap.size,
+            taxId: tl.tax_id ?? null,
+            data: {
+              ...tl.data,
+              parent_line_id: tl.data.parent_line_id
+                ? (lineIdMap.get(tl.data.parent_line_id) ??
+                  tl.data.parent_line_id)
+                : undefined,
+            },
+          };
+          const createRes = await createLine(quoteId, draft);
+          if (!createRes.ok || !createRes.body.success) {
+            toast.error(
+              (createRes.body.message as string) ??
+                t("errors.lineAddFromTemplateFailedToast"),
+            );
+            break;
+          }
           const newLineId = createRes.body.line_id as string;
+          lineIdMap.set(tl.line_id, newLineId);
           setItems((prev) => [
             ...prev,
             {
               lineId: newLineId,
+              type: tl.type === "multiple" ? "multiple" : "simple",
               name: tl.name,
               quantity: Number(tl.quantity),
               unitPriceEuros: tl.unit_price / 100,
               position: prev.length,
               taxId: tl.tax_id ?? null,
+              data: {
+                ...draft.data,
+                kind:
+                  draft.data?.kind ??
+                  (tl.type === "multiple" ? "detailed" : "line"),
+                sublines: draft.data?.sublines?.map((s) =>
+                  s._key ? s : { ...s, _key: nextSublineKey() },
+                ),
+              },
               saveStatus: "idle",
             },
           ]);
+        }
+      } finally {
+        setAdding(false);
+      }
+    },
+    [adding, quoteId, t],
+  );
+
+  const handleAddItem = useCallback(
+    async (kind: QuoteLineData["kind"] = "line") => {
+      if (!quoteId || adding) return;
+      setAdding(true);
+      try {
+        const draft = buildLineDraft(kind, {
+          position: itemsRef.current.length,
+          taxId: defaultTaxId,
+        });
+        const { ok, body } = await createLine(quoteId, draft);
+        if (ok && body.success) {
+          const newLineId = body.line_id as string;
+          setItems((prev) => [
+            ...prev,
+            newItemFromDraft(newLineId, draft, prev.length),
+          ]);
         } else {
           toast.error(
-            (createRes.body.message as string) ??
-              t("errors.lineAddFromTemplateFailedToast"),
+            (body.message as string) ?? t("errors.lineAddFailedToast"),
+          );
+        }
+      } finally {
+        setAdding(false);
+      }
+    },
+    [adding, quoteId, defaultTaxId, t],
+  );
+
+  const handleAddChildItem = useCallback(
+    async (parentLineId: string, kind: QuoteLineData["kind"] = "line") => {
+      if (!quoteId || adding) return;
+      const parent = itemsRef.current.find(
+        (row) => row.lineId === parentLineId,
+      );
+      if (!parent) return;
+      setAdding(true);
+      try {
+        const draft = buildLineDraft(kind, {
+          position: itemsRef.current.length,
+          taxId: parent.taxId,
+          parentLineId,
+        });
+        const { ok, body } = await createLine(quoteId, draft);
+        if (ok && body.success) {
+          const newLineId = body.line_id as string;
+          setItems((prev) => [
+            ...prev,
+            newItemFromDraft(newLineId, draft, prev.length),
+          ]);
+        } else {
+          toast.error(
+            (body.message as string) ?? t("errors.lineAddFailedToast"),
           );
         }
       } finally {
@@ -692,58 +952,49 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     [adding, quoteId, t],
   );
 
-  const handleAddItem = useCallback(async () => {
-    if (!quoteId || adding) return;
-    setAdding(true);
-    try {
-      const draft: LineDraft = {
-        type: "simple",
-        name: "",
-        quantity: 1,
-        unitPriceEuros: 0,
-        position: itemsRef.current.length,
-        taxId: defaultTaxId,
-      };
-      const { ok, body } = await createLine(quoteId, draft);
-      if (ok && body.success) {
-        const newLineId = body.line_id as string;
-        setItems((prev) => [
-          ...prev,
-          {
-            lineId: newLineId,
-            name: "",
-            quantity: 1,
-            unitPriceEuros: 0,
-            position: prev.length,
-            taxId: defaultTaxId,
-            saveStatus: "idle",
-          },
-        ]);
-      } else {
-        toast.error((body.message as string) ?? t("errors.lineAddFailedToast"));
-      }
-    } finally {
-      setAdding(false);
-    }
-  }, [adding, quoteId, defaultTaxId, t]);
-
   const handleRemoveItem = useCallback(
     async (lineId: string) => {
       if (!quoteId) return;
-      if (itemsRef.current.length <= 1) return;
-      const timer = lineTimersRef.current.get(lineId);
-      if (timer) {
-        clearTimeout(timer);
-        lineTimersRef.current.delete(lineId);
+      const snapshot = itemsRef.current;
+      const target = snapshot.find((r) => r.lineId === lineId);
+      if (!target) return;
+      // Block only when deleting the last top-level line.
+      if (
+        !target.data.parent_line_id &&
+        snapshot.filter((r) => !r.data.parent_line_id).length <= 1
+      )
+        return;
+
+      // BFS to collect the line and all its descendants.
+      const toDelete = new Set<string>([lineId]);
+      let frontier = [lineId];
+      while (frontier.length > 0) {
+        const next = snapshot
+          .filter(
+            (r) =>
+              r.data.parent_line_id && frontier.includes(r.data.parent_line_id),
+          )
+          .map((r) => r.lineId);
+        next.forEach((id) => toDelete.add(id));
+        frontier = next;
       }
-      const previous = itemsRef.current;
-      setItems((prev) => prev.filter((row) => row.lineId !== lineId));
-      const { ok, body } = await deleteLine(quoteId, lineId);
-      if (!ok || !body.success) {
-        toast.error(
-          (body.message as string) ?? t("errors.lineRemoveFailedToast"),
-        );
-        setItems(previous);
+
+      // Cancel pending save timers.
+      for (const id of toDelete) {
+        const timer = lineTimersRef.current.get(id);
+        if (timer) {
+          clearTimeout(timer);
+          lineTimersRef.current.delete(id);
+        }
+      }
+
+      setItems((prev) => prev.filter((r) => !toDelete.has(r.lineId)));
+      const results = await Promise.all(
+        [...toDelete].map((id) => deleteLine(quoteId, id)),
+      );
+      if (results.some(({ ok, body }) => !ok || !body.success)) {
+        toast.error(t("errors.lineRemoveFailedToast"));
+        setItems(snapshot);
       }
     },
     [quoteId, t],
@@ -781,6 +1032,104 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       scheduleLineSave(lineId);
     },
     [scheduleLineSave, setRow],
+  );
+
+  const handleDescriptionChange = useCallback(
+    (lineId: string, value: string) => {
+      setItems((prev) =>
+        prev.map((row) =>
+          row.lineId !== lineId
+            ? row
+            : { ...row, data: { ...row.data, description: value } },
+        ),
+      );
+      scheduleLineSave(lineId);
+    },
+    [scheduleLineSave],
+  );
+
+  const handleOptionChange = useCallback(
+    (lineId: string, value: boolean) => {
+      setItems((prev) =>
+        prev.map((row) =>
+          row.lineId !== lineId
+            ? row
+            : { ...row, data: { ...row.data, option: value } },
+        ),
+      );
+      scheduleLineSave(lineId);
+    },
+    [scheduleLineSave],
+  );
+
+  const handleSublineAdd = useCallback(
+    (lineId: string) => {
+      const newSubline = {
+        name: "",
+        quantity: "1",
+        unit_price: 0,
+        option: false,
+        _key: nextSublineKey(),
+      };
+      setItems((prev) =>
+        prev.map((row) =>
+          row.lineId !== lineId
+            ? row
+            : {
+                ...row,
+                data: {
+                  ...row.data,
+                  sublines: [...(row.data.sublines ?? []), newSubline],
+                },
+              },
+        ),
+      );
+      // The empty subline is stripped by lineDraftFromRow until the user types a name;
+      // this save persists the line's other fields and clears any stale save indicator.
+      scheduleLineSave(lineId);
+    },
+    [scheduleLineSave],
+  );
+
+  const handleSublineChange = useCallback(
+    (
+      lineId: string,
+      index: number,
+      patch: Partial<NonNullable<QuoteLineData["sublines"]>[number]>,
+    ) => {
+      setItems((prev) =>
+        prev.map((row) => {
+          if (row.lineId !== lineId) return row;
+          const sublines = [...(row.data.sublines ?? [])];
+          sublines[index] = { ...sublines[index], ...patch };
+          return { ...row, data: { ...row.data, sublines } };
+        }),
+      );
+      scheduleLineSave(lineId);
+    },
+    [scheduleLineSave],
+  );
+
+  const handleSublineRemove = useCallback(
+    (lineId: string, index: number) => {
+      setItems((prev) =>
+        prev.map((row) =>
+          row.lineId !== lineId
+            ? row
+            : {
+                ...row,
+                data: {
+                  ...row.data,
+                  sublines: (row.data.sublines ?? []).filter(
+                    (_, i) => i !== index,
+                  ),
+                },
+              },
+        ),
+      );
+      scheduleLineSave(lineId);
+    },
+    [scheduleLineSave],
   );
 
   const handleClientIdChange = useCallback(
@@ -1024,8 +1373,20 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             onQuantityChange={handleQuantityChange}
             onUnitPriceChange={handleUnitPriceChange}
             onTaxChange={handleTaxChange}
+            onDescriptionChange={handleDescriptionChange}
+            onOptionChange={handleOptionChange}
             onRemoveItem={handleRemoveItem}
             onAddItem={handleAddItem}
+            onAddChildItem={handleAddChildItem}
+            onSublineAdd={
+              !isCreate && !isReadonly ? handleSublineAdd : undefined
+            }
+            onSublineChange={
+              !isCreate && !isReadonly ? handleSublineChange : undefined
+            }
+            onSublineRemove={
+              !isCreate && !isReadonly ? handleSublineRemove : undefined
+            }
             onSaveLineAsTemplate={
               !isCreate && !isReadonly ? handleSaveLineAsTemplate : undefined
             }
