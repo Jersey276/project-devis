@@ -44,7 +44,7 @@ func TestValidateData_Multiple(t *testing.T) {
 		{"valid sublines", `{"sublines":[{"name":"a","quantity":"1","unit_price":1000}]}`, false},
 		{"valid with optional unit", `{"sublines":[{"name":"a","quantity":"1.5","unit":"kg","unit_price":1000,"option":true}]}`, false},
 		{"empty data rejected", "", true},
-		{"empty sublines rejected", `{"sublines":[]}`, true},
+		{"empty sublines accepted", `{"sublines":[]}`, false},
 		{"missing name rejected", `{"sublines":[{"quantity":"1","unit_price":1}]}`, true},
 		{"missing quantity rejected", `{"sublines":[{"name":"a","unit_price":1}]}`, true},
 		{"non-numeric quantity rejected", `{"sublines":[{"name":"a","quantity":"abc","unit_price":1}]}`, true},

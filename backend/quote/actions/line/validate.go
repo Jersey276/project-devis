@@ -49,9 +49,7 @@ func validateSimple(data string) (string, error) {
 	if payload.Kind != "line" && payload.Kind != "text" && payload.Kind != "group" && payload.Kind != "subline" {
 		return "", fmt.Errorf("simple line data has invalid kind %q", payload.Kind)
 	}
-	if payload.Kind == "text" && strings.TrimSpace(payload.Description) == "" {
-		return "", fmt.Errorf("text line description is required")
-	}
+	// Description can be empty on creation; it is filled in by the user later.
 	if payload.Kind == "subline" && payload.ParentLineID == "" {
 		return "", fmt.Errorf("subline parent_line_id is required")
 	}
@@ -71,9 +69,9 @@ type subline struct {
 }
 
 type multiplePayload struct {
-	Kind        string   `json:"kind,omitempty"`
-	Description string   `json:"description,omitempty"`
-	Sublines    []subline `json:"sublines"`
+	Kind        string    `json:"kind,omitempty"`
+	Description string    `json:"description,omitempty"`
+	Sublines    []subline `json:"sublines,omitempty"`
 }
 
 func validateMultiple(data string) (string, error) {
@@ -92,9 +90,6 @@ func validateMultiple(data string) (string, error) {
 	if payload.Kind != "detailed" {
 		return "", fmt.Errorf("multiple line data has invalid kind %q", payload.Kind)
 	}
-	if len(payload.Sublines) == 0 {
-		return "", fmt.Errorf("multiple line must have at least one subline")
-	}
 	for i, s := range payload.Sublines {
 		if s.Name == "" {
 			return "", fmt.Errorf("subline %d: name required", i)
@@ -108,9 +103,9 @@ func validateMultiple(data string) (string, error) {
 		if s.UnitPrice < 0 {
 			return "", fmt.Errorf("subline %d: unit_price must be >= 0", i)
 		}
-		if s.Option == nil {
+		if payload.Sublines[i].Option == nil {
 			defaultOption := false
-			s.Option = &defaultOption
+			payload.Sublines[i].Option = &defaultOption
 		}
 	}
 

@@ -75,6 +75,11 @@ import CreateScheduleDialog from "@/components/schedule/create-schedule-dialog";
 
 type FormItem = RenderedRow & { position: number };
 
+let _nextSublineKeyVal = 0;
+function nextSublineKey(): string {
+  return String(++_nextSublineKeyVal);
+}
+
 function normalizeLineData(
   data: QuoteLineData | undefined,
   lineType: BackendQuoteLine["type"],
@@ -82,6 +87,9 @@ function normalizeLineData(
   return {
     ...data,
     kind: data?.kind ?? (lineType === "multiple" ? "detailed" : "line"),
+    sublines: data?.sublines?.map((s) =>
+      s._key ? s : { ...s, _key: nextSublineKey() },
+    ),
   };
 }
 
@@ -244,6 +252,7 @@ function rowFromBackendLine(line: BackendQuoteLine): FormItem {
 }
 
 function lineDraftFromRow(row: FormItem): LineDraft {
+  const { data } = row;
   return {
     type: row.type,
     name: row.name,
@@ -251,7 +260,52 @@ function lineDraftFromRow(row: FormItem): LineDraft {
     unitPriceEuros: row.unitPriceEuros,
     position: row.position,
     taxId: row.taxId,
-    data: row.data,
+    data: {
+      ...data,
+      sublines: data.sublines
+        ?.filter((s) => s.name.trim() !== "" && s.quantity.trim() !== "")
+        .map(({ _key: _, ...rest }) => rest),
+    },
+  };
+}
+
+function buildLineDraft(
+  kind: QuoteLineData["kind"],
+  opts: { position: number; taxId: number | null; parentLineId?: string },
+): LineDraft {
+  const isDetailed = kind === "detailed";
+  const isTextOrGroup = kind === "text" || kind === "group";
+  return {
+    type: isDetailed ? "multiple" : "simple",
+    name: "",
+    quantity: isTextOrGroup ? 0 : 1,
+    unitPriceEuros: 0,
+    position: opts.position,
+    taxId: isTextOrGroup ? null : opts.taxId,
+    data: {
+      ...(kind !== "line" && { kind }),
+      ...(opts.parentLineId && { parent_line_id: opts.parentLineId }),
+      ...(isDetailed && { sublines: [] }),
+      ...(kind === "text" && { description: "" }),
+    },
+  };
+}
+
+function newItemFromDraft(
+  lineId: string,
+  draft: LineDraft,
+  position: number,
+): FormItem {
+  return {
+    lineId,
+    type: draft.type,
+    name: "",
+    quantity: draft.quantity,
+    unitPriceEuros: 0,
+    position,
+    taxId: draft.taxId,
+    data: draft.data ?? {},
+    saveStatus: "idle",
   };
 }
 
@@ -822,9 +876,11 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
                 kind:
                   draft.data?.kind ??
                   (tl.type === "multiple" ? "detailed" : "line"),
+                sublines: draft.data?.sublines?.map((s) =>
+                  s._key ? s : { ...s, _key: nextSublineKey() },
+                ),
               },
               saveStatus: "idle",
-              type: row.type,
             },
           ]);
         }
@@ -835,61 +891,110 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     [adding, quoteId, t],
   );
 
-  const handleAddItem = useCallback(async () => {
-    if (!quoteId || adding) return;
-    setAdding(true);
-    try {
-      const draft: LineDraft = {
-        type: "simple",
-        name: "",
-        quantity: 1,
-        unitPriceEuros: 0,
-        position: itemsRef.current.length,
-        taxId: defaultTaxId,
-        data: {},
-      };
-      const { ok, body } = await createLine(quoteId, draft);
-      if (ok && body.success) {
-        const newLineId = body.line_id as string;
-        setItems((prev) => [
-          ...prev,
-          {
-            lineId: newLineId,
-            type: "simple",
-            name: "",
-            quantity: 1,
-            unitPriceEuros: 0,
-            position: prev.length,
-            taxId: defaultTaxId,
-            data: {},
-            saveStatus: "idle",
-          },
-        ]);
-      } else {
-        toast.error((body.message as string) ?? t("errors.lineAddFailedToast"));
+  const handleAddItem = useCallback(
+    async (kind: QuoteLineData["kind"] = "line") => {
+      if (!quoteId || adding) return;
+      setAdding(true);
+      try {
+        const draft = buildLineDraft(kind, {
+          position: itemsRef.current.length,
+          taxId: defaultTaxId,
+        });
+        const { ok, body } = await createLine(quoteId, draft);
+        if (ok && body.success) {
+          const newLineId = body.line_id as string;
+          setItems((prev) => [
+            ...prev,
+            newItemFromDraft(newLineId, draft, prev.length),
+          ]);
+        } else {
+          toast.error(
+            (body.message as string) ?? t("errors.lineAddFailedToast"),
+          );
+        }
+      } finally {
+        setAdding(false);
       }
-    } finally {
-      setAdding(false);
-    }
-  }, [adding, quoteId, defaultTaxId, t]);
+    },
+    [adding, quoteId, defaultTaxId, t],
+  );
+
+  const handleAddChildItem = useCallback(
+    async (parentLineId: string, kind: QuoteLineData["kind"] = "line") => {
+      if (!quoteId || adding) return;
+      const parent = itemsRef.current.find(
+        (row) => row.lineId === parentLineId,
+      );
+      if (!parent) return;
+      setAdding(true);
+      try {
+        const draft = buildLineDraft(kind, {
+          position: itemsRef.current.length,
+          taxId: parent.taxId,
+          parentLineId,
+        });
+        const { ok, body } = await createLine(quoteId, draft);
+        if (ok && body.success) {
+          const newLineId = body.line_id as string;
+          setItems((prev) => [
+            ...prev,
+            newItemFromDraft(newLineId, draft, prev.length),
+          ]);
+        } else {
+          toast.error(
+            (body.message as string) ?? t("errors.lineAddFailedToast"),
+          );
+        }
+      } finally {
+        setAdding(false);
+      }
+    },
+    [adding, quoteId, t],
+  );
 
   const handleRemoveItem = useCallback(
     async (lineId: string) => {
       if (!quoteId) return;
-      if (itemsRef.current.length <= 1) return;
-      const timer = lineTimersRef.current.get(lineId);
-      if (timer) {
-        clearTimeout(timer);
-        lineTimersRef.current.delete(lineId);
+      const snapshot = itemsRef.current;
+      const target = snapshot.find((r) => r.lineId === lineId);
+      if (!target) return;
+      // Block only when deleting the last top-level line.
+      if (
+        !target.data.parent_line_id &&
+        snapshot.filter((r) => !r.data.parent_line_id).length <= 1
+      )
+        return;
+
+      // BFS to collect the line and all its descendants.
+      const toDelete = new Set<string>([lineId]);
+      let frontier = [lineId];
+      while (frontier.length > 0) {
+        const next = snapshot
+          .filter(
+            (r) =>
+              r.data.parent_line_id && frontier.includes(r.data.parent_line_id),
+          )
+          .map((r) => r.lineId);
+        next.forEach((id) => toDelete.add(id));
+        frontier = next;
       }
-      const previous = itemsRef.current;
-      setItems((prev) => prev.filter((row) => row.lineId !== lineId));
-      const { ok, body } = await deleteLine(quoteId, lineId);
-      if (!ok || !body.success) {
-        toast.error(
-          (body.message as string) ?? t("errors.lineRemoveFailedToast"),
-        );
-        setItems(previous);
+
+      // Cancel pending save timers.
+      for (const id of toDelete) {
+        const timer = lineTimersRef.current.get(id);
+        if (timer) {
+          clearTimeout(timer);
+          lineTimersRef.current.delete(id);
+        }
+      }
+
+      setItems((prev) => prev.filter((r) => !toDelete.has(r.lineId)));
+      const results = await Promise.all(
+        [...toDelete].map((id) => deleteLine(quoteId, id)),
+      );
+      if (results.some(({ ok, body }) => !ok || !body.success)) {
+        toast.error(t("errors.lineRemoveFailedToast"));
+        setItems(snapshot);
       }
     },
     [quoteId, t],
@@ -931,26 +1036,100 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
 
   const handleDescriptionChange = useCallback(
     (lineId: string, value: string) => {
-      const current = itemsRef.current.find((row) => row.lineId === lineId);
-      if (!current) return;
-      setRow(lineId, {
-        data: { ...current.data, description: value },
-      });
+      setItems((prev) =>
+        prev.map((row) =>
+          row.lineId !== lineId
+            ? row
+            : { ...row, data: { ...row.data, description: value } },
+        ),
+      );
       scheduleLineSave(lineId);
     },
-    [scheduleLineSave, setRow],
+    [scheduleLineSave],
   );
 
   const handleOptionChange = useCallback(
     (lineId: string, value: boolean) => {
-      const current = itemsRef.current.find((row) => row.lineId === lineId);
-      if (!current) return;
-      setRow(lineId, {
-        data: { ...current.data, option: value },
-      });
+      setItems((prev) =>
+        prev.map((row) =>
+          row.lineId !== lineId
+            ? row
+            : { ...row, data: { ...row.data, option: value } },
+        ),
+      );
       scheduleLineSave(lineId);
     },
-    [scheduleLineSave, setRow],
+    [scheduleLineSave],
+  );
+
+  const handleSublineAdd = useCallback(
+    (lineId: string) => {
+      const newSubline = {
+        name: "",
+        quantity: "1",
+        unit_price: 0,
+        option: false,
+        _key: nextSublineKey(),
+      };
+      setItems((prev) =>
+        prev.map((row) =>
+          row.lineId !== lineId
+            ? row
+            : {
+                ...row,
+                data: {
+                  ...row.data,
+                  sublines: [...(row.data.sublines ?? []), newSubline],
+                },
+              },
+        ),
+      );
+      // The empty subline is stripped by lineDraftFromRow until the user types a name;
+      // this save persists the line's other fields and clears any stale save indicator.
+      scheduleLineSave(lineId);
+    },
+    [scheduleLineSave],
+  );
+
+  const handleSublineChange = useCallback(
+    (
+      lineId: string,
+      index: number,
+      patch: Partial<NonNullable<QuoteLineData["sublines"]>[number]>,
+    ) => {
+      setItems((prev) =>
+        prev.map((row) => {
+          if (row.lineId !== lineId) return row;
+          const sublines = [...(row.data.sublines ?? [])];
+          sublines[index] = { ...sublines[index], ...patch };
+          return { ...row, data: { ...row.data, sublines } };
+        }),
+      );
+      scheduleLineSave(lineId);
+    },
+    [scheduleLineSave],
+  );
+
+  const handleSublineRemove = useCallback(
+    (lineId: string, index: number) => {
+      setItems((prev) =>
+        prev.map((row) =>
+          row.lineId !== lineId
+            ? row
+            : {
+                ...row,
+                data: {
+                  ...row.data,
+                  sublines: (row.data.sublines ?? []).filter(
+                    (_, i) => i !== index,
+                  ),
+                },
+              },
+        ),
+      );
+      scheduleLineSave(lineId);
+    },
+    [scheduleLineSave],
   );
 
   const handleClientIdChange = useCallback(
@@ -1198,6 +1377,16 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             onOptionChange={handleOptionChange}
             onRemoveItem={handleRemoveItem}
             onAddItem={handleAddItem}
+            onAddChildItem={handleAddChildItem}
+            onSublineAdd={
+              !isCreate && !isReadonly ? handleSublineAdd : undefined
+            }
+            onSublineChange={
+              !isCreate && !isReadonly ? handleSublineChange : undefined
+            }
+            onSublineRemove={
+              !isCreate && !isReadonly ? handleSublineRemove : undefined
+            }
             onSaveLineAsTemplate={
               !isCreate && !isReadonly ? handleSaveLineAsTemplate : undefined
             }

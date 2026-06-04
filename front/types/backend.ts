@@ -30,6 +30,8 @@ export type QuoteLineData = {
     unit?: string;
     unit_price: number;
     option?: boolean;
+    /** Frontend-only stable React key — stripped before API calls. */
+    _key?: string;
   }>;
 };
 

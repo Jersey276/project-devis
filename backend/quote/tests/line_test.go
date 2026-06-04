@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	multipleData = `{"kind":"detailed","sublines":[{"name":"a","quantity":"1","unit_price":1000}]}`
+	multipleData = `{"kind":"detailed","sublines":[{"name":"a","quantity":"1","unit_price":1000,"option":false}]}`
 )
 
 func TestCreateLine_SimpleSuccess(t *testing.T) {
@@ -94,8 +94,14 @@ func TestCreateLine_InvalidType(t *testing.T) {
 	}
 }
 
-func TestCreateLine_InvalidData_MultipleNoSublines(t *testing.T) {
+func TestCreateLine_MultipleEmptySublines(t *testing.T) {
+	// Empty sublines are now valid — a detailed line can be created before sublines are added.
 	srv, mock := setupServer(t)
+
+	expectEditableCheck(mock, "q-1", "user-1", "draft")
+	mock.ExpectExec(`INSERT INTO quote_lines`).
+		WithArgs(sqlmock.AnyArg(), "q-1", "multiple", "X", "1", nil, int64(0), `{"kind":"detailed"}`, int32(0), nil).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.CreateQuoteLine(context.Background(), &quoteGrpc.CreateQuoteLineRequest{
 		QuoteId:  "q-1",
@@ -108,11 +114,8 @@ func TestCreateLine_InvalidData_MultipleNoSublines(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if resp.Success {
-		t.Fatal("expected failure for empty sublines")
-	}
-	if resp.Code != actions.CodeInvalidLineData {
-		t.Fatalf("expected CodeInvalidLineData, got %d", resp.Code)
+	if !resp.Success {
+		t.Fatalf("expected success for empty sublines, got code %d", resp.Code)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unexpected DB calls: %v", err)

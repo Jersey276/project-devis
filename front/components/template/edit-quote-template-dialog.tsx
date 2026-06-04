@@ -29,6 +29,7 @@ import type {
   BackendTax,
   BackendTemplate,
   BackendTemplateLine,
+  QuoteLineData,
 } from "@/types/backend";
 
 type LocalItem = QuoteItemRow & { position: number };
@@ -136,17 +137,24 @@ export default function EditQuoteTemplateSheet({
     );
   }
 
-  function handleAddItem() {
+  function handleAddItem(kind: QuoteLineData["kind"] = "line") {
     setAdding(true);
+    const isDetailed = kind === "detailed";
+    const isTextOrGroup = kind === "text" || kind === "group";
     const newItem: LocalItem = {
       lineId: newTempId(),
-      type: "simple",
+      type: isDetailed ? "multiple" : "simple",
       name: "",
-      quantity: 1,
+      quantity: isTextOrGroup ? 0 : 1,
       unitPriceEuros: 0,
       taxId: null,
       position: itemsRef.current.length,
       saveStatus: "idle",
+      data: {
+        ...(kind !== "line" && { kind }),
+        ...(isDetailed && { sublines: [] }),
+        ...(kind === "text" && { description: "" }),
+      },
     };
     setItems((prev) => [...prev, newItem]);
     setAdding(false);
