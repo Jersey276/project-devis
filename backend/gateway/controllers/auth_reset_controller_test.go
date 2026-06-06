@@ -82,6 +82,10 @@ func (m *mockAuthClient) IntrospectToken(context.Context, *auth.IntrospectTokenR
 	}, nil
 }
 
+func (m *mockAuthClient) UpdateSubscriptionTier(context.Context, *auth.UpdateSubscriptionTierRequest, ...grpc.CallOption) (*auth.GenericResponse, error) {
+	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
+}
+
 func resetAuthLimiterStateForTests() {
 	resetPasswordIPLimiter = newSlidingWindowLimiter()
 	resetPasswordEmailLimiter = newSlidingWindowLimiter()

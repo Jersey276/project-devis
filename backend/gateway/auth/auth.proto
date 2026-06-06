@@ -14,6 +14,7 @@ service AuthService {
     rpc RefreshToken(RefreshTokenRequest) returns (LoginResponse);
     rpc Logout(LogoutRequest) returns (GenericResponse);
     rpc IntrospectToken(IntrospectTokenRequest) returns (IntrospectTokenResponse);
+    rpc UpdateSubscriptionTier(UpdateSubscriptionTierRequest) returns (GenericResponse);
 }
 
 message RegisterRequest {
@@ -97,4 +98,9 @@ message IntrospectTokenResponse {
     bool success = 1;
     int32 code = 2;
     AccessContext context = 3;
+}
+
+message UpdateSubscriptionTierRequest {
+    string user_id = 1;
+    string tier    = 2;
 }

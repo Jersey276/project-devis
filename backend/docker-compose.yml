@@ -43,6 +43,7 @@ services:
       EXPORT_SERVICE_ADDRESS: devis-export:50054
       TEMPLATE_SERVICE_ADDRESS: devis-template:50055
       SCHEDULE_SERVICE_ADDRESS: devis-schedule:50056
+      SUBSCRIPTION_SERVICE_ADDRESS: devis-subscription:50057
     ports:
       - "8080:8080"
     secrets:
@@ -54,6 +55,21 @@ services:
       - devis-export
       - devis-template
       - devis-schedule
+      - devis-subscription
+
+  devis-subscription:
+    <<: *db-service
+    build:
+      <<: *service-build
+      args:
+        SERVICE_NAME: subscription
+    environment:
+      <<: *db-env
+      DB_USER: devis-subscription
+      DB_NAME: subscription
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      AUTH_SERVICE_ADDRESS: devis-auth:50051
 
   devis-auth:
     <<: *db-service

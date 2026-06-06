@@ -13,12 +13,18 @@ func (a *LocalAuthorizer) Can(_ context.Context, subject Subject, action Action,
 		return Decision{Allowed: false, Reason: "ACCOUNT_SUSPENDED"}, nil
 	}
 
-	if resource == ResourceAdminCountries || resource == ResourceAdminCountryGroup || resource == ResourceAdminTaxes {
+	if resource == ResourceAdminCountries || resource == ResourceAdminCountryGroup || resource == ResourceAdminTaxes || resource == ResourceAdminSubscriptions {
 		if subject.AccountStatus != "active" {
 			return Decision{Allowed: false, Reason: "ACCOUNT_INACTIVE"}, nil
 		}
 		if subject.Role != "super_admin" {
 			return Decision{Allowed: false, Reason: "ADMIN_REQUIRED"}, nil
+		}
+	}
+
+	if resource == ResourceSubscriptionTemplates || resource == ResourceSubscriptionSchedules {
+		if subject.SubscriptionTier == "free" {
+			return Decision{Allowed: false, Reason: "SUBSCRIPTION_REQUIRED"}, nil
 		}
 	}
 

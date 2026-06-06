@@ -33,6 +33,10 @@ var (
 	authClientErr  error
 )
 
+func GetAuthServiceClient() (auth.AuthServiceClient, error) {
+	return getAuthClient()
+}
+
 func getAuthClient() (auth.AuthServiceClient, error) {
 	authClientOnce.Do(func() {
 		address := os.Getenv("AUTH_SERVICE_ADDRESS")
