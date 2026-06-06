@@ -35,6 +35,8 @@
     "countries": "Pays",
     "taxes": "Taxes",
     "templates": "Templates",
+    "subscriptions": "Abonnements",
+    "analytics": "Analytiques",
     "test": "Test"
   },
   "breadcrumb": {},
@@ -532,6 +534,80 @@
         "vatLabel": "N° de TVA",
         "updateSuccessToast": "Compte mis à jour."
       }
+    },
+    "plans": {
+      "title": "Plans d'abonnement",
+      "actionsLabel": "Actions",
+      "columns": {
+        "name": "Nom",
+        "tier": "Tier",
+        "price": "Prix",
+        "billingCycle": "Cycle",
+        "stripePriceId": "Stripe Price ID",
+        "status": "Statut"
+      },
+      "billingCycle": {
+        "monthly": "Mensuel",
+        "yearly": "Annuel",
+        "none": "Gratuit"
+      },
+      "active": "Actif",
+      "inactive": "Inactif",
+      "actions": {
+        "edit": "Modifier le plan"
+      },
+      "editDialog": {
+        "title": "Modifier le plan",
+        "nameLabel": "Nom",
+        "priceLabelEuros": "Prix (€)",
+        "billingCycleLabel": "Cycle de facturation",
+        "billingCyclePlaceholder": "Sélectionner un cycle",
+        "stripePriceIdLabel": "Stripe Price ID",
+        "stripePriceIdHint": "Copier depuis le Dashboard Stripe → Products → Price ID (price_xxx). Laisser vide pour les plans gratuits.",
+        "featuresLabel": "Fonctionnalités (JSON)",
+        "featuresHint": "Exemple : {\"max_schedules\":-1,\"max_templates\":-1}",
+        "confirm": "Enregistrer",
+        "successToast": "Plan mis à jour.",
+        "errorToast": "Impossible de mettre à jour le plan.",
+        "invalidJson": "Le JSON des fonctionnalités est invalide."
+      }
+    },
+    "subscriptions": {
+      "title": "Abonnements",
+      "actionsLabel": "Actions",
+      "empty": "Aucun abonnement pour le moment.",
+      "columns": {
+        "userId": "ID Utilisateur",
+        "plan": "Plan",
+        "status": "Statut",
+        "updatedAt": "Mis à jour"
+      },
+      "actions": {
+        "changePlan": "Changer de plan"
+      },
+      "changePlanDialog": {
+        "title": "Modifier le plan",
+        "planLabel": "Nouveau plan",
+        "planPlaceholder": "Sélectionner un plan",
+        "confirm": "Confirmer",
+        "successToast": "Plan mis à jour.",
+        "errorToast": "Impossible de mettre à jour le plan."
+      },
+      "tiers": {
+        "free": "Gratuit",
+        "pro": "Pro",
+        "enterprise": "Enterprise"
+      }
+    },
+    "analytics": {
+      "title": "Analytiques",
+      "totalActive": "Abonnements actifs",
+      "totalRevenue": "Revenu total",
+      "monthRevenue": "Revenu du mois",
+      "planDistribution": "Répartition des plans",
+      "monthlyRevenue": "Revenu mensuel (12 derniers mois)",
+      "loading": "Chargement des statistiques…",
+      "noData": "Aucune donnée disponible."
     }
   },
   "profile": {
@@ -543,7 +619,8 @@
     "tabs": {
       "information": "Information",
       "addresses": "Adresses",
-      "connection": "Connexion"
+      "connection": "Connexion",
+      "subscription": "Abonnement"
     },
     "userInfo": {
       "emailLabel": "Email",
@@ -641,6 +718,33 @@
       "title": "Créer depuis un template",
       "description": "Choisissez un modèle de devis.",
       "empty": "Aucun template de devis disponible."
+    }
+  },
+  "subscription": {
+    "guard": {
+      "loading": "Vérification de votre abonnement…",
+      "forbidden": "Cette fonctionnalité est réservée aux abonnés Pro et Enterprise.",
+      "upgradePrompt": "Mettre à niveau"
+    },
+    "tab": {
+      "currentPlan": "Mon abonnement actuel",
+      "freePlan": "Gratuit — pas de renouvellement",
+      "renewsOn": "Renouvellement le {date}",
+      "cancelPending": "Résiliation en cours — accès jusqu'au {date}",
+      "subscribeCta": "S'abonner",
+      "cancelCta": "Résilier l'abonnement",
+      "perMonth": "/mois",
+      "cancelSuccess": "Résiliation programmée.",
+      "cancelError": "Impossible de résilier l'abonnement."
+    },
+    "paymentDialog": {
+      "title": "Passer au plan {name}",
+      "loading": "Préparation du paiement…",
+      "confirmButton": "Confirmer le paiement",
+      "cancel": "Annuler",
+      "success": "Abonnement activé !",
+      "error": "Le paiement a échoué.",
+      "processingError": "Une erreur est survenue lors du traitement."
     }
   }
 }

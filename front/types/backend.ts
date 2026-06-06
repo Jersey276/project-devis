@@ -183,3 +183,38 @@ export function scheduleBalanceState(
   if (plannedCents > expectedCents) return "over";
   return "balanced";
 }
+
+export type SubscriptionTier = "free" | "pro" | "enterprise";
+
+export type BackendPlan = {
+  plan_id: number;
+  name: string;
+  tier: SubscriptionTier;
+  price_cents: number;
+  billing_cycle: "monthly" | "yearly" | "none";
+  features: Record<string, number>;
+  active: boolean;
+  stripe_price_id?: string | null;
+};
+
+export type BackendSubscription = {
+  subscription_id: string;
+  user_id: string;
+  plan_id: number;
+  tier: SubscriptionTier;
+  status: "active" | "cancelled" | "expired";
+  current_period_start: string;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  stripe_subscription_id: string | null;
+  updated_at: string;
+};
+
+export type PlanDistributionEntry = { tier: SubscriptionTier; count: number };
+export type MonthlyRevenueEntry = { month: string; revenue_cents: number };
+export type AdminStats = {
+  total_active_subscriptions: number;
+  total_revenue_cents: number;
+  plan_distribution: PlanDistributionEntry[];
+  monthly_revenue: MonthlyRevenueEntry[];
+};
