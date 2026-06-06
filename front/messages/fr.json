@@ -564,12 +564,15 @@
         "billingCyclePlaceholder": "Sélectionner un cycle",
         "stripePriceIdLabel": "Stripe Price ID",
         "stripePriceIdHint": "Copier depuis le Dashboard Stripe → Products → Price ID (price_xxx). Laisser vide pour les plans gratuits.",
-        "featuresLabel": "Fonctionnalités (JSON)",
-        "featuresHint": "Exemple : {\"max_schedules\":-1,\"max_templates\":-1}",
+        "featuresLabel": "Limites du plan",
+        "features": {
+          "max_schedules": "Échéanciers max",
+          "max_templates": "Templates max",
+          "unlimited": "Illimité"
+        },
         "confirm": "Enregistrer",
         "successToast": "Plan mis à jour.",
-        "errorToast": "Impossible de mettre à jour le plan.",
-        "invalidJson": "Le JSON des fonctionnalités est invalide."
+        "errorToast": "Impossible de mettre à jour le plan."
       }
     },
     "subscriptions": {
@@ -734,8 +737,14 @@
       "subscribeCta": "S'abonner",
       "cancelCta": "Résilier l'abonnement",
       "perMonth": "/mois",
+      "currentPlanBadge": "Plan actuel",
       "cancelSuccess": "Résiliation programmée.",
-      "cancelError": "Impossible de résilier l'abonnement."
+      "cancelError": "Impossible de résilier l'abonnement.",
+      "features": {
+        "max_schedules": "Échéanciers",
+        "max_templates": "Templates",
+        "unlimited": "Illimité"
+      }
     },
     "paymentDialog": {
       "title": "Passer au plan {name}",

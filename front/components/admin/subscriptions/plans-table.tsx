@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -43,6 +43,14 @@ import { listAllPlans, updatePlan } from "@/lib/services/subscriptions";
 import type { BackendPlan, SubscriptionTier } from "@/types/backend";
 
 const BILLING_CYCLES = ["monthly", "yearly", "none"] as const;
+const PLAN_FEATURE_KEYS = ["max_schedules", "max_templates"] as const;
+
+function parsePlanFeatures(features: BackendPlan["features"]): Record<string, number> {
+  if (typeof features === "string") {
+    try { return JSON.parse(features); } catch { return {}; }
+  }
+  return features ?? {};
+}
 
 function centsToEuros(cents: number): string {
   return (cents / 100).toFixed(2);
@@ -50,15 +58,6 @@ function centsToEuros(cents: number): string {
 
 function eurosToCents(euros: string): number {
   return Math.round(parseFloat(euros || "0") * 100);
-}
-
-function featuresAsString(features: BackendPlan["features"]): string {
-  if (typeof features === "string") return features;
-  try {
-    return JSON.stringify(features, null, 2);
-  } catch {
-    return "{}";
-  }
 }
 
 export default function PlansTable() {
@@ -75,7 +74,7 @@ export default function PlansTable() {
   const [formPriceEuros, setFormPriceEuros] = useState("");
   const [formBillingCycle, setFormBillingCycle] = useState<string>("none");
   const [formStripePriceId, setFormStripePriceId] = useState("");
-  const [formFeatures, setFormFeatures] = useState("");
+  const [formFeatures, setFormFeatures] = useState<Record<string, number>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -96,21 +95,17 @@ export default function PlansTable() {
     setFormPriceEuros(centsToEuros(plan.price_cents));
     setFormBillingCycle(plan.billing_cycle);
     setFormStripePriceId(plan.stripe_price_id ?? "");
-    setFormFeatures(featuresAsString(plan.features));
+    const parsed = parsePlanFeatures(plan.features);
+    const initialFeatures: Record<string, number> = {};
+    for (const key of PLAN_FEATURE_KEYS) {
+      initialFeatures[key] = parsed[key] ?? 0;
+    }
+    setFormFeatures(initialFeatures);
     setDialogOpen(true);
   }
 
   async function confirmUpdate() {
     if (!editing) return;
-
-    let parsedFeatures: string;
-    try {
-      JSON.parse(formFeatures || "{}");
-      parsedFeatures = formFeatures || "{}";
-    } catch {
-      toast.error(t("editDialog.invalidJson"));
-      return;
-    }
 
     setSubmitting(true);
     try {
@@ -119,7 +114,7 @@ export default function PlansTable() {
         price_cents: eurosToCents(formPriceEuros),
         billing_cycle: formBillingCycle,
         stripe_price_id: formStripePriceId,
-        features: parsedFeatures,
+        features: JSON.stringify(formFeatures),
       });
       if (ok && body.success) {
         toast.success(t("editDialog.successToast"));
@@ -257,17 +252,45 @@ export default function PlansTable() {
               <FieldDescription>{t("editDialog.stripePriceIdHint")}</FieldDescription>
             </Field>
             <Field>
-              <FieldLabel htmlFor="plan_features">
-                {t("editDialog.featuresLabel")}
-              </FieldLabel>
-              <Textarea
-                id="plan_features"
-                rows={4}
-                className="font-mono text-xs"
-                value={formFeatures}
-                onChange={(e) => setFormFeatures(e.target.value)}
-              />
-              <FieldDescription>{t("editDialog.featuresHint")}</FieldDescription>
+              <FieldLabel>{t("editDialog.featuresLabel")}</FieldLabel>
+              <FieldGroup>
+                {PLAN_FEATURE_KEYS.map((key) => {
+                  const isUnlimited = formFeatures[key] === -1;
+                  return (
+                    <div key={key} className="flex items-center gap-3">
+                      <span className="flex-1 text-sm">
+                        {t(`editDialog.features.${key}`)}
+                      </span>
+                      <label className="flex items-center gap-1.5 text-sm cursor-pointer select-none">
+                        <Checkbox
+                          checked={isUnlimited}
+                          onCheckedChange={(checked) =>
+                            setFormFeatures((prev) => ({
+                              ...prev,
+                              [key]: checked ? -1 : 0,
+                            }))
+                          }
+                        />
+                        {t("editDialog.features.unlimited")}
+                      </label>
+                      <Input
+                        type="number"
+                        min={0}
+                        className="w-24"
+                        disabled={isUnlimited}
+                        value={isUnlimited ? "" : String(formFeatures[key] ?? 0)}
+                        placeholder={isUnlimited ? "∞" : "0"}
+                        onChange={(e) =>
+                          setFormFeatures((prev) => ({
+                            ...prev,
+                            [key]: Math.max(0, parseInt(e.target.value, 10) || 0),
+                          }))
+                        }
+                      />
+                    </div>
+                  );
+                })}
+              </FieldGroup>
             </Field>
           </FieldGroup>
           <DialogFooter>

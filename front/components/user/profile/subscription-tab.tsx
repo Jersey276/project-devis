@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import {
   getMySubscription,
@@ -21,6 +20,13 @@ type SubscriptionTabProps = {
   phone?: string;
   name?: string;
 };
+
+function parsePlanFeatures(features: BackendPlan["features"]): Record<string, number> {
+  if (typeof features === "string") {
+    try { return JSON.parse(features); } catch { return {}; }
+  }
+  return features ?? {};
+}
 
 function formatDate(value: string | null | undefined): string {
   if (!value) return "";
@@ -91,7 +97,9 @@ export default function SubscriptionTab({ readOnly, email, phone, name }: Subscr
     setDialogOpen(true);
   }
 
-  const currentTier = subscription?.tier ?? "free";
+  const PLAN_FEATURE_KEYS = ["max_schedules", "max_templates"] as const;
+
+const currentTier = subscription?.tier ?? "free";
 
   const currentPlanInfo = () => {
     if (!subscription || currentTier === "free") {
@@ -137,41 +145,86 @@ export default function SubscriptionTab({ readOnly, email, phone, name }: Subscr
         </Button>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        {plans.map((plan) => {
-          const isCurrent = plan.tier === currentTier;
-          const isUpgrade =
-            (currentTier === "free" && plan.tier !== "free") ||
-            (currentTier === "pro" && plan.tier === "enterprise");
-
-          return (
-            <Card
-              key={plan.plan_id}
-              className={isCurrent ? "border-primary ring-1 ring-primary" : ""}
-            >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">{plan.name}</CardTitle>
-                <p className="text-sm font-semibold text-foreground">
-                  {formatPrice(plan.price_cents, plan.billing_cycle)}
-                </p>
-              </CardHeader>
-              <CardContent>
-                {isCurrent && (
-                  <Badge variant="outline" className="text-xs">Plan actuel</Badge>
-                )}
-                {isUpgrade && !readOnly && (
-                  <Button
-                    size="sm"
-                    className="mt-2 w-full"
-                    onClick={() => openPaymentDialog(plan)}
+      <div className="overflow-x-auto rounded-md border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b">
+              <th className="w-40 py-4 pl-4 pr-2 text-left font-normal text-muted-foreground" />
+              {plans.map((plan) => {
+                const isCurrent = plan.tier === currentTier;
+                return (
+                  <th
+                    key={plan.plan_id}
+                    className={`px-6 py-4 text-center${isCurrent ? " bg-primary/5" : ""}`}
                   >
-                    {t("tab.subscribeCta")}
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
+                    <div className="font-semibold">{plan.name}</div>
+                    <div className="mt-0.5 text-xs font-normal text-muted-foreground">
+                      {formatPrice(plan.price_cents, plan.billing_cycle)}
+                    </div>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {PLAN_FEATURE_KEYS.map((key) => (
+              <tr key={key} className="border-b">
+                <td className="py-3 pl-4 pr-2 text-muted-foreground">
+                  {t(`tab.features.${key}`)}
+                </td>
+                {plans.map((plan) => {
+                  const isCurrent = plan.tier === currentTier;
+                  const value = parsePlanFeatures(plan.features)[key];
+                  return (
+                    <td
+                      key={plan.plan_id}
+                      className={`px-6 py-3 text-center${isCurrent ? " bg-primary/5" : ""}`}
+                    >
+                      {value === undefined || value === 0 ? (
+                        <span className="text-muted-foreground">—</span>
+                      ) : value === -1 ? (
+                        <span className="font-medium text-primary">
+                          {t("tab.features.unlimited")}
+                        </span>
+                      ) : (
+                        <span className="font-medium">{value}</span>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+            <tr>
+              <td className="py-4 pl-4 pr-2" />
+              {plans.map((plan) => {
+                const isCurrent = plan.tier === currentTier;
+                const isUpgrade =
+                  (currentTier === "free" && plan.tier !== "free") ||
+                  (currentTier === "pro" && plan.tier === "enterprise");
+                return (
+                  <td
+                    key={plan.plan_id}
+                    className={`px-6 py-4 text-center${isCurrent ? " bg-primary/5" : ""}`}
+                  >
+                    {isCurrent ? (
+                      <Badge variant="outline" className="text-xs">
+                        {t("tab.currentPlanBadge")}
+                      </Badge>
+                    ) : isUpgrade && !readOnly ? (
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={() => openPaymentDialog(plan)}
+                      >
+                        {t("tab.subscribeCta")}
+                      </Button>
+                    ) : null}
+                  </td>
+                );
+              })}
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <PaymentDialog
