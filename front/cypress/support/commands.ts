@@ -39,6 +39,8 @@ Cypress.Commands.add("login", (token = "fake-token") => {
         user_id: "test-user",
         email: "test@test.fr",
         role: "admin",
+        account_status: "active",
+        subscription_tier: "pro",
       },
     },
   });
