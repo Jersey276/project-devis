@@ -15,10 +15,13 @@ const (
 )
 
 const (
-	ResourceGeneral           Resource = "general"
-	ResourceAdminCountries    Resource = "admin.countries"
-	ResourceAdminCountryGroup Resource = "admin.country_groups"
-	ResourceAdminTaxes        Resource = "admin.taxes"
+	ResourceGeneral                Resource = "general"
+	ResourceAdminCountries         Resource = "admin.countries"
+	ResourceAdminCountryGroup      Resource = "admin.country_groups"
+	ResourceAdminTaxes             Resource = "admin.taxes"
+	ResourceAdminSubscriptions     Resource = "admin.subscriptions"
+	ResourceSubscriptionTemplates  Resource = "subscription.templates"
+	ResourceSubscriptionSchedules  Resource = "subscription.schedules"
 )
 
 type Subject struct {

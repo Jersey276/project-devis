@@ -46,20 +46,49 @@ function stubProfile(addresses = INITIAL_ADDRESSES) {
     statusCode: 200,
     body: { success: true, addresses },
   }).as("getAddresses");
+  cy.intercept("GET", "/api/subscriptions/me", {
+    statusCode: 200,
+    body: {
+      success: true,
+      subscription: {
+        subscription_id: "",
+        user_id: USER.user_id,
+        plan_id: 1,
+        tier: "free",
+        status: "active",
+        current_period_start: "",
+        current_period_end: null,
+        cancel_at_period_end: false,
+        stripe_subscription_id: null,
+        updated_at: "",
+      },
+    },
+  }).as("getMySubscription");
+  cy.intercept("GET", "/api/plans", {
+    statusCode: 200,
+    body: {
+      success: true,
+      plans: [
+        { plan_id: 1, name: "Free", tier: "free", price_cents: 0, billing_cycle: "none", features: {} },
+        { plan_id: 2, name: "Pro", tier: "pro", price_cents: 900, billing_cycle: "monthly", features: {} },
+      ],
+    },
+  }).as("getPlans");
 }
 
 describe("Profile page", () => {
   describe("structure", () => {
     beforeEach(() => stubProfile());
 
-    it("shows the three tabs", () => {
+    it("shows the four tabs", () => {
       cy.visit("/profile");
       cy.wait("@getMe");
       cy.get("[role='tablist']").should("exist");
-      cy.get("[role='tab']").should("have.length", 3);
+      cy.get("[role='tab']").should("have.length", 4);
       cy.contains("[role='tab']", "Information").should("exist");
       cy.contains("[role='tab']", "Adresses").should("exist");
       cy.contains("[role='tab']", "Connexion").should("exist");
+      cy.contains("[role='tab']", "Abonnement").should("exist");
     });
 
     it("switches tabs on click", () => {

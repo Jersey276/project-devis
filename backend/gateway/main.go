@@ -1,6 +1,7 @@
 package main
 
 import (
+	"gateway/authz"
 	"gateway/controllers"
 	"gateway/middleware"
 
@@ -19,6 +20,10 @@ func main() {
 func setupRouter() *gin.Engine {
 	r := gin.Default()
 
+	// Stripe webhook — no auth, raw body, registered before auth groups
+	webhooks := r.Group("/api/webhooks")
+	controllers.WebhookRoutes(webhooks)
+
 	api := r.Group("/api")
 	controllers.AuthRoutes(api.Group("/auth"))
 
@@ -36,11 +41,21 @@ func setupRouter() *gin.Engine {
 
 	templates := api.Group("/templates")
 	templates.Use(middleware.AuthRequired())
+	templates.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionTemplates))
 	controllers.TemplateRoutes(templates)
 
 	schedules := api.Group("/schedules")
 	schedules.Use(middleware.AuthRequired())
+	schedules.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionSchedules))
 	controllers.SchedulesRoutes(schedules)
+
+	plans := api.Group("/plans")
+	plans.Use(middleware.AuthRequired())
+	controllers.PlansRoutes(plans)
+
+	subscriptions := api.Group("/subscriptions")
+	subscriptions.Use(middleware.AuthRequired())
+	controllers.SubscriptionsRoutes(subscriptions)
 
 	// controllers.ProjectRoutes(api.Group("/project"))
 	// controllers.PaymentRoutes(api.Group("/payments"))

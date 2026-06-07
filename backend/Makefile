@@ -1,5 +1,5 @@
-SERVICES := auth user quote schedule gateway export
-DB_SERVICES := auth user quote schedule
+SERVICES := auth user quote schedule gateway export template subscription
+DB_SERVICES := auth user quote schedule subscription
 
 .PHONY: db-init migrate rebuild up down $(addprefix rebuild-,$(SERVICES))
 

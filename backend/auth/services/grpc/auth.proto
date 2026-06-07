@@ -24,6 +24,8 @@ service AuthService {
     rpc Logout(LogoutRequest) returns (GenericResponse);
     // IntrospectToken validates access token against current auth state.
     rpc IntrospectToken(IntrospectTokenRequest) returns (IntrospectTokenResponse);
+    // UpdateSubscriptionTier updates a user's subscription tier and invalidates existing tokens.
+    rpc UpdateSubscriptionTier(UpdateSubscriptionTierRequest) returns (GenericResponse);
 }
 
 // RegisterRequest contains user registration information
@@ -110,4 +112,9 @@ message IntrospectTokenResponse {
     bool success = 1;
     int32 code = 2;
     AccessContext context = 3;
+}
+
+message UpdateSubscriptionTierRequest {
+    string user_id = 1;
+    string tier    = 2;
 }

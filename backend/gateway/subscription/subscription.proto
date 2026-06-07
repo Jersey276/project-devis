@@ -1,0 +1,153 @@
+syntax = "proto3";
+
+package subscription;
+
+option go_package = "gateway/subscription";
+
+service SubscriptionService {
+    rpc ListPlans(ListPlansRequest) returns (ListPlansResponse);
+    rpc GetPlan(GetPlanRequest) returns (GetPlanResponse);
+    rpc GetUserSubscription(GetUserSubscriptionRequest) returns (GetUserSubscriptionResponse);
+    rpc ListSubscriptions(ListSubscriptionsRequest) returns (ListSubscriptionsResponse);
+    rpc AssignPlan(AssignPlanRequest) returns (AssignPlanResponse);
+    rpc CreatePaymentIntent(CreatePaymentIntentRequest) returns (CreatePaymentIntentResponse);
+    rpc HandleStripeWebhook(HandleStripeWebhookRequest) returns (GenericResponse);
+    rpc CancelSubscription(CancelSubscriptionRequest) returns (GenericResponse);
+    rpc GetAdminStats(GetAdminStatsRequest) returns (AdminStatsResponse);
+    rpc UpdatePlan(UpdatePlanRequest) returns (GetPlanResponse);
+}
+
+message GenericResponse {
+    bool  success = 1;
+    int32 code    = 2;
+}
+
+message Plan {
+    int32  plan_id          = 1;
+    string name             = 2;
+    string tier             = 3;
+    int32  price_cents      = 4;
+    string billing_cycle    = 5;
+    string features         = 6;
+    bool   active           = 7;
+    string stripe_price_id  = 8;
+}
+
+message Subscription {
+    string subscription_id        = 1;
+    string user_id                = 2;
+    int32  plan_id                = 3;
+    string tier                   = 4;
+    string status                 = 5;
+    string current_period_start   = 6;
+    string current_period_end     = 7;
+    string created_at             = 8;
+    string updated_at             = 9;
+    bool   cancel_at_period_end   = 10;
+    string stripe_subscription_id = 11;
+}
+
+message ListPlansRequest {
+    bool include_inactive = 1;
+}
+
+message ListPlansResponse {
+    bool           success = 1;
+    int32          code    = 2;
+    repeated Plan  plans   = 3;
+}
+
+message GetPlanRequest {
+    int32 plan_id = 1;
+}
+
+message GetPlanResponse {
+    bool  success = 1;
+    int32 code    = 2;
+    Plan  plan    = 3;
+}
+
+message GetUserSubscriptionRequest {
+    string user_id = 1;
+}
+
+message GetUserSubscriptionResponse {
+    bool         success      = 1;
+    int32        code         = 2;
+    Subscription subscription = 3;
+}
+
+message ListSubscriptionsRequest {
+    int32 page      = 1;
+    int32 page_size = 2;
+}
+
+message ListSubscriptionsResponse {
+    bool                  success       = 1;
+    int32                 code          = 2;
+    repeated Subscription subscriptions = 3;
+    int32                 total         = 4;
+}
+
+message AssignPlanRequest {
+    string user_id = 1;
+    int32  plan_id = 2;
+}
+
+message AssignPlanResponse {
+    bool   success  = 1;
+    int32  code     = 2;
+    string new_tier = 3;
+}
+
+message CreatePaymentIntentRequest {
+    string user_id = 1;
+    int32  plan_id = 2;
+    string email   = 3;
+}
+
+message CreatePaymentIntentResponse {
+    bool   success                = 1;
+    int32  code                   = 2;
+    string client_secret          = 3;
+    string stripe_subscription_id = 4;
+}
+
+message HandleStripeWebhookRequest {
+    bytes  payload          = 1;
+    string stripe_signature = 2;
+}
+
+message CancelSubscriptionRequest {
+    string user_id = 1;
+}
+
+message GetAdminStatsRequest {}
+
+message UpdatePlanRequest {
+    int32  plan_id         = 1;
+    string name            = 2;
+    int32  price_cents     = 3;
+    string billing_cycle   = 4;
+    string stripe_price_id = 5;
+    string features        = 6;
+}
+
+message PlanDistributionEntry {
+    string tier  = 1;
+    int32  count = 2;
+}
+
+message MonthlyRevenueEntry {
+    string month         = 1;
+    int64  revenue_cents = 2;
+}
+
+message AdminStatsResponse {
+    bool   success                    = 1;
+    int32  code                       = 2;
+    int32  total_active_subscriptions = 3;
+    int64  total_revenue_cents        = 4;
+    repeated PlanDistributionEntry plan_distribution = 5;
+    repeated MonthlyRevenueEntry   monthly_revenue   = 6;
+}

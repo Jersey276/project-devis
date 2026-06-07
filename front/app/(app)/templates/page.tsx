@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import PageBreadcrumb from "@/components/custom/page-breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import TemplateTabs from "@/components/template/template-tabs";
+import SubscriptionGuard from "@/components/custom/subscription-guard";
 
 export default async function TemplatesPage() {
   const t = await getTranslations("templates");
@@ -19,7 +20,9 @@ export default async function TemplatesPage() {
           <CardTitle>{t("list.title")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <TemplateTabs />
+          <SubscriptionGuard>
+            <TemplateTabs />
+          </SubscriptionGuard>
         </CardContent>
       </Card>
     </>
