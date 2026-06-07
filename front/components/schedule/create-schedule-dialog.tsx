@@ -251,8 +251,7 @@ export default function CreateScheduleDialog({
             <Input
               id="schedule-duration"
               name="duration_months"
-              type="number"
-              min={1}
+              inputMode="numeric"
               value={durationMonths}
               onChange={(e) => setDurationMonths(e.target.value)}
             />
