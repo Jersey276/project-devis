@@ -21,9 +21,9 @@ import { toast } from "sonner";
 import { createPaymentIntent } from "@/lib/services/subscriptions";
 import type { BackendPlan } from "@/types/backend";
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "",
-);
+const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+  : null;
 
 type BillingDetails = {
   email?: string;

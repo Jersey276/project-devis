@@ -79,8 +79,8 @@ describe("Profile — Subscription tab", () => {
   it("shows the Abonnement tab on the profile page", () => {
     stubSubscriptionTab();
     cy.visit("/profile");
-    cy.wait("@getMySub");
     cy.contains("[role='tab']", "Abonnement").should("be.visible").click();
+    cy.wait("@getMySub");
     cy.wait("@getPlans");
     cy.contains("Mon abonnement actuel").should("be.visible");
   });
@@ -109,13 +109,6 @@ describe("Profile — Subscription tab", () => {
       statusCode: 200,
       body: { success: true },
     }).as("cancelSub");
-    cy.intercept("GET", "/api/subscriptions/me", {
-      statusCode: 200,
-      body: {
-        success: true,
-        subscription: { ...PRO_SUB, cancel_at_period_end: true },
-      },
-    }).as("getMeAfterCancel");
 
     cy.visit("/profile?tab=abonnement");
     cy.wait("@getMySub");
