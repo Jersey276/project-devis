@@ -17,9 +17,10 @@ import (
 )
 
 type mockAuthClient struct {
-	resetFn   func(context.Context, *auth.ResetPasswordRequest) (*auth.GenericResponse, error)
-	confirmFn func(context.Context, *auth.ConfirmResetPasswordRequest) (*auth.GenericResponse, error)
-	updateFn  func(context.Context, *auth.UpdatePasswordRequest) (*auth.GenericResponse, error)
+	resetFn          func(context.Context, *auth.ResetPasswordRequest) (*auth.GenericResponse, error)
+	confirmFn        func(context.Context, *auth.ConfirmResetPasswordRequest) (*auth.GenericResponse, error)
+	updateFn         func(context.Context, *auth.UpdatePasswordRequest) (*auth.GenericResponse, error)
+	resendVerifyFn   func(context.Context, *auth.ResendEmailVerificationRequest) (*auth.GenericResponse, error)
 }
 
 func (m *mockAuthClient) Register(context.Context, *auth.RegisterRequest, ...grpc.CallOption) (*auth.FormGenericResponse, error) {
@@ -86,10 +87,18 @@ func (m *mockAuthClient) UpdateSubscriptionTier(context.Context, *auth.UpdateSub
 	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
 }
 
+func (m *mockAuthClient) ResendEmailVerification(ctx context.Context, req *auth.ResendEmailVerificationRequest, _ ...grpc.CallOption) (*auth.GenericResponse, error) {
+	if m.resendVerifyFn != nil {
+		return m.resendVerifyFn(ctx, req)
+	}
+	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
+}
+
 func resetAuthLimiterStateForTests() {
 	resetPasswordIPLimiter = newSlidingWindowLimiter()
 	resetPasswordEmailLimiter = newSlidingWindowLimiter()
 	confirmResetIPLimiter = newSlidingWindowLimiter()
+	resendVerificationLimiter = newSlidingWindowLimiter()
 }
 
 func newJSONContext(method, path, body, remoteAddr string) (*gin.Context, *httptest.ResponseRecorder) {
@@ -226,6 +235,73 @@ func TestUpdatePassword_RequiresAuthContextEmail(t *testing.T) {
 
 	ctx, res := newJSONContext(http.MethodPost, "/api/auth/password/update", `{"old_password":"old","new_password":"StrongPass123!"}`, "10.0.0.6:1234")
 	UpdatePassword(ctx, client)
+
+	if res.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", res.Code)
+	}
+}
+
+func TestResendEmailVerification_Success(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	resetAuthLimiterStateForTests()
+	client := &mockAuthClient{}
+
+	ctx, res := newJSONContext(http.MethodPost, "/api/auth/email/resend-verification", `{}`, "10.0.0.7:1234")
+	ctx.Set(middleware.CtxUserID, "user-42")
+	ResendEmailVerification(ctx, client)
+
+	if res.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", res.Code)
+	}
+}
+
+func TestResendEmailVerification_AlreadyVerified(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	resetAuthLimiterStateForTests()
+	client := &mockAuthClient{
+		resendVerifyFn: func(_ context.Context, _ *auth.ResendEmailVerificationRequest) (*auth.GenericResponse, error) {
+			return &auth.GenericResponse{Success: false, Code: CodeAlreadyVerified}, nil
+		},
+	}
+
+	ctx, res := newJSONContext(http.MethodPost, "/api/auth/email/resend-verification", `{}`, "10.0.0.8:1234")
+	ctx.Set(middleware.CtxUserID, "user-42")
+	ResendEmailVerification(ctx, client)
+
+	if res.Code != http.StatusConflict {
+		t.Fatalf("expected 409, got %d", res.Code)
+	}
+}
+
+func TestResendEmailVerification_RateLimited(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	resetAuthLimiterStateForTests()
+	client := &mockAuthClient{}
+
+	for i := range 3 {
+		ctx, res := newJSONContext(http.MethodPost, "/api/auth/email/resend-verification", `{}`, "10.0.0.9:1234")
+		ctx.Set(middleware.CtxUserID, "user-rl")
+		ResendEmailVerification(ctx, client)
+		if res.Code != http.StatusOK {
+			t.Fatalf("attempt %d expected 200, got %d", i+1, res.Code)
+		}
+	}
+
+	ctx, res := newJSONContext(http.MethodPost, "/api/auth/email/resend-verification", `{}`, "10.0.0.9:1234")
+	ctx.Set(middleware.CtxUserID, "user-rl")
+	ResendEmailVerification(ctx, client)
+	if res.Code != http.StatusTooManyRequests {
+		t.Fatalf("expected 429 after rate limit, got %d", res.Code)
+	}
+}
+
+func TestResendEmailVerification_RequiresAuthContext(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	client := &mockAuthClient{}
+
+	ctx, res := newJSONContext(http.MethodPost, "/api/auth/email/resend-verification", `{}`, "10.0.0.10:1234")
+	// No user_id set in context
+	ResendEmailVerification(ctx, client)
 
 	if res.Code != http.StatusUnauthorized {
 		t.Fatalf("expected 401, got %d", res.Code)

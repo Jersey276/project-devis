@@ -26,8 +26,11 @@ const (
 	CodeInvalidResetToken   int32 = 1005
 	CodeExpiredResetToken   int32 = 1006
 	CodeWeakPassword        int32 = 1007
-	CodeSessionInvalidated  int32 = 1008
-	CodeUserServiceError    int32 = 2001
+	CodeSessionInvalidated          int32 = 1008
+	CodeInvalidVerificationToken   int32 = 1010
+	CodeExpiredVerificationToken   int32 = 1011
+	CodeAlreadyVerified            int32 = 1012
+	CodeUserServiceError           int32 = 2001
 	CodeInternalError       int32 = 2002
 	CodeNotImplemented      int32 = 2003
 )
@@ -44,6 +47,7 @@ var (
 	resetPasswordIPLimiter    = newSlidingWindowLimiter()
 	resetPasswordEmailLimiter = newSlidingWindowLimiter()
 	confirmResetIPLimiter     = newSlidingWindowLimiter()
+	resendVerificationLimiter = newSlidingWindowLimiter()
 )
 
 func setAuthCookies(c *gin.Context, accessToken, refreshToken string, rememberMe bool) {
@@ -73,8 +77,11 @@ var authErrors = &serviceErrors{
 		CodeWeakPassword:        {http.StatusUnprocessableEntity, "Le mot de passe ne respecte pas la politique de sécurité."},
 		CodeSessionInvalidated:  {http.StatusUnauthorized, "Session expirée, veuillez vous reconnecter."},
 		CodeUserServiceError:    {http.StatusBadGateway, "Erreur lors de la création du compte, veuillez réessayer."},
-		CodeInternalError:       {http.StatusInternalServerError, "Une erreur interne est survenue."},
-		CodeNotImplemented:      {http.StatusNotImplemented, "Cette fonctionnalité n'est pas encore disponible."},
+		CodeInternalError:              {http.StatusInternalServerError, "Une erreur interne est survenue."},
+		CodeNotImplemented:             {http.StatusNotImplemented, "Cette fonctionnalité n'est pas encore disponible."},
+		CodeInvalidVerificationToken:   {http.StatusBadRequest, "Le lien de vérification est invalide ou déjà utilisé."},
+		CodeExpiredVerificationToken:   {http.StatusGone, "Le lien de vérification a expiré."},
+		CodeAlreadyVerified:            {http.StatusConflict, "Cette adresse email est déjà vérifiée."},
 	},
 	unavailableMessage: "Service d'authentification indisponible.",
 }
@@ -108,6 +115,9 @@ func AuthRoutes(r *gin.RouterGroup) *gin.RouterGroup {
 
 	email := r.Group("/email")
 	email.POST("/verify", func(c *gin.Context) { VerifyEmail(c, client) })
+	emailAuth := email.Group("")
+	emailAuth.Use(middleware.AuthRequired())
+	emailAuth.POST("/resend-verification", func(c *gin.Context) { ResendEmailVerification(c, client) })
 
 	return r
 }
@@ -393,7 +403,6 @@ func ConfirmResetPassword(c *gin.Context, client auth.AuthServiceClient) {
 
 func VerifyEmail(c *gin.Context, client auth.AuthServiceClient) {
 	var input struct {
-		Email string `json:"email" binding:"required,email"`
 		Token string `json:"token" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -402,7 +411,6 @@ func VerifyEmail(c *gin.Context, client auth.AuthServiceClient) {
 	}
 
 	resp, err := client.VerifyEmail(c.Request.Context(), &auth.VerifyEmailRequest{
-		Email: input.Email,
 		Token: input.Token,
 	})
 	if err != nil {
@@ -415,4 +423,36 @@ func VerifyEmail(c *gin.Context, client auth.AuthServiceClient) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Email vérifié."})
+}
+
+func ResendEmailVerification(c *gin.Context, client auth.AuthServiceClient) {
+	userIDRaw, exists := c.Get(middleware.CtxUserID)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Token d'authentification manquant."})
+		return
+	}
+	userID, _ := userIDRaw.(string)
+
+	if !resendVerificationLimiter.Allow("resend_verif:"+userID, 3, 15*time.Minute, time.Now()) {
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"success": false,
+			"message": "Trop de demandes. Veuillez réessayer plus tard.",
+			"code":    "RATE_LIMITED",
+		})
+		return
+	}
+
+	resp, err := client.ResendEmailVerification(c.Request.Context(), &auth.ResendEmailVerificationRequest{
+		UserId: userID,
+	})
+	if err != nil {
+		authErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		authErrors.reply(c, resp.Code)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Email de vérification renvoyé."})
 }

@@ -15,6 +15,7 @@ service AuthService {
     rpc Logout(LogoutRequest) returns (GenericResponse);
     rpc IntrospectToken(IntrospectTokenRequest) returns (IntrospectTokenResponse);
     rpc UpdateSubscriptionTier(UpdateSubscriptionTierRequest) returns (GenericResponse);
+    rpc ResendEmailVerification(ResendEmailVerificationRequest) returns (GenericResponse);
 }
 
 message RegisterRequest {
@@ -103,4 +104,8 @@ message IntrospectTokenResponse {
 message UpdateSubscriptionTierRequest {
     string user_id = 1;
     string tier    = 2;
+}
+
+message ResendEmailVerificationRequest {
+    string user_id = 1;
 }

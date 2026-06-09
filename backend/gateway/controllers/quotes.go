@@ -9,7 +9,9 @@ import (
 	"strconv"
 	"strings"
 
+	export "gateway/export"
 	quote "gateway/quote"
+	gatewaySvc "gateway/services"
 	users "gateway/users"
 
 	"github.com/gin-gonic/gin"
@@ -42,7 +44,7 @@ var quoteErrors = &serviceErrors{
 }
 
 // QuotesRoutes wires the /quotes API group against the quote gRPC service.
-func QuotesRoutes(r *gin.RouterGroup) {
+func QuotesRoutes(r *gin.RouterGroup, emailNotifier gatewaySvc.EmailNotifier) {
 	address := os.Getenv("QUOTE_SERVICE_ADDRESS")
 	if address == "" {
 		address = "localhost:50053"
@@ -63,6 +65,22 @@ func QuotesRoutes(r *gin.RouterGroup) {
 	}
 	usersClient := users.NewUserServiceClient(usersConn)
 
+	exportAddress := os.Getenv("EXPORT_SERVICE_ADDRESS")
+	if exportAddress == "" {
+		exportAddress = "localhost:50054"
+	}
+	exportConn, err := grpc.NewClient(exportAddress,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(maxExportMessageBytes),
+			grpc.MaxCallSendMsgSize(maxExportMessageBytes),
+		),
+	)
+	if err != nil {
+		log.Fatalf("Failed to connect to export gRPC server: %v", err)
+	}
+	exportClient := export.NewExportServiceClient(exportConn)
+
 	r.GET("", func(c *gin.Context) { ListQuotes(c, client, usersClient) })
 	r.POST("", func(c *gin.Context) { CreateQuote(c, client) })
 
@@ -77,6 +95,7 @@ func QuotesRoutes(r *gin.RouterGroup) {
 	one.POST("/restore", func(c *gin.Context) { RestoreQuote(c, client) })
 	one.POST("/drop", func(c *gin.Context) { DropQuote(c, client) })
 	one.POST("/continue", func(c *gin.Context) { ContinueQuote(c, client) })
+	one.POST("/send", func(c *gin.Context) { SendQuote(c, client, usersClient, exportClient, emailNotifier) })
 
 	lines := one.Group("/lines")
 	lines.GET("", func(c *gin.Context) { ListQuoteLines(c, client) })
@@ -676,4 +695,57 @@ func marshalLines(lines []*quote.QuoteLine) []gin.H {
 		out = append(out, marshalLine(l))
 	}
 	return out
+}
+
+func SendQuote(
+	c *gin.Context,
+	quoteClient quote.QuoteServiceClient,
+	usersClient users.UserServiceClient,
+	exportClient export.ExportServiceClient,
+	emailNotifier gatewaySvc.EmailNotifier,
+) {
+	userID := userIDFromCtx(c)
+	quoteID := c.Param("id")
+
+	sendResp, err := quoteClient.SendQuote(c.Request.Context(), &quote.SendQuoteRequest{
+		QuoteId: quoteID,
+		UserId:  userID,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !sendResp.Success {
+		quoteErrors.reply(c, sendResp.Code)
+		return
+	}
+
+	clientResp, err := usersClient.GetClient(c.Request.Context(), &users.GetClientRequest{
+		ClientId: sendResp.ClientId,
+		UserId:   userID,
+	})
+	if err != nil || !clientResp.Success {
+		log.Printf("SendQuote: could not fetch client %s: %v", sendResp.ClientId, err)
+		c.JSON(http.StatusOK, gin.H{"success": true})
+		return
+	}
+	client := clientResp.Client
+
+	var pdfBytes []byte
+	exportResp, exportErr := exportClient.ExportQuote(c.Request.Context(), &export.ExportQuoteRequest{
+		QuoteId: quoteID,
+		UserId:  userID,
+	})
+	if exportErr != nil || !exportResp.Success {
+		log.Printf("SendQuote: PDF generation failed for quote %s: %v", quoteID, exportErr)
+	} else {
+		pdfBytes = exportResp.Pdf
+	}
+
+	clientName := strings.TrimSpace(client.FirstName + " " + client.LastName)
+	if err := emailNotifier.SendQuoteEmail(c.Request.Context(), userID, quoteID, client.Email, clientName, sendResp.Name, pdfBytes); err != nil {
+		log.Printf("SendQuote: email send failed for quote %s: %v", quoteID, err)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }

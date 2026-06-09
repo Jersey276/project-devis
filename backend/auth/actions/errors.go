@@ -11,8 +11,11 @@ const (
 	CodeExpiredResetToken   int32 = 1006
 	CodeWeakPassword        int32 = 1007
 	CodeSessionInvalidated  int32 = 1008
-	CodeInvalidInput        int32 = 1009
-	CodeUserServiceError    int32 = 2001
+	CodeInvalidInput                int32 = 1009
+	CodeInvalidVerificationToken   int32 = 1010
+	CodeExpiredVerificationToken   int32 = 1011
+	CodeAlreadyVerified            int32 = 1012
+	CodeUserServiceError           int32 = 2001
 	CodeInternalError       int32 = 2002
 	CodeNotImplemented      int32 = 2003
 )

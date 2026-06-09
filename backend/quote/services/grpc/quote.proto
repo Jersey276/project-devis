@@ -16,6 +16,7 @@ service QuoteService {
     rpc TrashQuotes(TrashQuotesRequest) returns (GenericResponse);
     rpc DropQuote(DropQuoteRequest) returns (GenericResponse);
     rpc ContinueQuote(ContinueQuoteRequest) returns (GenericResponse);
+    rpc SendQuote(SendQuoteRequest) returns (SendQuoteResponse);
 
     // Line
     rpc CreateQuoteLine(CreateQuoteLineRequest) returns (CreateQuoteLineResponse);
@@ -130,6 +131,18 @@ message DropQuoteRequest {
 message ContinueQuoteRequest {
     string quote_id = 1;
     string user_id = 2;
+}
+
+message SendQuoteRequest {
+    string quote_id  = 1;
+    string user_id   = 2;
+}
+
+message SendQuoteResponse {
+    bool   success   = 1;
+    int32  code      = 2;
+    string client_id = 3;
+    string name      = 4;
 }
 
 // ─── Line ────────────────────────────────────────────────────────────────────

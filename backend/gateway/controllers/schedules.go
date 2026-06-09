@@ -1,11 +1,17 @@
 package controllers
 
 import (
+	"context"
+	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
+	quote "gateway/quote"
 	schedule "gateway/schedule"
+	gatewaySvc "gateway/services"
+	users "gateway/users"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -36,7 +42,7 @@ var scheduleErrors = &serviceErrors{
 }
 
 // SchedulesRoutes wires the /schedules API group against the schedule gRPC service.
-func SchedulesRoutes(r *gin.RouterGroup) {
+func SchedulesRoutes(r *gin.RouterGroup, emailNotifier gatewaySvc.EmailNotifier) {
 	address := os.Getenv("SCHEDULE_SERVICE_ADDRESS")
 	if address == "" {
 		address = "localhost:50056"
@@ -47,14 +53,81 @@ func SchedulesRoutes(r *gin.RouterGroup) {
 	}
 	client := schedule.NewScheduleServiceClient(conn)
 
+	quoteAddress := os.Getenv("QUOTE_SERVICE_ADDRESS")
+	if quoteAddress == "" {
+		quoteAddress = "localhost:50053"
+	}
+	quoteConn, err := grpc.NewClient(quoteAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic("failed to connect to quote gRPC server: " + err.Error())
+	}
+	quoteClient := quote.NewQuoteServiceClient(quoteConn)
+
+	usersAddress := os.Getenv("USER_SERVICE_ADDRESS")
+	if usersAddress == "" {
+		usersAddress = "localhost:50052"
+	}
+	usersConn, err := grpc.NewClient(usersAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic("failed to connect to users gRPC server: " + err.Error())
+	}
+	usersClient := users.NewUserServiceClient(usersConn)
+
 	r.GET("", func(c *gin.Context) { ListSchedules(c, client) })
 	r.POST("", func(c *gin.Context) { CreateSchedule(c, client) })
 
 	one := r.Group("/:id")
 	one.GET("", func(c *gin.Context) { GetSchedule(c, client) })
 	one.PATCH("/cells", func(c *gin.Context) { UpdateScheduleCell(c, client) })
-	one.PATCH("/status", func(c *gin.Context) { UpdateScheduleStatus(c, client) })
-	one.POST("/validate", func(c *gin.Context) { ValidateSchedule(c, client) })
+	one.PATCH("/status", func(c *gin.Context) { UpdateScheduleStatus(c, client, quoteClient, usersClient, emailNotifier) })
+	one.POST("/validate", func(c *gin.Context) { ValidateSchedule(c, client, quoteClient, usersClient, emailNotifier) })
+}
+
+// ─── Email helper ────────────────────────────────────────────────────────────
+
+func sendScheduleEmailNotification(
+	scheduleID, userID, status string,
+	scheduleClient schedule.ScheduleServiceClient,
+	quoteClient quote.QuoteServiceClient,
+	usersClient users.UserServiceClient,
+	emailNotifier gatewaySvc.EmailNotifier,
+) {
+	ctx := context.Background()
+
+	schedResp, err := scheduleClient.GetSchedule(ctx, &schedule.GetScheduleRequest{
+		ScheduleId: scheduleID,
+		UserId:     userID,
+	})
+	if err != nil || !schedResp.Success {
+		log.Printf("schedule email: GetSchedule failed for %s: %v", scheduleID, err)
+		return
+	}
+
+	quoteResp, err := quoteClient.GetQuote(ctx, &quote.GetQuoteRequest{
+		QuoteId: schedResp.Schedule.QuoteId,
+		UserId:  userID,
+	})
+	if err != nil || !quoteResp.Success {
+		log.Printf("schedule email: GetQuote failed for %s: %v", schedResp.Schedule.QuoteId, err)
+		return
+	}
+
+	clientResp, err := usersClient.GetClient(ctx, &users.GetClientRequest{
+		ClientId: quoteResp.Quote.ClientId,
+		UserId:   userID,
+	})
+	if err != nil || !clientResp.Success {
+		log.Printf("schedule email: GetClient failed for %s: %v", quoteResp.Quote.ClientId, err)
+		return
+	}
+
+	clientName := strings.TrimSpace(clientResp.Client.FirstName + " " + clientResp.Client.LastName)
+	if err := emailNotifier.SendScheduleEmail(
+		ctx, userID, quoteResp.Quote.QuoteId,
+		clientResp.Client.Email, clientName, quoteResp.Quote.Name, status,
+	); err != nil {
+		log.Printf("schedule email: send failed for schedule %s: %v", scheduleID, err)
+	}
 }
 
 // ─── Handlers ────────────────────────────────────────────────────────────────
@@ -235,7 +308,13 @@ func UpdateScheduleCell(c *gin.Context, client schedule.ScheduleServiceClient) {
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
-func ValidateSchedule(c *gin.Context, client schedule.ScheduleServiceClient) {
+func ValidateSchedule(
+	c *gin.Context,
+	client schedule.ScheduleServiceClient,
+	quoteClient quote.QuoteServiceClient,
+	usersClient users.UserServiceClient,
+	emailNotifier gatewaySvc.EmailNotifier,
+) {
 	startedAt := time.Now()
 	grpcCode := int32(0)
 	success := false
@@ -243,9 +322,12 @@ func ValidateSchedule(c *gin.Context, client schedule.ScheduleServiceClient) {
 		recordScheduleHTTP("validate_schedule", success, grpcCode, startedAt)
 	}()
 
+	scheduleID := c.Param("id")
+	userID := userIDFromCtx(c)
+
 	resp, err := client.ValidateSchedule(c.Request.Context(), &schedule.ValidateScheduleRequest{
-		ScheduleId: c.Param("id"),
-		UserId:     userIDFromCtx(c),
+		ScheduleId: scheduleID,
+		UserId:     userID,
 	})
 	if err != nil {
 		grpcCode = ScheduleCodeInternalError
@@ -259,5 +341,8 @@ func ValidateSchedule(c *gin.Context, client schedule.ScheduleServiceClient) {
 	}
 	grpcCode = resp.Code
 	success = true
+
+	go sendScheduleEmailNotification(scheduleID, userID, "VALID", client, quoteClient, usersClient, emailNotifier)
+
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }

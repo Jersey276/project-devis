@@ -10,7 +10,10 @@ import (
 	"strings"
 	"time"
 
+	quote "gateway/quote"
 	schedule "gateway/schedule"
+	gatewaySvc "gateway/services"
+	users "gateway/users"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -23,7 +26,13 @@ const (
 	scheduleStatusValid     = "VALID"
 )
 
-func UpdateScheduleStatus(c *gin.Context, client schedule.ScheduleServiceClient) {
+func UpdateScheduleStatus(
+	c *gin.Context,
+	client schedule.ScheduleServiceClient,
+	quoteClient quote.QuoteServiceClient,
+	usersClient users.UserServiceClient,
+	emailNotifier gatewaySvc.EmailNotifier,
+) {
 	startedAt := time.Now()
 	grpcCode := int32(0)
 	success := false
@@ -40,12 +49,15 @@ func UpdateScheduleStatus(c *gin.Context, client schedule.ScheduleServiceClient)
 		return
 	}
 
+	scheduleID := c.Param("id")
+	userID := userIDFromCtx(c)
 	status := strings.ToUpper(strings.TrimSpace(input.Status))
+
 	switch status {
 	case scheduleStatusValid:
 		resp, err := client.ValidateSchedule(c.Request.Context(), &schedule.ValidateScheduleRequest{
-			ScheduleId: c.Param("id"),
-			UserId:     userIDFromCtx(c),
+			ScheduleId: scheduleID,
+			UserId:     userID,
 		})
 		if err != nil {
 			grpcCode = ScheduleCodeInternalError
@@ -59,10 +71,11 @@ func UpdateScheduleStatus(c *gin.Context, client schedule.ScheduleServiceClient)
 		}
 		grpcCode = resp.Code
 		success = true
+		go sendScheduleEmailNotification(scheduleID, userID, status, client, quoteClient, usersClient, emailNotifier)
 		c.JSON(http.StatusOK, gin.H{"success": true, "status": status})
 		return
 	case scheduleStatusDraft, scheduleStatusNegotiate, scheduleStatusDenied:
-		if err := updateScheduleStatusDirect(c.Request.Context(), c.Param("id"), userIDFromCtx(c), status); err != nil {
+		if err := updateScheduleStatusDirect(c.Request.Context(), scheduleID, userID, status); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				grpcCode = ScheduleCodeNotFound
 				scheduleErrors.reply(c, ScheduleCodeNotFound)
@@ -74,6 +87,9 @@ func UpdateScheduleStatus(c *gin.Context, client schedule.ScheduleServiceClient)
 		}
 		grpcCode = 0
 		success = true
+		if status == scheduleStatusDenied {
+			go sendScheduleEmailNotification(scheduleID, userID, status, client, quoteClient, usersClient, emailNotifier)
+		}
 		c.JSON(http.StatusOK, gin.H{"success": true, "status": status})
 		return
 	default:
