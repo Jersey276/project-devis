@@ -44,6 +44,9 @@ services:
       TEMPLATE_SERVICE_ADDRESS: devis-template:50055
       SCHEDULE_SERVICE_ADDRESS: devis-schedule:50056
       SUBSCRIPTION_SERVICE_ADDRESS: devis-subscription:50057
+      EMAIL_SERVICE_ADDRESS: devis-email:50058
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}
     ports:
       - "8080:8080"
     secrets:
@@ -56,6 +59,7 @@ services:
       - devis-template
       - devis-schedule
       - devis-subscription
+      - devis-email
 
   devis-subscription:
     <<: *db-service
@@ -71,6 +75,19 @@ services:
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       AUTH_SERVICE_ADDRESS: devis-auth:50051
 
+  devis-email:
+    <<: *db-service
+    build:
+      <<: *service-build
+      args:
+        SERVICE_NAME: email
+    environment:
+      <<: *db-env
+      DB_USER: devis-email
+      DB_NAME: email
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-no-reply@project-devis.local}
+
   devis-auth:
     <<: *db-service
     build:
@@ -84,8 +101,10 @@ services:
       USER_SERVICE_ADDRESS: devis-user:50052
       SMTP_HOST: mailpit
       SMTP_PORT: 1025
-      SMTP_FROM: no-reply@project-devis.local
+      SMTP_FROM: ${EMAIL_FROM:-no-reply@project-devis.local}
       RESET_PASSWORD_BASE_URL: http://localhost:3000/reset-password
+      VERIFY_EMAIL_BASE_URL: http://localhost:3000/verify-email
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
     depends_on:
       postgres-init:
         condition: service_completed_successfully
