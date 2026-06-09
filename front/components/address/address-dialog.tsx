@@ -57,6 +57,10 @@ export default function AddressDialog({
 
   async function handleSubmit(values: AddressValues) {
     setFieldErrors({});
+    if (values.country_id == null) {
+      setFieldErrors({ country_id: [tCommon("validation.required")] });
+      return;
+    }
     setSubmitting(true);
     const isEdit = address?.id != null;
     try {

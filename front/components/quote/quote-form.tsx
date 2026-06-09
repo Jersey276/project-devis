@@ -349,6 +349,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [createScheduleOpen, setCreateScheduleOpen] = useState(false);
+  const [userId, setUserId] = useState("");
 
   const templateIdFromQuery = useMemo(
     () => searchParams.get("template") ?? null,
@@ -426,6 +427,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         return;
       }
       const meId = (meRes.body.user as { user_id: string }).user_id;
+      setUserId(meId);
       const { ok, body } = await listAddresses({
         type: "user",
         userId: meId,
@@ -1197,6 +1199,29 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     [isReadonly, quoteId, t],
   );
 
+  const refreshClients = useCallback(async () => {
+    const { ok, body } = await listClients();
+    if (ok && Array.isArray(body.clients)) {
+      setClients(body.clients as BackendClient[]);
+    }
+  }, []);
+
+  const refreshUserAddresses = useCallback(async () => {
+    if (!userId) return;
+    const { ok, body } = await listAddresses({ type: "user", userId });
+    if (ok && Array.isArray(body.addresses)) {
+      setUserAddresses(body.addresses as BackendAddress[]);
+    }
+  }, [userId]);
+
+  const refreshClientAddresses = useCallback(async () => {
+    if (!clientId) return;
+    const { ok, body } = await listAddresses({ type: "client", clientId });
+    if (ok && Array.isArray(body.addresses)) {
+      setAddresses(body.addresses as BackendAddress[]);
+    }
+  }, [clientId]);
+
   // ────────────────────────────────────────────────────────────
   // Render
 
@@ -1350,6 +1375,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             clients={clients}
             addresses={addresses}
             userAddresses={userAddresses}
+            userId={userId}
             nameErrors={errors.name}
             clientErrors={errors.client_id}
             addressErrors={errors.address_id}
@@ -1358,6 +1384,9 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             onClientIdChange={handleClientIdChange}
             onAddressIdChange={handleAddressIdChange}
             onUserAddressIdChange={handleUserAddressIdChange}
+            onClientCreated={refreshClients}
+            onUserAddressCreated={refreshUserAddresses}
+            onClientAddressCreated={refreshClientAddresses}
           />
         )}
 
