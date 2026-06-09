@@ -26,6 +26,8 @@ service AuthService {
     rpc IntrospectToken(IntrospectTokenRequest) returns (IntrospectTokenResponse);
     // UpdateSubscriptionTier updates a user's subscription tier and invalidates existing tokens.
     rpc UpdateSubscriptionTier(UpdateSubscriptionTierRequest) returns (GenericResponse);
+    // ResendEmailVerification re-sends the verification email for an unverified account.
+    rpc ResendEmailVerification(ResendEmailVerificationRequest) returns (GenericResponse);
 }
 
 // RegisterRequest contains user registration information
@@ -117,4 +119,8 @@ message IntrospectTokenResponse {
 message UpdateSubscriptionTierRequest {
     string user_id = 1;
     string tier    = 2;
+}
+
+message ResendEmailVerificationRequest {
+    string user_id = 1;
 }

@@ -133,6 +133,14 @@ func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*
 		}, err
 	}
 
+	if token, tokenErr := services.GenerateEmailVerificationToken(ctx, s.db, userID); tokenErr == nil {
+		if sendErr := s.emailSender.SendEmailVerification(normalizedEmail, token); sendErr != nil {
+			log.Printf("send verification email failed for user=%s: %v", userID, sendErr)
+		}
+	} else {
+		log.Printf("generate verification token failed for user=%s: %v", userID, tokenErr)
+	}
+
 	return &authGrpc.FormGenericResponse{
 		Success: true,
 		Code:    CodeSuccess,

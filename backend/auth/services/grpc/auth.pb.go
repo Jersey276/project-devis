@@ -920,6 +920,50 @@ func (x *UpdateSubscriptionTierRequest) GetTier() string {
 	return ""
 }
 
+type ResendEmailVerificationRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResendEmailVerificationRequest) Reset() {
+	*x = ResendEmailVerificationRequest{}
+	mi := &file_auth_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResendEmailVerificationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResendEmailVerificationRequest) ProtoMessage() {}
+
+func (x *ResendEmailVerificationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResendEmailVerificationRequest.ProtoReflect.Descriptor instead.
+func (*ResendEmailVerificationRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ResendEmailVerificationRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
 var File_auth_proto protoreflect.FileDescriptor
 
 const file_auth_proto_rawDesc = "" +
@@ -988,7 +1032,9 @@ const file_auth_proto_rawDesc = "" +
 	"\acontext\x18\x03 \x01(\v2\x13.auth.AccessContextR\acontext\"L\n" +
 	"\x1dUpdateSubscriptionTierRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
-	"\x04tier\x18\x02 \x01(\tR\x04tier2\xb5\x05\n" +
+	"\x04tier\x18\x02 \x01(\tR\x04tier\"9\n" +
+	"\x1eResendEmailVerificationRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId2\x8d\x06\n" +
 	"\vAuthService\x12<\n" +
 	"\bRegister\x12\x15.auth.RegisterRequest\x1a\x19.auth.FormGenericResponse\x120\n" +
 	"\x05Login\x12\x12.auth.LoginRequest\x1a\x13.auth.LoginResponse\x12B\n" +
@@ -999,7 +1045,8 @@ const file_auth_proto_rawDesc = "" +
 	"\fRefreshToken\x12\x19.auth.RefreshTokenRequest\x1a\x13.auth.LoginResponse\x124\n" +
 	"\x06Logout\x12\x13.auth.LogoutRequest\x1a\x15.auth.GenericResponse\x12N\n" +
 	"\x0fIntrospectToken\x12\x1c.auth.IntrospectTokenRequest\x1a\x1d.auth.IntrospectTokenResponse\x12T\n" +
-	"\x16UpdateSubscriptionTier\x12#.auth.UpdateSubscriptionTierRequest\x1a\x15.auth.GenericResponseB\"Z project-devis/auth/services/grpcb\x06proto3"
+	"\x16UpdateSubscriptionTier\x12#.auth.UpdateSubscriptionTierRequest\x1a\x15.auth.GenericResponse\x12V\n" +
+	"\x17ResendEmailVerification\x12$.auth.ResendEmailVerificationRequest\x1a\x15.auth.GenericResponseB\"Z project-devis/auth/services/grpcb\x06proto3"
 
 var (
 	file_auth_proto_rawDescOnce sync.Once
@@ -1013,24 +1060,25 @@ func file_auth_proto_rawDescGZIP() []byte {
 	return file_auth_proto_rawDescData
 }
 
-var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_auth_proto_goTypes = []any{
-	(*RegisterRequest)(nil),               // 0: auth.RegisterRequest
-	(*LoginRequest)(nil),                  // 1: auth.LoginRequest
-	(*LoginResponse)(nil),                 // 2: auth.LoginResponse
-	(*UpdatePasswordRequest)(nil),         // 3: auth.UpdatePasswordRequest
-	(*GenericResponse)(nil),               // 4: auth.GenericResponse
-	(*ResetPasswordRequest)(nil),          // 5: auth.ResetPasswordRequest
-	(*ConfirmResetPasswordRequest)(nil),   // 6: auth.ConfirmResetPasswordRequest
-	(*VerifyEmailRequest)(nil),            // 7: auth.VerifyEmailRequest
-	(*RefreshTokenRequest)(nil),           // 8: auth.RefreshTokenRequest
-	(*LogoutRequest)(nil),                 // 9: auth.LogoutRequest
-	(*FormGenericResponse)(nil),           // 10: auth.FormGenericResponse
-	(*FormFieldError)(nil),                // 11: auth.FormFieldError
-	(*IntrospectTokenRequest)(nil),        // 12: auth.IntrospectTokenRequest
-	(*AccessContext)(nil),                 // 13: auth.AccessContext
-	(*IntrospectTokenResponse)(nil),       // 14: auth.IntrospectTokenResponse
-	(*UpdateSubscriptionTierRequest)(nil), // 15: auth.UpdateSubscriptionTierRequest
+	(*RegisterRequest)(nil),                // 0: auth.RegisterRequest
+	(*LoginRequest)(nil),                   // 1: auth.LoginRequest
+	(*LoginResponse)(nil),                  // 2: auth.LoginResponse
+	(*UpdatePasswordRequest)(nil),          // 3: auth.UpdatePasswordRequest
+	(*GenericResponse)(nil),                // 4: auth.GenericResponse
+	(*ResetPasswordRequest)(nil),           // 5: auth.ResetPasswordRequest
+	(*ConfirmResetPasswordRequest)(nil),    // 6: auth.ConfirmResetPasswordRequest
+	(*VerifyEmailRequest)(nil),             // 7: auth.VerifyEmailRequest
+	(*RefreshTokenRequest)(nil),            // 8: auth.RefreshTokenRequest
+	(*LogoutRequest)(nil),                  // 9: auth.LogoutRequest
+	(*FormGenericResponse)(nil),            // 10: auth.FormGenericResponse
+	(*FormFieldError)(nil),                 // 11: auth.FormFieldError
+	(*IntrospectTokenRequest)(nil),         // 12: auth.IntrospectTokenRequest
+	(*AccessContext)(nil),                  // 13: auth.AccessContext
+	(*IntrospectTokenResponse)(nil),        // 14: auth.IntrospectTokenResponse
+	(*UpdateSubscriptionTierRequest)(nil),  // 15: auth.UpdateSubscriptionTierRequest
+	(*ResendEmailVerificationRequest)(nil), // 16: auth.ResendEmailVerificationRequest
 }
 var file_auth_proto_depIdxs = []int32{
 	11, // 0: auth.FormGenericResponse.field_errors:type_name -> auth.FormFieldError
@@ -1045,18 +1093,20 @@ var file_auth_proto_depIdxs = []int32{
 	9,  // 9: auth.AuthService.Logout:input_type -> auth.LogoutRequest
 	12, // 10: auth.AuthService.IntrospectToken:input_type -> auth.IntrospectTokenRequest
 	15, // 11: auth.AuthService.UpdateSubscriptionTier:input_type -> auth.UpdateSubscriptionTierRequest
-	10, // 12: auth.AuthService.Register:output_type -> auth.FormGenericResponse
-	2,  // 13: auth.AuthService.Login:output_type -> auth.LoginResponse
-	4,  // 14: auth.AuthService.ResetPassword:output_type -> auth.GenericResponse
-	4,  // 15: auth.AuthService.ConfirmResetPassword:output_type -> auth.GenericResponse
-	4,  // 16: auth.AuthService.UpdatePassword:output_type -> auth.GenericResponse
-	4,  // 17: auth.AuthService.VerifyEmail:output_type -> auth.GenericResponse
-	2,  // 18: auth.AuthService.RefreshToken:output_type -> auth.LoginResponse
-	4,  // 19: auth.AuthService.Logout:output_type -> auth.GenericResponse
-	14, // 20: auth.AuthService.IntrospectToken:output_type -> auth.IntrospectTokenResponse
-	4,  // 21: auth.AuthService.UpdateSubscriptionTier:output_type -> auth.GenericResponse
-	12, // [12:22] is the sub-list for method output_type
-	2,  // [2:12] is the sub-list for method input_type
+	16, // 12: auth.AuthService.ResendEmailVerification:input_type -> auth.ResendEmailVerificationRequest
+	10, // 13: auth.AuthService.Register:output_type -> auth.FormGenericResponse
+	2,  // 14: auth.AuthService.Login:output_type -> auth.LoginResponse
+	4,  // 15: auth.AuthService.ResetPassword:output_type -> auth.GenericResponse
+	4,  // 16: auth.AuthService.ConfirmResetPassword:output_type -> auth.GenericResponse
+	4,  // 17: auth.AuthService.UpdatePassword:output_type -> auth.GenericResponse
+	4,  // 18: auth.AuthService.VerifyEmail:output_type -> auth.GenericResponse
+	2,  // 19: auth.AuthService.RefreshToken:output_type -> auth.LoginResponse
+	4,  // 20: auth.AuthService.Logout:output_type -> auth.GenericResponse
+	14, // 21: auth.AuthService.IntrospectToken:output_type -> auth.IntrospectTokenResponse
+	4,  // 22: auth.AuthService.UpdateSubscriptionTier:output_type -> auth.GenericResponse
+	4,  // 23: auth.AuthService.ResendEmailVerification:output_type -> auth.GenericResponse
+	13, // [13:24] is the sub-list for method output_type
+	2,  // [2:13] is the sub-list for method input_type
 	2,  // [2:2] is the sub-list for extension type_name
 	2,  // [2:2] is the sub-list for extension extendee
 	0,  // [0:2] is the sub-list for field type_name
@@ -1074,7 +1124,7 @@ func file_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_proto_rawDesc), len(file_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -29,6 +29,8 @@ const (
 	SMTPPassword            EnvKey = "SMTP_PASSWORD"
 	SMTPFrom                EnvKey = "SMTP_FROM"
 	ResetPasswordBaseURL    EnvKey = "RESET_PASSWORD_BASE_URL"
+	ResendAPIKey            EnvKey = "RESEND_API_KEY"
+	VerifyEmailBaseURL      EnvKey = "VERIFY_EMAIL_BASE_URL"
 )
 
 func (key EnvKey) GetValue() string {

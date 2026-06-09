@@ -1,0 +1,1 @@
+ALTER TABLE auth DROP COLUMN IF EXISTS email_verified;
