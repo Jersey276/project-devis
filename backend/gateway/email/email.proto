@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package email;
+
+option go_package = "gateway/email";
+
+service EmailService {
+    rpc SendQuoteEmail(SendQuoteEmailRequest) returns (SendEmailResponse);
+    rpc SendScheduleEmail(SendScheduleEmailRequest) returns (SendEmailResponse);
+    rpc GetEmailLogs(GetEmailLogsRequest) returns (GetEmailLogsResponse);
+    rpc TrackEmailEvent(TrackEmailEventRequest) returns (GenericResponse);
+}
+
+message SendQuoteEmailRequest {
+    string to_email   = 1;
+    string to_name    = 2;
+    string quote_name = 3;
+    bytes  pdf_bytes  = 4;
+    string user_id    = 5;
+    string quote_id   = 6;
+}
+
+message SendScheduleEmailRequest {
+    string to_email   = 1;
+    string to_name    = 2;
+    string quote_name = 3;
+    string status     = 4;
+    string user_id    = 5;
+    string quote_id   = 6;
+}
+
+message SendEmailResponse {
+    bool   success = 1;
+    int32  code    = 2;
+}
+
+message GetEmailLogsRequest {
+    string user_id = 1;
+    int32  limit   = 2;
+    int32  offset  = 3;
+}
+
+message EmailLog {
+    int32  id             = 1;
+    string to_email       = 2;
+    string type           = 3;
+    string reference_name = 4;
+    string status         = 5;
+    bool   opened         = 6;
+    bool   clicked        = 7;
+    string created_at     = 8;
+}
+
+message GetEmailLogsResponse {
+    repeated EmailLog logs  = 1;
+    int32             total = 2;
+}
+
+message TrackEmailEventRequest {
+    string resend_id   = 1;
+    string event_type  = 2;
+    string occurred_at = 3;
+}
+
+message GenericResponse {
+    bool  success = 1;
+    int32 code    = 2;
+}

@@ -4,9 +4,12 @@ import (
 	"gateway/authz"
 	"gateway/controllers"
 	"gateway/middleware"
+	"gateway/services"
 
 	"github.com/gin-gonic/gin"
 )
+
+var authorizer = authz.NewFromEnv()
 
 type Route struct {
 	TargetURL string
@@ -20,9 +23,12 @@ func main() {
 func setupRouter() *gin.Engine {
 	r := gin.Default()
 
-	// Stripe webhook — no auth, raw body, registered before auth groups
+	emailNotifier := services.NewEmailNotifier()
+
+	// Webhooks — no auth, raw body, registered before auth groups
 	webhooks := r.Group("/api/webhooks")
 	controllers.WebhookRoutes(webhooks)
+	controllers.ResendWebhookRoutes(webhooks)
 
 	api := r.Group("/api")
 	controllers.AuthRoutes(api.Group("/auth"))
@@ -33,7 +39,7 @@ func setupRouter() *gin.Engine {
 
 	quotes := api.Group("/quotes")
 	quotes.Use(middleware.AuthRequired())
-	controllers.QuotesRoutes(quotes)
+	controllers.QuotesRoutes(quotes, emailNotifier)
 
 	exportGrp := api.Group("/export")
 	exportGrp.Use(middleware.AuthRequired())
@@ -47,7 +53,7 @@ func setupRouter() *gin.Engine {
 	schedules := api.Group("/schedules")
 	schedules.Use(middleware.AuthRequired())
 	schedules.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionSchedules))
-	controllers.SchedulesRoutes(schedules)
+	controllers.SchedulesRoutes(schedules, emailNotifier)
 
 	plans := api.Group("/plans")
 	plans.Use(middleware.AuthRequired())
@@ -57,8 +63,9 @@ func setupRouter() *gin.Engine {
 	subscriptions.Use(middleware.AuthRequired())
 	controllers.SubscriptionsRoutes(subscriptions)
 
-	// controllers.ProjectRoutes(api.Group("/project"))
-	// controllers.PaymentRoutes(api.Group("/payments"))
+	emailLogs := api.Group("/email-logs")
+	emailLogs.Use(middleware.AuthRequired())
+	controllers.EmailLogsRoutes(emailLogs, authorizer)
 
 	return r
 }

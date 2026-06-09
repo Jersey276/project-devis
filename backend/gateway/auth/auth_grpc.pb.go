@@ -19,16 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_Register_FullMethodName               = "/auth.AuthService/Register"
-	AuthService_Login_FullMethodName                  = "/auth.AuthService/Login"
-	AuthService_ResetPassword_FullMethodName          = "/auth.AuthService/ResetPassword"
-	AuthService_ConfirmResetPassword_FullMethodName   = "/auth.AuthService/ConfirmResetPassword"
-	AuthService_UpdatePassword_FullMethodName         = "/auth.AuthService/UpdatePassword"
-	AuthService_VerifyEmail_FullMethodName            = "/auth.AuthService/VerifyEmail"
-	AuthService_RefreshToken_FullMethodName           = "/auth.AuthService/RefreshToken"
-	AuthService_Logout_FullMethodName                 = "/auth.AuthService/Logout"
-	AuthService_IntrospectToken_FullMethodName        = "/auth.AuthService/IntrospectToken"
-	AuthService_UpdateSubscriptionTier_FullMethodName = "/auth.AuthService/UpdateSubscriptionTier"
+	AuthService_Register_FullMethodName                = "/auth.AuthService/Register"
+	AuthService_Login_FullMethodName                   = "/auth.AuthService/Login"
+	AuthService_ResetPassword_FullMethodName           = "/auth.AuthService/ResetPassword"
+	AuthService_ConfirmResetPassword_FullMethodName    = "/auth.AuthService/ConfirmResetPassword"
+	AuthService_UpdatePassword_FullMethodName          = "/auth.AuthService/UpdatePassword"
+	AuthService_VerifyEmail_FullMethodName             = "/auth.AuthService/VerifyEmail"
+	AuthService_RefreshToken_FullMethodName            = "/auth.AuthService/RefreshToken"
+	AuthService_Logout_FullMethodName                  = "/auth.AuthService/Logout"
+	AuthService_IntrospectToken_FullMethodName         = "/auth.AuthService/IntrospectToken"
+	AuthService_UpdateSubscriptionTier_FullMethodName  = "/auth.AuthService/UpdateSubscriptionTier"
+	AuthService_ResendEmailVerification_FullMethodName = "/auth.AuthService/ResendEmailVerification"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -45,6 +46,7 @@ type AuthServiceClient interface {
 	Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	IntrospectToken(ctx context.Context, in *IntrospectTokenRequest, opts ...grpc.CallOption) (*IntrospectTokenResponse, error)
 	UpdateSubscriptionTier(ctx context.Context, in *UpdateSubscriptionTierRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	ResendEmailVerification(ctx context.Context, in *ResendEmailVerificationRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 }
 
 type authServiceClient struct {
@@ -155,6 +157,16 @@ func (c *authServiceClient) UpdateSubscriptionTier(ctx context.Context, in *Upda
 	return out, nil
 }
 
+func (c *authServiceClient) ResendEmailVerification(ctx context.Context, in *ResendEmailVerificationRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, AuthService_ResendEmailVerification_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -169,6 +181,7 @@ type AuthServiceServer interface {
 	Logout(context.Context, *LogoutRequest) (*GenericResponse, error)
 	IntrospectToken(context.Context, *IntrospectTokenRequest) (*IntrospectTokenResponse, error)
 	UpdateSubscriptionTier(context.Context, *UpdateSubscriptionTierRequest) (*GenericResponse, error)
+	ResendEmailVerification(context.Context, *ResendEmailVerificationRequest) (*GenericResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -208,6 +221,9 @@ func (UnimplementedAuthServiceServer) IntrospectToken(context.Context, *Introspe
 }
 func (UnimplementedAuthServiceServer) UpdateSubscriptionTier(context.Context, *UpdateSubscriptionTierRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateSubscriptionTier not implemented")
+}
+func (UnimplementedAuthServiceServer) ResendEmailVerification(context.Context, *ResendEmailVerificationRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ResendEmailVerification not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -410,6 +426,24 @@ func _AuthService_UpdateSubscriptionTier_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_ResendEmailVerification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResendEmailVerificationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).ResendEmailVerification(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_ResendEmailVerification_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).ResendEmailVerification(ctx, req.(*ResendEmailVerificationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -456,6 +490,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateSubscriptionTier",
 			Handler:    _AuthService_UpdateSubscriptionTier_Handler,
+		},
+		{
+			MethodName: "ResendEmailVerification",
+			Handler:    _AuthService_ResendEmailVerification_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

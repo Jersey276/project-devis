@@ -29,6 +29,7 @@ const (
 	QuoteService_TrashQuotes_FullMethodName        = "/quote.QuoteService/TrashQuotes"
 	QuoteService_DropQuote_FullMethodName          = "/quote.QuoteService/DropQuote"
 	QuoteService_ContinueQuote_FullMethodName      = "/quote.QuoteService/ContinueQuote"
+	QuoteService_SendQuote_FullMethodName          = "/quote.QuoteService/SendQuote"
 	QuoteService_CreateQuoteLine_FullMethodName    = "/quote.QuoteService/CreateQuoteLine"
 	QuoteService_GetQuoteLine_FullMethodName       = "/quote.QuoteService/GetQuoteLine"
 	QuoteService_ListQuoteLines_FullMethodName     = "/quote.QuoteService/ListQuoteLines"
@@ -52,6 +53,7 @@ type QuoteServiceClient interface {
 	TrashQuotes(ctx context.Context, in *TrashQuotesRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	DropQuote(ctx context.Context, in *DropQuoteRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	ContinueQuote(ctx context.Context, in *ContinueQuoteRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	SendQuote(ctx context.Context, in *SendQuoteRequest, opts ...grpc.CallOption) (*SendQuoteResponse, error)
 	// Line
 	CreateQuoteLine(ctx context.Context, in *CreateQuoteLineRequest, opts ...grpc.CallOption) (*CreateQuoteLineResponse, error)
 	GetQuoteLine(ctx context.Context, in *GetQuoteLineRequest, opts ...grpc.CallOption) (*GetQuoteLineResponse, error)
@@ -169,6 +171,16 @@ func (c *quoteServiceClient) ContinueQuote(ctx context.Context, in *ContinueQuot
 	return out, nil
 }
 
+func (c *quoteServiceClient) SendQuote(ctx context.Context, in *SendQuoteRequest, opts ...grpc.CallOption) (*SendQuoteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendQuoteResponse)
+	err := c.cc.Invoke(ctx, QuoteService_SendQuote_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *quoteServiceClient) CreateQuoteLine(ctx context.Context, in *CreateQuoteLineRequest, opts ...grpc.CallOption) (*CreateQuoteLineResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateQuoteLineResponse)
@@ -244,6 +256,7 @@ type QuoteServiceServer interface {
 	TrashQuotes(context.Context, *TrashQuotesRequest) (*GenericResponse, error)
 	DropQuote(context.Context, *DropQuoteRequest) (*GenericResponse, error)
 	ContinueQuote(context.Context, *ContinueQuoteRequest) (*GenericResponse, error)
+	SendQuote(context.Context, *SendQuoteRequest) (*SendQuoteResponse, error)
 	// Line
 	CreateQuoteLine(context.Context, *CreateQuoteLineRequest) (*CreateQuoteLineResponse, error)
 	GetQuoteLine(context.Context, *GetQuoteLineRequest) (*GetQuoteLineResponse, error)
@@ -290,6 +303,9 @@ func (UnimplementedQuoteServiceServer) DropQuote(context.Context, *DropQuoteRequ
 }
 func (UnimplementedQuoteServiceServer) ContinueQuote(context.Context, *ContinueQuoteRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ContinueQuote not implemented")
+}
+func (UnimplementedQuoteServiceServer) SendQuote(context.Context, *SendQuoteRequest) (*SendQuoteResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SendQuote not implemented")
 }
 func (UnimplementedQuoteServiceServer) CreateQuoteLine(context.Context, *CreateQuoteLineRequest) (*CreateQuoteLineResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateQuoteLine not implemented")
@@ -510,6 +526,24 @@ func _QuoteService_ContinueQuote_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _QuoteService_SendQuote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendQuoteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuoteServiceServer).SendQuote(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QuoteService_SendQuote_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuoteServiceServer).SendQuote(ctx, req.(*SendQuoteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _QuoteService_CreateQuoteLine_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateQuoteLineRequest)
 	if err := dec(in); err != nil {
@@ -664,6 +698,10 @@ var QuoteService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ContinueQuote",
 			Handler:    _QuoteService_ContinueQuote_Handler,
+		},
+		{
+			MethodName: "SendQuote",
+			Handler:    _QuoteService_SendQuote_Handler,
 		},
 		{
 			MethodName: "CreateQuoteLine",

@@ -22,7 +22,7 @@ func (a *LocalAuthorizer) Can(_ context.Context, subject Subject, action Action,
 		}
 	}
 
-	if resource == ResourceSubscriptionTemplates || resource == ResourceSubscriptionSchedules {
+	if resource == ResourceSubscriptionTemplates || resource == ResourceSubscriptionSchedules || resource == ResourceSubscriptionEmailTracking {
 		if subject.SubscriptionTier == "free" {
 			return Decision{Allowed: false, Reason: "SUBSCRIPTION_REQUIRED"}, nil
 		}
