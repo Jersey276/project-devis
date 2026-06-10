@@ -25,15 +25,12 @@ func (s *Server) CreateScheduleWithEligibleLines(ctx context.Context, req *sched
 
 func (s *Server) createScheduleWithEligibleLines(ctx context.Context, req *scheduleGrpc.CreateScheduleRequest, eligibleLineIDs []string) (resp *scheduleGrpc.CreateScheduleResponse, err error) {
 	startedAt := time.Now()
-	defer func() {
-		code := CodeInternalError
-		success := false
-		if resp != nil {
-			code = resp.Code
-			success = resp.Success
+	defer deferObserve("create_schedule", startedAt, func() (int32, bool) {
+		if resp == nil {
+			return CodeInternalError, false
 		}
-		recordOperation("create_schedule", success, code, startedAt, err)
-	}()
+		return resp.Code, resp.Success
+	}, &err)()
 
 	if req == nil {
 		return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInvalidInput}, nil
@@ -73,6 +70,7 @@ func (s *Server) createScheduleWithEligibleLines(ctx context.Context, req *sched
 	if err != nil {
 		return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInternalError}, err
 	}
+	defer tx.Rollback()
 
 	scheduleID := uuid.New().String()
 	_, err = tx.ExecContext(ctx,
@@ -80,14 +78,12 @@ func (s *Server) createScheduleWithEligibleLines(ctx context.Context, req *sched
 		scheduleID, req.QuoteId, req.UserId, req.Name, StatusDraft, startMonthDate, req.DurationMonths,
 	)
 	if err != nil {
-		_ = tx.Rollback()
 		return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInternalError}, err
 	}
 
 	for _, lineID := range eligibleLineIDs {
 		trimmedLineID := strings.TrimSpace(lineID)
 		if trimmedLineID == "" {
-			_ = tx.Rollback()
 			return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInvalidInput}, nil
 		}
 		for monthIndex := 1; monthIndex <= int(req.DurationMonths); monthIndex++ {
@@ -96,7 +92,6 @@ func (s *Server) createScheduleWithEligibleLines(ctx context.Context, req *sched
 				scheduleID, trimmedLineID, monthIndex, int64(0),
 			)
 			if err != nil {
-				_ = tx.Rollback()
 				return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInternalError}, err
 			}
 		}

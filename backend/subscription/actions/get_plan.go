@@ -16,11 +16,8 @@ func (s *Server) GetPlan(ctx context.Context, req *subscriptionGrpc.GetPlanReque
 		req.GetPlanId(),
 	).Scan(&p.PlanId, &p.Name, &p.Tier, &p.PriceCents, &p.BillingCycle, &p.Features, &p.Active, &spid)
 
-	if err == sql.ErrNoRows {
-		return &subscriptionGrpc.GetPlanResponse{Success: false, Code: CodeNotFound}, nil
-	}
-	if err != nil {
-		return &subscriptionGrpc.GetPlanResponse{Success: false, Code: CodeInternalError}, nil
+	if code, isErr := queryErrCode(err); isErr {
+		return &subscriptionGrpc.GetPlanResponse{Success: false, Code: code}, nil
 	}
 	p.StripePriceId = spid.String
 

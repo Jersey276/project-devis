@@ -55,10 +55,18 @@ func (s *Server) ProcessWebhookEvent(ctx context.Context, event stripe.Event) (*
 	return &subGrpc.GenericResponse{Success: true, Code: CodeSuccess}, nil
 }
 
+func unmarshalStripeData[T any](raw []byte) (T, *subGrpc.GenericResponse) {
+	var v T
+	if err := json.Unmarshal(raw, &v); err != nil {
+		return v, &subGrpc.GenericResponse{Success: false, Code: CodeInternalError}
+	}
+	return v, nil
+}
+
 func (s *Server) handleSubscriptionUpdated(ctx context.Context, event stripe.Event) (*subGrpc.GenericResponse, error) {
-	var sub stripe.Subscription
-	if err := json.Unmarshal(event.Data.Raw, &sub); err != nil {
-		return &subGrpc.GenericResponse{Success: false, Code: CodeInternalError}, nil
+	sub, errResp := unmarshalStripeData[stripe.Subscription](event.Data.Raw)
+	if errResp != nil {
+		return errResp, nil
 	}
 
 	status := mapStripeStatus(string(sub.Status))
@@ -118,9 +126,9 @@ func (s *Server) handleSubscriptionUpdated(ctx context.Context, event stripe.Eve
 }
 
 func (s *Server) handleSubscriptionDeleted(ctx context.Context, event stripe.Event) (*subGrpc.GenericResponse, error) {
-	var sub stripe.Subscription
-	if err := json.Unmarshal(event.Data.Raw, &sub); err != nil {
-		return &subGrpc.GenericResponse{Success: false, Code: CodeInternalError}, nil
+	sub, errResp := unmarshalStripeData[stripe.Subscription](event.Data.Raw)
+	if errResp != nil {
+		return errResp, nil
 	}
 
 	var userID string
@@ -139,9 +147,9 @@ func (s *Server) handleSubscriptionDeleted(ctx context.Context, event stripe.Eve
 }
 
 func (s *Server) handleInvoicePaymentFailed(ctx context.Context, event stripe.Event) (*subGrpc.GenericResponse, error) {
-	var invoice stripe.Invoice
-	if err := json.Unmarshal(event.Data.Raw, &invoice); err != nil {
-		return &subGrpc.GenericResponse{Success: false, Code: CodeInternalError}, nil
+	invoice, errResp := unmarshalStripeData[stripe.Invoice](event.Data.Raw)
+	if errResp != nil {
+		return errResp, nil
 	}
 
 	if invoice.Customer == nil {

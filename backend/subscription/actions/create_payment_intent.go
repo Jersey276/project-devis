@@ -21,11 +21,8 @@ func (s *Server) CreatePaymentIntent(ctx context.Context, req *subGrpc.CreatePay
 		"SELECT stripe_price_id FROM plans WHERE plan_id = $1 AND active = TRUE",
 		req.GetPlanId(),
 	).Scan(&stripePriceID)
-	if err == sql.ErrNoRows {
-		return &subGrpc.CreatePaymentIntentResponse{Success: false, Code: CodeNotFound}, nil
-	}
-	if err != nil {
-		return &subGrpc.CreatePaymentIntentResponse{Success: false, Code: CodeInternalError}, nil
+	if code, isErr := queryErrCode(err); isErr {
+		return &subGrpc.CreatePaymentIntentResponse{Success: false, Code: code}, nil
 	}
 	if !stripePriceID.Valid || stripePriceID.String == "" {
 		return &subGrpc.CreatePaymentIntentResponse{Success: false, Code: CodeInvalidInput}, nil
