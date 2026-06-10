@@ -22,6 +22,7 @@ service UserService {
 
 message CreateUserRequest {
     string email = 1;
+    bool is_admin = 2;
 }
 
 message CreateUserResponse {

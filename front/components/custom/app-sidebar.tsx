@@ -88,6 +88,7 @@ const items: SidebarItem[] = [
     icon: UsersIcon,
     modes: ["provider"],
     temp: true,
+    adminOnly: true,
   },
   {
     key: "countries",
@@ -183,25 +184,7 @@ export default function AppSidebar() {
   return (
     <Sidebar data-mode={mode}>
       <SidebarContent className="bg-primary-foreground text-primary">
-        <SidebarGroup>
-          <SidebarGroupLabel>{shownGroupLabel}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {shownItems.map((item) => (
-                <SidebarMenuItem key={item.key}>
-                  <SidebarMenuButton asChild>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{t(item.key)}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {isAdmin && adminItems.length > 0 && (
+        {isAdmin && (
           <SidebarGroup>
             <SidebarGroupLabel>{t("viewSwitchLabel")}</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -228,6 +211,24 @@ export default function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
+        <SidebarGroup>
+          <SidebarGroupLabel>{shownGroupLabel}</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {shownItems.map((item) => (
+                <SidebarMenuItem key={item.key}>
+                  <SidebarMenuButton asChild>
+                    <Link href={item.url}>
+                      <item.icon />
+                      <span>{t(item.key)}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="bg-primary-foreground text-primary">
         <UserMenu />
