@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v7.34.0
-// source: schedule/schedule.proto
+// source: schedule.proto
 
 package schedule
 
@@ -269,5 +269,5 @@ var ScheduleService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "schedule/schedule.proto",
+	Metadata: "schedule.proto",
 }

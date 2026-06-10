@@ -21,6 +21,14 @@ const (
 	TemplateCodeInternalError       int32 = 2001
 )
 
+func templateValidationErrors(errs []*template.ValidationError) []FieldError {
+	out := make([]FieldError, len(errs))
+	for i, e := range errs {
+		out[i] = FieldError{Field: e.Field, Message: e.Message}
+	}
+	return out
+}
+
 var templateErrors = &serviceErrors{
 	codes: map[int32]codeMapping{
 		TemplateCodeNotFound:            {http.StatusNotFound, "Template introuvable."},
@@ -103,7 +111,11 @@ func CreateTemplate(c *gin.Context, client template.TemplateServiceClient) {
 		return
 	}
 	if !resp.Success {
-		templateErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			templateErrors.replyWithValidation(c, resp.Code, templateValidationErrors(resp.ValidationErrors))
+		} else {
+			templateErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "template_id": resp.TemplateId})
@@ -153,7 +165,11 @@ func UpdateTemplate(c *gin.Context, client template.TemplateServiceClient) {
 		return
 	}
 	if !resp.Success {
-		templateErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			templateErrors.replyWithValidation(c, resp.Code, templateValidationErrors(resp.ValidationErrors))
+		} else {
+			templateErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -270,7 +286,11 @@ func CreateTemplateLine(c *gin.Context, client template.TemplateServiceClient) {
 		return
 	}
 	if !resp.Success {
-		templateErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			templateErrors.replyWithValidation(c, resp.Code, templateValidationErrors(resp.ValidationErrors))
+		} else {
+			templateErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "line_id": resp.LineId})
@@ -313,7 +333,11 @@ func UpdateTemplateLine(c *gin.Context, client template.TemplateServiceClient) {
 		return
 	}
 	if !resp.Success {
-		templateErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			templateErrors.replyWithValidation(c, resp.Code, templateValidationErrors(resp.ValidationErrors))
+		} else {
+			templateErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})

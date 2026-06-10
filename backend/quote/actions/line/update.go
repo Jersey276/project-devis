@@ -12,19 +12,32 @@ import (
 )
 
 func Update(ctx context.Context, db *sql.DB, req *quoteGrpc.UpdateQuoteLineRequest) (*quoteGrpc.UpdateQuoteLineResponse, error) {
-	if req.LineId == "" || req.UserId == "" || req.Type == "" || req.Quantity == "" {
-		return &quoteGrpc.UpdateQuoteLineResponse{Success: false, Code: codes.InvalidInput}, nil
+	var fieldErrors []*quoteGrpc.ValidationError
+
+	if req.LineId == "" {
+		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "line_id", Message: "Champ requis."})
+	}
+	if req.UserId == "" {
+		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "user_id", Message: "Champ requis."})
+	}
+	if req.Type == "" {
+		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "type", Message: "Champ requis."})
+	} else if req.Type != TypeSimple && req.Type != TypeMultiple {
+		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "type", Message: "Type invalide."})
+	}
+	if req.Quantity == "" {
+		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "quantity", Message: "Champ requis."})
+	} else if _, err := strconv.ParseFloat(req.Quantity, 64); err != nil {
+		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "quantity", Message: "Doit être un nombre valide."})
 	}
 	if req.UnitPrice < 0 {
-		return &quoteGrpc.UpdateQuoteLineResponse{Success: false, Code: codes.InvalidInput}, nil
-	}
-	if _, err := strconv.ParseFloat(req.Quantity, 64); err != nil {
-		return &quoteGrpc.UpdateQuoteLineResponse{Success: false, Code: codes.InvalidInput}, nil
+		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "unit_price", Message: "Doit être positif ou nul."})
 	}
 
-	if req.Type != TypeSimple && req.Type != TypeMultiple {
-		return &quoteGrpc.UpdateQuoteLineResponse{Success: false, Code: codes.InvalidLineType}, nil
+	if len(fieldErrors) > 0 {
+		return &quoteGrpc.UpdateQuoteLineResponse{Success: false, Code: codes.InvalidInput, ValidationErrors: fieldErrors}, nil
 	}
+
 	cleanData, err := ValidateData(req.Type, req.Data)
 	if err != nil {
 		return &quoteGrpc.UpdateQuoteLineResponse{Success: false, Code: codes.InvalidLineData}, nil

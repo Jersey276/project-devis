@@ -28,6 +28,14 @@ const (
 	ScheduleCodeInternalError int32 = 2001
 )
 
+func scheduleValidationErrors(errs []*schedule.ValidationError) []FieldError {
+	out := make([]FieldError, len(errs))
+	for i, e := range errs {
+		out[i] = FieldError{Field: e.Field, Message: e.Message}
+	}
+	return out
+}
+
 var scheduleErrors = &serviceErrors{
 	codes: map[int32]codeMapping{
 		ScheduleCodeNotFound:      {http.StatusNotFound, "Échéancier introuvable."},
@@ -203,7 +211,11 @@ func CreateSchedule(c *gin.Context, client schedule.ScheduleServiceClient) {
 	}
 	if !resp.Success {
 		grpcCode = resp.Code
-		scheduleErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			scheduleErrors.replyWithValidation(c, resp.Code, scheduleValidationErrors(resp.ValidationErrors))
+		} else {
+			scheduleErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	grpcCode = resp.Code

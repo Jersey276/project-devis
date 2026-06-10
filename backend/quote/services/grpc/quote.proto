@@ -32,6 +32,11 @@ message GenericResponse {
     int32 code = 2;
 }
 
+message ValidationError {
+    string field   = 1;
+    string message = 2;
+}
+
 // ─── Quote ───────────────────────────────────────────────────────────────────
 
 enum QuoteState {
@@ -65,6 +70,7 @@ message CreateQuoteResponse {
     bool success = 1;
     int32 code = 2;
     string quote_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message GetQuoteRequest {
@@ -102,6 +108,7 @@ message UpdateQuoteRequest {
 message UpdateQuoteResponse {
     bool success = 1;
     int32 code = 2;
+    repeated ValidationError validation_errors = 3;
 }
 
 message DeleteQuoteRequest {
@@ -177,6 +184,7 @@ message CreateQuoteLineResponse {
     bool success = 1;
     int32 code = 2;
     string line_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message GetQuoteLineRequest {
@@ -228,6 +236,7 @@ message UpdateQuoteLineRequest {
 message UpdateQuoteLineResponse {
     bool success = 1;
     int32 code = 2;
+    repeated ValidationError validation_errors = 3;
 }
 
 message DeleteQuoteLineRequest {

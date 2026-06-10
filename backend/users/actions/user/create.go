@@ -12,7 +12,11 @@ import (
 
 func Create(ctx context.Context, db *sql.DB, req *usersGrpc.CreateUserRequest) (*usersGrpc.CreateUserResponse, error) {
 	if req.Email == "" {
-		return &usersGrpc.CreateUserResponse{Success: false, Code: codes.InvalidInput}, nil
+		return &usersGrpc.CreateUserResponse{
+			Success:          false,
+			Code:             codes.InvalidInput,
+			ValidationErrors: []*usersGrpc.ValidationError{{Field: "email", Message: "Champ requis."}},
+		}, nil
 	}
 
 	userID := uuid.New().String()

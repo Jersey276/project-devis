@@ -10,10 +10,39 @@ import (
 )
 
 func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateAddressRequest) (*usersGrpc.UpdateAddressResponse, error) {
+	var fieldErrors []*usersGrpc.ValidationError
+
 	ownerType, err := sqlutil.OwnerTypeToDBString(req.OwnerType)
-	if err != nil || req.AddressId == 0 || req.OwnerId == "" || req.AuthUserId == "" ||
-		req.Name == "" || req.Street == "" || req.City == "" || req.ZipCode == "" || req.CountryId == 0 {
-		return &usersGrpc.UpdateAddressResponse{Success: false, Code: codes.InvalidInput}, nil
+	if err != nil {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "owner_type", Message: "Type de propriétaire invalide."})
+	}
+	if req.AddressId == 0 {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "address_id", Message: "Champ requis."})
+	}
+	if req.OwnerId == "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "owner_id", Message: "Champ requis."})
+	}
+	if req.AuthUserId == "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "auth_user_id", Message: "Champ requis."})
+	}
+	if req.Name == "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "name", Message: "Champ requis."})
+	}
+	if req.Street == "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "street", Message: "Champ requis."})
+	}
+	if req.City == "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "city", Message: "Champ requis."})
+	}
+	if req.ZipCode == "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "zip_code", Message: "Champ requis."})
+	}
+	if req.CountryId == 0 {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "country_id", Message: "Champ requis."})
+	}
+
+	if len(fieldErrors) > 0 {
+		return &usersGrpc.UpdateAddressResponse{Success: false, Code: codes.InvalidInput, ValidationErrors: fieldErrors}, nil
 	}
 
 	res, execErr := db.ExecContext(ctx,

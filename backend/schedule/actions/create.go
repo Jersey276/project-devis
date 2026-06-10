@@ -38,11 +38,30 @@ func (s *Server) createScheduleWithEligibleLines(ctx context.Context, req *sched
 	if req == nil {
 		return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInvalidInput}, nil
 	}
-	if err := ValidateCreateScheduleInput(req.UserId, req.QuoteId, req.Name, req.StartMonth, req.DurationMonths); err != nil {
-		return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInvalidInput}, nil
+
+	var fieldErrors []*scheduleGrpc.ValidationError
+
+	if strings.TrimSpace(req.UserId) == "" {
+		fieldErrors = append(fieldErrors, &scheduleGrpc.ValidationError{Field: "user_id", Message: "Champ requis."})
+	}
+	if strings.TrimSpace(req.QuoteId) == "" {
+		fieldErrors = append(fieldErrors, &scheduleGrpc.ValidationError{Field: "quote_id", Message: "Champ requis."})
+	}
+	if strings.TrimSpace(req.Name) == "" {
+		fieldErrors = append(fieldErrors, &scheduleGrpc.ValidationError{Field: "name", Message: "Champ requis."})
+	}
+	if !startMonthRegexp.MatchString(strings.TrimSpace(req.StartMonth)) {
+		fieldErrors = append(fieldErrors, &scheduleGrpc.ValidationError{Field: "start_month", Message: "Format invalide (YYYY-MM)."})
+	}
+	if req.DurationMonths <= 0 {
+		fieldErrors = append(fieldErrors, &scheduleGrpc.ValidationError{Field: "duration_months", Message: "Doit être supérieur à zéro."})
 	}
 	if len(eligibleLineIDs) == 0 {
-		return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInvalidInput}, nil
+		fieldErrors = append(fieldErrors, &scheduleGrpc.ValidationError{Field: "quote_id", Message: "Aucune ligne de devis éligible."})
+	}
+
+	if len(fieldErrors) > 0 {
+		return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInvalidInput, ValidationErrors: fieldErrors}, nil
 	}
 
 	startMonthDate, err := parseStartMonth(req.StartMonth)

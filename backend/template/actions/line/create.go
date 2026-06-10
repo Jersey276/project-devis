@@ -13,8 +13,14 @@ import (
 )
 
 func Create(ctx context.Context, db *sql.DB, req *templateGrpc.CreateTemplateLineRequest) (*templateGrpc.CreateTemplateLineResponse, error) {
-	if _, err := strconv.ParseFloat(req.Quantity, 64); err != nil {
-		return &templateGrpc.CreateTemplateLineResponse{Success: false, Code: codes.InvalidInput}, nil
+	if req.Quantity != "" {
+		if _, err := strconv.ParseFloat(req.Quantity, 64); err != nil {
+			return &templateGrpc.CreateTemplateLineResponse{
+				Success:          false,
+				Code:             codes.InvalidInput,
+				ValidationErrors: []*templateGrpc.ValidationError{{Field: "quantity", Message: "Doit être un nombre valide."}},
+			}, nil
+		}
 	}
 
 	var count int

@@ -23,11 +23,22 @@ type currentRow struct {
 // quote_lines that point at the old id keep their snapshot. If only
 // is_default changed, the current row is updated in place.
 func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateTaxRequest) (*usersGrpc.UpdateTaxResponse, error) {
-	if req.TaxId == 0 || req.Name == "" || req.Rate == "" {
-		return &usersGrpc.UpdateTaxResponse{Success: false, Code: codes.InvalidInput}, nil
+	var fieldErrors []*usersGrpc.ValidationError
+
+	if req.TaxId == 0 {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "tax_id", Message: "Champ requis."})
 	}
-	if err := validateRate(req.Rate); err != nil {
-		return &usersGrpc.UpdateTaxResponse{Success: false, Code: codes.InvalidInput}, nil
+	if req.Name == "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "name", Message: "Champ requis."})
+	}
+	if req.Rate == "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "rate", Message: "Champ requis."})
+	} else if err := validateRate(req.Rate); err != nil {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "rate", Message: "Taux invalide (0–999.99)."})
+	}
+
+	if len(fieldErrors) > 0 {
+		return &usersGrpc.UpdateTaxResponse{Success: false, Code: codes.InvalidInput, ValidationErrors: fieldErrors}, nil
 	}
 
 	tx, err := db.BeginTx(ctx, nil)

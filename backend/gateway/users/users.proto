@@ -61,6 +61,11 @@ message GenericResponse {
     int32 code = 2;
 }
 
+message ValidationError {
+    string field   = 1;
+    string message = 2;
+}
+
 // ─── User ────────────────────────────────────────────────────────────────────
 
 message User {
@@ -82,6 +87,7 @@ message CreateUserResponse {
     bool success = 1;
     int32 code = 2;
     string user_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message GetUserRequest {
@@ -203,6 +209,7 @@ message CreateClientResponse {
     bool success = 1;
     int32 code = 2;
     string client_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message GetClientRequest {
@@ -242,6 +249,7 @@ message UpdateClientRequest {
 message UpdateClientResponse {
     bool success = 1;
     int32 code = 2;
+    repeated ValidationError validation_errors = 3;
 }
 
 message ArchiveClientRequest {
@@ -292,6 +300,7 @@ message CreateAddressResponse {
     bool success = 1;
     int32 code = 2;
     int32 address_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message GetAddressRequest {
@@ -337,6 +346,7 @@ message UpdateAddressRequest {
 message UpdateAddressResponse {
     bool success = 1;
     int32 code = 2;
+    repeated ValidationError validation_errors = 3;
 }
 
 message ArchiveAddressRequest {
@@ -363,6 +373,7 @@ message CreateCountryResponse {
     bool success = 1;
     int32 code = 2;
     int32 country_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message GetCountryRequest {
@@ -392,6 +403,7 @@ message UpdateCountryRequest {
 message UpdateCountryResponse {
     bool success = 1;
     int32 code = 2;
+    repeated ValidationError validation_errors = 3;
 }
 
 message DeleteCountryRequest {
@@ -415,6 +427,7 @@ message CreateCountryGroupResponse {
     bool success = 1;
     int32 code = 2;
     int32 country_group_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message GetCountryGroupRequest {
@@ -443,6 +456,7 @@ message UpdateCountryGroupRequest {
 message UpdateCountryGroupResponse {
     bool success = 1;
     int32 code = 2;
+    repeated ValidationError validation_errors = 3;
 }
 
 message DeleteCountryGroupRequest {
@@ -484,6 +498,7 @@ message CreateTaxResponse {
     bool success = 1;
     int32 code = 2;
     int32 tax_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message GetTaxRequest {
@@ -525,6 +540,7 @@ message UpdateTaxResponse {
     bool success = 1;
     int32 code = 2;
     int32 tax_id = 3; // id of the current version after update (may be a new row)
+    repeated ValidationError validation_errors = 4;
 }
 
 message DeleteTaxRequest {
