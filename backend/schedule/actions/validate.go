@@ -83,23 +83,7 @@ func (s *Server) ValidateSchedule(ctx context.Context, req *scheduleGrpc.Validat
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
 
-	unbalanced := false
-	for lineID, expected := range expectedByLineID {
-		if plannedByLineID[lineID] != expected {
-			unbalanced = true
-			break
-		}
-	}
-	if !unbalanced {
-		for lineID, planned := range plannedByLineID {
-			if _, ok := expectedByLineID[lineID]; !ok && planned != 0 {
-				unbalanced = true
-				break
-			}
-		}
-	}
-
-	if unbalanced {
+	if !schedulesBalanced(expectedByLineID, plannedByLineID) {
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeScheduleUnbalanced}, nil
 	}
 
