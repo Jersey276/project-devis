@@ -15,7 +15,7 @@ func TestCreateUser_Success(t *testing.T) {
 	srv, mock := setupServer(t)
 
 	mock.ExpectExec(`INSERT INTO users`).
-		WithArgs(sqlmock.AnyArg(), "new@example.com").
+		WithArgs(sqlmock.AnyArg(), "new@example.com", "user").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.CreateUser(context.Background(), &usersGrpc.CreateUserRequest{Email: "new@example.com"})
@@ -55,7 +55,7 @@ func TestCreateUser_AlreadyExists(t *testing.T) {
 	srv, mock := setupServer(t)
 
 	mock.ExpectExec(`INSERT INTO users`).
-		WithArgs(sqlmock.AnyArg(), "existing@example.com").
+		WithArgs(sqlmock.AnyArg(), "existing@example.com", "user").
 		WillReturnError(&pq.Error{Code: "23505"})
 
 	resp, err := srv.CreateUser(context.Background(), &usersGrpc.CreateUserRequest{Email: "existing@example.com"})
