@@ -87,6 +87,10 @@ func (m *mockAuthClient) UpdateSubscriptionTier(context.Context, *auth.UpdateSub
 	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
 }
 
+func (m *mockAuthClient) UpdateRole(context.Context, *auth.UpdateRoleRequest, ...grpc.CallOption) (*auth.GenericResponse, error) {
+	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
+}
+
 func (m *mockAuthClient) ResendEmailVerification(ctx context.Context, req *auth.ResendEmailVerificationRequest, _ ...grpc.CallOption) (*auth.GenericResponse, error) {
 	if m.resendVerifyFn != nil {
 		return m.resendVerifyFn(ctx, req)
