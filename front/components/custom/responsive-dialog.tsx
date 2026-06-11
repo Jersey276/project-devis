@@ -69,7 +69,9 @@ function ResponsiveDialogContent({ children }: { children: React.ReactNode }) {
   return mobile ? (
     <DrawerContent>{children}</DrawerContent>
   ) : (
-    <DialogContent>{children}</DialogContent>
+    <DialogContent className="flex flex-col max-h-[90vh] gap-0 p-0">
+      {children}
+    </DialogContent>
   );
 }
 
@@ -77,7 +79,7 @@ function ResponsiveDialogFooter({ children }: { children: React.ReactNode }) {
   return mobile ? (
     <DrawerFooter>{children}</DrawerFooter>
   ) : (
-    <DialogFooter>{children}</DialogFooter>
+    <DialogFooter className="p-4 border-t">{children}</DialogFooter>
   );
 }
 
@@ -98,7 +100,7 @@ function ResponsiveDialogTrigger({ children }: { children: React.ReactNode }) {
 }
 
 function ResponsiveDialogBody({ children }: { children: React.ReactNode }) {
-  return <div className="p-4">{children}</div>;
+  return <div className="p-4 overflow-y-auto flex-1">{children}</div>;
 }
 
 export {

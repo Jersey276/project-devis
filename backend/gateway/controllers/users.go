@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	authpb "gateway/auth"
 	"gateway/authz"
 	"gateway/middleware"
 	users "gateway/users"
@@ -300,6 +301,19 @@ func UpdateAdminAccount(c *gin.Context, client users.UserServiceClient) {
 	if !resp.Success {
 		usersErrors.reply(c, resp.Code)
 		return
+	}
+
+	authRole := "free_user"
+	if input.Role == "admin" {
+		authRole = "super_admin"
+	}
+	if authClient, authClientErr := middleware.GetAuthServiceClient(); authClientErr != nil {
+		log.Printf("UpdateAdminAccount: failed to get auth client: %v", authClientErr)
+	} else if _, authErr := authClient.UpdateRole(c.Request.Context(), &authpb.UpdateRoleRequest{
+		UserId: c.Param("userId"),
+		Role:   authRole,
+	}); authErr != nil {
+		log.Printf("UpdateAdminAccount: failed to update role in auth for user %s: %v", c.Param("userId"), authErr)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"success": true})

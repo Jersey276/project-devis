@@ -19,5 +19,5 @@ export function isPro(auth: AuthContext | null): boolean {
 }
 
 export function canUsePaidFeatures(auth: AuthContext | null): boolean {
-  return isPro(auth) || isEnterprise(auth);
+  return isPro(auth) || isEnterprise(auth) || isSuperAdmin(auth);
 }

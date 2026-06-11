@@ -28,6 +28,8 @@ service AuthService {
     rpc UpdateSubscriptionTier(UpdateSubscriptionTierRequest) returns (GenericResponse);
     // ResendEmailVerification re-sends the verification email for an unverified account.
     rpc ResendEmailVerification(ResendEmailVerificationRequest) returns (GenericResponse);
+    // UpdateRole updates a user's role and invalidates existing tokens.
+    rpc UpdateRole(UpdateRoleRequest) returns (GenericResponse);
 }
 
 // RegisterRequest contains user registration information
@@ -123,4 +125,9 @@ message UpdateSubscriptionTierRequest {
 
 message ResendEmailVerificationRequest {
     string user_id = 1;
+}
+
+message UpdateRoleRequest {
+    string user_id = 1;
+    string role    = 2;
 }
