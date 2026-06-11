@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -88,6 +88,7 @@ export default function CreateScheduleDialog({
   const [startMonthValue, setStartMonthValue] = useState("");
   const [durationMonths, setDurationMonths] = useState("");
   const [startMonthPickerOpen, setStartMonthPickerOpen] = useState(false);
+  const durationRef = useRef<HTMLInputElement>(null);
 
   const effectiveQuoteId = lockQuote ? (initialQuoteId ?? "") : quoteId;
 
@@ -135,7 +136,8 @@ export default function CreateScheduleDialog({
   async function onCreateSchedule() {
     setErrorMessage("");
     setCreating(true);
-    const months = parseInt(durationMonths, 10);
+    const rawDuration = durationRef.current?.value ?? durationMonths;
+    const months = parseInt(rawDuration, 10);
 
     const { ok, body } = await createSchedule({
       quoteId: effectiveQuoteId,
@@ -249,6 +251,7 @@ export default function CreateScheduleDialog({
           <Field>
             <FieldLabel htmlFor="schedule-duration">Durée (mois)</FieldLabel>
             <Input
+              ref={durationRef}
               id="schedule-duration"
               name="duration_months"
               inputMode="numeric"
