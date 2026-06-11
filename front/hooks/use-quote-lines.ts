@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
@@ -196,7 +196,8 @@ function lineDraftFromRow(row: FormItem): LineDraft {
       ...data,
       sublines: data.sublines
         ?.filter((s) => s.name.trim() !== "" && s.quantity.trim() !== "")
-        .map(({ _key: _, ...rest }) => rest),
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        .map(({ _key, ...rest }) => rest),
     },
   };
 }
@@ -259,9 +260,9 @@ export function useQuoteLines({
   const [adding, setAdding] = useState(false);
 
   const itemsRef = useRef(items);
-  itemsRef.current = items;
+  useEffect(() => { itemsRef.current = items; }, [items]);
   const defaultTaxIdRef = useRef(defaultTaxId);
-  defaultTaxIdRef.current = defaultTaxId;
+  useEffect(() => { defaultTaxIdRef.current = defaultTaxId; }, [defaultTaxId]);
 
   const lineTimersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const savedIndicatorTimersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());

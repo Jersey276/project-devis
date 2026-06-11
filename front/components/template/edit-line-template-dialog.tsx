@@ -55,7 +55,7 @@ export default function EditLineTemplateSheet({
   const t = useTranslations("templates.editLine");
   const tCommon = useTranslations("common");
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const [templateName, setTemplateName] = useState("");
@@ -66,10 +66,14 @@ export default function EditLineTemplateSheet({
   const [taxId, setTaxId] = useState<number | null>(null);
   const [lineData, setLineData] = useState<QuoteLineData>({ kind: "line" });
 
+  function handleOpenChange(newOpen: boolean) {
+    if (!newOpen) setLoading(true);
+    onOpenChange(newOpen);
+  }
+
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    setLoading(true);
 
     Promise.all([getTemplate(templateId), listTemplateLines(templateId)]).then(
       ([tplRes, linesRes]) => {
@@ -162,7 +166,7 @@ export default function EditLineTemplateSheet({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg p-6">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>

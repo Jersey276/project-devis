@@ -77,16 +77,6 @@ function DataTable({
     "asc" | "desc"
   >(sortDirection ?? "asc");
 
-  React.useEffect(() => {
-    setCurrentSortBy(sortBy);
-  }, [sortBy]);
-
-  React.useEffect(() => {
-    if (sortDirection) {
-      setCurrentSortDirection(sortDirection);
-    }
-  }, [sortDirection]);
-
   const setSort = React.useCallback(
     (column: string, direction: "asc" | "desc") => {
       setCurrentSortBy(column);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDialogSubmit } from "@/hooks/use-dialog-submit";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -63,17 +63,20 @@ export default function UserEditDialog({
     tCommon("errors.generic"),
   );
 
-  useEffect(() => {
-    setFirstName(user?.first_name ?? "");
-    setLastName(user?.last_name ?? "");
-    setPhone(user?.phone ?? "");
-    setCompany(user?.company ?? "");
-    setSiren(user?.siren ?? "");
-    setVat(user?.vat ?? "");
-    setRole(user?.role ?? "user");
-    setPlan(user?.plan ?? "");
-    setFieldErrors({});
-  }, [user, setFieldErrors]);
+  function handleOpenChange(newOpen: boolean) {
+    if (newOpen && user) {
+      setFirstName(user.first_name ?? "");
+      setLastName(user.last_name ?? "");
+      setPhone(user.phone ?? "");
+      setCompany(user.company ?? "");
+      setSiren(user.siren ?? "");
+      setVat(user.vat ?? "");
+      setRole(user.role ?? "user");
+      setPlan(user.plan ?? "");
+      setFieldErrors({});
+    }
+    onOpenChange(newOpen);
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -98,7 +101,7 @@ export default function UserEditDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="p-6 sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>

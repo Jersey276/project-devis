@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -49,12 +49,9 @@ export default function ScheduleStatusSelect({
   className,
   disabled,
 }: ScheduleStatusSelectProps) {
-  const [status, setStatus] = useState<BackendScheduleStatus>(value);
+  const [optimisticStatus, setOptimisticStatus] = useState<BackendScheduleStatus | null>(null);
+  const status = optimisticStatus ?? value;
   const [isUpdating, setIsUpdating] = useState(false);
-
-  useEffect(() => {
-    setStatus(value);
-  }, [value]);
 
   async function handleChange(nextValue: string) {
     const nextStatus = nextValue as BackendScheduleStatus;
@@ -62,12 +59,10 @@ export default function ScheduleStatusSelect({
 
     const confirmation = confirmationMessage(nextStatus);
     if (confirmation && !window.confirm(confirmation)) {
-      setStatus(value);
       return;
     }
 
-    const previousStatus = status;
-    setStatus(nextStatus);
+    setOptimisticStatus(nextStatus);
     setIsUpdating(true);
 
     try {
@@ -79,11 +74,11 @@ export default function ScheduleStatusSelect({
       }
       await onUpdated?.(nextStatus);
     } catch (error) {
-      setStatus(previousStatus);
       onError?.(
         error instanceof Error ? error.message : "Mise à jour impossible.",
       );
     } finally {
+      setOptimisticStatus(null);
       setIsUpdating(false);
     }
   }

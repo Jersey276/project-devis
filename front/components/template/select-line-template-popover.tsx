@@ -27,18 +27,21 @@ export default function SelectLineTemplatePopover({
   const t = useTranslations("template.selectLinePopover");
   const [open, setOpen] = useState(false);
   const [templates, setTemplates] = useState<BackendTemplate[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [selectingId, setSelectingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(15);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
+  function handleSetOpen(newOpen: boolean) {
+    if (newOpen) { setSearch(""); setVisibleCount(15); }
+    if (!newOpen) setLoading(true);
+    setOpen(newOpen);
+  }
+
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    setLoading(true);
-    setSearch("");
-    setVisibleCount(15);
     listTemplates({ type: "quote_line" }).then(({ ok, body }) => {
       if (cancelled) return;
       setLoading(false);
@@ -61,10 +64,6 @@ export default function SelectLineTemplatePopover({
     return list;
   }, [templates, search]);
 
-  useEffect(() => {
-    setVisibleCount(15);
-  }, [search]);
-
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
 
@@ -85,14 +84,14 @@ export default function SelectLineTemplatePopover({
     setSelectingId(templateId);
     try {
       await onSelect(templateId);
-      setOpen(false);
+      handleSetOpen(false);
     } finally {
       setSelectingId(null);
     }
   }
 
   return (
-    <Popover open={open} onOpenChange={disabled ? undefined : setOpen}>
+    <Popover open={open} onOpenChange={disabled ? undefined : handleSetOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent className="w-64 p-2">
         {loading ? (
@@ -107,7 +106,7 @@ export default function SelectLineTemplatePopover({
           <div className="flex flex-col gap-1">
             <Input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setVisibleCount(15); }}
               placeholder={t("searchPlaceholder")}
               className="mb-1 h-8 text-sm"
             />

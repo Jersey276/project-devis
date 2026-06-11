@@ -27,13 +27,17 @@ export default function SelectQuoteTemplateDialog({
 }: SelectQuoteTemplateDialogProps) {
   const t = useTranslations("template.selectQuoteDialog");
   const [templates, setTemplates] = useState<BackendTemplate[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [selectingId, setSelectingId] = useState<string | null>(null);
+
+  function handleOpenChange(newOpen: boolean) {
+    if (!newOpen) setLoading(true);
+    onOpenChange(newOpen);
+  }
 
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    setLoading(true);
     listTemplates({ type: "quote_document" }).then(({ ok, body }) => {
       if (cancelled) return;
       setLoading(false);
@@ -57,7 +61,7 @@ export default function SelectQuoteTemplateDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>

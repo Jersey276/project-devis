@@ -311,15 +311,31 @@ export default function ScheduleDetailsPage() {
   }, [scheduleId]);
 
   useEffect(() => {
-    let cancelled = false;
     if (!scheduleId) return;
-    loadSchedule().then(() => {
+    let cancelled = false;
+    getSchedule(scheduleId).then(({ ok, body }) => {
       if (cancelled) return;
+      if (!ok || !body.success || !body.schedule) {
+        setError(
+          (body.message as string) ?? "Impossible de charger l'échéancier.",
+        );
+        setSchedule(null);
+        setLoading(false);
+        return;
+      }
+      const loadedSchedule = body.schedule as BackendScheduleDetails;
+      const drafts = buildCellDrafts(loadedSchedule);
+      setSchedule(loadedSchedule);
+      setCellDrafts(drafts);
+      setSavedCellDrafts(drafts);
+      setCellErrors({});
+      setError(null);
+      setLoading(false);
     });
     return () => {
       cancelled = true;
     };
-  }, [loadSchedule, scheduleId]);
+  }, [scheduleId]);
 
   async function onExportPdf() {
     if (!scheduleId || isExporting) return;

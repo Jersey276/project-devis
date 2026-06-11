@@ -73,7 +73,7 @@ export default function EditQuoteTemplateSheet({
   const t = useTranslations("templates.editQuote");
   const tCommon = useTranslations("common");
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [adding, setAdding] = useState(false);
 
@@ -85,12 +85,16 @@ export default function EditQuoteTemplateSheet({
   );
 
   const itemsRef = useRef(items);
-  itemsRef.current = items;
+  useEffect(() => { itemsRef.current = items; }, [items]);
+
+  function handleOpenChange(newOpen: boolean) {
+    if (!newOpen) setLoading(true);
+    onOpenChange(newOpen);
+  }
 
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    setLoading(true);
 
     Promise.all([getTemplate(templateId), listTemplateLines(templateId)]).then(
       ([tplRes, linesRes]) => {
@@ -253,7 +257,7 @@ export default function EditQuoteTemplateSheet({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-3xl overflow-y-auto max-h-[90vh] p-6">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
