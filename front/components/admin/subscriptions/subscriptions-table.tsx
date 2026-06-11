@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useReloadKey } from "@/hooks/use-reload-key";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,15 +55,13 @@ export default function SubscriptionsTable() {
   const t = useTranslations("admin.subscriptions");
   const tCommon = useTranslations("common");
 
+  const { key: reloadKey, reload } = useReloadKey();
   const [subscriptions, setSubscriptions] = useState<BackendSubscription[]>([]);
   const [plans, setPlans] = useState<BackendPlan[]>([]);
   const [editing, setEditing] = useState<BackendSubscription | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
-
-  const reload = () => setReloadKey((k) => k + 1);
 
   useEffect(() => {
     let cancelled = false;

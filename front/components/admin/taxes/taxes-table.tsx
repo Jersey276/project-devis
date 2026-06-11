@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useReloadKey } from "@/hooks/use-reload-key";
 import { useTranslations } from "next-intl";
 import {
   AlertDialog,
@@ -33,14 +34,12 @@ import { type CountryGroup, type Tax } from "@/components/admin/types";
 export default function TaxesTable() {
   const t = useTranslations("admin.taxes");
   const tCommon = useTranslations("common");
+  const { key: reloadKey, reload } = useReloadKey();
   const [taxes, setTaxes] = useState<Tax[]>([]);
   const [groups, setGroups] = useState<CountryGroup[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Tax | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Tax | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
-
-  const reload = () => setReloadKey((k) => k + 1);
 
   useEffect(() => {
     let cancelled = false;

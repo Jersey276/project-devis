@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useReloadKey } from "@/hooks/use-reload-key";
 import { useTranslations } from "next-intl";
 import {
   AlertDialog,
@@ -44,15 +45,13 @@ export default function UsersTable() {
   const t = useTranslations("admin.users");
   const tCommon = useTranslations("common");
 
+  const { key: reloadKey, reload } = useReloadKey();
   const [users, setUsers] = useState<AdminUserAccount[]>([]);
   const [editing, setEditing] = useState<AdminUserAccount | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pendingSuspend, setPendingSuspend] = useState<AdminUserAccount | null>(
     null,
   );
-  const [reloadKey, setReloadKey] = useState(0);
-
-  const reload = () => setReloadKey((k) => k + 1);
 
   useEffect(() => {
     let cancelled = false;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useReloadKey } from "@/hooks/use-reload-key";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,11 +71,11 @@ export default function PlansTable() {
   const t = useTranslations("admin.plans");
   const tCommon = useTranslations("common");
 
+  const { key: reloadKey, reload } = useReloadKey();
   const [plans, setPlans] = useState<BackendPlan[]>([]);
   const [editing, setEditing] = useState<BackendPlan | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
 
   const [formName, setFormName] = useState("");
   const [formPriceEuros, setFormPriceEuros] = useState("");
@@ -124,7 +125,7 @@ export default function PlansTable() {
       });
       if (ok && body.success) {
         toast.success(t("editDialog.successToast"));
-        setReloadKey((k) => k + 1);
+        reload();
         setDialogOpen(false);
       } else {
         toast.error(body.message ?? tCommon("errors.generic"));
