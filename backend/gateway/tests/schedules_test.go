@@ -4,13 +4,17 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"gateway/controllers"
+	quote "gateway/quote"
 	schedule "gateway/schedule"
+	gatewaySvc "gateway/services"
+	users "gateway/users"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -97,6 +101,192 @@ func startScheduleTestServer(t *testing.T) (schedule.ScheduleServiceClient, func
 	}
 }
 
+// ─── Nop stubs for ancillary clients (used only by the email goroutine) ──────
+
+type nopQuoteClient struct{}
+
+func (nopQuoteClient) CreateQuote(context.Context, *quote.CreateQuoteRequest, ...grpc.CallOption) (*quote.CreateQuoteResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) GetQuote(context.Context, *quote.GetQuoteRequest, ...grpc.CallOption) (*quote.GetQuoteResponse, error) {
+	return nil, fmt.Errorf("nop")
+}
+func (nopQuoteClient) ListQuotes(context.Context, *quote.ListQuotesRequest, ...grpc.CallOption) (*quote.ListQuotesResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) UpdateQuote(context.Context, *quote.UpdateQuoteRequest, ...grpc.CallOption) (*quote.UpdateQuoteResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) DeleteQuote(context.Context, *quote.DeleteQuoteRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) ArchiveQuote(context.Context, *quote.ArchiveQuoteRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) RestoreQuote(context.Context, *quote.RestoreQuoteRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) TrashQuotes(context.Context, *quote.TrashQuotesRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) DropQuote(context.Context, *quote.DropQuoteRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) ContinueQuote(context.Context, *quote.ContinueQuoteRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) SendQuote(context.Context, *quote.SendQuoteRequest, ...grpc.CallOption) (*quote.SendQuoteResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) CreateQuoteLine(context.Context, *quote.CreateQuoteLineRequest, ...grpc.CallOption) (*quote.CreateQuoteLineResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) GetQuoteLine(context.Context, *quote.GetQuoteLineRequest, ...grpc.CallOption) (*quote.GetQuoteLineResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) ListQuoteLines(context.Context, *quote.ListQuoteLinesRequest, ...grpc.CallOption) (*quote.ListQuoteLinesResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) ListUserQuoteLines(context.Context, *quote.ListUserQuoteLinesRequest, ...grpc.CallOption) (*quote.ListUserQuoteLinesResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) UpdateQuoteLine(context.Context, *quote.UpdateQuoteLineRequest, ...grpc.CallOption) (*quote.UpdateQuoteLineResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) DeleteQuoteLine(context.Context, *quote.DeleteQuoteLineRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
+	return nil, nil
+}
+
+type nopUsersClient struct{}
+
+func (nopUsersClient) CreateUser(context.Context, *users.CreateUserRequest, ...grpc.CallOption) (*users.CreateUserResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) GetUser(context.Context, *users.GetUserRequest, ...grpc.CallOption) (*users.GetUserResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) UpdateUser(context.Context, *users.UpdateUserRequest, ...grpc.CallOption) (*users.UpdateUserResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) DeleteUser(context.Context, *users.DeleteUserRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) GetUserAccessInfo(context.Context, *users.GetUserAccessInfoRequest, ...grpc.CallOption) (*users.GetUserAccessInfoResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) GetUserAccessInfoByEmail(context.Context, *users.GetUserAccessInfoByEmailRequest, ...grpc.CallOption) (*users.GetUserAccessInfoResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) ListAdminAccounts(context.Context, *users.ListAdminAccountsRequest, ...grpc.CallOption) (*users.ListAdminAccountsResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) UpdateAdminAccount(context.Context, *users.UpdateAdminAccountRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) SuspendAdminAccount(context.Context, *users.SuspendAdminAccountRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) TouchUserLastLogin(context.Context, *users.TouchUserLastLoginRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) CreateClient(context.Context, *users.CreateClientRequest, ...grpc.CallOption) (*users.CreateClientResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) GetClient(context.Context, *users.GetClientRequest, ...grpc.CallOption) (*users.GetClientResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) ListClients(context.Context, *users.ListClientsRequest, ...grpc.CallOption) (*users.ListClientsResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) UpdateClient(context.Context, *users.UpdateClientRequest, ...grpc.CallOption) (*users.UpdateClientResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) ArchiveClient(context.Context, *users.ArchiveClientRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) CreateAddress(context.Context, *users.CreateAddressRequest, ...grpc.CallOption) (*users.CreateAddressResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) GetAddress(context.Context, *users.GetAddressRequest, ...grpc.CallOption) (*users.GetAddressResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) ListAddresses(context.Context, *users.ListAddressesRequest, ...grpc.CallOption) (*users.ListAddressesResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) UpdateAddress(context.Context, *users.UpdateAddressRequest, ...grpc.CallOption) (*users.UpdateAddressResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) ArchiveAddress(context.Context, *users.ArchiveAddressRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) CreateCountry(context.Context, *users.CreateCountryRequest, ...grpc.CallOption) (*users.CreateCountryResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) GetCountry(context.Context, *users.GetCountryRequest, ...grpc.CallOption) (*users.GetCountryResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) ListCountries(context.Context, *users.ListCountriesRequest, ...grpc.CallOption) (*users.ListCountriesResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) UpdateCountry(context.Context, *users.UpdateCountryRequest, ...grpc.CallOption) (*users.UpdateCountryResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) DeleteCountry(context.Context, *users.DeleteCountryRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) CreateCountryGroup(context.Context, *users.CreateCountryGroupRequest, ...grpc.CallOption) (*users.CreateCountryGroupResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) GetCountryGroup(context.Context, *users.GetCountryGroupRequest, ...grpc.CallOption) (*users.GetCountryGroupResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) ListCountryGroups(context.Context, *users.ListCountryGroupsRequest, ...grpc.CallOption) (*users.ListCountryGroupsResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) UpdateCountryGroup(context.Context, *users.UpdateCountryGroupRequest, ...grpc.CallOption) (*users.UpdateCountryGroupResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) DeleteCountryGroup(context.Context, *users.DeleteCountryGroupRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) AttachCountry(context.Context, *users.AttachCountryRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) DetachCountry(context.Context, *users.DetachCountryRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) CreateTax(context.Context, *users.CreateTaxRequest, ...grpc.CallOption) (*users.CreateTaxResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) GetTax(context.Context, *users.GetTaxRequest, ...grpc.CallOption) (*users.GetTaxResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) ListTaxes(context.Context, *users.ListTaxesRequest, ...grpc.CallOption) (*users.ListTaxesResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) ListTaxesForUser(context.Context, *users.ListTaxesForUserRequest, ...grpc.CallOption) (*users.ListTaxesResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) UpdateTax(context.Context, *users.UpdateTaxRequest, ...grpc.CallOption) (*users.UpdateTaxResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) DeleteTax(context.Context, *users.DeleteTaxRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
+	return nil, nil
+}
+
+type nopEmailNotifier struct{}
+
+func (nopEmailNotifier) SendQuoteEmail(context.Context, string, string, string, string, string, []byte) error {
+	return nil
+}
+func (nopEmailNotifier) SendScheduleEmail(context.Context, string, string, string, string, string, string) error {
+	return nil
+}
+
+var _ quote.QuoteServiceClient = nopQuoteClient{}
+var _ users.UserServiceClient = nopUsersClient{}
+var _ gatewaySvc.EmailNotifier = nopEmailNotifier{}
+
 // setupScheduleRouter builds a Gin router with a fake user_id middleware,
 // matching the production pattern (middleware.CtxUserID = "user_id").
 func setupScheduleRouter(client schedule.ScheduleServiceClient) *gin.Engine {
@@ -112,7 +302,9 @@ func setupScheduleRouter(client schedule.ScheduleServiceClient) *gin.Engine {
 	one := g.Group("/:id")
 	one.GET("", func(c *gin.Context) { controllers.GetSchedule(c, client) })
 	one.PATCH("/cells", func(c *gin.Context) { controllers.UpdateScheduleCell(c, client) })
-	one.POST("/validate", func(c *gin.Context) { controllers.ValidateSchedule(c, client) })
+	one.POST("/validate", func(c *gin.Context) {
+		controllers.ValidateSchedule(c, client, nopQuoteClient{}, nopUsersClient{}, nopEmailNotifier{})
+	})
 	return r
 }
 
