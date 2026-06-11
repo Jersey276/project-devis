@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Dialog,
   DialogClose,
@@ -21,51 +22,29 @@ import {
 
 const mobile = typeof window !== "undefined" && window.innerWidth <= 768;
 
-function ResponsiveDialog({
-  open,
-  onOpenChange,
-  children,
-}: {
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  children: React.ReactNode;
-}) {
-  return mobile ? (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      {children}
-    </Drawer>
-  ) : (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      {children}
-    </Dialog>
-  );
-}
+type WithChildren = { children?: React.ReactNode };
 
-function ResponsiveDialogClose({ children }: { children?: React.ReactNode }) {
+// Direct aliases — no className overrides needed
+const ResponsiveDialog = mobile ? Drawer : Dialog;
+const ResponsiveDialogTitle = mobile ? DrawerTitle : DialogTitle;
+const ResponsiveDialogTrigger = mobile ? DrawerTrigger : DialogTrigger;
+
+// Wrappers — shared or differing classNames per breakpoint
+function ResponsiveDialogClose({ children }: WithChildren) {
   return mobile ? <DrawerClose /> : <DialogClose>{children}</DialogClose>;
 }
 
-function ResponsiveDialogDescription({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return mobile ? (
-    <DrawerDescription className="p-4">{children}</DrawerDescription>
-  ) : (
-    <DialogDescription className="p-4">{children}</DialogDescription>
-  );
+function ResponsiveDialogHeader({ children }: WithChildren) {
+  const Comp = mobile ? DrawerHeader : DialogHeader;
+  return <Comp className="p-4 border-b">{children}</Comp>;
 }
 
-function ResponsiveDialogHeader({ children }: { children: React.ReactNode }) {
-  return mobile ? (
-    <DrawerHeader className="p-4 border-b">{children}</DrawerHeader>
-  ) : (
-    <DialogHeader className="p-4 border-b">{children}</DialogHeader>
-  );
+function ResponsiveDialogDescription({ children }: WithChildren) {
+  const Comp = mobile ? DrawerDescription : DialogDescription;
+  return <Comp className="p-4">{children}</Comp>;
 }
 
-function ResponsiveDialogContent({ children }: { children: React.ReactNode }) {
+function ResponsiveDialogContent({ children }: WithChildren) {
   return mobile ? (
     <DrawerContent>{children}</DrawerContent>
   ) : (
@@ -75,7 +54,7 @@ function ResponsiveDialogContent({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ResponsiveDialogFooter({ children }: { children: React.ReactNode }) {
+function ResponsiveDialogFooter({ children }: WithChildren) {
   return mobile ? (
     <DrawerFooter>{children}</DrawerFooter>
   ) : (
@@ -83,23 +62,7 @@ function ResponsiveDialogFooter({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ResponsiveDialogTitle({ children }: { children: React.ReactNode }) {
-  return mobile ? (
-    <DrawerTitle>{children}</DrawerTitle>
-  ) : (
-    <DialogTitle>{children}</DialogTitle>
-  );
-}
-
-function ResponsiveDialogTrigger({ children }: { children: React.ReactNode }) {
-  return mobile ? (
-    <DrawerTrigger>{children}</DrawerTrigger>
-  ) : (
-    <DialogTrigger>{children}</DialogTrigger>
-  );
-}
-
-function ResponsiveDialogBody({ children }: { children: React.ReactNode }) {
+function ResponsiveDialogBody({ children }: WithChildren) {
   return <div className="p-4 overflow-y-auto flex-1">{children}</div>;
 }
 
