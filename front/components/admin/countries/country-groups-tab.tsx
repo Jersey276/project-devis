@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useCountries } from "@/hooks/use-countries";
 import { useTranslations } from "next-intl";
 import {
   AlertDialog,
@@ -42,6 +43,7 @@ export default function CountryGroupsTab() {
   const t = useTranslations("admin.countryGroups");
   const tCommon = useTranslations("common");
   const [groups, setGroups] = useState<CountryGroup[]>([]);
+  const allCountries = useCountries();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<CountryGroup | null>(null);
   const [pendingDelete, setPendingDelete] = useState<CountryGroup | null>(null);
@@ -159,6 +161,7 @@ export default function CountryGroupsTab() {
         onOpenChange={setDialogOpen}
         group={editing}
         onSaved={reload}
+        allCountries={allCountries}
       />
 
       <AlertDialog

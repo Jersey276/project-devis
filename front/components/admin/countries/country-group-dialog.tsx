@@ -39,6 +39,7 @@ type CountryGroupDialogProps = {
   onOpenChange: (open: boolean) => void;
   group?: CountryGroup | null;
   onSaved: () => void;
+  allCountries?: Country[];
 };
 
 const FORM_ID = "country-group-form";
@@ -48,13 +49,15 @@ export default function CountryGroupDialog({
   onOpenChange,
   group,
   onSaved,
+  allCountries: allCountriesProp,
 }: CountryGroupDialogProps) {
   const t = useTranslations("admin.countryGroups.dialog");
   const tCommon = useTranslations("common");
   const isEdit = group != null;
   const [name, setName] = useState(group?.name ?? "");
   const [members, setMembers] = useState<Country[]>(group?.countries ?? []);
-  const allCountries = useCountries(0, !isEdit);
+  const fetchedCountries = useCountries(0, allCountriesProp !== undefined || !isEdit);
+  const allCountries = allCountriesProp ?? fetchedCountries;
   const [pendingAdd, setPendingAdd] = useState<Country | null>(null);
   const { fieldErrors, submitting, submit } = useDialogSubmit(tCommon("errors.generic"));
   const [memberMutating, setMemberMutating] = useState(false);

@@ -73,10 +73,6 @@ export default function AddressDialog({
   }, [open, setFieldErrors]);
 
   async function handleSubmit(values: AddressValues) {
-    if (values.country_id == null) {
-      setFieldErrors({ country_id: [tCommon("validation.required")] });
-      return;
-    }
     const isEdit = address?.id != null;
     const owner = buildOwner(ownerType, ownerId);
     await submit({
