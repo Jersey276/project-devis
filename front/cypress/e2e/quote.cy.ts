@@ -140,7 +140,7 @@ describe("Quote", () => {
       );
       cy.get("input[name='name']").type("Echéancier Alpha");
       selectScheduleStartMonth("2026", "Aout");
-      cy.get("input[name='duration_months']").type("6");
+      cy.get("input[name='duration_months']").type("6").should("have.value", "6");
       cy.contains("button", "Créer").click();
 
       cy.wait("@createSchedule").then((interception) => {
