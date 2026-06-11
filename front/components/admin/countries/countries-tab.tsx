@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useCountries } from "@/hooks/use-countries";
+import { useReloadKey } from "@/hooks/use-reload-key";
 import { useTranslations } from "next-intl";
 import {
   AlertDialog,
@@ -27,32 +29,18 @@ import {
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { toast } from "sonner";
+
 import CountryDialog from "./country-dialog";
 import { type Country } from "@/components/address/address-form";
 
 export default function CountriesTab() {
   const t = useTranslations("admin.countries");
   const tCommon = useTranslations("common");
-  const [countries, setCountries] = useState<Country[]>([]);
+  const { key: reloadKey, reload } = useReloadKey();
+  const countries = useCountries(reloadKey);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Country | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Country | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
-
-  const reload = () => setReloadKey((k) => k + 1);
-
-  useEffect(() => {
-    let cancelled = false;
-    apiFetch("/api/users/countries").then(({ ok, body }) => {
-      if (cancelled) return;
-      if (ok && Array.isArray(body.countries)) {
-        setCountries(body.countries as Country[]);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [reloadKey]);
 
   function openCreate() {
     setEditing(null);

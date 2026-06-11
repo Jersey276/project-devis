@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Combobox,
@@ -17,7 +17,8 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { apiFetch, FieldErrors, toErrorProps } from "@/lib/api";
+import { FieldErrors, toErrorProps } from "@/lib/api";
+import { useCountries } from "@/hooks/use-countries";
 
 export type Country = {
   id: number;
@@ -62,20 +63,7 @@ export default function AddressForm({
   const [values, setValues] = useState<AddressValues>(
     () => initialValues ?? EMPTY_ADDRESS_VALUES,
   );
-  const [countries, setCountries] = useState<Country[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    apiFetch("/api/users/countries").then(({ ok, body }) => {
-      if (cancelled) return;
-      if (ok && Array.isArray(body.countries)) {
-        setCountries(body.countries as Country[]);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const countries = useCountries();
 
   function update<K extends keyof AddressValues>(
     key: K,
