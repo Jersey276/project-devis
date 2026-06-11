@@ -198,10 +198,10 @@ func distinctTaxIds(lines []*quote.QuoteLine) []int32 {
 }
 
 type quoteLineData struct {
-	Kind         string        `json:"kind"`
-	Description  string        `json:"description"`
-	Option       *bool         `json:"option"`
-	ParentLineID string        `json:"parent_line_id"`
+	Kind         string         `json:"kind"`
+	Description  string         `json:"description"`
+	Option       *bool          `json:"option"`
+	ParentLineID string         `json:"parent_line_id"`
 	Sublines     []quoteSubline `json:"sublines"`
 }
 

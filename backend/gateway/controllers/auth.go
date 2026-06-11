@@ -18,21 +18,21 @@ import (
 
 // Auth service error codes
 const (
-	CodeSuccess             int32 = 0
-	CodeUserAlreadyExists   int32 = 1001
-	CodeUserNotFound        int32 = 1002
-	CodeInvalidCredentials  int32 = 1003
-	CodeInvalidRefreshToken int32 = 1004
-	CodeInvalidResetToken   int32 = 1005
-	CodeExpiredResetToken   int32 = 1006
-	CodeWeakPassword        int32 = 1007
-	CodeSessionInvalidated          int32 = 1008
-	CodeInvalidVerificationToken   int32 = 1010
-	CodeExpiredVerificationToken   int32 = 1011
-	CodeAlreadyVerified            int32 = 1012
-	CodeUserServiceError           int32 = 2001
-	CodeInternalError       int32 = 2002
-	CodeNotImplemented      int32 = 2003
+	CodeSuccess                  int32 = 0
+	CodeUserAlreadyExists        int32 = 1001
+	CodeUserNotFound             int32 = 1002
+	CodeInvalidCredentials       int32 = 1003
+	CodeInvalidRefreshToken      int32 = 1004
+	CodeInvalidResetToken        int32 = 1005
+	CodeExpiredResetToken        int32 = 1006
+	CodeWeakPassword             int32 = 1007
+	CodeSessionInvalidated       int32 = 1008
+	CodeInvalidVerificationToken int32 = 1010
+	CodeExpiredVerificationToken int32 = 1011
+	CodeAlreadyVerified          int32 = 1012
+	CodeUserServiceError         int32 = 2001
+	CodeInternalError            int32 = 2002
+	CodeNotImplemented           int32 = 2003
 )
 
 const (
@@ -68,20 +68,20 @@ func clearAuthCookies(c *gin.Context) {
 
 var authErrors = &serviceErrors{
 	codes: map[int32]codeMapping{
-		CodeUserAlreadyExists:   {http.StatusConflict, "Un compte avec cette adresse email existe déjà."},
-		CodeUserNotFound:        {http.StatusNotFound, "Aucun compte trouvé avec cette adresse email."},
-		CodeInvalidCredentials:  {http.StatusUnauthorized, "Adresse email ou mot de passe incorrect."},
-		CodeInvalidRefreshToken: {http.StatusUnauthorized, "Session expirée, veuillez vous reconnecter."},
-		CodeInvalidResetToken:   {http.StatusBadRequest, "Le lien de réinitialisation est invalide ou déjà utilisé."},
-		CodeExpiredResetToken:   {http.StatusGone, "Le lien de réinitialisation a expiré."},
-		CodeWeakPassword:        {http.StatusUnprocessableEntity, "Le mot de passe ne respecte pas la politique de sécurité."},
-		CodeSessionInvalidated:  {http.StatusUnauthorized, "Session expirée, veuillez vous reconnecter."},
-		CodeUserServiceError:    {http.StatusBadGateway, "Erreur lors de la création du compte, veuillez réessayer."},
-		CodeInternalError:              {http.StatusInternalServerError, "Une erreur interne est survenue."},
-		CodeNotImplemented:             {http.StatusNotImplemented, "Cette fonctionnalité n'est pas encore disponible."},
-		CodeInvalidVerificationToken:   {http.StatusBadRequest, "Le lien de vérification est invalide ou déjà utilisé."},
-		CodeExpiredVerificationToken:   {http.StatusGone, "Le lien de vérification a expiré."},
-		CodeAlreadyVerified:            {http.StatusConflict, "Cette adresse email est déjà vérifiée."},
+		CodeUserAlreadyExists:        {http.StatusConflict, "Un compte avec cette adresse email existe déjà."},
+		CodeUserNotFound:             {http.StatusNotFound, "Aucun compte trouvé avec cette adresse email."},
+		CodeInvalidCredentials:       {http.StatusUnauthorized, "Adresse email ou mot de passe incorrect."},
+		CodeInvalidRefreshToken:      {http.StatusUnauthorized, "Session expirée, veuillez vous reconnecter."},
+		CodeInvalidResetToken:        {http.StatusBadRequest, "Le lien de réinitialisation est invalide ou déjà utilisé."},
+		CodeExpiredResetToken:        {http.StatusGone, "Le lien de réinitialisation a expiré."},
+		CodeWeakPassword:             {http.StatusUnprocessableEntity, "Le mot de passe ne respecte pas la politique de sécurité."},
+		CodeSessionInvalidated:       {http.StatusUnauthorized, "Session expirée, veuillez vous reconnecter."},
+		CodeUserServiceError:         {http.StatusBadGateway, "Erreur lors de la création du compte, veuillez réessayer."},
+		CodeInternalError:            {http.StatusInternalServerError, "Une erreur interne est survenue."},
+		CodeNotImplemented:           {http.StatusNotImplemented, "Cette fonctionnalité n'est pas encore disponible."},
+		CodeInvalidVerificationToken: {http.StatusBadRequest, "Le lien de vérification est invalide ou déjà utilisé."},
+		CodeExpiredVerificationToken: {http.StatusGone, "Le lien de vérification a expiré."},
+		CodeAlreadyVerified:          {http.StatusConflict, "Cette adresse email est déjà vérifiée."},
 	},
 	unavailableMessage: "Service d'authentification indisponible.",
 }

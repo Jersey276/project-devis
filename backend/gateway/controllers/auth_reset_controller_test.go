@@ -17,10 +17,10 @@ import (
 )
 
 type mockAuthClient struct {
-	resetFn          func(context.Context, *auth.ResetPasswordRequest) (*auth.GenericResponse, error)
-	confirmFn        func(context.Context, *auth.ConfirmResetPasswordRequest) (*auth.GenericResponse, error)
-	updateFn         func(context.Context, *auth.UpdatePasswordRequest) (*auth.GenericResponse, error)
-	resendVerifyFn   func(context.Context, *auth.ResendEmailVerificationRequest) (*auth.GenericResponse, error)
+	resetFn        func(context.Context, *auth.ResetPasswordRequest) (*auth.GenericResponse, error)
+	confirmFn      func(context.Context, *auth.ConfirmResetPasswordRequest) (*auth.GenericResponse, error)
+	updateFn       func(context.Context, *auth.UpdatePasswordRequest) (*auth.GenericResponse, error)
+	resendVerifyFn func(context.Context, *auth.ResendEmailVerificationRequest) (*auth.GenericResponse, error)
 }
 
 func (m *mockAuthClient) Register(context.Context, *auth.RegisterRequest, ...grpc.CallOption) (*auth.FormGenericResponse, error) {

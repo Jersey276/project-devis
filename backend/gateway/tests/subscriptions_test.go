@@ -80,9 +80,9 @@ func (s *mockSubscriptionServer) CancelSubscription(_ context.Context, _ *sub.Ca
 
 func (s *mockSubscriptionServer) GetAdminStats(_ context.Context, _ *sub.GetAdminStatsRequest) (*sub.AdminStatsResponse, error) {
 	return &sub.AdminStatsResponse{
-		Success:                 true,
+		Success:                  true,
 		TotalActiveSubscriptions: 5,
-		TotalRevenueCents:       45000,
+		TotalRevenueCents:        45000,
 		PlanDistribution: []*sub.PlanDistributionEntry{
 			{Tier: "free", Count: 3},
 			{Tier: "pro", Count: 2},
