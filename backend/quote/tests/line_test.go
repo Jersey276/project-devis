@@ -86,8 +86,8 @@ func TestCreateLine_InvalidType(t *testing.T) {
 	if resp.Success {
 		t.Fatal("expected failure for unknown type")
 	}
-	if resp.Code != actions.CodeInvalidLineType {
-		t.Fatalf("expected CodeInvalidLineType, got %d", resp.Code)
+	if resp.Code != actions.CodeInvalidInput {
+		t.Fatalf("expected CodeInvalidInput, got %d", resp.Code)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unexpected DB calls: %v", err)
