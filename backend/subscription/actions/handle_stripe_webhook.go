@@ -55,72 +55,35 @@ func (s *Server) ProcessWebhookEvent(ctx context.Context, event stripe.Event) (*
 	return &subGrpc.GenericResponse{Success: true, Code: CodeSuccess}, nil
 }
 
+func unmarshalStripeData[T any](raw []byte) (T, *subGrpc.GenericResponse) {
+	var v T
+	if err := json.Unmarshal(raw, &v); err != nil {
+		return v, &subGrpc.GenericResponse{Success: false, Code: CodeInternalError}
+	}
+	return v, nil
+}
+
 func (s *Server) handleSubscriptionUpdated(ctx context.Context, event stripe.Event) (*subGrpc.GenericResponse, error) {
-	var sub stripe.Subscription
-	if err := json.Unmarshal(event.Data.Raw, &sub); err != nil {
-		return &subGrpc.GenericResponse{Success: false, Code: CodeInternalError}, nil
+	sub, errResp := unmarshalStripeData[stripe.Subscription](event.Data.Raw)
+	if errResp != nil {
+		return errResp, nil
 	}
 
-	status := mapStripeStatus(string(sub.Status))
-
-	// In stripe-go v82, period dates are on subscription items, not the subscription itself.
-	var periodStart, periodEnd int64
-	if sub.Items != nil && len(sub.Items.Data) > 0 {
-		periodStart = sub.Items.Data[0].CurrentPeriodStart
-		periodEnd = sub.Items.Data[0].CurrentPeriodEnd
-	}
-
-	// Resolve plan_id from the Stripe price ID on the first subscription item.
-	var planID int
-	if sub.Items != nil && len(sub.Items.Data) > 0 && sub.Items.Data[0].Price != nil {
-		_ = s.db.QueryRowContext(ctx,
-			"SELECT plan_id FROM plans WHERE stripe_price_id = $1",
-			sub.Items.Data[0].Price.ID,
-		).Scan(&planID)
-	}
-
-	var currentTier string
-	var query string
-	var args []any
-	if planID > 0 {
-		query = `UPDATE subscriptions
-		         SET stripe_subscription_id = $1,
-		             status                 = $2,
-		             plan_id                = $3,
-		             current_period_start   = to_timestamp($4),
-		             current_period_end     = to_timestamp($5),
-		             cancel_at_period_end   = $6,
-		             updated_at             = NOW()
-		         WHERE stripe_customer_id = $7
-		         RETURNING (SELECT tier FROM plans WHERE plan_id = $3)`
-		args = []any{sub.ID, status, planID, periodStart, periodEnd, sub.CancelAtPeriodEnd, sub.Customer.ID}
-	} else {
-		query = `UPDATE subscriptions
-		         SET stripe_subscription_id = $1,
-		             status                 = $2,
-		             current_period_start   = to_timestamp($3),
-		             current_period_end     = to_timestamp($4),
-		             cancel_at_period_end   = $5,
-		             updated_at             = NOW()
-		         WHERE stripe_customer_id = $6
-		         RETURNING (SELECT tier FROM plans WHERE plan_id = subscriptions.plan_id)`
-		args = []any{sub.ID, status, periodStart, periodEnd, sub.CancelAtPeriodEnd, sub.Customer.ID}
-	}
-
-	err := s.db.QueryRowContext(ctx, query, args...).Scan(&currentTier)
+	tier, err := services.ApplyStripeSubscriptionUpdate(ctx, s.db, sub)
 	if err != nil {
 		log.Printf("handleSubscriptionUpdated: no row for customer %s: %v", sub.Customer.ID, err)
 		return &subGrpc.GenericResponse{Success: true, Code: CodeSuccess}, nil
 	}
-
-	s.syncAuthTier(ctx, sub.Customer.ID, currentTier)
+	if tier != "" {
+		s.syncAuthTier(ctx, sub.Customer.ID, tier)
+	}
 	return &subGrpc.GenericResponse{Success: true, Code: CodeSuccess}, nil
 }
 
 func (s *Server) handleSubscriptionDeleted(ctx context.Context, event stripe.Event) (*subGrpc.GenericResponse, error) {
-	var sub stripe.Subscription
-	if err := json.Unmarshal(event.Data.Raw, &sub); err != nil {
-		return &subGrpc.GenericResponse{Success: false, Code: CodeInternalError}, nil
+	sub, errResp := unmarshalStripeData[stripe.Subscription](event.Data.Raw)
+	if errResp != nil {
+		return errResp, nil
 	}
 
 	var userID string
@@ -139,9 +102,9 @@ func (s *Server) handleSubscriptionDeleted(ctx context.Context, event stripe.Eve
 }
 
 func (s *Server) handleInvoicePaymentFailed(ctx context.Context, event stripe.Event) (*subGrpc.GenericResponse, error) {
-	var invoice stripe.Invoice
-	if err := json.Unmarshal(event.Data.Raw, &invoice); err != nil {
-		return &subGrpc.GenericResponse{Success: false, Code: CodeInternalError}, nil
+	invoice, errResp := unmarshalStripeData[stripe.Invoice](event.Data.Raw)
+	if errResp != nil {
+		return errResp, nil
 	}
 
 	if invoice.Customer == nil {
@@ -185,15 +148,3 @@ func (s *Server) callAuthUpdateTier(ctx context.Context, userID, tier string) {
 	}
 }
 
-func mapStripeStatus(stripeStatus string) string {
-	switch stripeStatus {
-	case "active", "trialing":
-		return "active"
-	case "canceled":
-		return "cancelled"
-	case "past_due", "unpaid":
-		return "expired"
-	default:
-		return "active"
-	}
-}

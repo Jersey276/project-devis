@@ -61,6 +61,9 @@ func TestRegister_Success(t *testing.T) {
 		WithArgs("new@example.com").
 		WillReturnRows(sqlmock.NewRows([]string{"email"}))
 
+	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM auth`).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+
 	mock.ExpectBegin()
 	mock.ExpectExec(`SELECT pg_advisory_xact_lock\(\$1\)`).
 		WithArgs(int64(2026052901)).
@@ -72,6 +75,10 @@ func TestRegister_Success(t *testing.T) {
 		WithArgs("user-123", "new@example.com", sqlmock.AnyArg(), "super_admin", "active", "free").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
+
+	mock.ExpectExec(`INSERT INTO email_verification_tokens`).
+		WithArgs("user-123", sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
 		Email:    "new@example.com",
@@ -206,6 +213,9 @@ func TestRegister_RollbackOnAuthInsertFailure(t *testing.T) {
 		WithArgs("fail@example.com").
 		WillReturnRows(sqlmock.NewRows([]string{"email"}))
 
+	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM auth`).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+
 	mock.ExpectBegin()
 	mock.ExpectExec(`SELECT pg_advisory_xact_lock\(\$1\)`).
 		WithArgs(int64(2026052901)).
@@ -247,6 +257,9 @@ func TestRegister_UserServiceError(t *testing.T) {
 	mock.ExpectQuery(`SELECT email FROM auth WHERE email = \$1`).
 		WithArgs("new@example.com").
 		WillReturnRows(sqlmock.NewRows([]string{"email"}))
+
+	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM auth`).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 
 	resp, err := srv.Register(context.Background(), &authGrpc.RegisterRequest{
 		Email:    "new@example.com",

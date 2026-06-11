@@ -145,11 +145,7 @@ export default function AnalyticsDashboard() {
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={lineData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 12 }}
-                tickLine={false}
-              />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} tickLine={false} />
               <YAxis
                 tick={{ fontSize: 12 }}
                 tickLine={false}

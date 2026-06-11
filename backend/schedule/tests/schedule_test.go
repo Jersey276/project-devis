@@ -19,13 +19,13 @@ func TestNewServer(t *testing.T) {
 
 func TestValidateCreateScheduleInput(t *testing.T) {
 	tests := []struct {
-		name          string
-		userID        string
-		quoteID       string
-		scheduleName  string
-		startMonth    string
+		name           string
+		userID         string
+		quoteID        string
+		scheduleName   string
+		startMonth     string
 		durationMonths int32
-		wantErr       bool
+		wantErr        bool
 	}{
 		{name: "valid input", userID: "user-1", quoteID: "quote-1", scheduleName: "Echeancier principal", startMonth: "2026-06", durationMonths: 12},
 		{name: "missing user", quoteID: "quote-1", scheduleName: "Echeancier principal", startMonth: "2026-06", durationMonths: 12, wantErr: true},

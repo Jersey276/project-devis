@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	authpb "gateway/auth"
 	"gateway/authz"
 	"gateway/middleware"
 	users "gateway/users"
@@ -23,6 +24,14 @@ const (
 	UsersCodeInvalidInput  int32 = 1003
 	UsersCodeInternalError int32 = 2001
 )
+
+func usersValidationErrors(errs []*users.ValidationError) []FieldError {
+	out := make([]FieldError, len(errs))
+	for i, e := range errs {
+		out[i] = FieldError{Field: e.Field, Message: e.Message}
+	}
+	return out
+}
 
 var usersErrors = &serviceErrors{
 	codes: map[int32]codeMapping{
@@ -294,6 +303,19 @@ func UpdateAdminAccount(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 
+	authRole := "free_user"
+	if input.Role == "admin" {
+		authRole = "super_admin"
+	}
+	if authClient, authClientErr := middleware.GetAuthServiceClient(); authClientErr != nil {
+		log.Printf("UpdateAdminAccount: failed to get auth client: %v", authClientErr)
+	} else if _, authErr := authClient.UpdateRole(c.Request.Context(), &authpb.UpdateRoleRequest{
+		UserId: c.Param("userId"),
+		Role:   authRole,
+	}); authErr != nil {
+		log.Printf("UpdateAdminAccount: failed to update role in auth for user %s: %v", c.Param("userId"), authErr)
+	}
+
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
@@ -458,7 +480,11 @@ func CreateAddress(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "address_id": resp.AddressId})
@@ -498,7 +524,11 @@ func UpdateAddress(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -589,7 +619,11 @@ func CreateClient(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "client_id": resp.ClientId})
@@ -633,7 +667,11 @@ func UpdateClient(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -686,7 +724,11 @@ func CreateCountry(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "country_id": resp.CountryId})
@@ -732,7 +774,11 @@ func UpdateCountry(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -782,7 +828,11 @@ func CreateCountryGroup(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "country_group_id": resp.CountryGroupId})
@@ -826,7 +876,11 @@ func UpdateCountryGroup(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -999,7 +1053,11 @@ func CreateTax(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "tax_id": resp.TaxId})
@@ -1047,7 +1105,11 @@ func UpdateTax(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	// tax_id may differ from the request id if the update created a new

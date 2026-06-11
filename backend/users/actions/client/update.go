@@ -18,8 +18,23 @@ import (
 //
 // FirstName and LastName are always required.
 func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateClientRequest) (*usersGrpc.UpdateClientResponse, error) {
-	if req.ClientId == "" || req.UserId == "" || req.FirstName == "" || req.LastName == "" {
-		return &usersGrpc.UpdateClientResponse{Success: false, Code: codes.InvalidInput}, nil
+	var fieldErrors []*usersGrpc.ValidationError
+
+	if req.ClientId == "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "client_id", Message: "Champ requis."})
+	}
+	if req.UserId == "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "user_id", Message: "Champ requis."})
+	}
+	if req.FirstName == "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "first_name", Message: "Champ requis."})
+	}
+	if req.LastName == "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "last_name", Message: "Champ requis."})
+	}
+
+	if len(fieldErrors) > 0 {
+		return &usersGrpc.UpdateClientResponse{Success: false, Code: codes.InvalidInput, ValidationErrors: fieldErrors}, nil
 	}
 
 	res, err := db.ExecContext(ctx,

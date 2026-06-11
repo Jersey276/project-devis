@@ -44,7 +44,7 @@ func TestSendQuoteEmail_Success(t *testing.T) {
 
 	// SQL has 'quote_sent' as a literal — 6 Go params: user_id, to_email, reference_name, subject, status, resend_id
 	mock.ExpectExec(`INSERT INTO email_logs`).
-		WithArgs(sqlmock.AnyArg(), "client@example.com", "Devis Test", sqlmock.AnyArg(), "sent", "resend-id-123").
+		WithArgs(sqlmock.AnyArg(), "client@example.com", "quote_sent", "Devis Test", sqlmock.AnyArg(), "sent", "resend-id-123").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := s.SendQuoteEmail(context.Background(), &emailGrpc.SendQuoteEmailRequest{
@@ -97,7 +97,7 @@ func TestSendQuoteEmail_SendFails_LogsFailedStatus(t *testing.T) {
 	}
 
 	mock.ExpectExec(`INSERT INTO email_logs`).
-		WithArgs(sqlmock.AnyArg(), "client@example.com", "Devis Test", sqlmock.AnyArg(), "failed", nil).
+		WithArgs(sqlmock.AnyArg(), "client@example.com", "quote_sent", "Devis Test", sqlmock.AnyArg(), "failed", nil).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := s.SendQuoteEmail(context.Background(), &emailGrpc.SendQuoteEmailRequest{

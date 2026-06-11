@@ -88,6 +88,7 @@ const items: SidebarItem[] = [
     icon: UsersIcon,
     modes: ["provider"],
     temp: true,
+    adminOnly: true,
   },
   {
     key: "countries",
@@ -183,7 +184,7 @@ export default function AppSidebar() {
   return (
     <Sidebar data-mode={mode}>
       <SidebarContent className="bg-primary-foreground text-primary">
-        {isAdmin && adminItems.length > 0 && (
+        {isAdmin && (
           <SidebarGroup>
             <SidebarGroupLabel>{t("viewSwitchLabel")}</SidebarGroupLabel>
             <SidebarGroupContent>

@@ -6,8 +6,8 @@ import (
 	"os"
 	"strconv"
 
-	emailGrpc "gateway/email"
 	"gateway/authz"
+	emailGrpc "gateway/email"
 	"gateway/middleware"
 
 	"github.com/gin-gonic/gin"

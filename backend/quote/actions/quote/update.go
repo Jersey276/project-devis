@@ -9,8 +9,20 @@ import (
 )
 
 func Update(ctx context.Context, db *sql.DB, req *quoteGrpc.UpdateQuoteRequest) (*quoteGrpc.UpdateQuoteResponse, error) {
-	if req.QuoteId == "" || req.UserId == "" || req.Name == "" {
-		return &quoteGrpc.UpdateQuoteResponse{Success: false, Code: codes.InvalidInput}, nil
+	var fieldErrors []*quoteGrpc.ValidationError
+
+	if req.QuoteId == "" {
+		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "quote_id", Message: "Champ requis."})
+	}
+	if req.UserId == "" {
+		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "user_id", Message: "Champ requis."})
+	}
+	if req.Name == "" {
+		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "name", Message: "Champ requis."})
+	}
+
+	if len(fieldErrors) > 0 {
+		return &quoteGrpc.UpdateQuoteResponse{Success: false, Code: codes.InvalidInput, ValidationErrors: fieldErrors}, nil
 	}
 
 	if code, ok := EditableForUser(ctx, db, req.QuoteId, req.UserId); !ok {

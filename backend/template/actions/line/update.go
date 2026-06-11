@@ -13,7 +13,11 @@ import (
 func Update(ctx context.Context, db *sql.DB, req *templateGrpc.UpdateTemplateLineRequest) (*templateGrpc.UpdateTemplateLineResponse, error) {
 	if req.Quantity != "" {
 		if _, err := strconv.ParseFloat(req.Quantity, 64); err != nil {
-			return &templateGrpc.UpdateTemplateLineResponse{Success: false, Code: codes.InvalidInput}, nil
+			return &templateGrpc.UpdateTemplateLineResponse{
+				Success:          false,
+				Code:             codes.InvalidInput,
+				ValidationErrors: []*templateGrpc.ValidationError{{Field: "quantity", Message: "Doit être un nombre valide."}},
+			}, nil
 		}
 	}
 

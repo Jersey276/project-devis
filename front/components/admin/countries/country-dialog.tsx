@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useDialogSubmit } from "@/hooks/use-dialog-submit";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,13 +19,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  apiFetch,
-  fieldErrorsFromBody,
-  FieldErrors,
-  toErrorProps,
-} from "@/lib/api";
-import { toast } from "sonner";
+import { apiFetch, toErrorProps } from "@/lib/api";
 import { type Country } from "@/components/address/address-form";
 
 type CountryDialogProps = {
@@ -47,39 +42,17 @@ export default function CountryDialog({
   const isEdit = country != null;
   const [code, setCode] = useState(country?.code ?? "");
   const [name, setName] = useState(country?.name ?? "");
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [submitting, setSubmitting] = useState(false);
+  const { fieldErrors, submitting, submit } = useDialogSubmit(tCommon("errors.generic"));
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setFieldErrors({});
-    setSubmitting(true);
-    const path = isEdit
-      ? `/api/users/countries/${country!.id}`
-      : "/api/users/countries";
-    try {
-      const { ok, status, body } = await apiFetch(path, {
-        method: isEdit ? "PUT" : "POST",
-        body: JSON.stringify({ code, name }),
-      });
-      if (ok && body.success) {
-        toast.success(
-          isEdit ? t("updateSuccessToast") : t("createSuccessToast"),
-        );
-        onSaved();
-        onOpenChange(false);
-        return;
-      }
-      if (status === 422 && Array.isArray(body.field_errors)) {
-        setFieldErrors(fieldErrorsFromBody(body));
-        return;
-      }
-      toast.error(body.message ?? tCommon("errors.generic"));
-    } catch {
-      toast.error(tCommon("errors.generic"));
-    } finally {
-      setSubmitting(false);
-    }
+    const path = isEdit ? `/api/users/countries/${country!.id}` : "/api/users/countries";
+    await submit({
+      request: () => apiFetch(path, { method: isEdit ? "PUT" : "POST", body: JSON.stringify({ code, name }) }),
+      successMessage: isEdit ? t("updateSuccessToast") : t("createSuccessToast"),
+      onSuccess: onSaved,
+      onClose: onOpenChange,
+    });
   }
 
   return (
@@ -91,7 +64,12 @@ export default function CountryDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <form id={FORM_ID} className="grid gap-4" onSubmit={handleSubmit} noValidate>
+        <form
+          id={FORM_ID}
+          className="grid gap-4"
+          onSubmit={handleSubmit}
+          noValidate
+        >
           <FieldGroup>
             <Field data-invalid={!!fieldErrors.code?.length}>
               <FieldLabel htmlFor="country_code">{t("codeLabel")}</FieldLabel>

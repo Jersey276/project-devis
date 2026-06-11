@@ -24,6 +24,13 @@ func getOperationMetrics(operation string) *operationMetrics {
 	return actual.(*operationMetrics)
 }
 
+func deferObserve(op string, startedAt time.Time, getResult func() (int32, bool), errPtr *error) func() {
+	return func() {
+		code, success := getResult()
+		recordOperation(op, success, code, startedAt, *errPtr)
+	}
+}
+
 func recordOperation(operation string, success bool, code int32, startedAt time.Time, err error) {
 	metrics := getOperationMetrics(operation)
 	requests := metrics.requests.Add(1)

@@ -27,12 +27,12 @@ func setupServer(t *testing.T) (*actions.Server, sqlmock.Sqlmock) {
 func TestListPlans_ReturnsPlans(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	rows := sqlmock.NewRows([]string{"plan_id", "name", "tier", "price_cents", "billing_cycle", "features", "active"}).
-		AddRow(1, "Free", "free", 0, "none", `{"max_schedules":3}`, true).
-		AddRow(2, "Pro", "pro", 900, "monthly", `{"max_schedules":-1}`, true).
-		AddRow(3, "Enterprise", "enterprise", 4900, "monthly", `{"max_schedules":-1}`, true)
+	rows := sqlmock.NewRows([]string{"plan_id", "name", "tier", "price_cents", "billing_cycle", "features", "active", "stripe_price_id"}).
+		AddRow(1, "Free", "free", 0, "none", `{"max_schedules":3}`, true, "").
+		AddRow(2, "Pro", "pro", 900, "monthly", `{"max_schedules":-1}`, true, "").
+		AddRow(3, "Enterprise", "enterprise", 4900, "monthly", `{"max_schedules":-1}`, true, "")
 
-	mock.ExpectQuery(`SELECT plan_id, name, tier, price_cents, billing_cycle, features::text, active FROM plans WHERE active = TRUE`).
+	mock.ExpectQuery(`SELECT plan_id, name, tier, price_cents, billing_cycle, features::text, active, COALESCE`).
 		WillReturnRows(rows)
 
 	resp, err := srv.ListPlans(context.Background(), &subGrpc.ListPlansRequest{})

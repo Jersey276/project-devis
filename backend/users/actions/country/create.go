@@ -10,8 +10,17 @@ import (
 )
 
 func Create(ctx context.Context, db *sql.DB, req *usersGrpc.CreateCountryRequest) (*usersGrpc.CreateCountryResponse, error) {
-	if len(req.Code) != 2 || req.Name == "" {
-		return &usersGrpc.CreateCountryResponse{Success: false, Code: codes.InvalidInput}, nil
+	var fieldErrors []*usersGrpc.ValidationError
+
+	if len(req.Code) != 2 {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "code", Message: "Doit être un code ISO à 2 caractères."})
+	}
+	if req.Name == "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "name", Message: "Champ requis."})
+	}
+
+	if len(fieldErrors) > 0 {
+		return &usersGrpc.CreateCountryResponse{Success: false, Code: codes.InvalidInput, ValidationErrors: fieldErrors}, nil
 	}
 
 	var countryID int32

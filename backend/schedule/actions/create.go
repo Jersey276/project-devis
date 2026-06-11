@@ -25,24 +25,40 @@ func (s *Server) CreateScheduleWithEligibleLines(ctx context.Context, req *sched
 
 func (s *Server) createScheduleWithEligibleLines(ctx context.Context, req *scheduleGrpc.CreateScheduleRequest, eligibleLineIDs []string) (resp *scheduleGrpc.CreateScheduleResponse, err error) {
 	startedAt := time.Now()
-	defer func() {
-		code := CodeInternalError
-		success := false
-		if resp != nil {
-			code = resp.Code
-			success = resp.Success
+	defer deferObserve("create_schedule", startedAt, func() (int32, bool) {
+		if resp == nil {
+			return CodeInternalError, false
 		}
-		recordOperation("create_schedule", success, code, startedAt, err)
-	}()
+		return resp.Code, resp.Success
+	}, &err)()
 
 	if req == nil {
 		return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInvalidInput}, nil
 	}
-	if err := ValidateCreateScheduleInput(req.UserId, req.QuoteId, req.Name, req.StartMonth, req.DurationMonths); err != nil {
-		return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInvalidInput}, nil
+
+	var fieldErrors []*scheduleGrpc.ValidationError
+
+	if strings.TrimSpace(req.UserId) == "" {
+		fieldErrors = append(fieldErrors, &scheduleGrpc.ValidationError{Field: "user_id", Message: "Champ requis."})
+	}
+	if strings.TrimSpace(req.QuoteId) == "" {
+		fieldErrors = append(fieldErrors, &scheduleGrpc.ValidationError{Field: "quote_id", Message: "Champ requis."})
+	}
+	if strings.TrimSpace(req.Name) == "" {
+		fieldErrors = append(fieldErrors, &scheduleGrpc.ValidationError{Field: "name", Message: "Champ requis."})
+	}
+	if !startMonthRegexp.MatchString(strings.TrimSpace(req.StartMonth)) {
+		fieldErrors = append(fieldErrors, &scheduleGrpc.ValidationError{Field: "start_month", Message: "Format invalide (YYYY-MM)."})
+	}
+	if req.DurationMonths <= 0 {
+		fieldErrors = append(fieldErrors, &scheduleGrpc.ValidationError{Field: "duration_months", Message: "Doit être supérieur à zéro."})
 	}
 	if len(eligibleLineIDs) == 0 {
-		return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInvalidInput}, nil
+		fieldErrors = append(fieldErrors, &scheduleGrpc.ValidationError{Field: "quote_id", Message: "Aucune ligne de devis éligible."})
+	}
+
+	if len(fieldErrors) > 0 {
+		return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInvalidInput, ValidationErrors: fieldErrors}, nil
 	}
 
 	startMonthDate, err := parseStartMonth(req.StartMonth)
@@ -54,6 +70,7 @@ func (s *Server) createScheduleWithEligibleLines(ctx context.Context, req *sched
 	if err != nil {
 		return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInternalError}, err
 	}
+	defer tx.Rollback()
 
 	scheduleID := uuid.New().String()
 	_, err = tx.ExecContext(ctx,
@@ -61,14 +78,12 @@ func (s *Server) createScheduleWithEligibleLines(ctx context.Context, req *sched
 		scheduleID, req.QuoteId, req.UserId, req.Name, StatusDraft, startMonthDate, req.DurationMonths,
 	)
 	if err != nil {
-		_ = tx.Rollback()
 		return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInternalError}, err
 	}
 
 	for _, lineID := range eligibleLineIDs {
 		trimmedLineID := strings.TrimSpace(lineID)
 		if trimmedLineID == "" {
-			_ = tx.Rollback()
 			return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInvalidInput}, nil
 		}
 		for monthIndex := 1; monthIndex <= int(req.DurationMonths); monthIndex++ {
@@ -77,7 +92,6 @@ func (s *Server) createScheduleWithEligibleLines(ctx context.Context, req *sched
 				scheduleID, trimmedLineID, monthIndex, int64(0),
 			)
 			if err != nil {
-				_ = tx.Rollback()
 				return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInternalError}, err
 			}
 		}

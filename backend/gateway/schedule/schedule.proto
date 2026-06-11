@@ -17,6 +17,11 @@ message GenericResponse {
     int32 code    = 2;
 }
 
+message ValidationError {
+    string field   = 1;
+    string message = 2;
+}
+
 message CreateScheduleRequest {
     string user_id          = 1;
     string quote_id         = 2;
@@ -29,6 +34,7 @@ message CreateScheduleResponse {
     bool   success     = 1;
     int32  code        = 2;
     string schedule_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message UpdateScheduleCellRequest {

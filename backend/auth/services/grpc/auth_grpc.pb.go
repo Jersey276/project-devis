@@ -30,6 +30,7 @@ const (
 	AuthService_IntrospectToken_FullMethodName         = "/auth.AuthService/IntrospectToken"
 	AuthService_UpdateSubscriptionTier_FullMethodName  = "/auth.AuthService/UpdateSubscriptionTier"
 	AuthService_ResendEmailVerification_FullMethodName = "/auth.AuthService/ResendEmailVerification"
+	AuthService_UpdateRole_FullMethodName              = "/auth.AuthService/UpdateRole"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -60,6 +61,8 @@ type AuthServiceClient interface {
 	UpdateSubscriptionTier(ctx context.Context, in *UpdateSubscriptionTierRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	// ResendEmailVerification re-sends the verification email for an unverified account.
 	ResendEmailVerification(ctx context.Context, in *ResendEmailVerificationRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// UpdateRole updates a user's role and invalidates existing tokens.
+	UpdateRole(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 }
 
 type authServiceClient struct {
@@ -180,6 +183,16 @@ func (c *authServiceClient) ResendEmailVerification(ctx context.Context, in *Res
 	return out, nil
 }
 
+func (c *authServiceClient) UpdateRole(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, AuthService_UpdateRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -208,6 +221,8 @@ type AuthServiceServer interface {
 	UpdateSubscriptionTier(context.Context, *UpdateSubscriptionTierRequest) (*GenericResponse, error)
 	// ResendEmailVerification re-sends the verification email for an unverified account.
 	ResendEmailVerification(context.Context, *ResendEmailVerificationRequest) (*GenericResponse, error)
+	// UpdateRole updates a user's role and invalidates existing tokens.
+	UpdateRole(context.Context, *UpdateRoleRequest) (*GenericResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -250,6 +265,9 @@ func (UnimplementedAuthServiceServer) UpdateSubscriptionTier(context.Context, *U
 }
 func (UnimplementedAuthServiceServer) ResendEmailVerification(context.Context, *ResendEmailVerificationRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ResendEmailVerification not implemented")
+}
+func (UnimplementedAuthServiceServer) UpdateRole(context.Context, *UpdateRoleRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateRole not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -470,6 +488,24 @@ func _AuthService_ResendEmailVerification_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_UpdateRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).UpdateRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_UpdateRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).UpdateRole(ctx, req.(*UpdateRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -520,6 +556,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResendEmailVerification",
 			Handler:    _AuthService_ResendEmailVerification_Handler,
+		},
+		{
+			MethodName: "UpdateRole",
+			Handler:    _AuthService_UpdateRole_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

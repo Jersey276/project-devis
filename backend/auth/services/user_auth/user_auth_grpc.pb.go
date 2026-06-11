@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v7.34.0
-// source: user_auth.proto
+// source: services/user_auth/user_auth.proto
 
 // Package matches the users service so the wire format aligns:
 // /users.UserService/CreateUser and /users.UserService/DeleteUser
@@ -286,5 +286,5 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "user_auth.proto",
+	Metadata: "services/user_auth/user_auth.proto",
 }

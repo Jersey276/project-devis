@@ -43,9 +43,7 @@ export function ClientsTable({ data, onArchived }: ClientsTableProps) {
           toast.success(t("deleteSuccessToast"));
           onArchived?.();
         } else {
-          toast.error(
-            (body.message as string) ?? t("deleteFailedToast"),
-          );
+          toast.error((body.message as string) ?? t("deleteFailedToast"));
         }
       },
     },
@@ -63,9 +61,15 @@ export function ClientsTable({ data, onArchived }: ClientsTableProps) {
           <DataTableSortableHead name="first_name">
             {t("columns.firstName")}
           </DataTableSortableHead>
-          <DataTableSortableHead name="last_name">{t("columns.lastName")}</DataTableSortableHead>
-          <DataTableSortableHead name="email">{t("columns.email")}</DataTableSortableHead>
-          <DataTableSortableHead name="company">{t("columns.company")}</DataTableSortableHead>
+          <DataTableSortableHead name="last_name">
+            {t("columns.lastName")}
+          </DataTableSortableHead>
+          <DataTableSortableHead name="email">
+            {t("columns.email")}
+          </DataTableSortableHead>
+          <DataTableSortableHead name="company">
+            {t("columns.company")}
+          </DataTableSortableHead>
           <DataTableHead>{t("columns.actions")}</DataTableHead>
         </DataTableRow>
       </DataTableHeader>

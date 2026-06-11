@@ -23,8 +23,24 @@ var validTypes = map[string]bool{
 }
 
 func Create(ctx context.Context, db *sql.DB, req *templateGrpc.CreateTemplateRequest) (*templateGrpc.CreateTemplateResponse, error) {
+	var fieldErrors []*templateGrpc.ValidationError
+
+	if req.UserId == "" {
+		fieldErrors = append(fieldErrors, &templateGrpc.ValidationError{Field: "user_id", Message: "Champ requis."})
+	}
+	if req.Name == "" {
+		fieldErrors = append(fieldErrors, &templateGrpc.ValidationError{Field: "name", Message: "Champ requis."})
+	}
 	if !validTypes[req.TemplateType] {
-		return &templateGrpc.CreateTemplateResponse{Success: false, Code: codes.InvalidTemplateType}, nil
+		fieldErrors = append(fieldErrors, &templateGrpc.ValidationError{Field: "template_type", Message: "Type de template invalide."})
+	}
+
+	if len(fieldErrors) > 0 {
+		code := codes.InvalidInput
+		if !validTypes[req.TemplateType] && req.UserId != "" && req.Name != "" {
+			code = codes.InvalidTemplateType
+		}
+		return &templateGrpc.CreateTemplateResponse{Success: false, Code: code, ValidationErrors: fieldErrors}, nil
 	}
 
 	templateID := uuid.New().String()

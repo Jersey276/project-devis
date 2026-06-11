@@ -11,8 +11,20 @@ import (
 )
 
 func Create(ctx context.Context, db *sql.DB, req *usersGrpc.CreateClientRequest) (*usersGrpc.CreateClientResponse, error) {
-	if req.UserId == "" || req.FirstName == "" || req.LastName == "" {
-		return &usersGrpc.CreateClientResponse{Success: false, Code: codes.InvalidInput}, nil
+	var fieldErrors []*usersGrpc.ValidationError
+
+	if req.UserId == "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "user_id", Message: "Champ requis."})
+	}
+	if req.FirstName == "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "first_name", Message: "Champ requis."})
+	}
+	if req.LastName == "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "last_name", Message: "Champ requis."})
+	}
+
+	if len(fieldErrors) > 0 {
+		return &usersGrpc.CreateClientResponse{Success: false, Code: codes.InvalidInput, ValidationErrors: fieldErrors}, nil
 	}
 
 	clientID := uuid.New().String()

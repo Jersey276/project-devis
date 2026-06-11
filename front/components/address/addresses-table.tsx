@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useCountries } from "@/hooks/use-countries";
 import { useTranslations } from "next-intl";
 import {
   AlertDialog,
@@ -25,9 +26,9 @@ import {
 } from "@/components/custom/data-table";
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import AddressDialog, {
+  backendAddressToExisting,
   type ExistingAddress,
 } from "@/components/address/address-dialog";
-import { apiFetch } from "@/lib/api";
 import { type Country } from "@/components/address/address-form";
 import {
   archiveAddress,
@@ -62,7 +63,7 @@ export default function AddressesTable({
   const t = useTranslations("address.list");
   const tCommon = useTranslations("common");
   const [addresses, setAddresses] = useState<BackendAddress[]>([]);
-  const [countries, setCountries] = useState<Country[]>([]);
+  const countries = useCountries();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<ExistingAddress | null>(null);
   const [pendingDelete, setPendingDelete] = useState<BackendAddress | null>(
@@ -81,19 +82,6 @@ export default function AddressesTable({
     reload();
   }, [reload]);
 
-  useEffect(() => {
-    let cancelled = false;
-    apiFetch("/api/users/countries").then(({ ok, body }) => {
-      if (cancelled) return;
-      if (ok && Array.isArray(body.countries)) {
-        setCountries(body.countries as Country[]);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   function openCreate() {
     if (readOnly) return;
     setEditing(null);
@@ -102,15 +90,7 @@ export default function AddressesTable({
 
   function openEdit(address: BackendAddress) {
     if (readOnly) return;
-    setEditing({
-      id: address.id,
-      name: address.name,
-      street: address.street,
-      additional_street: address.additional_street ?? "",
-      city: address.city,
-      zip_code: address.zip_code,
-      country_id: address.country_id,
-    });
+    setEditing(backendAddressToExisting(address));
     setDrawerOpen(true);
   }
 

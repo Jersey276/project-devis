@@ -11,23 +11,23 @@ import (
 
 type Server struct {
 	authGrpc.UnimplementedAuthServiceServer
-	db         *sql.DB
-	userClient userGrpc.UserServiceClient
+	db          *sql.DB
+	userClient  userGrpc.UserServiceClient
 	emailSender services.EmailSender
 }
 
 func NewServer(db *sql.DB, userConn *grpc.ClientConn) *Server {
 	return &Server{
-		db:         db,
-		userClient: userGrpc.NewUserServiceClient(userConn),
+		db:          db,
+		userClient:  userGrpc.NewUserServiceClient(userConn),
 		emailSender: services.NewEmailSenderFromEnv(),
 	}
 }
 
 func NewServerWithClient(db *sql.DB, userClient userGrpc.UserServiceClient) *Server {
 	return &Server{
-		db:         db,
-		userClient: userClient,
+		db:          db,
+		userClient:  userClient,
 		emailSender: services.NewEmailSenderFromEnv(),
 	}
 }

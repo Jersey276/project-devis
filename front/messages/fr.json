@@ -204,8 +204,11 @@
         "addressEmpty": "Aucune adresse trouvée.",
         "userAddressLabel": "Adresse du prestataire",
         "userAddressPlaceholder": "Sélectionner une adresse",
-        "userAddressPlaceholderEmpty": "Aucune adresse enregistrée — ajoutez-en une dans votre profil.",
-        "userAddressEmpty": "Aucune adresse trouvée."
+        "userAddressPlaceholderEmpty": "Aucune adresse enregistrée",
+        "userAddressEmpty": "Aucune adresse trouvée.",
+        "addClientButton": "Nouveau client",
+        "addAddressButton": "Nouvelle adresse",
+        "addUserAddressButton": "Nouvelle adresse"
       },
       "items": {
         "label": "Éléments du devis",
@@ -317,6 +320,10 @@
       "createFailedToast": "Impossible de créer le client.",
       "addressFailedToast": "Client créé, mais l'adresse n'a pas pu être enregistrée. Vous pouvez l'ajouter depuis la fiche client.",
       "addressDefaultName": "Adresse principale"
+    },
+    "dialog": {
+      "createTitle": "Nouveau client",
+      "createSuccessToast": "Client créé."
     },
     "edit": {
       "title": "Modifier le client",

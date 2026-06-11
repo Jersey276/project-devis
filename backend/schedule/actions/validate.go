@@ -11,15 +11,12 @@ import (
 
 func (s *Server) ValidateSchedule(ctx context.Context, req *scheduleGrpc.ValidateScheduleRequest) (resp *scheduleGrpc.GenericResponse, err error) {
 	startedAt := time.Now()
-	defer func() {
-		code := CodeInternalError
-		success := false
-		if resp != nil {
-			code = resp.Code
-			success = resp.Success
+	defer deferObserve("validate_schedule", startedAt, func() (int32, bool) {
+		if resp == nil {
+			return CodeInternalError, false
 		}
-		recordOperation("validate_schedule", success, code, startedAt, err)
-	}()
+		return resp.Code, resp.Success
+	}, &err)()
 
 	if req == nil || strings.TrimSpace(req.ScheduleId) == "" || strings.TrimSpace(req.UserId) == "" {
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeInvalidInput}, nil
@@ -29,11 +26,11 @@ func (s *Server) ValidateSchedule(ctx context.Context, req *scheduleGrpc.Validat
 	if err != nil {
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
+	defer tx.Rollback()
 
 	var quoteID, status string
 	err = tx.QueryRowContext(ctx, `SELECT quote_id, status FROM schedules WHERE schedule_id=$1 AND user_id=$2 FOR UPDATE`, req.ScheduleId, req.UserId).Scan(&quoteID, &status)
 	if err != nil {
-		_ = tx.Rollback()
 		if err == sql.ErrNoRows {
 			return &scheduleGrpc.GenericResponse{Success: false, Code: CodeNotFound}, nil
 		}
@@ -41,11 +38,9 @@ func (s *Server) ValidateSchedule(ctx context.Context, req *scheduleGrpc.Validat
 	}
 
 	if status == StatusValid {
-		_ = tx.Rollback()
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeScheduleValidated}, nil
 	}
 	if status == StatusDenied {
-		_ = tx.Rollback()
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeScheduleFinalized}, nil
 	}
 
@@ -55,17 +50,14 @@ func (s *Server) ValidateSchedule(ctx context.Context, req *scheduleGrpc.Validat
 		quoteID, req.ScheduleId,
 	).Scan(&existingValidCount)
 	if err != nil {
-		_ = tx.Rollback()
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
 	if existingValidCount > 0 {
-		_ = tx.Rollback()
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeScheduleValidated}, nil
 	}
 
 	expectedByLineID, err := getQuoteLineExpectedCents(ctx, req.UserId, quoteID)
 	if err != nil {
-		_ = tx.Rollback()
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
 
@@ -75,7 +67,6 @@ func (s *Server) ValidateSchedule(ctx context.Context, req *scheduleGrpc.Validat
 		req.ScheduleId,
 	)
 	if err != nil {
-		_ = tx.Rollback()
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
 	defer rows.Close()
@@ -84,34 +75,15 @@ func (s *Server) ValidateSchedule(ctx context.Context, req *scheduleGrpc.Validat
 		var lineID string
 		var planned int64
 		if err := rows.Scan(&lineID, &planned); err != nil {
-			_ = tx.Rollback()
 			return &scheduleGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 		}
 		plannedByLineID[lineID] = planned
 	}
 	if err := rows.Err(); err != nil {
-		_ = tx.Rollback()
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
 
-	unbalanced := false
-	for lineID, expected := range expectedByLineID {
-		if plannedByLineID[lineID] != expected {
-			unbalanced = true
-			break
-		}
-	}
-	if !unbalanced {
-		for lineID, planned := range plannedByLineID {
-			if _, ok := expectedByLineID[lineID]; !ok && planned != 0 {
-				unbalanced = true
-				break
-			}
-		}
-	}
-
-	if unbalanced {
-		_ = tx.Rollback()
+	if !schedulesBalanced(expectedByLineID, plannedByLineID) {
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeScheduleUnbalanced}, nil
 	}
 
@@ -120,16 +92,13 @@ func (s *Server) ValidateSchedule(ctx context.Context, req *scheduleGrpc.Validat
 		req.ScheduleId, req.UserId,
 	)
 	if err != nil {
-		_ = tx.Rollback()
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
 	affected, err := result.RowsAffected()
 	if err != nil {
-		_ = tx.Rollback()
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
 	if affected == 0 {
-		_ = tx.Rollback()
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeNotFound}, nil
 	}
 
@@ -138,7 +107,6 @@ func (s *Server) ValidateSchedule(ctx context.Context, req *scheduleGrpc.Validat
 		quoteID, req.ScheduleId,
 	)
 	if err != nil {
-		_ = tx.Rollback()
 		return &scheduleGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
 

@@ -16,12 +16,12 @@ import (
 )
 
 const (
-	CtxUserID           = "user_id"
-	CtxEmail            = "email"
-	CtxRole             = "role"
-	CtxAccountStatus    = "account_status"
-	CtxSubscriptionTier = "subscription_tier"
-	CtxSessionVersion   = "session_version"
+	CtxUserID                    = "user_id"
+	CtxEmail                     = "email"
+	CtxRole                      = "role"
+	CtxAccountStatus             = "account_status"
+	CtxSubscriptionTier          = "subscription_tier"
+	CtxSessionVersion            = "session_version"
 	codeSessionInvalidated int32 = 1008
 )
 

@@ -12,8 +12,13 @@ import (
 	userGrpc "project-devis-auth/services/user_auth"
 )
 
+func validEmail(email string) bool {
+	_, err := mail.ParseAddress(email)
+	return err == nil
+}
+
 func (s *Server) ResetPassword(ctx context.Context, req *authGrpc.ResetPasswordRequest) (*authGrpc.GenericResponse, error) {
-	if _, err := mail.ParseAddress(req.Email); err != nil {
+	if !validEmail(req.Email) {
 		return &authGrpc.GenericResponse{Success: false, Code: CodeInvalidCredentials}, nil
 	}
 
@@ -43,7 +48,7 @@ func (s *Server) ResetPassword(ctx context.Context, req *authGrpc.ResetPasswordR
 }
 
 func (s *Server) UpdatePassword(ctx context.Context, req *authGrpc.UpdatePasswordRequest) (*authGrpc.GenericResponse, error) {
-	if _, err := mail.ParseAddress(req.Email); err != nil {
+	if !validEmail(req.Email) {
 		return &authGrpc.GenericResponse{Success: false, Code: CodeInvalidCredentials}, nil
 	}
 	if req.OldPassword == "" {
@@ -141,7 +146,7 @@ func (s *Server) ConfirmResetPassword(ctx context.Context, req *authGrpc.Confirm
 		return &authGrpc.GenericResponse{Success: false, Code: CodeInternalError}, err
 	}
 
-	if err := services.ConsumePasswordResetTokenTx(ctx, tx, req.Token); err != nil {
+	if err := services.ConsumePasswordResetToken(ctx, tx, req.Token); err != nil {
 		switch {
 		case errors.Is(err, services.ErrPasswordResetTokenNotFound):
 			return &authGrpc.GenericResponse{Success: false, Code: CodeInvalidResetToken}, nil

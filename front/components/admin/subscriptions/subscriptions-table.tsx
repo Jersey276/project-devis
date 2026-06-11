@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useReloadKey } from "@/hooks/use-reload-key";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,11 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
   Select,
   SelectContent,
@@ -41,7 +38,11 @@ import {
   listPlans,
   assignPlan,
 } from "@/lib/services/subscriptions";
-import type { BackendSubscription, BackendPlan, SubscriptionTier } from "@/types/backend";
+import type {
+  BackendSubscription,
+  BackendPlan,
+  SubscriptionTier,
+} from "@/types/backend";
 
 function formatDate(value: string | null | undefined): string {
   if (!value) return "—";
@@ -54,15 +55,13 @@ export default function SubscriptionsTable() {
   const t = useTranslations("admin.subscriptions");
   const tCommon = useTranslations("common");
 
+  const { key: reloadKey, reload } = useReloadKey();
   const [subscriptions, setSubscriptions] = useState<BackendSubscription[]>([]);
   const [plans, setPlans] = useState<BackendPlan[]>([]);
   const [editing, setEditing] = useState<BackendSubscription | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
-
-  const reload = () => setReloadKey((k) => k + 1);
 
   useEffect(() => {
     let cancelled = false;
@@ -98,7 +97,10 @@ export default function SubscriptionsTable() {
 
     setSubmitting(true);
     try {
-      const { ok, body } = await assignPlan(editing.user_id, Number(selectedPlanId));
+      const { ok, body } = await assignPlan(
+        editing.user_id,
+        Number(selectedPlanId),
+      );
       if (ok && body.success) {
         toast.success(t("changePlanDialog.successToast"));
         reload();

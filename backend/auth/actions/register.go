@@ -40,8 +40,21 @@ func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*
 		}, err
 	}
 
+	// Pre-check: is this the very first registration? Used to set the admin role
+	// in the users service at creation time. The transaction below re-verifies
+	// under an advisory lock, so auth.role is always race-free.
+	var preCount int64
+	if err = s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM auth").Scan(&preCount); err != nil {
+		return &authGrpc.FormGenericResponse{
+			Success: false,
+			Code:    CodeInternalError,
+		}, err
+	}
+	isFirstUser := preCount == 0
+
 	insertResp, err := s.userClient.CreateUser(ctx, &userGrpc.CreateUserRequest{
-		Email: normalizedEmail,
+		Email:   normalizedEmail,
+		IsAdmin: isFirstUser,
 	})
 	if err != nil {
 		return &authGrpc.FormGenericResponse{

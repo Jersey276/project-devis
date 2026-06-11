@@ -30,6 +30,14 @@ const (
 	QuoteCodeInternalError   int32 = 2001
 )
 
+func quoteValidationErrors(errs []*quote.ValidationError) []FieldError {
+	out := make([]FieldError, len(errs))
+	for i, e := range errs {
+		out[i] = FieldError{Field: e.Field, Message: e.Message}
+	}
+	return out
+}
+
 var quoteErrors = &serviceErrors{
 	codes: map[int32]codeMapping{
 		QuoteCodeNotFound:        {http.StatusNotFound, "Devis introuvable."},
@@ -190,10 +198,10 @@ func distinctTaxIds(lines []*quote.QuoteLine) []int32 {
 }
 
 type quoteLineData struct {
-	Kind         string        `json:"kind"`
-	Description  string        `json:"description"`
-	Option       *bool         `json:"option"`
-	ParentLineID string        `json:"parent_line_id"`
+	Kind         string         `json:"kind"`
+	Description  string         `json:"description"`
+	Option       *bool          `json:"option"`
+	ParentLineID string         `json:"parent_line_id"`
 	Sublines     []quoteSubline `json:"sublines"`
 }
 
@@ -345,7 +353,11 @@ func CreateQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		return
 	}
 	if !resp.Success {
-		quoteErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			quoteErrors.replyWithValidation(c, resp.Code, quoteValidationErrors(resp.ValidationErrors))
+		} else {
+			quoteErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "quote_id": resp.QuoteId})
@@ -395,7 +407,11 @@ func UpdateQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		return
 	}
 	if !resp.Success {
-		quoteErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			quoteErrors.replyWithValidation(c, resp.Code, quoteValidationErrors(resp.ValidationErrors))
+		} else {
+			quoteErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -555,7 +571,11 @@ func CreateQuoteLine(c *gin.Context, client quote.QuoteServiceClient) {
 		return
 	}
 	if !resp.Success {
-		quoteErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			quoteErrors.replyWithValidation(c, resp.Code, quoteValidationErrors(resp.ValidationErrors))
+		} else {
+			quoteErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "line_id": resp.LineId})
@@ -600,7 +620,11 @@ func UpdateQuoteLine(c *gin.Context, client quote.QuoteServiceClient) {
 		return
 	}
 	if !resp.Success {
-		quoteErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			quoteErrors.replyWithValidation(c, resp.Code, quoteValidationErrors(resp.ValidationErrors))
+		} else {
+			quoteErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -86,8 +86,8 @@ export default function CreateScheduleDialog({
   const [name, setName] = useState("");
   const [startYear, setStartYear] = useState("");
   const [startMonthValue, setStartMonthValue] = useState("");
-  const [durationMonths, setDurationMonths] = useState("");
   const [startMonthPickerOpen, setStartMonthPickerOpen] = useState(false);
+  const durationRef = useRef<HTMLInputElement>(null);
 
   const effectiveQuoteId = lockQuote ? (initialQuoteId ?? "") : quoteId;
 
@@ -135,7 +135,8 @@ export default function CreateScheduleDialog({
   async function onCreateSchedule() {
     setErrorMessage("");
     setCreating(true);
-    const months = parseInt(durationMonths, 10);
+    const rawDuration = durationRef.current?.value ?? "";
+    const months = parseInt(rawDuration, 10);
 
     const { ok, body } = await createSchedule({
       quoteId: effectiveQuoteId,
@@ -153,7 +154,7 @@ export default function CreateScheduleDialog({
     setName("");
     setStartYear("");
     setStartMonthValue("");
-    setDurationMonths("");
+    if (durationRef.current) durationRef.current.value = "";
     setCreating(false);
     onOpenChange(false);
     onCreated?.();
@@ -167,7 +168,7 @@ export default function CreateScheduleDialog({
       setName("");
       setStartYear("");
       setStartMonthValue("");
-      setDurationMonths("");
+      if (durationRef.current) durationRef.current.value = "";
       setStartMonthPickerOpen(false);
       if (!lockQuote) setQuoteId("");
     }
@@ -249,11 +250,11 @@ export default function CreateScheduleDialog({
           <Field>
             <FieldLabel htmlFor="schedule-duration">Durée (mois)</FieldLabel>
             <Input
+              ref={durationRef}
               id="schedule-duration"
               name="duration_months"
               inputMode="numeric"
-              value={durationMonths}
-              onChange={(e) => setDurationMonths(e.target.value)}
+              defaultValue=""
             />
           </Field>
 

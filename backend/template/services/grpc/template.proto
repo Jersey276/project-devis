@@ -26,6 +26,11 @@ message GenericResponse {
     int32 code    = 2;
 }
 
+message ValidationError {
+    string field   = 1;
+    string message = 2;
+}
+
 // ─── Template ─────────────────────────────────────────────────────────────────
 
 message Template {
@@ -64,6 +69,7 @@ message CreateTemplateResponse {
     bool   success     = 1;
     int32  code        = 2;
     string template_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message GetTemplateRequest {
@@ -89,6 +95,7 @@ message UpdateTemplateRequest {
 message UpdateTemplateResponse {
     bool  success = 1;
     int32 code    = 2;
+    repeated ValidationError validation_errors = 3;
 }
 
 message DeleteTemplateRequest {
@@ -149,6 +156,7 @@ message CreateTemplateLineResponse {
     bool   success = 1;
     int32  code    = 2;
     string line_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message UpdateTemplateLineRequest {
@@ -168,6 +176,7 @@ message UpdateTemplateLineRequest {
 message UpdateTemplateLineResponse {
     bool  success = 1;
     int32 code    = 2;
+    repeated ValidationError validation_errors = 3;
 }
 
 message DeleteTemplateLineRequest {

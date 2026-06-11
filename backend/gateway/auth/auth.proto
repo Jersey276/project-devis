@@ -16,6 +16,8 @@ service AuthService {
     rpc IntrospectToken(IntrospectTokenRequest) returns (IntrospectTokenResponse);
     rpc UpdateSubscriptionTier(UpdateSubscriptionTierRequest) returns (GenericResponse);
     rpc ResendEmailVerification(ResendEmailVerificationRequest) returns (GenericResponse);
+    // UpdateRole updates a user's role and invalidates existing tokens.
+    rpc UpdateRole(UpdateRoleRequest) returns (GenericResponse);
 }
 
 message RegisterRequest {
@@ -108,4 +110,9 @@ message UpdateSubscriptionTierRequest {
 
 message ResendEmailVerificationRequest {
     string user_id = 1;
+}
+
+message UpdateRoleRequest {
+    string user_id = 1;
+    string role    = 2;
 }

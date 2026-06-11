@@ -13,10 +13,10 @@ const (
 )
 
 type lineDataPayload struct {
-	Kind         string   `json:"kind,omitempty"`
-	Description  string   `json:"description,omitempty"`
-	Option       *bool    `json:"option,omitempty"`
-	ParentLineID string   `json:"parent_line_id,omitempty"`
+	Kind         string    `json:"kind,omitempty"`
+	Description  string    `json:"description,omitempty"`
+	Option       *bool     `json:"option,omitempty"`
+	ParentLineID string    `json:"parent_line_id,omitempty"`
 	Sublines     []subline `json:"sublines,omitempty"`
 }
 

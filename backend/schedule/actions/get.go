@@ -13,15 +13,12 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 	startedAt := time.Now()
 	var resp *scheduleGrpc.GetScheduleResponse
 	var err error
-	defer func() {
-		code := CodeInternalError
-		success := false
-		if resp != nil {
-			code = resp.Code
-			success = resp.Success
+	defer deferObserve("get_schedule", startedAt, func() (int32, bool) {
+		if resp == nil {
+			return CodeInternalError, false
 		}
-		recordOperation("get_schedule", success, code, startedAt, err)
-	}()
+		return resp.Code, resp.Success
+	}, &err)()
 
 	if req == nil || strings.TrimSpace(req.ScheduleId) == "" || strings.TrimSpace(req.UserId) == "" {
 		resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInvalidInput}

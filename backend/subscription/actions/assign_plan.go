@@ -2,8 +2,6 @@ package actions
 
 import (
 	"context"
-	"database/sql"
-
 	"github.com/google/uuid"
 	subscriptionGrpc "project-devis-subscription/services/grpc"
 )
@@ -15,11 +13,8 @@ func (s *Server) AssignPlan(ctx context.Context, req *subscriptionGrpc.AssignPla
 
 	var newTier string
 	err := s.db.QueryRowContext(ctx, "SELECT tier FROM plans WHERE plan_id = $1 AND active = TRUE", req.GetPlanId()).Scan(&newTier)
-	if err == sql.ErrNoRows {
-		return &subscriptionGrpc.AssignPlanResponse{Success: false, Code: CodeNotFound}, nil
-	}
-	if err != nil {
-		return &subscriptionGrpc.AssignPlanResponse{Success: false, Code: CodeInternalError}, nil
+	if code, isErr := queryErrCode(err); isErr {
+		return &subscriptionGrpc.AssignPlanResponse{Success: false, Code: code}, nil
 	}
 
 	subscriptionID := uuid.New().String()

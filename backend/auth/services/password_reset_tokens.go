@@ -3,10 +3,8 @@ package services
 import (
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
-	"encoding/hex"
 	"errors"
 	"time"
 )
@@ -18,11 +16,6 @@ var (
 	ErrPasswordResetTokenExpired  = errors.New("password reset token expired")
 	ErrPasswordResetTokenUsed     = errors.New("password reset token already used")
 )
-
-func hashPasswordResetToken(raw string) string {
-	h := sha256.Sum256([]byte(raw))
-	return hex.EncodeToString(h[:])
-}
 
 func generatePasswordResetToken() (string, error) {
 	buf := make([]byte, 32)
@@ -38,7 +31,7 @@ func GeneratePasswordResetToken(ctx context.Context, db *sql.DB, userID string) 
 		return "", err
 	}
 
-	tokenHash := hashPasswordResetToken(rawToken)
+	tokenHash := hashToken(rawToken)
 	expiresAt := time.Now().Add(PasswordResetTokenTTL)
 
 	_, err = db.ExecContext(
@@ -56,7 +49,7 @@ func GeneratePasswordResetToken(ctx context.Context, db *sql.DB, userID string) 
 }
 
 func ValidatePasswordResetToken(ctx context.Context, db *sql.DB, rawToken string) (string, error) {
-	tokenHash := hashPasswordResetToken(rawToken)
+	tokenHash := hashToken(rawToken)
 
 	var userID string
 	var expiresAt time.Time
@@ -84,22 +77,13 @@ func ValidatePasswordResetToken(ctx context.Context, db *sql.DB, rawToken string
 	return userID, nil
 }
 
-func ConsumePasswordResetToken(ctx context.Context, db *sql.DB, rawToken string) error {
-	return consumePasswordResetTokenWithExecer(ctx, db, rawToken)
-}
-
-func ConsumePasswordResetTokenTx(ctx context.Context, tx *sql.Tx, rawToken string) error {
-	return consumePasswordResetTokenWithExecer(ctx, tx, rawToken)
-}
-
 type execContexter interface {
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 }
 
-func consumePasswordResetTokenWithExecer(ctx context.Context, execer execContexter, rawToken string) error {
-	tokenHash := hashPasswordResetToken(rawToken)
-
-	result, err := execer.ExecContext(
+func ConsumePasswordResetToken(ctx context.Context, db execContexter, rawToken string) error {
+	tokenHash := hashToken(rawToken)
+	result, err := db.ExecContext(
 		ctx,
 		"UPDATE password_reset_tokens SET used_at = NOW() WHERE token_hash = $1 AND used_at IS NULL AND expires_at > NOW()",
 		tokenHash,
@@ -107,7 +91,6 @@ func consumePasswordResetTokenWithExecer(ctx context.Context, execer execContext
 	if err != nil {
 		return err
 	}
-
 	rows, err := result.RowsAffected()
 	if err != nil {
 		return err
@@ -115,6 +98,5 @@ func consumePasswordResetTokenWithExecer(ctx context.Context, execer execContext
 	if rows == 0 {
 		return ErrPasswordResetTokenNotFound
 	}
-
 	return nil
 }

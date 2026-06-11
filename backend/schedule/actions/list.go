@@ -12,15 +12,12 @@ func (s *Server) ListSchedules(ctx context.Context, req *scheduleGrpc.ListSchedu
 	startedAt := time.Now()
 	var resp *scheduleGrpc.ListSchedulesResponse
 	var err error
-	defer func() {
-		code := CodeInternalError
-		success := false
-		if resp != nil {
-			code = resp.Code
-			success = resp.Success
+	defer deferObserve("list_schedules", startedAt, func() (int32, bool) {
+		if resp == nil {
+			return CodeInternalError, false
 		}
-		recordOperation("list_schedules", success, code, startedAt, err)
-	}()
+		return resp.Code, resp.Success
+	}, &err)()
 
 	if req == nil || strings.TrimSpace(req.UserId) == "" {
 		resp = &scheduleGrpc.ListSchedulesResponse{Success: false, Code: CodeInvalidInput}

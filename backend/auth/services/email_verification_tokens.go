@@ -3,10 +3,8 @@ package services
 import (
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
-	"encoding/hex"
 	"errors"
 	"time"
 )
@@ -19,18 +17,13 @@ var (
 	ErrEmailVerificationTokenUsed     = errors.New("email verification token already used")
 )
 
-func hashEmailVerificationToken(raw string) string {
-	h := sha256.Sum256([]byte(raw))
-	return hex.EncodeToString(h[:])
-}
-
 func GenerateEmailVerificationToken(ctx context.Context, db *sql.DB, userID string) (string, error) {
 	buf := make([]byte, 32)
 	if _, err := rand.Read(buf); err != nil {
 		return "", err
 	}
 	rawToken := base64.RawURLEncoding.EncodeToString(buf)
-	tokenHash := hashEmailVerificationToken(rawToken)
+	tokenHash := hashToken(rawToken)
 	expiresAt := time.Now().Add(EmailVerificationTokenTTL)
 
 	_, err := db.ExecContext(ctx,
@@ -44,7 +37,7 @@ func GenerateEmailVerificationToken(ctx context.Context, db *sql.DB, userID stri
 }
 
 func ValidateEmailVerificationToken(ctx context.Context, db *sql.DB, rawToken string) (string, error) {
-	tokenHash := hashEmailVerificationToken(rawToken)
+	tokenHash := hashToken(rawToken)
 
 	var userID string
 	var expiresAt time.Time
@@ -70,7 +63,7 @@ func ValidateEmailVerificationToken(ctx context.Context, db *sql.DB, rawToken st
 }
 
 func ConsumeEmailVerificationToken(ctx context.Context, db *sql.DB, rawToken string) error {
-	tokenHash := hashEmailVerificationToken(rawToken)
+	tokenHash := hashToken(rawToken)
 	result, err := db.ExecContext(ctx,
 		"UPDATE email_verification_tokens SET used_at = NOW() WHERE token_hash = $1 AND used_at IS NULL AND expires_at > NOW()",
 		tokenHash,
