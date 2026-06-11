@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,15 +44,16 @@ export default function ClientDialog({
   const [addressErrors, setAddressErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!open) {
+  function handleOpenChange(newOpen: boolean) {
+    if (!newOpen) {
       setClient(EMPTY_CLIENT_VALUES);
       setAddress(EMPTY_ADDRESS_VALUES);
       setClientErrors({});
       setAddressErrors({});
       setSubmitting(false);
     }
-  }, [open]);
+    onOpenChange(newOpen);
+  }
 
   async function handleSave() {
     if (submitting) return;
@@ -98,7 +99,7 @@ export default function ClientDialog({
   }
 
   return (
-    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+    <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>{t("createTitle")}</ResponsiveDialogTitle>

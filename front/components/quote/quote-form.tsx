@@ -125,7 +125,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     isCustomer || quoteState === "validated" || quoteState === "drop";
 
   const projectNameRef = useRef(projectName);
-  projectNameRef.current = projectName;
+  useEffect(() => { projectNameRef.current = projectName; }, [projectName]);
   const nameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initial fetch (edit mode only)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Dialog,
@@ -33,9 +33,10 @@ export default function SaveTemplateDialog({
   const [name, setName] = useState(defaultName);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (open) setName(defaultName);
-  }, [open, defaultName]);
+  function handleOpenChange(newOpen: boolean) {
+    if (newOpen) setName(defaultName);
+    onOpenChange(newOpen);
+  }
 
   async function handleSave() {
     const trimmed = name.trim();
@@ -52,7 +53,7 @@ export default function SaveTemplateDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>

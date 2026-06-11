@@ -59,7 +59,7 @@ export function useQuoteReferenceData({
 
   // Load addresses for selected client
   useEffect(() => {
-    if (!clientId) { setAddresses([]); return; }
+    if (!clientId) return;
     let cancelled = false;
     listAddresses({ type: "client", clientId }).then(({ ok, body }) => {
       if (cancelled) return;
@@ -67,6 +67,8 @@ export function useQuoteReferenceData({
     });
     return () => { cancelled = true; };
   }, [clientId]);
+
+  const clientAddresses = useMemo(() => (clientId ? addresses : []), [clientId, addresses]);
 
   // Compute which orphaned tax IDs (superseded) the lines still reference,
   // so the taxes fetch can include them and keep their labels renderable.
@@ -128,7 +130,7 @@ export function useQuoteReferenceData({
     clients,
     userId,
     userAddresses,
-    addresses,
+    addresses: clientAddresses,
     availableTaxes,
     taxById,
     defaultTaxId,
