@@ -298,7 +298,7 @@ describe("Countries page", () => {
       cy.contains("Modifier").click();
 
       cy.get("[data-slot='group-members']").within(() => {
-        cy.get("input[name='attach_country_id']").type("Belg");
+        cy.get("input[name='attach_country_id']").click();
       });
       cy.contains("[data-slot='combobox-item']", "Belgique").click({
         force: true,
