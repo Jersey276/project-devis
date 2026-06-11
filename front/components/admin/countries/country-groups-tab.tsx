@@ -114,8 +114,12 @@ export default function CountryGroupsTab() {
       <DataTable datas={groups} row_actions={rowActions} sortBy="id">
         <DataTableHeader>
           <DataTableRow>
-            <DataTableSortableHead name="id">{t("columns.id")}</DataTableSortableHead>
-            <DataTableSortableHead name="name">{t("columns.name")}</DataTableSortableHead>
+            <DataTableSortableHead name="id">
+              {t("columns.id")}
+            </DataTableSortableHead>
+            <DataTableSortableHead name="name">
+              {t("columns.name")}
+            </DataTableSortableHead>
             <DataTableHead>{t("columns.members")}</DataTableHead>
             <DataTableHead>
               <span className="sr-only">{t("actionsLabel")}</span>

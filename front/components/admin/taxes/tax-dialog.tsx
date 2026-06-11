@@ -69,9 +69,7 @@ export default function TaxDialog({
     event.preventDefault();
     setFieldErrors({});
     setSubmitting(true);
-    const path = isEdit
-      ? `/api/users/taxes/${tax!.id}`
-      : "/api/users/taxes";
+    const path = isEdit ? `/api/users/taxes/${tax!.id}` : "/api/users/taxes";
     const payload = isEdit
       ? { name, rate, is_default: isDefault }
       : { name, rate, country_group_id: groupId, is_default: isDefault };
@@ -101,7 +99,7 @@ export default function TaxDialog({
   }
 
   const selectedGroup =
-    groupId != null ? groups.find((g) => g.id === groupId) ?? null : null;
+    groupId != null ? (groups.find((g) => g.id === groupId) ?? null) : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -112,7 +110,12 @@ export default function TaxDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <form id={FORM_ID} className="grid gap-4" onSubmit={handleSubmit} noValidate>
+        <form
+          id={FORM_ID}
+          className="grid gap-4"
+          onSubmit={handleSubmit}
+          noValidate
+        >
           <FieldGroup>
             <Field data-invalid={!!fieldErrors.name?.length}>
               <FieldLabel htmlFor="tax_name">{t("nameLabel")}</FieldLabel>

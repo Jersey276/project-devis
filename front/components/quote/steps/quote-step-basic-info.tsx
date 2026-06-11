@@ -3,11 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { PlusIcon } from "lucide-react";
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Combobox,
@@ -79,21 +75,19 @@ export default function QuoteStepBasicInfo({
   const hasUserAddressError = !!userAddressErrors?.length;
 
   const selectedClient = clientId
-    ? clients.find((c) => c.client_id === clientId) ?? null
+    ? (clients.find((c) => c.client_id === clientId) ?? null)
     : null;
   const selectedAddress =
     addressId != null
-      ? addresses.find((a) => a.id === addressId) ?? null
+      ? (addresses.find((a) => a.id === addressId) ?? null)
       : null;
   const selectedUserAddress =
     userAddressId != null
-      ? userAddresses.find((a) => a.id === userAddressId) ?? null
+      ? (userAddresses.find((a) => a.id === userAddressId) ?? null)
       : null;
 
   const clientPlaceholder =
-    clients.length === 0
-      ? t("clientPlaceholderEmpty")
-      : t("clientPlaceholder");
+    clients.length === 0 ? t("clientPlaceholderEmpty") : t("clientPlaceholder");
 
   const addressPlaceholder = !clientId
     ? t("addressPlaceholderNoClient")

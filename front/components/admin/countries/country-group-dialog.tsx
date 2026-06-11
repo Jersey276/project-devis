@@ -173,7 +173,12 @@ export default function CountryGroupDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <form id={FORM_ID} className="grid gap-4" onSubmit={handleSubmit} noValidate>
+        <form
+          id={FORM_ID}
+          className="grid gap-4"
+          onSubmit={handleSubmit}
+          noValidate
+        >
           <FieldGroup>
             <Field data-invalid={!!fieldErrors.name?.length}>
               <FieldLabel htmlFor="group_name">{t("nameLabel")}</FieldLabel>
@@ -191,7 +196,10 @@ export default function CountryGroupDialog({
         </form>
 
         {isEdit && (
-          <div className="grid gap-3 rounded-lg border p-4" data-slot="group-members">
+          <div
+            className="grid gap-3 rounded-lg border p-4"
+            data-slot="group-members"
+          >
             <h3 className="text-sm font-medium">{t("membersTitle")}</h3>
 
             {members.length === 0 ? (
@@ -208,7 +216,10 @@ export default function CountryGroupDialog({
                   >
                     <span>
                       <span className="font-medium">{country.code}</span>
-                      <span className="text-muted-foreground"> — {country.name}</span>
+                      <span className="text-muted-foreground">
+                        {" "}
+                        — {country.name}
+                      </span>
                     </span>
                     <Button
                       type="button"

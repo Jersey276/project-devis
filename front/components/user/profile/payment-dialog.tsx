@@ -96,7 +96,12 @@ function CheckoutForm({
         }}
       />
       <DialogFooter>
-        <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClose}
+          disabled={submitting}
+        >
           {tCommon("actions.cancel")}
         </Button>
         <Button type="submit" disabled={!stripe || submitting}>
@@ -152,9 +157,7 @@ export default function PaymentDialog({
           <p className="text-sm text-muted-foreground">{t("loading")}</p>
         )}
 
-        {error && (
-          <p className="text-sm text-destructive">{error}</p>
-        )}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
         {clientSecret && (
           <Elements

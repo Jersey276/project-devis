@@ -23,9 +23,9 @@ describe("SubscriptionGuard", () => {
       cy.visit("/templates");
       cy.wait("@getAuthMe");
 
-      cy.contains("Cette fonctionnalité est réservée aux abonnés Pro et Enterprise.").should(
-        "be.visible",
-      );
+      cy.contains(
+        "Cette fonctionnalité est réservée aux abonnés Pro et Enterprise.",
+      ).should("be.visible");
     });
 
     it("renders templates for pro users", () => {
@@ -71,9 +71,9 @@ describe("SubscriptionGuard", () => {
       cy.visit("/schedule");
       cy.wait("@getAuthMe");
 
-      cy.contains("Cette fonctionnalité est réservée aux abonnés Pro et Enterprise.").should(
-        "be.visible",
-      );
+      cy.contains(
+        "Cette fonctionnalité est réservée aux abonnés Pro et Enterprise.",
+      ).should("be.visible");
     });
 
     it("renders schedule list for pro users", () => {

@@ -1,8 +1,29 @@
 describe("Admin Subscriptions page", () => {
   const PLANS = [
-    { plan_id: 1, name: "Free", tier: "free", price_cents: 0, billing_cycle: "none", features: {} },
-    { plan_id: 2, name: "Pro", tier: "pro", price_cents: 900, billing_cycle: "monthly", features: {} },
-    { plan_id: 3, name: "Enterprise", tier: "enterprise", price_cents: 4900, billing_cycle: "monthly", features: {} },
+    {
+      plan_id: 1,
+      name: "Free",
+      tier: "free",
+      price_cents: 0,
+      billing_cycle: "none",
+      features: {},
+    },
+    {
+      plan_id: 2,
+      name: "Pro",
+      tier: "pro",
+      price_cents: 900,
+      billing_cycle: "monthly",
+      features: {},
+    },
+    {
+      plan_id: 3,
+      name: "Enterprise",
+      tier: "enterprise",
+      price_cents: 4900,
+      billing_cycle: "monthly",
+      features: {},
+    },
   ];
 
   const SUBSCRIPTIONS = [
@@ -113,7 +134,10 @@ describe("Admin Subscriptions page", () => {
         body: {
           success: true,
           subscriptions: assigned
-            ? [{ ...SUBSCRIPTIONS[0], tier: "enterprise", plan_id: 3 }, SUBSCRIPTIONS[1]]
+            ? [
+                { ...SUBSCRIPTIONS[0], tier: "enterprise", plan_id: 3 },
+                SUBSCRIPTIONS[1],
+              ]
             : SUBSCRIPTIONS,
           total: 2,
         },
@@ -135,7 +159,9 @@ describe("Admin Subscriptions page", () => {
     cy.contains("Modifier le plan").should("be.visible");
 
     cy.get("#assign_plan_select").click({ force: true });
-    cy.contains("[data-slot='select-item']", "Enterprise").click({ force: true });
+    cy.contains("[data-slot='select-item']", "Enterprise").click({
+      force: true,
+    });
 
     cy.contains("button", "Confirmer").click();
 

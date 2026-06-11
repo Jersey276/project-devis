@@ -91,7 +91,12 @@ export default function CountryDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <form id={FORM_ID} className="grid gap-4" onSubmit={handleSubmit} noValidate>
+        <form
+          id={FORM_ID}
+          className="grid gap-4"
+          onSubmit={handleSubmit}
+          noValidate
+        >
           <FieldGroup>
             <Field data-invalid={!!fieldErrors.code?.length}>
               <FieldLabel htmlFor="country_code">{t("codeLabel")}</FieldLabel>

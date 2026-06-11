@@ -11,11 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
   Select,
   SelectContent,
@@ -41,7 +37,11 @@ import {
   listPlans,
   assignPlan,
 } from "@/lib/services/subscriptions";
-import type { BackendSubscription, BackendPlan, SubscriptionTier } from "@/types/backend";
+import type {
+  BackendSubscription,
+  BackendPlan,
+  SubscriptionTier,
+} from "@/types/backend";
 
 function formatDate(value: string | null | undefined): string {
   if (!value) return "—";
@@ -98,7 +98,10 @@ export default function SubscriptionsTable() {
 
     setSubmitting(true);
     try {
-      const { ok, body } = await assignPlan(editing.user_id, Number(selectedPlanId));
+      const { ok, body } = await assignPlan(
+        editing.user_id,
+        Number(selectedPlanId),
+      );
       if (ok && body.success) {
         toast.success(t("changePlanDialog.successToast"));
         reload();

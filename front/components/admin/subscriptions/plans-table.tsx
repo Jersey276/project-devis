@@ -45,9 +45,15 @@ import type { BackendPlan, SubscriptionTier } from "@/types/backend";
 const BILLING_CYCLES = ["monthly", "yearly", "none"] as const;
 const PLAN_FEATURE_KEYS = ["max_schedules", "max_templates"] as const;
 
-function parsePlanFeatures(features: BackendPlan["features"]): Record<string, number> {
+function parsePlanFeatures(
+  features: BackendPlan["features"],
+): Record<string, number> {
   if (typeof features === "string") {
-    try { return JSON.parse(features); } catch { return {}; }
+    try {
+      return JSON.parse(features);
+    } catch {
+      return {};
+    }
   }
   return features ?? {};
 }
@@ -204,7 +210,9 @@ export default function PlansTable() {
           </DialogHeader>
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="plan_name">{t("editDialog.nameLabel")}</FieldLabel>
+              <FieldLabel htmlFor="plan_name">
+                {t("editDialog.nameLabel")}
+              </FieldLabel>
               <Input
                 id="plan_name"
                 value={formName}
@@ -212,7 +220,9 @@ export default function PlansTable() {
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="plan_price">{t("editDialog.priceLabelEuros")}</FieldLabel>
+              <FieldLabel htmlFor="plan_price">
+                {t("editDialog.priceLabelEuros")}
+              </FieldLabel>
               <Input
                 id="plan_price"
                 type="number"
@@ -226,9 +236,14 @@ export default function PlansTable() {
               <FieldLabel htmlFor="plan_billing_cycle">
                 {t("editDialog.billingCycleLabel")}
               </FieldLabel>
-              <Select value={formBillingCycle} onValueChange={setFormBillingCycle}>
+              <Select
+                value={formBillingCycle}
+                onValueChange={setFormBillingCycle}
+              >
                 <SelectTrigger id="plan_billing_cycle" className="w-full">
-                  <SelectValue placeholder={t("editDialog.billingCyclePlaceholder")} />
+                  <SelectValue
+                    placeholder={t("editDialog.billingCyclePlaceholder")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {BILLING_CYCLES.map((cycle) => (
@@ -249,7 +264,9 @@ export default function PlansTable() {
                 value={formStripePriceId}
                 onChange={(e) => setFormStripePriceId(e.target.value)}
               />
-              <FieldDescription>{t("editDialog.stripePriceIdHint")}</FieldDescription>
+              <FieldDescription>
+                {t("editDialog.stripePriceIdHint")}
+              </FieldDescription>
             </Field>
             <Field>
               <FieldLabel>{t("editDialog.featuresLabel")}</FieldLabel>
@@ -278,12 +295,17 @@ export default function PlansTable() {
                         min={0}
                         className="w-24"
                         disabled={isUnlimited}
-                        value={isUnlimited ? "" : String(formFeatures[key] ?? 0)}
+                        value={
+                          isUnlimited ? "" : String(formFeatures[key] ?? 0)
+                        }
                         placeholder={isUnlimited ? "∞" : "0"}
                         onChange={(e) =>
                           setFormFeatures((prev) => ({
                             ...prev,
-                            [key]: Math.max(0, parseInt(e.target.value, 10) || 0),
+                            [key]: Math.max(
+                              0,
+                              parseInt(e.target.value, 10) || 0,
+                            ),
                           }))
                         }
                       />

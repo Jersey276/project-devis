@@ -1,9 +1,16 @@
-"use client"
+"use client";
 
-import { Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox"
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
 
-const frameworks = ["Next.js", "SvelteKit", "Nuxt.js", "Remix", "Astro"]
- 
+const frameworks = ["Next.js", "SvelteKit", "Nuxt.js", "Remix", "Astro"];
+
 export function TestComboBox() {
   return (
     <Combobox items={frameworks}>
@@ -19,5 +26,5 @@ export function TestComboBox() {
         </ComboboxList>
       </ComboboxContent>
     </Combobox>
-  )
+  );
 }

@@ -21,9 +21,15 @@ type SubscriptionTabProps = {
   name?: string;
 };
 
-function parsePlanFeatures(features: BackendPlan["features"]): Record<string, number> {
+function parsePlanFeatures(
+  features: BackendPlan["features"],
+): Record<string, number> {
   if (typeof features === "string") {
-    try { return JSON.parse(features); } catch { return {}; }
+    try {
+      return JSON.parse(features);
+    } catch {
+      return {};
+    }
   }
   return features ?? {};
 }
@@ -44,11 +50,18 @@ function formatPrice(priceCents: number, billingCycle: string): string {
   return billingCycle === "yearly" ? `${euros}/an` : `${euros}/mois`;
 }
 
-export default function SubscriptionTab({ readOnly, email, phone, name }: SubscriptionTabProps) {
+export default function SubscriptionTab({
+  readOnly,
+  email,
+  phone,
+  name,
+}: SubscriptionTabProps) {
   const t = useTranslations("subscription");
   const tCommon = useTranslations("common");
 
-  const [subscription, setSubscription] = useState<BackendSubscription | null>(null);
+  const [subscription, setSubscription] = useState<BackendSubscription | null>(
+    null,
+  );
   const [plans, setPlans] = useState<BackendPlan[]>([]);
   const [loadedFor, setLoadedFor] = useState<number | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -99,51 +112,71 @@ export default function SubscriptionTab({ readOnly, email, phone, name }: Subscr
 
   const PLAN_FEATURE_KEYS = ["max_schedules", "max_templates"] as const;
 
-const currentTier = subscription?.tier ?? "free";
+  const currentTier = subscription?.tier ?? "free";
 
   const currentPlanInfo = () => {
     if (!subscription || currentTier === "free") {
-      return <p className="text-sm text-muted-foreground">{t("tab.freePlan")}</p>;
+      return (
+        <p className="text-sm text-muted-foreground">{t("tab.freePlan")}</p>
+      );
     }
     if (subscription.cancel_at_period_end) {
       return (
         <p className="text-sm text-amber-600">
-          {t("tab.cancelPending", { date: formatDate(subscription.current_period_end) })}
+          {t("tab.cancelPending", {
+            date: formatDate(subscription.current_period_end),
+          })}
         </p>
       );
     }
     return (
       <p className="text-sm text-muted-foreground">
-        {t("tab.renewsOn", { date: formatDate(subscription.current_period_end) })}
+        {t("tab.renewsOn", {
+          date: formatDate(subscription.current_period_end),
+        })}
       </p>
     );
   };
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">{tCommon("actions.loading")}</p>;
+    return (
+      <p className="text-sm text-muted-foreground">
+        {tCommon("actions.loading")}
+      </p>
+    );
   }
 
   return (
     <div className="grid gap-6">
       <div className="flex items-center gap-3">
         <span className="text-sm font-medium">{t("tab.currentPlan")}</span>
-        <Badge variant={currentTier === "enterprise" ? "default" : currentTier === "pro" ? "secondary" : "outline"}>
+        <Badge
+          variant={
+            currentTier === "enterprise"
+              ? "default"
+              : currentTier === "pro"
+                ? "secondary"
+                : "outline"
+          }
+        >
           {currentTier.charAt(0).toUpperCase() + currentTier.slice(1)}
         </Badge>
         {currentPlanInfo()}
       </div>
 
-      {!subscription?.cancel_at_period_end && currentTier !== "free" && !readOnly && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-fit text-destructive border-destructive/30 hover:bg-destructive/5"
-          onClick={handleCancel}
-          disabled={cancelling}
-        >
-          {cancelling ? tCommon("actions.saving") : t("tab.cancelCta")}
-        </Button>
-      )}
+      {!subscription?.cancel_at_period_end &&
+        currentTier !== "free" &&
+        !readOnly && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-fit text-destructive border-destructive/30 hover:bg-destructive/5"
+            onClick={handleCancel}
+            disabled={cancelling}
+          >
+            {cancelling ? tCommon("actions.saving") : t("tab.cancelCta")}
+          </Button>
+        )}
 
       <div className="overflow-x-auto rounded-md border">
         <table className="w-full text-sm">

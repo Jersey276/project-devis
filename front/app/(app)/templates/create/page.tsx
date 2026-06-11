@@ -16,7 +16,9 @@ export default async function CreateTemplatePage() {
           <CardTitle>{t("create.title")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground text-sm">{t("create.coming_soon")}</p>
+          <p className="text-muted-foreground text-sm">
+            {t("create.coming_soon")}
+          </p>
         </CardContent>
       </Card>
     </>

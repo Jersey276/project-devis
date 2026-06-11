@@ -20,7 +20,12 @@ import ConnectionForm from "@/components/user/profile/connection-form";
 import SubscriptionTab from "@/components/user/profile/subscription-tab";
 import { apiFetch } from "@/lib/api";
 
-const PROFILE_TABS = ["information", "adresse", "compte", "abonnement"] as const;
+const PROFILE_TABS = [
+  "information",
+  "adresse",
+  "compte",
+  "abonnement",
+] as const;
 type ProfileTab = (typeof PROFILE_TABS)[number];
 
 export default function ProfileContent() {
@@ -82,7 +87,9 @@ export default function ProfileContent() {
                 </TabsTrigger>
                 <TabsTrigger value="adresse">{t("tabs.addresses")}</TabsTrigger>
                 <TabsTrigger value="compte">{t("tabs.connection")}</TabsTrigger>
-                <TabsTrigger value="abonnement">{t("tabs.subscription")}</TabsTrigger>
+                <TabsTrigger value="abonnement">
+                  {t("tabs.subscription")}
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="information" className="pt-4">

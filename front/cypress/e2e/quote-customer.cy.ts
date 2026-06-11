@@ -44,7 +44,10 @@ describe.skip("Quote — customer mode", () => {
       cy.get("[data-sidebar='sidebar']").within(() => {
         cy.contains("Factures").should("exist");
       });
-      cy.get("[data-slot='mode-toggle']").should("not.have.attr", "data-active");
+      cy.get("[data-slot='mode-toggle']").should(
+        "not.have.attr",
+        "data-active",
+      );
     });
   });
 

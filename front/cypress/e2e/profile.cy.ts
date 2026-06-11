@@ -69,8 +69,22 @@ function stubProfile(addresses = INITIAL_ADDRESSES) {
     body: {
       success: true,
       plans: [
-        { plan_id: 1, name: "Free", tier: "free", price_cents: 0, billing_cycle: "none", features: {} },
-        { plan_id: 2, name: "Pro", tier: "pro", price_cents: 900, billing_cycle: "monthly", features: {} },
+        {
+          plan_id: 1,
+          name: "Free",
+          tier: "free",
+          price_cents: 0,
+          billing_cycle: "none",
+          features: {},
+        },
+        {
+          plan_id: 2,
+          name: "Pro",
+          tier: "pro",
+          price_cents: 900,
+          billing_cycle: "monthly",
+          features: {},
+        },
       ],
     },
   }).as("getPlans");

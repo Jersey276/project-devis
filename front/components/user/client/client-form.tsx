@@ -9,7 +9,9 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { FieldErrors, toErrorProps } from "@/lib/api";
-import AddressForm, { type AddressValues } from "@/components/address/address-form";
+import AddressForm, {
+  type AddressValues,
+} from "@/components/address/address-form";
 import type { ClientPayload } from "@/lib/services/clients";
 
 export type ClientFormValues = ClientPayload;
@@ -116,7 +118,9 @@ export default function ClientForm({
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Field data-invalid={!!fieldErrors?.company?.length}>
-            <FieldLabel htmlFor="client_company">{t("companyLabel")}</FieldLabel>
+            <FieldLabel htmlFor="client_company">
+              {t("companyLabel")}
+            </FieldLabel>
             <Input
               id="client_company"
               name="company"
