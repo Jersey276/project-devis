@@ -26,6 +26,7 @@ import {
 } from "@/components/custom/data-table";
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import AddressDialog, {
+  backendAddressToExisting,
   type ExistingAddress,
 } from "@/components/address/address-dialog";
 import { type Country } from "@/components/address/address-form";
@@ -89,15 +90,7 @@ export default function AddressesTable({
 
   function openEdit(address: BackendAddress) {
     if (readOnly) return;
-    setEditing({
-      id: address.id,
-      name: address.name,
-      street: address.street,
-      additional_street: address.additional_street ?? "",
-      city: address.city,
-      zip_code: address.zip_code,
-      country_id: address.country_id,
-    });
+    setEditing(backendAddressToExisting(address));
     setDrawerOpen(true);
   }
 

@@ -23,6 +23,26 @@ import { useDialogSubmit } from "@/hooks/use-dialog-submit";
 
 export type ExistingAddress = AddressValues & { id: number };
 
+export function backendAddressToExisting(addr: {
+  id: number;
+  name: string;
+  street: string;
+  additional_street?: string | null;
+  city: string;
+  zip_code: string;
+  country_id: number;
+}): ExistingAddress {
+  return {
+    id: addr.id,
+    name: addr.name,
+    street: addr.street,
+    additional_street: addr.additional_street ?? "",
+    city: addr.city,
+    zip_code: addr.zip_code,
+    country_id: addr.country_id,
+  };
+}
+
 type AddressDialogProps = {
   ownerType: "user" | "client";
   ownerId: string;
