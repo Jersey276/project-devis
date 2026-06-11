@@ -86,7 +86,6 @@ export default function CreateScheduleDialog({
   const [name, setName] = useState("");
   const [startYear, setStartYear] = useState("");
   const [startMonthValue, setStartMonthValue] = useState("");
-  const [durationMonths, setDurationMonths] = useState("");
   const [startMonthPickerOpen, setStartMonthPickerOpen] = useState(false);
   const durationRef = useRef<HTMLInputElement>(null);
 
@@ -136,7 +135,7 @@ export default function CreateScheduleDialog({
   async function onCreateSchedule() {
     setErrorMessage("");
     setCreating(true);
-    const rawDuration = durationRef.current?.value ?? durationMonths;
+    const rawDuration = durationRef.current?.value ?? "";
     const months = parseInt(rawDuration, 10);
 
     const { ok, body } = await createSchedule({
@@ -155,7 +154,7 @@ export default function CreateScheduleDialog({
     setName("");
     setStartYear("");
     setStartMonthValue("");
-    setDurationMonths("");
+    if (durationRef.current) durationRef.current.value = "";
     setCreating(false);
     onOpenChange(false);
     onCreated?.();
@@ -169,7 +168,7 @@ export default function CreateScheduleDialog({
       setName("");
       setStartYear("");
       setStartMonthValue("");
-      setDurationMonths("");
+      if (durationRef.current) durationRef.current.value = "";
       setStartMonthPickerOpen(false);
       if (!lockQuote) setQuoteId("");
     }
@@ -255,8 +254,7 @@ export default function CreateScheduleDialog({
               id="schedule-duration"
               name="duration_months"
               inputMode="numeric"
-              value={durationMonths}
-              onChange={(e) => setDurationMonths(e.target.value)}
+              defaultValue=""
             />
           </Field>
 
