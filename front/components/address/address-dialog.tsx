@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,13 +14,12 @@ import {
 import AddressForm, {
   type AddressValues,
 } from "@/components/address/address-form";
-import { fieldErrorsFromBody, FieldErrors } from "@/lib/api";
 import {
   buildOwner,
   createAddress,
   updateAddress,
 } from "@/lib/services/addresses";
-import { toast } from "sonner";
+import { useDialogSubmit } from "@/hooks/use-dialog-submit";
 
 export type ExistingAddress = AddressValues & { id: number };
 
@@ -45,47 +44,30 @@ export default function AddressDialog({
 }: AddressDialogProps) {
   const t = useTranslations("address.dialog");
   const tCommon = useTranslations("common");
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [submitting, setSubmitting] = useState(false);
+  const { fieldErrors, setFieldErrors, submitting, submit } = useDialogSubmit(
+    tCommon("errors.generic"),
+  );
 
   useEffect(() => {
-    if (!open) {
-      setFieldErrors({});
-      setSubmitting(false);
-    }
-  }, [open]);
+    if (!open) setFieldErrors({});
+  }, [open, setFieldErrors]);
 
   async function handleSubmit(values: AddressValues) {
-    setFieldErrors({});
     if (values.country_id == null) {
       setFieldErrors({ country_id: [tCommon("validation.required")] });
       return;
     }
-    setSubmitting(true);
     const isEdit = address?.id != null;
-    try {
-      const owner = buildOwner(ownerType, ownerId);
-      const { ok, status, body } = isEdit
-        ? await updateAddress(owner, address!.id, values)
-        : await createAddress(owner, values);
-      if (ok && body.success) {
-        toast.success(
-          isEdit ? t("updateSuccessToast") : t("createSuccessToast"),
-        );
-        onSaved();
-        onOpenChange(false);
-        return;
-      }
-      if (status === 422 && Array.isArray(body.field_errors)) {
-        setFieldErrors(fieldErrorsFromBody(body));
-        return;
-      }
-      toast.error(body.message ?? tCommon("errors.generic"));
-    } catch {
-      toast.error(tCommon("errors.generic"));
-    } finally {
-      setSubmitting(false);
-    }
+    const owner = buildOwner(ownerType, ownerId);
+    await submit({
+      request: () =>
+        isEdit
+          ? updateAddress(owner, address!.id, values)
+          : createAddress(owner, values),
+      successMessage: isEdit ? t("updateSuccessToast") : t("createSuccessToast"),
+      onSuccess: onSaved,
+      onClose: onOpenChange,
+    });
   }
 
   return (

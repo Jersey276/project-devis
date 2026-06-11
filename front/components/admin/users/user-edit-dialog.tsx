@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useDialogSubmit } from "@/hooks/use-dialog-submit";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,13 +26,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FieldErrors, fieldErrorsFromBody, toErrorProps } from "@/lib/api";
+import { toErrorProps } from "@/lib/api";
 import { updateAdminUser } from "@/lib/services/admin-users";
 import {
   type AdminUserAccount,
   type AdminUserRole,
 } from "@/components/admin/types";
-import { toast } from "sonner";
 
 type UserEditDialogProps = {
   open: boolean;
@@ -59,8 +59,9 @@ export default function UserEditDialog({
   const [vat, setVat] = useState("");
   const [role, setRole] = useState<AdminUserRole>("user");
   const [plan, setPlan] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [submitting, setSubmitting] = useState(false);
+  const { fieldErrors, setFieldErrors, submitting, submit } = useDialogSubmit(
+    tCommon("errors.generic"),
+  );
 
   useEffect(() => {
     setFirstName(user?.first_name ?? "");
@@ -72,45 +73,28 @@ export default function UserEditDialog({
     setRole(user?.role ?? "user");
     setPlan(user?.plan ?? "");
     setFieldErrors({});
-  }, [user]);
+  }, [user, setFieldErrors]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!user) return;
-
-    setSubmitting(true);
-    setFieldErrors({});
-    try {
-      const { ok, status, body } = await updateAdminUser(user.user_id, {
-        first_name: firstName,
-        last_name: lastName,
-        email: user.email,
-        role,
-        plan,
-        phone,
-        company,
-        siren,
-        vat,
-      });
-
-      if (ok && body.success) {
-        toast.success(t("updateSuccessToast"));
-        onSaved();
-        onOpenChange(false);
-        return;
-      }
-
-      if (status === 422 && Array.isArray(body.field_errors)) {
-        setFieldErrors(fieldErrorsFromBody(body));
-        return;
-      }
-
-      toast.error(body.message ?? tCommon("errors.generic"));
-    } catch {
-      toast.error(tCommon("errors.generic"));
-    } finally {
-      setSubmitting(false);
-    }
+    await submit({
+      request: () =>
+        updateAdminUser(user.user_id, {
+          first_name: firstName,
+          last_name: lastName,
+          email: user.email,
+          role,
+          plan,
+          phone,
+          company,
+          siren,
+          vat,
+        }),
+      successMessage: t("updateSuccessToast"),
+      onSuccess: onSaved,
+      onClose: onOpenChange,
+    });
   }
 
   return (
