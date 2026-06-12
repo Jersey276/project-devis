@@ -330,7 +330,11 @@ describe("Schedule", () => {
       ).click({ force: true });
       cy.get("input[name='name']").type("Bad");
       selectStartMonth("2026", "Septembre");
-      cy.get("input[name='duration_months']").type("0").should("have.value", "0");
+      cy.get("input[name='duration_months']")
+        .click({ force: true })
+        .clear({ force: true })
+        .type("0", { force: true })
+        .should("have.value", "0");
       cy.contains("button", "Créer").click();
 
       cy.wait("@createScheduleInvalid");
