@@ -2,14 +2,22 @@ package actions
 
 // Route response codes returned in FormGenericResponse.code and GenericResponse.code.
 const (
-	CodeSuccess             int32 = 0
-	CodeUserAlreadyExists   int32 = 1001
-	CodeUserNotFound        int32 = 1002
-	CodeInvalidCredentials  int32 = 1003
-	CodeInvalidRefreshToken int32 = 1004
-	CodeUserServiceError    int32 = 2001
-	CodeInternalError       int32 = 2002
-	CodeNotImplemented      int32 = 2003
+	CodeSuccess                  int32 = 0
+	CodeUserAlreadyExists        int32 = 1001
+	CodeUserNotFound             int32 = 1002
+	CodeInvalidCredentials       int32 = 1003
+	CodeInvalidRefreshToken      int32 = 1004
+	CodeInvalidResetToken        int32 = 1005
+	CodeExpiredResetToken        int32 = 1006
+	CodeWeakPassword             int32 = 1007
+	CodeSessionInvalidated       int32 = 1008
+	CodeInvalidInput             int32 = 1009
+	CodeInvalidVerificationToken int32 = 1010
+	CodeExpiredVerificationToken int32 = 1011
+	CodeAlreadyVerified          int32 = 1012
+	CodeUserServiceError         int32 = 2001
+	CodeInternalError            int32 = 2002
+	CodeNotImplemented           int32 = 2003
 )
 
 // Field validation codes used inside FormFieldError.error_code.

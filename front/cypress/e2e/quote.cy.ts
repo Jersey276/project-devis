@@ -14,6 +14,17 @@ function stubAvailableTaxes(taxes: TaxFixture[] = []) {
 }
 
 describe("Quote", () => {
+  function selectScheduleStartMonth(year: string, monthLabel: string) {
+    cy.get("#schedule-start-month").click();
+    cy.get("[data-slot='schedule-start-year-trigger']").click();
+    cy.contains("[data-slot='select-item']", year).click({ force: true });
+    cy.get("[data-slot='schedule-start-month-trigger']").click();
+    cy.contains("[data-slot='select-item']", monthLabel).click({
+      force: true,
+    });
+    cy.contains("button", "Valider").click();
+  }
+
   describe("List", () => {
     it("renders quotes and maps state + archived_at to status", () => {
       cy.login();
@@ -64,6 +75,82 @@ describe("Quote", () => {
       cy.visit("/quote");
       cy.wait("@listQuotesEmpty");
       cy.contains("Aucun devis pour le moment.").should("be.visible");
+    });
+
+    it("creates a schedule from the quote row actions menu", () => {
+      cy.login();
+      cy.intercept("GET", "/api/quotes", {
+        statusCode: 200,
+        body: {
+          success: true,
+          quotes: [
+            quote({
+              quote_id: "q-1",
+              client_id: "c-1",
+              name: "Devis Alpha",
+            }),
+          ],
+        },
+      }).as("listQuotes");
+      cy.intercept("GET", "/api/users/clients**", {
+        statusCode: 200,
+        body: {
+          success: true,
+          clients: [
+            {
+              client_id: "c-1",
+              user_id: "u-1",
+              first_name: "Jean",
+              last_name: "Dupont",
+              email: "jean@example.com",
+              phone: "",
+              company: "",
+              siren: "",
+              vat: "",
+              archived: false,
+            },
+          ],
+        },
+      }).as("listClientsForSchedule");
+      cy.intercept("GET", "/api/schedules**", {
+        statusCode: 200,
+        body: { success: true, schedules: [] },
+      }).as("listSchedules");
+      cy.intercept("POST", "/api/schedules", {
+        statusCode: 201,
+        body: { success: true, schedule_id: "sch-1" },
+      }).as("createSchedule");
+
+      cy.visit("/quote");
+      cy.wait("@listQuotes");
+
+      cy.contains("td", "Devis Alpha")
+        .closest("tr")
+        .within(() => {
+          cy.get("button").click();
+        });
+      cy.contains("Créer un échéancier").click();
+
+      cy.wait("@listClientsForSchedule");
+      cy.wait("@listSchedules");
+
+      cy.get("input[name='quote_id']").should(
+        "have.value",
+        "Devis Alpha (Jean Dupont)",
+      );
+      cy.get("input[name='name']").type("Echéancier Alpha");
+      selectScheduleStartMonth("2026", "Aout");
+      cy.get("input[name='duration_months']").type("6").should("have.value", "6");
+      cy.contains("button", "Créer").click();
+
+      cy.wait("@createSchedule").then((interception) => {
+        expect(interception.request.body).to.deep.equal({
+          quote_id: "q-1",
+          name: "Echéancier Alpha",
+          start_month: "2026-08",
+          duration_months: 6,
+        });
+      });
     });
   });
 
@@ -135,32 +222,28 @@ describe("Quote", () => {
         },
       ).as("listClientAddresses");
 
-      cy.intercept(
-        "GET",
-        "/api/users/addresses?owner_type=user&owner_id=u-1",
-        {
-          statusCode: 200,
-          body: {
-            success: true,
-            addresses: [
-              {
-                id: 50,
-                owner_type: "user",
-                owner_id: "u-1",
-                name: "Bureau principal",
-                street: "5 rue de Lyon",
-                additional_street: "",
-                city: "Lyon",
-                zip_code: "69001",
-                country_id: 1,
-                email: "",
-                phone: "",
-                archived: false,
-              },
-            ],
-          },
+      cy.intercept("GET", "/api/users/addresses?owner_type=user&owner_id=u-1", {
+        statusCode: 200,
+        body: {
+          success: true,
+          addresses: [
+            {
+              id: 50,
+              owner_type: "user",
+              owner_id: "u-1",
+              name: "Bureau principal",
+              street: "5 rue de Lyon",
+              additional_street: "",
+              city: "Lyon",
+              zip_code: "69001",
+              country_id: 1,
+              email: "",
+              phone: "",
+              archived: false,
+            },
+          ],
         },
-      ).as("listUserAddresses");
+      }).as("listUserAddresses");
     }
 
     function fillStep1() {
@@ -295,6 +378,7 @@ describe("Quote", () => {
       cy.visit("/quote/q-1?step=2");
       cy.wait("@getQuote");
       cy.get("[aria-label='Ajouter une ligne']").click();
+      cy.contains("[role='menuitem']", "Ligne simple").click();
 
       cy.wait("@createLine").then((interception) => {
         expect(interception.request.body).to.deep.equal({
@@ -399,8 +483,9 @@ describe("Quote", () => {
       cy.wait("@getQuote");
       cy.wait("@listAvailableTaxes");
 
-      cy.get("[data-line-id='l-1'] [data-slot='line-tax-cell'] input")
-        .should("be.disabled");
+      cy.get("[data-line-id='l-1'] [data-slot='line-tax-cell'] input").should(
+        "be.disabled",
+      );
       cy.get("[data-slot='total-ht']").should("contain", "800.00");
       cy.get("[data-slot='total-ttc']").should("not.exist");
       cy.get("[data-slot='total-tax-line']").should("not.exist");
@@ -417,6 +502,7 @@ describe("Quote", () => {
       cy.wait("@getQuote");
       cy.wait("@listAvailableTaxes");
       cy.get("[aria-label='Ajouter une ligne']").click();
+      cy.contains("[role='menuitem']", "Ligne simple").click();
 
       cy.wait("@createLine").then((interception) => {
         expect(interception.request.body).to.include({ tax_id: 100 });
@@ -447,7 +533,13 @@ describe("Quote", () => {
       stubGet(
         [line({ tax_id: 99 })],
         [
-          tax({ id: 100, name: "TVA 21", rate: "21.00", is_default: true, version: 2 }),
+          tax({
+            id: 100,
+            name: "TVA 21",
+            rate: "21.00",
+            is_default: true,
+            version: 2,
+          }),
           tax({
             id: 99,
             name: "TVA 20",
@@ -567,6 +659,123 @@ describe("Quote", () => {
       cy.get("input[name='name']").should("be.disabled");
       cy.contains("button", "Abandonner").should("not.exist");
       cy.contains("button", "Continuer").should("not.exist");
+    });
+
+    it("blocks PDF export when quote is refused", () => {
+      cy.login();
+      cy.intercept("GET", "/api/quotes/q-1", {
+        statusCode: 200,
+        body: {
+          success: true,
+          quote: quote({ state: "drop" }),
+          lines: [],
+        },
+      }).as("getDroppedQuote");
+      cy.intercept("GET", "/api/export/quotes/q-1", {
+        statusCode: 409,
+        body: {
+          success: false,
+          message: "Le devis refusé ne peut pas être exporté.",
+          code: 3006,
+        },
+      }).as("exportDroppedQuote");
+
+      cy.visit("/quote/q-1");
+      cy.wait("@getDroppedQuote");
+
+      cy.get("[data-quote-state='drop']").should("exist");
+      cy.contains("button", "Exporter").click();
+
+      cy.wait("@exportDroppedQuote")
+        .its("response.statusCode")
+        .should("eq", 409);
+      cy.get("[data-sonner-toaster]").should("contain", "Échec de l'export.");
+    });
+
+    it("creates a schedule from the quote editor button", () => {
+      cy.login();
+      stubAvailableTaxes();
+      cy.intercept("GET", "/api/quotes/q-1", {
+        statusCode: 200,
+        body: {
+          success: true,
+          quote: quote({
+            quote_id: "q-1",
+            client_id: "c-1",
+            name: "Devis Alpha",
+            state: "draft",
+          }),
+          lines: [],
+        },
+      }).as("getQuote");
+      cy.intercept("GET", "/api/quotes", {
+        statusCode: 200,
+        body: {
+          success: true,
+          quotes: [
+            quote({ quote_id: "q-1", client_id: "c-1", name: "Devis Alpha" }),
+          ],
+        },
+      }).as("listQuotesForSchedule");
+      cy.intercept("GET", "/api/users/clients**", {
+        statusCode: 200,
+        body: {
+          success: true,
+          clients: [
+            {
+              client_id: "c-1",
+              user_id: "u-1",
+              first_name: "Jean",
+              last_name: "Dupont",
+              email: "jean@example.com",
+              phone: "",
+              company: "",
+              siren: "",
+              vat: "",
+              archived: false,
+            },
+          ],
+        },
+      }).as("listClientsForSchedule");
+      cy.intercept("GET", "/api/schedules**", {
+        statusCode: 200,
+        body: { success: true, schedules: [] },
+      }).as("listSchedules");
+      cy.intercept("POST", "/api/schedules", {
+        statusCode: 201,
+        body: { success: true, schedule_id: "sch-2" },
+      }).as("createSchedule");
+
+      cy.visit("/quote/q-1");
+      cy.wait("@getQuote");
+      cy.contains("button", "Créer un échéancier").click();
+
+      cy.wait("@listQuotesForSchedule");
+      cy.wait("@listClientsForSchedule");
+      cy.wait("@listSchedules");
+
+      cy.get("[data-slot='dialog-content']").within(() => {
+        cy.get("input[name='quote_id']").should(
+          "have.value",
+          "Devis Alpha (Jean Dupont)",
+        );
+        cy.get("input[name='name']").type("Echéancier depuis éditeur");
+        cy.get("input[name='duration_months']").type("4");
+      });
+
+      selectScheduleStartMonth("2026", "Septembre");
+      cy.get("[data-slot='dialog-content']")
+        .contains("button", "Créer")
+        .click();
+
+      cy.wait("@createSchedule").then((interception) => {
+        expect(interception.request.body).to.deep.equal({
+          quote_id: "q-1",
+          name: "Echéancier depuis éditeur",
+          start_month: "2026-09",
+          duration_months: 4,
+        });
+      });
     });
   });
 });

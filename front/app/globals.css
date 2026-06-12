@@ -110,8 +110,6 @@
   --color-primary-800: #9d2e0f;
   --color-primary-900: #7f290f;
   --color-primary-950: #441106;
-
-
 }
 
 .dark {
@@ -121,7 +119,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.87 0.00 0);
+  --primary: oklch(0.87 0 0);
   --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);

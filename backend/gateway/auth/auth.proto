@@ -8,10 +8,16 @@ service AuthService {
     rpc Register(RegisterRequest) returns (FormGenericResponse);
     rpc Login(LoginRequest) returns (LoginResponse);
     rpc ResetPassword(ResetPasswordRequest) returns (GenericResponse);
+    rpc ConfirmResetPassword(ConfirmResetPasswordRequest) returns (GenericResponse);
     rpc UpdatePassword(UpdatePasswordRequest) returns (GenericResponse);
     rpc VerifyEmail(VerifyEmailRequest) returns (GenericResponse);
     rpc RefreshToken(RefreshTokenRequest) returns (LoginResponse);
     rpc Logout(LogoutRequest) returns (GenericResponse);
+    rpc IntrospectToken(IntrospectTokenRequest) returns (IntrospectTokenResponse);
+    rpc UpdateSubscriptionTier(UpdateSubscriptionTierRequest) returns (GenericResponse);
+    rpc ResendEmailVerification(ResendEmailVerificationRequest) returns (GenericResponse);
+    // UpdateRole updates a user's role and invalidates existing tokens.
+    rpc UpdateRole(UpdateRoleRequest) returns (GenericResponse);
 }
 
 message RegisterRequest {
@@ -37,6 +43,7 @@ message UpdatePasswordRequest {
     string email = 1;
     string old_password = 2;
     string new_password = 3;
+    string current_refresh_token = 4;
 }
 
 message GenericResponse {
@@ -46,6 +53,11 @@ message GenericResponse {
 
 message ResetPasswordRequest {
     string email = 1;
+}
+
+message ConfirmResetPasswordRequest {
+    string token = 1;
+    string new_password = 2;
 }
 
 message VerifyEmailRequest {
@@ -70,4 +82,37 @@ message FormGenericResponse {
 message FormFieldError {
     string field = 1;
     repeated int32 error_code = 2;
+}
+
+message IntrospectTokenRequest {
+    string token = 1;
+}
+
+message AccessContext {
+    string user_id = 1;
+    string email = 2;
+    string role = 3;
+    string account_status = 4;
+    string subscription_tier = 5;
+    int32 session_version = 6;
+}
+
+message IntrospectTokenResponse {
+    bool success = 1;
+    int32 code = 2;
+    AccessContext context = 3;
+}
+
+message UpdateSubscriptionTierRequest {
+    string user_id = 1;
+    string tier    = 2;
+}
+
+message ResendEmailVerificationRequest {
+    string user_id = 1;
+}
+
+message UpdateRoleRequest {
+    string user_id = 1;
+    string role    = 2;
 }

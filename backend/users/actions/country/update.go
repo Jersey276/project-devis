@@ -9,8 +9,17 @@ import (
 )
 
 func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateCountryRequest) (*usersGrpc.UpdateCountryResponse, error) {
-	if req.CountryId == 0 || (len(req.Code) > 0 && len(req.Code) != 2) {
-		return &usersGrpc.UpdateCountryResponse{Success: false, Code: codes.InvalidInput}, nil
+	var fieldErrors []*usersGrpc.ValidationError
+
+	if req.CountryId == 0 {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "country_id", Message: "Champ requis."})
+	}
+	if len(req.Code) > 0 && len(req.Code) != 2 {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "code", Message: "Doit être un code ISO à 2 caractères."})
+	}
+
+	if len(fieldErrors) > 0 {
+		return &usersGrpc.UpdateCountryResponse{Success: false, Code: codes.InvalidInput, ValidationErrors: fieldErrors}, nil
 	}
 
 	res, err := db.ExecContext(ctx,

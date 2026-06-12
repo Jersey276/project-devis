@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package auth_stub;
+
+option go_package = "project-devis-subscription/services/grpc/auth";
+
+service AuthService {
+    rpc UpdateSubscriptionTier(UpdateSubscriptionTierRequest) returns (GenericResponse);
+}
+
+message UpdateSubscriptionTierRequest {
+    string user_id = 1;
+    string tier    = 2;
+}
+
+message GenericResponse {
+    bool  success = 1;
+    int32 code    = 2;
+}

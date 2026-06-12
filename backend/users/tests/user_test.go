@@ -4,17 +4,18 @@ import (
 	"context"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/lib/pq"
 	"project-devis-users/actions"
 	usersGrpc "project-devis-users/services/grpc"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/lib/pq"
 )
 
 func TestCreateUser_Success(t *testing.T) {
 	srv, mock := setupServer(t)
 
 	mock.ExpectExec(`INSERT INTO users`).
-		WithArgs(sqlmock.AnyArg(), "new@example.com").
+		WithArgs(sqlmock.AnyArg(), "new@example.com", "user").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.CreateUser(context.Background(), &usersGrpc.CreateUserRequest{Email: "new@example.com"})
@@ -54,7 +55,7 @@ func TestCreateUser_AlreadyExists(t *testing.T) {
 	srv, mock := setupServer(t)
 
 	mock.ExpectExec(`INSERT INTO users`).
-		WithArgs(sqlmock.AnyArg(), "existing@example.com").
+		WithArgs(sqlmock.AnyArg(), "existing@example.com", "user").
 		WillReturnError(&pq.Error{Code: "23505"})
 
 	resp, err := srv.CreateUser(context.Background(), &usersGrpc.CreateUserRequest{Email: "existing@example.com"})
@@ -74,8 +75,8 @@ func TestGetUser_Success(t *testing.T) {
 
 	mock.ExpectQuery(`SELECT user_id, email`).
 		WithArgs("user-123").
-		WillReturnRows(sqlmock.NewRows([]string{"user_id", "email", "phone", "company", "siren", "vat", "logo_url"}).
-			AddRow("user-123", "user@example.com", "", "", "", "", ""))
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "email", "phone", "company", "siren", "vat", "logo_url", "suspended"}).
+			AddRow("user-123", "user@example.com", "", "", "", "", "", false))
 
 	resp, err := srv.GetUser(context.Background(), &usersGrpc.GetUserRequest{UserId: "user-123"})
 	if err != nil {
@@ -94,7 +95,7 @@ func TestGetUser_NotFound(t *testing.T) {
 
 	mock.ExpectQuery(`SELECT user_id, email`).
 		WithArgs("unknown").
-		WillReturnRows(sqlmock.NewRows([]string{"user_id", "email", "phone", "company", "siren", "vat", "logo_url"}))
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "email", "phone", "company", "siren", "vat", "logo_url", "suspended"}))
 
 	resp, err := srv.GetUser(context.Background(), &usersGrpc.GetUserRequest{UserId: "unknown"})
 	if err != nil {

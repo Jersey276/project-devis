@@ -4,9 +4,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
+	"time"
 
 	auth "gateway/auth"
 	"gateway/authcookie"
+	"gateway/middleware"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -15,23 +18,37 @@ import (
 
 // Auth service error codes
 const (
-	CodeSuccess             int32 = 0
-	CodeUserAlreadyExists   int32 = 1001
-	CodeUserNotFound        int32 = 1002
-	CodeInvalidCredentials  int32 = 1003
-	CodeInvalidRefreshToken int32 = 1004
-	CodeUserServiceError    int32 = 2001
-	CodeInternalError       int32 = 2002
-	CodeNotImplemented      int32 = 2003
+	CodeSuccess                  int32 = 0
+	CodeUserAlreadyExists        int32 = 1001
+	CodeUserNotFound             int32 = 1002
+	CodeInvalidCredentials       int32 = 1003
+	CodeInvalidRefreshToken      int32 = 1004
+	CodeInvalidResetToken        int32 = 1005
+	CodeExpiredResetToken        int32 = 1006
+	CodeWeakPassword             int32 = 1007
+	CodeSessionInvalidated       int32 = 1008
+	CodeInvalidVerificationToken int32 = 1010
+	CodeExpiredVerificationToken int32 = 1011
+	CodeAlreadyVerified          int32 = 1012
+	CodeUserServiceError         int32 = 2001
+	CodeInternalError            int32 = 2002
+	CodeNotImplemented           int32 = 2003
 )
 
 const (
-	cookieAccessMaxAge          = 15 * 60          // must not outlive the JWT (services/jwt.go)
+	cookieAccessMaxAge          = 2 * 60           // must not outlive the JWT (services/jwt.go)
 	cookieRefreshMaxAge         = 7 * 24 * 60 * 60 // default refresh-token lifetime
 	cookieRefreshRememberMaxAge = 60 * 24 * 60 * 60
 )
 
 var cookieSecure = os.Getenv("ENV") == "production"
+
+var (
+	resetPasswordIPLimiter    = newSlidingWindowLimiter()
+	resetPasswordEmailLimiter = newSlidingWindowLimiter()
+	confirmResetIPLimiter     = newSlidingWindowLimiter()
+	resendVerificationLimiter = newSlidingWindowLimiter()
+)
 
 func setAuthCookies(c *gin.Context, accessToken, refreshToken string, rememberMe bool) {
 	refreshMaxAge := cookieRefreshMaxAge
@@ -51,13 +68,20 @@ func clearAuthCookies(c *gin.Context) {
 
 var authErrors = &serviceErrors{
 	codes: map[int32]codeMapping{
-		CodeUserAlreadyExists:   {http.StatusConflict, "Un compte avec cette adresse email existe déjà."},
-		CodeUserNotFound:        {http.StatusNotFound, "Aucun compte trouvé avec cette adresse email."},
-		CodeInvalidCredentials:  {http.StatusUnauthorized, "Adresse email ou mot de passe incorrect."},
-		CodeInvalidRefreshToken: {http.StatusUnauthorized, "Session expirée, veuillez vous reconnecter."},
-		CodeUserServiceError:    {http.StatusBadGateway, "Erreur lors de la création du compte, veuillez réessayer."},
-		CodeInternalError:       {http.StatusInternalServerError, "Une erreur interne est survenue."},
-		CodeNotImplemented:      {http.StatusNotImplemented, "Cette fonctionnalité n'est pas encore disponible."},
+		CodeUserAlreadyExists:        {http.StatusConflict, "Un compte avec cette adresse email existe déjà."},
+		CodeUserNotFound:             {http.StatusNotFound, "Aucun compte trouvé avec cette adresse email."},
+		CodeInvalidCredentials:       {http.StatusUnauthorized, "Adresse email ou mot de passe incorrect."},
+		CodeInvalidRefreshToken:      {http.StatusUnauthorized, "Session expirée, veuillez vous reconnecter."},
+		CodeInvalidResetToken:        {http.StatusBadRequest, "Le lien de réinitialisation est invalide ou déjà utilisé."},
+		CodeExpiredResetToken:        {http.StatusGone, "Le lien de réinitialisation a expiré."},
+		CodeWeakPassword:             {http.StatusUnprocessableEntity, "Le mot de passe ne respecte pas la politique de sécurité."},
+		CodeSessionInvalidated:       {http.StatusUnauthorized, "Session expirée, veuillez vous reconnecter."},
+		CodeUserServiceError:         {http.StatusBadGateway, "Erreur lors de la création du compte, veuillez réessayer."},
+		CodeInternalError:            {http.StatusInternalServerError, "Une erreur interne est survenue."},
+		CodeNotImplemented:           {http.StatusNotImplemented, "Cette fonctionnalité n'est pas encore disponible."},
+		CodeInvalidVerificationToken: {http.StatusBadRequest, "Le lien de vérification est invalide ou déjà utilisé."},
+		CodeExpiredVerificationToken: {http.StatusGone, "Le lien de vérification a expiré."},
+		CodeAlreadyVerified:          {http.StatusConflict, "Cette adresse email est déjà vérifiée."},
 	},
 	unavailableMessage: "Service d'authentification indisponible.",
 }
@@ -78,14 +102,43 @@ func AuthRoutes(r *gin.RouterGroup) *gin.RouterGroup {
 	r.POST("/refresh", func(c *gin.Context) { RefreshToken(c, client) })
 	r.POST("/logout", func(c *gin.Context) { Logout(c, client) })
 
+	me := r.Group("/me")
+	me.Use(middleware.AuthRequired())
+	me.GET("", AuthContextMe)
+
 	password := r.Group("/password")
 	password.POST("/reset", func(c *gin.Context) { ResetPassword(c, client) })
-	password.POST("/update", func(c *gin.Context) { UpdatePassword(c, client) })
+	password.POST("/confirm-reset", func(c *gin.Context) { ConfirmResetPassword(c, client) })
+	passwordAuth := password.Group("")
+	passwordAuth.Use(middleware.AuthRequired())
+	passwordAuth.POST("/update", func(c *gin.Context) { UpdatePassword(c, client) })
 
 	email := r.Group("/email")
 	email.POST("/verify", func(c *gin.Context) { VerifyEmail(c, client) })
+	emailAuth := email.Group("")
+	emailAuth.Use(middleware.AuthRequired())
+	emailAuth.POST("/resend-verification", func(c *gin.Context) { ResendEmailVerification(c, client) })
 
 	return r
+}
+
+func AuthContextMe(c *gin.Context) {
+	userID, _ := c.Get(middleware.CtxUserID)
+	email, _ := c.Get(middleware.CtxEmail)
+	role, _ := c.Get(middleware.CtxRole)
+	status, _ := c.Get(middleware.CtxAccountStatus)
+	tier, _ := c.Get(middleware.CtxSubscriptionTier)
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"auth": gin.H{
+			"user_id":           userID,
+			"email":             email,
+			"role":              role,
+			"account_status":    status,
+			"subscription_tier": tier,
+		},
+	})
 }
 
 type registerInput struct {
@@ -244,8 +297,20 @@ func ResetPassword(c *gin.Context, client auth.AuthServiceClient) {
 		return
 	}
 
+	now := time.Now()
+	normalizedEmail := strings.ToLower(strings.TrimSpace(input.Email))
+	if !resetPasswordIPLimiter.Allow("ip:"+c.ClientIP(), 5, time.Minute, now) ||
+		!resetPasswordEmailLimiter.Allow("email:"+normalizedEmail, 3, 15*time.Minute, now) {
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"success": false,
+			"message": "Trop de demandes. Veuillez réessayer plus tard.",
+			"code":    "RATE_LIMITED",
+		})
+		return
+	}
+
 	resp, err := client.ResetPassword(c.Request.Context(), &auth.ResetPasswordRequest{
-		Email: input.Email,
+		Email: normalizedEmail,
 	})
 	if err != nil {
 		authErrors.unavailable(c)
@@ -261,19 +326,32 @@ func ResetPassword(c *gin.Context, client auth.AuthServiceClient) {
 
 func UpdatePassword(c *gin.Context, client auth.AuthServiceClient) {
 	var input struct {
-		Email       string `json:"email" binding:"required,email"`
 		OldPassword string `json:"old_password" binding:"required"`
-		NewPassword string `json:"new_password" binding:"required,min=8"`
+		NewPassword string `json:"new_password" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides.", "code": "VALIDATION_ERROR"})
 		return
 	}
 
+	ctxEmailRaw, exists := c.Get(middleware.CtxEmail)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Token d'authentification manquant."})
+		return
+	}
+	ctxEmail, ok := ctxEmailRaw.(string)
+	if !ok || strings.TrimSpace(ctxEmail) == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Token invalide."})
+		return
+	}
+
+	currentRefreshToken, _ := c.Cookie(authcookie.RefreshName)
+
 	resp, err := client.UpdatePassword(c.Request.Context(), &auth.UpdatePasswordRequest{
-		Email:       input.Email,
-		OldPassword: input.OldPassword,
-		NewPassword: input.NewPassword,
+		Email:               strings.ToLower(strings.TrimSpace(ctxEmail)),
+		OldPassword:         input.OldPassword,
+		NewPassword:         input.NewPassword,
+		CurrentRefreshToken: currentRefreshToken,
 	})
 	if err != nil {
 		authErrors.unavailable(c)
@@ -287,9 +365,44 @@ func UpdatePassword(c *gin.Context, client auth.AuthServiceClient) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Mot de passe mis à jour."})
 }
 
+func ConfirmResetPassword(c *gin.Context, client auth.AuthServiceClient) {
+	var input struct {
+		Token       string `json:"token" binding:"required"`
+		NewPassword string `json:"new_password" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides.", "code": "VALIDATION_ERROR"})
+		return
+	}
+
+	if !confirmResetIPLimiter.Allow("confirm_ip:"+c.ClientIP(), 10, time.Minute, time.Now()) {
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"success": false,
+			"message": "Trop de demandes. Veuillez réessayer plus tard.",
+			"code":    "RATE_LIMITED",
+		})
+		return
+	}
+
+	resp, err := client.ConfirmResetPassword(c.Request.Context(), &auth.ConfirmResetPasswordRequest{
+		Token:       input.Token,
+		NewPassword: input.NewPassword,
+	})
+	if err != nil {
+		authErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		authErrors.reply(c, resp.Code)
+		return
+	}
+
+	clearAuthCookies(c)
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Mot de passe réinitialisé."})
+}
+
 func VerifyEmail(c *gin.Context, client auth.AuthServiceClient) {
 	var input struct {
-		Email string `json:"email" binding:"required,email"`
 		Token string `json:"token" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -298,7 +411,6 @@ func VerifyEmail(c *gin.Context, client auth.AuthServiceClient) {
 	}
 
 	resp, err := client.VerifyEmail(c.Request.Context(), &auth.VerifyEmailRequest{
-		Email: input.Email,
 		Token: input.Token,
 	})
 	if err != nil {
@@ -311,4 +423,36 @@ func VerifyEmail(c *gin.Context, client auth.AuthServiceClient) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Email vérifié."})
+}
+
+func ResendEmailVerification(c *gin.Context, client auth.AuthServiceClient) {
+	userIDRaw, exists := c.Get(middleware.CtxUserID)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Token d'authentification manquant."})
+		return
+	}
+	userID, _ := userIDRaw.(string)
+
+	if !resendVerificationLimiter.Allow("resend_verif:"+userID, 3, 15*time.Minute, time.Now()) {
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"success": false,
+			"message": "Trop de demandes. Veuillez réessayer plus tard.",
+			"code":    "RATE_LIMITED",
+		})
+		return
+	}
+
+	resp, err := client.ResendEmailVerification(c.Request.Context(), &auth.ResendEmailVerificationRequest{
+		UserId: userID,
+	})
+	if err != nil {
+		authErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		authErrors.reply(c, resp.Code)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Email de vérification renvoyé."})
 }

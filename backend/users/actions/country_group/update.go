@@ -9,8 +9,17 @@ import (
 )
 
 func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateCountryGroupRequest) (*usersGrpc.UpdateCountryGroupResponse, error) {
-	if req.CountryGroupId == 0 || req.Name == "" {
-		return &usersGrpc.UpdateCountryGroupResponse{Success: false, Code: codes.InvalidInput}, nil
+	var fieldErrors []*usersGrpc.ValidationError
+
+	if req.CountryGroupId == 0 {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "country_group_id", Message: "Champ requis."})
+	}
+	if req.Name == "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "name", Message: "Champ requis."})
+	}
+
+	if len(fieldErrors) > 0 {
+		return &usersGrpc.UpdateCountryGroupResponse{Success: false, Code: codes.InvalidInput, ValidationErrors: fieldErrors}, nil
 	}
 
 	res, err := db.ExecContext(ctx,

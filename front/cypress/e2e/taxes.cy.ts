@@ -20,6 +20,19 @@ describe("Taxes page", () => {
     groups?: typeof GROUPS;
   }) {
     cy.login();
+    cy.intercept("GET", "/api/auth/me", {
+      statusCode: 200,
+      body: {
+        success: true,
+        auth: {
+          user_id: "u1",
+          email: "admin@test.fr",
+          role: "super_admin",
+          account_status: "active",
+          subscription_tier: "free",
+        },
+      },
+    }).as("getAuthMe");
     cy.intercept("GET", "/api/users/taxes", {
       statusCode: 200,
       body: { success: true, taxes: opts?.taxes ?? TAXES },
@@ -63,7 +76,9 @@ describe("Taxes page", () => {
       cy.get("input[name='name']").type("TVA réduite");
       cy.get("input[name='rate']").type("5.50");
       cy.get("input[name='country_group_id']").type("Mercosur");
-      cy.contains("[data-slot='combobox-item']", "Mercosur").click({ force: true });
+      cy.contains("[data-slot='combobox-item']", "Mercosur").click({
+        force: true,
+      });
 
       cy.contains("[data-slot='dialog-content'] button", "Enregistrer").click();
 
@@ -96,7 +111,9 @@ describe("Taxes page", () => {
       cy.get("input[name='name']").type("Mauvais taux");
       cy.get("input[name='rate']").type("abc");
       cy.get("input[name='country_group_id']").type("Union");
-      cy.contains("[data-slot='combobox-item']", "Union européenne").click({ force: true });
+      cy.contains("[data-slot='combobox-item']", "Union européenne").click({
+        force: true,
+      });
       cy.contains("[data-slot='dialog-content'] button", "Enregistrer").click();
 
       cy.wait("@createTaxInvalid");

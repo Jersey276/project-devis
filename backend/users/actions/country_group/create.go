@@ -10,7 +10,11 @@ import (
 
 func Create(ctx context.Context, db *sql.DB, req *usersGrpc.CreateCountryGroupRequest) (*usersGrpc.CreateCountryGroupResponse, error) {
 	if req.Name == "" {
-		return &usersGrpc.CreateCountryGroupResponse{Success: false, Code: codes.InvalidInput}, nil
+		return &usersGrpc.CreateCountryGroupResponse{
+			Success:          false,
+			Code:             codes.InvalidInput,
+			ValidationErrors: []*usersGrpc.ValidationError{{Field: "name", Message: "Champ requis."}},
+		}, nil
 	}
 
 	var groupID int32

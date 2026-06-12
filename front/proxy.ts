@@ -4,7 +4,18 @@ import { NEXT_PARAM } from "@/lib/auth-utils";
 
 const REFRESH_TIMEOUT_MS = 5000;
 
-export async function middleware(request: NextRequest) {
+const PUBLIC_PATHS = new Set([
+  "/login",
+  "/register",
+  "/forget-password",
+  "/reset-password",
+]);
+
+export async function proxy(request: NextRequest) {
+  if (PUBLIC_PATHS.has(request.nextUrl.pathname)) {
+    return NextResponse.next();
+  }
+
   const cookies = request.cookies;
 
   if (cookies.get(AUTH_TOKEN_COOKIE)) {
@@ -60,6 +71,6 @@ export const config = {
   // Protect every route except the auth pages, API (would loop the refresh call),
   // Next.js internals, and static assets.
   matcher: [
-    "/((?!login|register|api/|_next/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map)$).*)",
+    "/((?!login|register|forget-password|reset-password|api/|_next/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map)$).*)",
   ],
 };

@@ -7,8 +7,11 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
+	export "gateway/export"
 	quote "gateway/quote"
+	gatewaySvc "gateway/services"
 	users "gateway/users"
 
 	"github.com/gin-gonic/gin"
@@ -27,6 +30,14 @@ const (
 	QuoteCodeInternalError   int32 = 2001
 )
 
+func quoteValidationErrors(errs []*quote.ValidationError) []FieldError {
+	out := make([]FieldError, len(errs))
+	for i, e := range errs {
+		out[i] = FieldError{Field: e.Field, Message: e.Message}
+	}
+	return out
+}
+
 var quoteErrors = &serviceErrors{
 	codes: map[int32]codeMapping{
 		QuoteCodeNotFound:        {http.StatusNotFound, "Devis introuvable."},
@@ -41,7 +52,7 @@ var quoteErrors = &serviceErrors{
 }
 
 // QuotesRoutes wires the /quotes API group against the quote gRPC service.
-func QuotesRoutes(r *gin.RouterGroup) {
+func QuotesRoutes(r *gin.RouterGroup, emailNotifier gatewaySvc.EmailNotifier) {
 	address := os.Getenv("QUOTE_SERVICE_ADDRESS")
 	if address == "" {
 		address = "localhost:50053"
@@ -62,6 +73,22 @@ func QuotesRoutes(r *gin.RouterGroup) {
 	}
 	usersClient := users.NewUserServiceClient(usersConn)
 
+	exportAddress := os.Getenv("EXPORT_SERVICE_ADDRESS")
+	if exportAddress == "" {
+		exportAddress = "localhost:50054"
+	}
+	exportConn, err := grpc.NewClient(exportAddress,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(maxExportMessageBytes),
+			grpc.MaxCallSendMsgSize(maxExportMessageBytes),
+		),
+	)
+	if err != nil {
+		log.Fatalf("Failed to connect to export gRPC server: %v", err)
+	}
+	exportClient := export.NewExportServiceClient(exportConn)
+
 	r.GET("", func(c *gin.Context) { ListQuotes(c, client, usersClient) })
 	r.POST("", func(c *gin.Context) { CreateQuote(c, client) })
 
@@ -76,6 +103,7 @@ func QuotesRoutes(r *gin.RouterGroup) {
 	one.POST("/restore", func(c *gin.Context) { RestoreQuote(c, client) })
 	one.POST("/drop", func(c *gin.Context) { DropQuote(c, client) })
 	one.POST("/continue", func(c *gin.Context) { ContinueQuote(c, client) })
+	one.POST("/send", func(c *gin.Context) { SendQuote(c, client, usersClient, exportClient, emailNotifier) })
 
 	lines := one.Group("/lines")
 	lines.GET("", func(c *gin.Context) { ListQuoteLines(c, client) })
@@ -146,7 +174,8 @@ func ListQuotes(c *gin.Context, client quote.QuoteServiceClient, usersClient use
 	out := make([]gin.H, 0, len(quotesResp.Quotes))
 	for _, q := range quotesResp.Quotes {
 		m := marshalQuote(q)
-		m["total_ttc"] = totals[q.QuoteId]
+		m["total_ttc"] = totals[q.QuoteId].principal
+		m["option_total_ttc"] = totals[q.QuoteId].option
 		out = append(out, m)
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "quotes": out})
@@ -168,10 +197,37 @@ func distinctTaxIds(lines []*quote.QuoteLine) []int32 {
 	return ids
 }
 
-// computeQuoteTotals folds quote_lines into per-quote TTC totals in cents.
-// Round once per line — matches the per-line breakdown of quote-form.tsx and
-// the canonical PDF total. Lines with tax_id=0 ("no tax") contribute HT only.
-func computeQuoteTotals(lines []*quote.QuoteLine, taxes []*users.Tax) map[string]int64 {
+type quoteLineData struct {
+	Kind         string         `json:"kind"`
+	Description  string         `json:"description"`
+	Option       *bool          `json:"option"`
+	ParentLineID string         `json:"parent_line_id"`
+	Sublines     []quoteSubline `json:"sublines"`
+}
+
+type quoteSubline struct {
+	Name      string `json:"name"`
+	Quantity  string `json:"quantity"`
+	Unit      string `json:"unit"`
+	UnitPrice int64  `json:"unit_price"`
+	Option    *bool  `json:"option"`
+}
+
+type quoteTotals struct {
+	principal int64
+	option    int64
+}
+
+func parseLineData(raw string) quoteLineData {
+	var data quoteLineData
+	if err := json.Unmarshal([]byte(raw), &data); err != nil {
+		return quoteLineData{}
+	}
+	data.Kind = strings.TrimSpace(data.Kind)
+	return data
+}
+
+func computeQuoteTotals(lines []*quote.QuoteLine, taxes []*users.Tax) map[string]quoteTotals {
 	rates := make(map[int32]float64, len(taxes)+1)
 	for _, t := range taxes {
 		r, err := strconv.ParseFloat(t.Rate, 64)
@@ -181,15 +237,96 @@ func computeQuoteTotals(lines []*quote.QuoteLine, taxes []*users.Tax) map[string
 		rates[t.Id] = r
 	}
 
-	totals := map[string]int64{}
-	for _, l := range lines {
-		qty, err := strconv.ParseFloat(l.Quantity, 64)
+	byID := make(map[string]*quote.QuoteLine, len(lines))
+	children := make(map[string][]*quote.QuoteLine, len(lines))
+	for _, line := range lines {
+		byID[line.LineId] = line
+		data := parseLineData(line.Data)
+		if data.ParentLineID != "" {
+			children[data.ParentLineID] = append(children[data.ParentLineID], line)
+		}
+	}
+
+	visited := make(map[string]struct{}, len(lines))
+	var evalLine func(line *quote.QuoteLine) quoteTotals
+	evalLine = func(line *quote.QuoteLine) quoteTotals {
+		if line == nil {
+			return quoteTotals{}
+		}
+		if _, ok := visited[line.LineId]; ok {
+			return quoteTotals{}
+		}
+		visited[line.LineId] = struct{}{}
+
+		data := parseLineData(line.Data)
+		kind := data.Kind
+		if kind == "" {
+			if line.Type == "multiple" {
+				kind = "detailed"
+			} else {
+				kind = "line"
+			}
+		}
+
+		if kind == "text" || kind == "group" {
+			var total quoteTotals
+			for _, child := range children[line.LineId] {
+				childTotal := evalLine(child)
+				total.principal += childTotal.principal
+				total.option += childTotal.option
+			}
+			return total
+		}
+
+		if kind == "detailed" {
+			var total quoteTotals
+			for _, sub := range data.Sublines {
+				qty, err := strconv.ParseFloat(sub.Quantity, 64)
+				if err != nil {
+					continue
+				}
+				amount := int64(math.Round(qty * float64(sub.UnitPrice) * (1 + rates[line.TaxId]/100)))
+				if sub.Option != nil && *sub.Option {
+					total.option += amount
+				} else {
+					total.principal += amount
+				}
+			}
+			return total
+		}
+
+		qty, err := strconv.ParseFloat(line.Quantity, 64)
 		if err != nil {
+			return quoteTotals{}
+		}
+		amount := int64(math.Round(qty * float64(line.UnitPrice) * (1 + rates[line.TaxId]/100)))
+		var total quoteTotals
+		if data.Option != nil && *data.Option {
+			total.option = amount
+		} else {
+			total.principal = amount
+		}
+		for _, child := range children[line.LineId] {
+			childTotal := evalLine(child)
+			total.principal += childTotal.principal
+			total.option += childTotal.option
+		}
+		return total
+	}
+
+	totals := map[string]quoteTotals{}
+	for _, line := range lines {
+		data := parseLineData(line.Data)
+		if data.ParentLineID != "" {
 			continue
 		}
-		rate := rates[l.TaxId]
-		totals[l.QuoteId] += int64(math.Round(qty * float64(l.UnitPrice) * (1 + rate/100)))
+		total := evalLine(line)
+		cur := totals[line.QuoteId]
+		cur.principal += total.principal
+		cur.option += total.option
+		totals[line.QuoteId] = cur
 	}
+	_ = byID
 	return totals
 }
 
@@ -216,7 +353,11 @@ func CreateQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		return
 	}
 	if !resp.Success {
-		quoteErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			quoteErrors.replyWithValidation(c, resp.Code, quoteValidationErrors(resp.ValidationErrors))
+		} else {
+			quoteErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "quote_id": resp.QuoteId})
@@ -266,7 +407,11 @@ func UpdateQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		return
 	}
 	if !resp.Success {
-		quoteErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			quoteErrors.replyWithValidation(c, resp.Code, quoteValidationErrors(resp.ValidationErrors))
+		} else {
+			quoteErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -426,7 +571,11 @@ func CreateQuoteLine(c *gin.Context, client quote.QuoteServiceClient) {
 		return
 	}
 	if !resp.Success {
-		quoteErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			quoteErrors.replyWithValidation(c, resp.Code, quoteValidationErrors(resp.ValidationErrors))
+		} else {
+			quoteErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "line_id": resp.LineId})
@@ -471,7 +620,11 @@ func UpdateQuoteLine(c *gin.Context, client quote.QuoteServiceClient) {
 		return
 	}
 	if !resp.Success {
-		quoteErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			quoteErrors.replyWithValidation(c, resp.Code, quoteValidationErrors(resp.ValidationErrors))
+		} else {
+			quoteErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -566,4 +719,57 @@ func marshalLines(lines []*quote.QuoteLine) []gin.H {
 		out = append(out, marshalLine(l))
 	}
 	return out
+}
+
+func SendQuote(
+	c *gin.Context,
+	quoteClient quote.QuoteServiceClient,
+	usersClient users.UserServiceClient,
+	exportClient export.ExportServiceClient,
+	emailNotifier gatewaySvc.EmailNotifier,
+) {
+	userID := userIDFromCtx(c)
+	quoteID := c.Param("id")
+
+	sendResp, err := quoteClient.SendQuote(c.Request.Context(), &quote.SendQuoteRequest{
+		QuoteId: quoteID,
+		UserId:  userID,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !sendResp.Success {
+		quoteErrors.reply(c, sendResp.Code)
+		return
+	}
+
+	clientResp, err := usersClient.GetClient(c.Request.Context(), &users.GetClientRequest{
+		ClientId: sendResp.ClientId,
+		UserId:   userID,
+	})
+	if err != nil || !clientResp.Success {
+		log.Printf("SendQuote: could not fetch client %s: %v", sendResp.ClientId, err)
+		c.JSON(http.StatusOK, gin.H{"success": true})
+		return
+	}
+	client := clientResp.Client
+
+	var pdfBytes []byte
+	exportResp, exportErr := exportClient.ExportQuote(c.Request.Context(), &export.ExportQuoteRequest{
+		QuoteId: quoteID,
+		UserId:  userID,
+	})
+	if exportErr != nil || !exportResp.Success {
+		log.Printf("SendQuote: PDF generation failed for quote %s: %v", quoteID, exportErr)
+	} else {
+		pdfBytes = exportResp.Pdf
+	}
+
+	clientName := strings.TrimSpace(client.FirstName + " " + client.LastName)
+	if err := emailNotifier.SendQuoteEmail(c.Request.Context(), userID, quoteID, client.Email, clientName, sendResp.Name, pdfBytes); err != nil {
+		log.Printf("SendQuote: email send failed for quote %s: %v", quoteID, err)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }

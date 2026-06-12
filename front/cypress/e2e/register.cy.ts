@@ -39,7 +39,7 @@ describe("Register", () => {
     cy.wait("@registerSuccessToast");
     cy.get("[data-sonner-toaster]").should(
       "contain",
-      "Inscription réussie. Veuillez vous connecter."
+      "Inscription réussie. Veuillez vous connecter.",
     );
   });
 
@@ -58,7 +58,7 @@ describe("Register", () => {
     cy.wait("@registerFailure").its("response.statusCode").should("eq", 400);
     cy.get("[data-sonner-toaster]").should(
       "contain",
-      "Échec de l'inscription. Veuillez réessayer."
+      "Échec de l'inscription. Veuillez réessayer.",
     );
   });
 
@@ -75,14 +75,16 @@ describe("Register", () => {
 
     cy.get("[data-sonner-toaster]").should(
       "contain",
-      "Échec de l'inscription. Veuillez réessayer."
+      "Échec de l'inscription. Veuillez réessayer.",
     );
   });
 
   describe("form validation", () => {
     it("shows confirm password mismatch error without calling the API", () => {
-      cy.intercept("POST", "/api/auth/register", (_req) => {
-        throw new Error("API should not be called on confirm password mismatch");
+      cy.intercept("POST", "/api/auth/register", () => {
+        throw new Error(
+          "API should not be called on confirm password mismatch",
+        );
       }).as("registerMismatch");
 
       cy.visit("/register");
@@ -149,7 +151,7 @@ describe("Register", () => {
       cy.get("input[name='password']")
         .closest("[data-slot='field']")
         .find("[data-slot='field-error']")
-        .should("contain", "Trop court (8 caractères minimum).");
+        .should("contain", "Trop court (12 caractères minimum).");
     });
 
     it("clears field errors when submitting again", () => {

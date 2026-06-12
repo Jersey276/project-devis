@@ -12,13 +12,22 @@ import (
 
 func Create(ctx context.Context, db *sql.DB, req *usersGrpc.CreateUserRequest) (*usersGrpc.CreateUserResponse, error) {
 	if req.Email == "" {
-		return &usersGrpc.CreateUserResponse{Success: false, Code: codes.InvalidInput}, nil
+		return &usersGrpc.CreateUserResponse{
+			Success:          false,
+			Code:             codes.InvalidInput,
+			ValidationErrors: []*usersGrpc.ValidationError{{Field: "email", Message: "Champ requis."}},
+		}, nil
+	}
+
+	role := "user"
+	if req.IsAdmin {
+		role = "admin"
 	}
 
 	userID := uuid.New().String()
 	_, err := db.ExecContext(ctx,
-		"INSERT INTO users (user_id, email) VALUES ($1, $2)",
-		userID, req.Email,
+		"INSERT INTO users (user_id, email, role) VALUES ($1, $2, $3)",
+		userID, req.Email, role,
 	)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {

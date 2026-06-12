@@ -74,9 +74,7 @@ export default function EditClientPage() {
       if (status === 422) {
         setFieldErrors(fieldErrorsFromBody(body));
       } else {
-        toast.error(
-          (body.message as string) ?? t("failedToast"),
-        );
+        toast.error((body.message as string) ?? t("failedToast"));
       }
     } finally {
       setSubmitting(false);

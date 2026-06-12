@@ -12,10 +12,17 @@ service UserService {
     rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
     // DeleteUser removes a user from the users service (used for rollback on failed registration).
     rpc DeleteUser(DeleteUserRequest) returns (GenericResponse);
+    // Resolve a user account by email for authentication flows.
+    rpc GetUserAccessInfoByEmail(GetUserAccessInfoByEmailRequest) returns (GetUserAccessInfoResponse);
+    // GetUserSecurityStatus checks account suspension state.
+    rpc GetUserAccessInfo(GetUserAccessInfoRequest) returns (GetUserAccessInfoResponse);
+    // TouchUserLastLogin stores the timestamp of the latest successful login.
+    rpc TouchUserLastLogin(TouchUserLastLoginRequest) returns (GenericResponse);
 }
 
 message CreateUserRequest {
     string email = 1;
+    bool is_admin = 2;
 }
 
 message CreateUserResponse {
@@ -25,6 +32,27 @@ message CreateUserResponse {
 }
 
 message DeleteUserRequest {
+    string user_id = 1;
+}
+
+message GetUserAccessInfoRequest {
+    string user_id = 1;
+}
+
+message GetUserAccessInfoByEmailRequest {
+    string email = 1;
+}
+
+message GetUserAccessInfoResponse {
+    bool success = 1;
+    int32 code = 2;
+    string user_id = 3;
+    string email = 4;
+    string role = 5;
+    bool suspended = 6;
+}
+
+message TouchUserLastLoginRequest {
     string user_id = 1;
 }
 

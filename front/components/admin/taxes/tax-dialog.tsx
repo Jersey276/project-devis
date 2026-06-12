@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useDialogSubmit } from "@/hooks/use-dialog-submit";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,13 +28,7 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
-import {
-  apiFetch,
-  fieldErrorsFromBody,
-  FieldErrors,
-  toErrorProps,
-} from "@/lib/api";
-import { toast } from "sonner";
+import { apiFetch, toErrorProps } from "@/lib/api";
 import { type CountryGroup, type Tax } from "@/components/admin/types";
 
 type TaxDialogProps = {
@@ -62,46 +57,24 @@ export default function TaxDialog({
     tax?.country_group_id ?? null,
   );
   const [isDefault, setIsDefault] = useState<boolean>(tax?.is_default ?? false);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [submitting, setSubmitting] = useState(false);
+  const { fieldErrors, submitting, submit } = useDialogSubmit(tCommon("errors.generic"));
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setFieldErrors({});
-    setSubmitting(true);
-    const path = isEdit
-      ? `/api/users/taxes/${tax!.id}`
-      : "/api/users/taxes";
+    const path = isEdit ? `/api/users/taxes/${tax!.id}` : "/api/users/taxes";
     const payload = isEdit
       ? { name, rate, is_default: isDefault }
       : { name, rate, country_group_id: groupId, is_default: isDefault };
-    try {
-      const { ok, status, body } = await apiFetch(path, {
-        method: isEdit ? "PUT" : "POST",
-        body: JSON.stringify(payload),
-      });
-      if (ok && body.success) {
-        toast.success(
-          isEdit ? t("updateSuccessToast") : t("createSuccessToast"),
-        );
-        onSaved();
-        onOpenChange(false);
-        return;
-      }
-      if (status === 422 && Array.isArray(body.field_errors)) {
-        setFieldErrors(fieldErrorsFromBody(body));
-        return;
-      }
-      toast.error(body.message ?? tCommon("errors.generic"));
-    } catch {
-      toast.error(tCommon("errors.generic"));
-    } finally {
-      setSubmitting(false);
-    }
+    await submit({
+      request: () => apiFetch(path, { method: isEdit ? "PUT" : "POST", body: JSON.stringify(payload) }),
+      successMessage: isEdit ? t("updateSuccessToast") : t("createSuccessToast"),
+      onSuccess: onSaved,
+      onClose: onOpenChange,
+    });
   }
 
   const selectedGroup =
-    groupId != null ? groups.find((g) => g.id === groupId) ?? null : null;
+    groupId != null ? (groups.find((g) => g.id === groupId) ?? null) : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -112,7 +85,12 @@ export default function TaxDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <form id={FORM_ID} className="grid gap-4" onSubmit={handleSubmit} noValidate>
+        <form
+          id={FORM_ID}
+          className="grid gap-4"
+          onSubmit={handleSubmit}
+          noValidate
+        >
           <FieldGroup>
             <Field data-invalid={!!fieldErrors.name?.length}>
               <FieldLabel htmlFor="tax_name">{t("nameLabel")}</FieldLabel>

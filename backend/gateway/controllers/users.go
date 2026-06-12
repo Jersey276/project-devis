@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	authpb "gateway/auth"
+	"gateway/authz"
 	"gateway/middleware"
 	users "gateway/users"
 
@@ -22,6 +24,14 @@ const (
 	UsersCodeInvalidInput  int32 = 1003
 	UsersCodeInternalError int32 = 2001
 )
+
+func usersValidationErrors(errs []*users.ValidationError) []FieldError {
+	out := make([]FieldError, len(errs))
+	for i, e := range errs {
+		out[i] = FieldError{Field: e.Field, Message: e.Message}
+	}
+	return out
+}
 
 var usersErrors = &serviceErrors{
 	codes: map[int32]codeMapping{
@@ -49,6 +59,12 @@ func UserRoutes(r *gin.RouterGroup) {
 	me.PUT("", func(c *gin.Context) { UpdateMe(c, client) })
 	me.DELETE("", func(c *gin.Context) { DeleteMe(c, client) })
 
+	admin := r.Group("/admin/accounts")
+	admin.Use(middleware.AdminRequired())
+	admin.GET("", func(c *gin.Context) { ListAdminAccounts(c, client) })
+	admin.PUT("/:userId", func(c *gin.Context) { UpdateAdminAccount(c, client) })
+	admin.POST("/:userId/suspend", func(c *gin.Context) { SuspendAdminAccount(c, client) })
+
 	clients := r.Group("/clients")
 	clients.GET("", func(c *gin.Context) { ListClients(c, client) })
 	clients.POST("", func(c *gin.Context) { CreateClient(c, client) })
@@ -64,6 +80,7 @@ func UserRoutes(r *gin.RouterGroup) {
 	addresses.DELETE("/:id", func(c *gin.Context) { ArchiveAddress(c, client) })
 
 	countries := r.Group("/countries")
+	countries.Use(middleware.RequireAdminResource(authz.ResourceAdminCountries))
 	countries.GET("", func(c *gin.Context) { ListCountries(c, client) })
 	countries.POST("", func(c *gin.Context) { CreateCountry(c, client) })
 	countries.GET("/:id", func(c *gin.Context) { GetCountry(c, client) })
@@ -71,6 +88,7 @@ func UserRoutes(r *gin.RouterGroup) {
 	countries.DELETE("/:id", func(c *gin.Context) { DeleteCountry(c, client) })
 
 	groups := r.Group("/country-groups")
+	groups.Use(middleware.RequireAdminResource(authz.ResourceAdminCountryGroup))
 	groups.GET("", func(c *gin.Context) { ListCountryGroups(c, client) })
 	groups.POST("", func(c *gin.Context) { CreateCountryGroup(c, client) })
 	groups.GET("/:id", func(c *gin.Context) { GetCountryGroup(c, client) })
@@ -80,12 +98,15 @@ func UserRoutes(r *gin.RouterGroup) {
 	groups.DELETE("/:id/countries/:countryId", func(c *gin.Context) { DetachCountry(c, client) })
 
 	taxes := r.Group("/taxes")
-	taxes.GET("", func(c *gin.Context) { ListTaxes(c, client) })
 	taxes.GET("/available", func(c *gin.Context) { ListTaxesForUser(c, client) })
-	taxes.POST("", func(c *gin.Context) { CreateTax(c, client) })
-	taxes.GET("/:id", func(c *gin.Context) { GetTax(c, client) })
-	taxes.PUT("/:id", func(c *gin.Context) { UpdateTax(c, client) })
-	taxes.DELETE("/:id", func(c *gin.Context) { DeleteTax(c, client) })
+
+	adminTaxes := taxes.Group("")
+	adminTaxes.Use(middleware.RequireAdminResource(authz.ResourceAdminTaxes))
+	adminTaxes.GET("", func(c *gin.Context) { ListTaxes(c, client) })
+	adminTaxes.POST("", func(c *gin.Context) { CreateTax(c, client) })
+	adminTaxes.GET("/:id", func(c *gin.Context) { GetTax(c, client) })
+	adminTaxes.PUT("/:id", func(c *gin.Context) { UpdateTax(c, client) })
+	adminTaxes.DELETE("/:id", func(c *gin.Context) { DeleteTax(c, client) })
 }
 
 func userIDFromCtx(c *gin.Context) string {
@@ -129,7 +150,27 @@ func GetMe(c *gin.Context, client users.UserServiceClient) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "user": resp.User})
 }
 
+func ensureUserWritable(c *gin.Context, client users.UserServiceClient) bool {
+	resp, err := client.GetUserAccessInfo(c.Request.Context(), &users.GetUserAccessInfoRequest{UserId: userIDFromCtx(c)})
+	if err != nil {
+		usersErrors.unavailable(c)
+		return false
+	}
+	if !resp.Success {
+		usersErrors.reply(c, resp.Code)
+		return false
+	}
+	if resp.Suspended {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"success": false, "message": "Compte suspendu. Modification désactivée."})
+		return false
+	}
+	return true
+}
+
 func UpdateMe(c *gin.Context, client users.UserServiceClient) {
+	if !ensureUserWritable(c, client) {
+		return
+	}
 	var input struct {
 		Phone   string `json:"phone"`
 		Company string `json:"company"`
@@ -165,6 +206,9 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 }
 
 func DeleteMe(c *gin.Context, client users.UserServiceClient) {
+	if !ensureUserWritable(c, client) {
+		return
+	}
 	resp, err := client.DeleteUser(c.Request.Context(), &users.DeleteUserRequest{UserId: userIDFromCtx(c)})
 	if err != nil {
 		usersErrors.unavailable(c)
@@ -174,6 +218,118 @@ func DeleteMe(c *gin.Context, client users.UserServiceClient) {
 		usersErrors.reply(c, resp.Code)
 		return
 	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func marshalAdminAccount(a *users.AdminAccount) gin.H {
+	if a == nil {
+		return nil
+	}
+
+	var lastLoginAt any = nil
+	if a.LastLoginAt != "" {
+		lastLoginAt = a.LastLoginAt
+	}
+
+	return gin.H{
+		"user_id":       a.UserId,
+		"first_name":    a.FirstName,
+		"last_name":     a.LastName,
+		"email":         a.Email,
+		"role":          a.Role,
+		"plan":          a.Plan,
+		"last_login_at": lastLoginAt,
+		"suspended":     a.Suspended,
+		"phone":         a.Phone,
+		"company":       a.Company,
+		"siren":         a.Siren,
+		"vat":           a.Vat,
+	}
+}
+
+func ListAdminAccounts(c *gin.Context, client users.UserServiceClient) {
+	resp, err := client.ListAdminAccounts(c.Request.Context(), &users.ListAdminAccountsRequest{})
+	if err != nil {
+		usersErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		usersErrors.reply(c, resp.Code)
+		return
+	}
+
+	out := make([]gin.H, 0, len(resp.Accounts))
+	for _, account := range resp.Accounts {
+		out = append(out, marshalAdminAccount(account))
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "users": out})
+}
+
+func UpdateAdminAccount(c *gin.Context, client users.UserServiceClient) {
+	var input struct {
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+		Email     string `json:"email" binding:"required"`
+		Role      string `json:"role" binding:"required"`
+		Plan      string `json:"plan"`
+		Phone     string `json:"phone"`
+		Company   string `json:"company"`
+		Siren     string `json:"siren"`
+		Vat       string `json:"vat"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+
+	resp, err := client.UpdateAdminAccount(c.Request.Context(), &users.UpdateAdminAccountRequest{
+		UserId:    c.Param("userId"),
+		FirstName: input.FirstName,
+		LastName:  input.LastName,
+		Email:     input.Email,
+		Role:      input.Role,
+		Plan:      input.Plan,
+		Phone:     input.Phone,
+		Company:   input.Company,
+		Siren:     input.Siren,
+		Vat:       input.Vat,
+	})
+	if err != nil {
+		usersErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		usersErrors.reply(c, resp.Code)
+		return
+	}
+
+	authRole := "free_user"
+	if input.Role == "admin" {
+		authRole = "super_admin"
+	}
+	if authClient, authClientErr := middleware.GetAuthServiceClient(); authClientErr != nil {
+		log.Printf("UpdateAdminAccount: failed to get auth client: %v", authClientErr)
+	} else if _, authErr := authClient.UpdateRole(c.Request.Context(), &authpb.UpdateRoleRequest{
+		UserId: c.Param("userId"),
+		Role:   authRole,
+	}); authErr != nil {
+		log.Printf("UpdateAdminAccount: failed to update role in auth for user %s: %v", c.Param("userId"), authErr)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func SuspendAdminAccount(c *gin.Context, client users.UserServiceClient) {
+	resp, err := client.SuspendAdminAccount(c.Request.Context(), &users.SuspendAdminAccountRequest{UserId: c.Param("userId")})
+	if err != nil {
+		usersErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		usersErrors.reply(c, resp.Code)
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
@@ -324,7 +480,11 @@ func CreateAddress(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "address_id": resp.AddressId})
@@ -364,7 +524,11 @@ func UpdateAddress(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -455,7 +619,11 @@ func CreateClient(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "client_id": resp.ClientId})
@@ -499,7 +667,11 @@ func UpdateClient(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -552,7 +724,11 @@ func CreateCountry(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "country_id": resp.CountryId})
@@ -598,7 +774,11 @@ func UpdateCountry(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -648,7 +828,11 @@ func CreateCountryGroup(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "country_group_id": resp.CountryGroupId})
@@ -692,7 +876,11 @@ func UpdateCountryGroup(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -786,6 +974,15 @@ func ListTaxes(c *gin.Context, client users.UserServiceClient) {
 }
 
 func ListTaxesForUser(c *gin.Context, client users.UserServiceClient) {
+	if status, _ := c.Get(middleware.CtxAccountStatus); status == "suspended" {
+		c.JSON(http.StatusForbidden, gin.H{
+			"success": false,
+			"message": "Compte suspendu: accès restreint.",
+			"code":    "ACCOUNT_SUSPENDED",
+		})
+		return
+	}
+
 	userID := userIDFromCtx(c)
 	if userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Non authentifié."})
@@ -856,7 +1053,11 @@ func CreateTax(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "tax_id": resp.TaxId})
@@ -904,7 +1105,11 @@ func UpdateTax(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+		} else {
+			usersErrors.reply(c, resp.Code)
+		}
 		return
 	}
 	// tax_id may differ from the request id if the update created a new

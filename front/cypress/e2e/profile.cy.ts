@@ -46,20 +46,63 @@ function stubProfile(addresses = INITIAL_ADDRESSES) {
     statusCode: 200,
     body: { success: true, addresses },
   }).as("getAddresses");
+  cy.intercept("GET", "/api/subscriptions/me", {
+    statusCode: 200,
+    body: {
+      success: true,
+      subscription: {
+        subscription_id: "",
+        user_id: USER.user_id,
+        plan_id: 1,
+        tier: "free",
+        status: "active",
+        current_period_start: "",
+        current_period_end: null,
+        cancel_at_period_end: false,
+        stripe_subscription_id: null,
+        updated_at: "",
+      },
+    },
+  }).as("getMySubscription");
+  cy.intercept("GET", "/api/plans", {
+    statusCode: 200,
+    body: {
+      success: true,
+      plans: [
+        {
+          plan_id: 1,
+          name: "Free",
+          tier: "free",
+          price_cents: 0,
+          billing_cycle: "none",
+          features: {},
+        },
+        {
+          plan_id: 2,
+          name: "Pro",
+          tier: "pro",
+          price_cents: 900,
+          billing_cycle: "monthly",
+          features: {},
+        },
+      ],
+    },
+  }).as("getPlans");
 }
 
 describe("Profile page", () => {
   describe("structure", () => {
     beforeEach(() => stubProfile());
 
-    it("shows the three tabs", () => {
+    it("shows the four tabs", () => {
       cy.visit("/profile");
       cy.wait("@getMe");
       cy.get("[role='tablist']").should("exist");
-      cy.get("[role='tab']").should("have.length", 3);
+      cy.get("[role='tab']").should("have.length", 4);
       cy.contains("[role='tab']", "Information").should("exist");
       cy.contains("[role='tab']", "Adresses").should("exist");
       cy.contains("[role='tab']", "Connexion").should("exist");
+      cy.contains("[role='tab']", "Abonnement").should("exist");
     });
 
     it("switches tabs on click", () => {
@@ -200,7 +243,9 @@ describe("Profile page", () => {
       cy.get("input[name='city']").type("Lyon");
       cy.get("input[name='zip_code']").type("69002");
       cy.get("input[name='country_id']").type("Bel");
-      cy.contains("[data-slot='combobox-item']", "Belgique").click({ force: true });
+      cy.contains("[data-slot='combobox-item']", "Belgique").click({
+        force: true,
+      });
 
       cy.contains("[data-slot='dialog-footer'] button", "Enregistrer").click();
 
@@ -268,10 +313,7 @@ describe("Profile page", () => {
           city: "Marseille",
         });
       });
-      cy.get("[data-sonner-toaster]").should(
-        "contain",
-        "Adresse mise à jour.",
-      );
+      cy.get("[data-sonner-toaster]").should("contain", "Adresse mise à jour.");
     });
 
     it("cancels deletion (no API call)", () => {
@@ -380,7 +422,6 @@ describe("Profile page", () => {
 
       cy.wait("@updatePassword").then((interception) => {
         expect(interception.request.body).to.deep.equal({
-          email: USER.email,
           old_password: "currentPass1",
           new_password: "newPassword1",
         });
@@ -466,7 +507,7 @@ describe("Profile page", () => {
       cy.get("input[name='new_password']")
         .closest("[data-slot='field']")
         .find("[data-slot='field-error']")
-        .should("contain", "Trop court (8 caractères minimum).");
+        .should("contain", "Trop court (12 caractères minimum).");
     });
   });
 });

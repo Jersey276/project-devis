@@ -21,9 +21,13 @@ import { toast } from "sonner";
 
 type ConnectionFormProps = {
   email: string;
+  readOnly?: boolean;
 };
 
-export default function ConnectionForm({ email }: ConnectionFormProps) {
+export default function ConnectionForm({
+  email,
+  readOnly = false,
+}: ConnectionFormProps) {
   const t = useTranslations("profile.connection");
   const tCommon = useTranslations("common");
   const [oldPassword, setOldPassword] = useState("");
@@ -41,6 +45,7 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (readOnly) return;
     setFieldErrors({});
     setConfirmError(null);
 
@@ -51,17 +56,13 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
 
     setSubmitting(true);
     try {
-      const { ok, status, body } = await apiFetch(
-        "/api/auth/password/update",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            email,
-            old_password: oldPassword,
-            new_password: newPassword,
-          }),
-        },
-      );
+      const { ok, status, body } = await apiFetch("/api/auth/password/update", {
+        method: "POST",
+        body: JSON.stringify({
+          old_password: oldPassword,
+          new_password: newPassword,
+        }),
+      });
       if (ok && body.success) {
         toast.success(t("successToast"));
         reset();
@@ -80,12 +81,14 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
   }
 
   return (
-    <form
-      className="grid max-w-3xl gap-4"
-      onSubmit={handleSubmit}
-      noValidate
-    >
+    <form className="grid max-w-3xl gap-4" onSubmit={handleSubmit} noValidate>
       <FieldGroup>
+        {readOnly ? (
+          <p className="text-muted-foreground rounded-md border border-dashed px-3 py-2 text-sm">
+            {t("suspendedNotice")}
+          </p>
+        ) : null}
+
         <Field>
           <FieldLabel htmlFor="connection_email">{t("emailLabel")}</FieldLabel>
           <Input
@@ -100,7 +103,9 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
         </Field>
 
         <Field data-invalid={!!fieldErrors.old_password?.length}>
-          <FieldLabel htmlFor="old_password">{t("oldPasswordLabel")}</FieldLabel>
+          <FieldLabel htmlFor="old_password">
+            {t("oldPasswordLabel")}
+          </FieldLabel>
           <Input
             id="old_password"
             name="old_password"
@@ -109,12 +114,15 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
             onChange={(e) => setOldPassword(e.target.value)}
             autoComplete="current-password"
             aria-invalid={!!fieldErrors.old_password?.length}
+            disabled={readOnly}
           />
           <FieldError errors={toErrorProps(fieldErrors.old_password)} />
         </Field>
 
         <Field data-invalid={!!fieldErrors.new_password?.length}>
-          <FieldLabel htmlFor="new_password">{t("newPasswordLabel")}</FieldLabel>
+          <FieldLabel htmlFor="new_password">
+            {t("newPasswordLabel")}
+          </FieldLabel>
           <Input
             id="new_password"
             name="new_password"
@@ -123,13 +131,16 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
             onChange={(e) => setNewPassword(e.target.value)}
             autoComplete="new-password"
             aria-invalid={!!fieldErrors.new_password?.length}
+            disabled={readOnly}
           />
           <FieldError errors={toErrorProps(fieldErrors.new_password)} />
           <FieldDescription>{t("newPasswordHint")}</FieldDescription>
         </Field>
 
         <Field data-invalid={!!confirmError}>
-          <FieldLabel htmlFor="confirm_password">{t("confirmPasswordLabel")}</FieldLabel>
+          <FieldLabel htmlFor="confirm_password">
+            {t("confirmPasswordLabel")}
+          </FieldLabel>
           <Input
             id="confirm_password"
             name="confirm_password"
@@ -138,6 +149,7 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
             onChange={(e) => setConfirmPassword(e.target.value)}
             autoComplete="new-password"
             aria-invalid={!!confirmError}
+            disabled={readOnly}
           />
           <FieldError
             errors={confirmError ? [{ message: confirmError }] : undefined}
@@ -146,7 +158,7 @@ export default function ConnectionForm({ email }: ConnectionFormProps) {
       </FieldGroup>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={submitting}>
+        <Button type="submit" disabled={submitting || readOnly}>
           {submitting ? tCommon("actions.saving") : t("submit")}
         </Button>
       </div>

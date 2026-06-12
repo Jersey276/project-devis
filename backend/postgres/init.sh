@@ -27,3 +27,7 @@ EOSQL
 
 create_user_and_db "devis-users" "users"
 create_user_and_db "devis-quote" "quote"
+create_user_and_db "devis-schedule" "schedule"
+create_user_and_db "devis-template" "template"
+create_user_and_db "devis-subscription" "subscription"
+create_user_and_db "devis-email" "email"

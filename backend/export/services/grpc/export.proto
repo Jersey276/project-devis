@@ -6,6 +6,7 @@ option go_package = "project-devis-export/services/grpc";
 
 service ExportService {
     rpc ExportQuote(ExportQuoteRequest) returns (ExportQuoteResponse);
+    rpc ExportSchedule(ExportScheduleRequest) returns (ExportQuoteResponse);
 }
 
 message ExportQuoteRequest {
@@ -18,4 +19,9 @@ message ExportQuoteResponse {
     int32  code     = 2;
     bytes  pdf      = 3;
     string filename = 4;
+}
+
+message ExportScheduleRequest {
+    string schedule_id = 1;
+    string user_id     = 2;
 }

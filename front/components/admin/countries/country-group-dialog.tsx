@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useCountries } from "@/hooks/use-countries";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,15 +27,11 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
-import {
-  apiFetch,
-  fieldErrorsFromBody,
-  FieldErrors,
-  toErrorProps,
-} from "@/lib/api";
+import { apiFetch, toErrorProps } from "@/lib/api";
 import { toast } from "sonner";
 import { XIcon } from "lucide-react";
 import { type Country } from "@/components/address/address-form";
+import { useDialogSubmit } from "@/hooks/use-dialog-submit";
 import { type CountryGroup } from "@/components/admin/types";
 
 type CountryGroupDialogProps = {
@@ -42,6 +39,7 @@ type CountryGroupDialogProps = {
   onOpenChange: (open: boolean) => void;
   group?: CountryGroup | null;
   onSaved: () => void;
+  allCountries?: Country[];
 };
 
 const FORM_ID = "country-group-form";
@@ -51,31 +49,18 @@ export default function CountryGroupDialog({
   onOpenChange,
   group,
   onSaved,
+  allCountries: allCountriesProp,
 }: CountryGroupDialogProps) {
   const t = useTranslations("admin.countryGroups.dialog");
   const tCommon = useTranslations("common");
   const isEdit = group != null;
   const [name, setName] = useState(group?.name ?? "");
   const [members, setMembers] = useState<Country[]>(group?.countries ?? []);
-  const [allCountries, setAllCountries] = useState<Country[]>([]);
+  const fetchedCountries = useCountries(0, allCountriesProp !== undefined || !isEdit);
+  const allCountries = allCountriesProp ?? fetchedCountries;
   const [pendingAdd, setPendingAdd] = useState<Country | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [submitting, setSubmitting] = useState(false);
+  const { fieldErrors, submitting, submit } = useDialogSubmit(tCommon("errors.generic"));
   const [memberMutating, setMemberMutating] = useState(false);
-
-  useEffect(() => {
-    if (!isEdit) return;
-    let cancelled = false;
-    apiFetch("/api/users/countries").then(({ ok, body }) => {
-      if (cancelled) return;
-      if (ok && Array.isArray(body.countries)) {
-        setAllCountries(body.countries as Country[]);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [isEdit]);
 
   async function refreshMembers() {
     if (!group) return;
@@ -90,34 +75,15 @@ export default function CountryGroupDialog({
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setFieldErrors({});
-    setSubmitting(true);
     const path = isEdit
       ? `/api/users/country-groups/${group!.id}`
       : "/api/users/country-groups";
-    try {
-      const { ok, status, body } = await apiFetch(path, {
-        method: isEdit ? "PUT" : "POST",
-        body: JSON.stringify({ name }),
-      });
-      if (ok && body.success) {
-        toast.success(
-          isEdit ? t("updateSuccessToast") : t("createSuccessToast"),
-        );
-        onSaved();
-        onOpenChange(false);
-        return;
-      }
-      if (status === 422 && Array.isArray(body.field_errors)) {
-        setFieldErrors(fieldErrorsFromBody(body));
-        return;
-      }
-      toast.error(body.message ?? tCommon("errors.generic"));
-    } catch {
-      toast.error(tCommon("errors.generic"));
-    } finally {
-      setSubmitting(false);
-    }
+    await submit({
+      request: () => apiFetch(path, { method: isEdit ? "PUT" : "POST", body: JSON.stringify({ name }) }),
+      successMessage: isEdit ? t("updateSuccessToast") : t("createSuccessToast"),
+      onSuccess: onSaved,
+      onClose: onOpenChange,
+    });
   }
 
   async function handleAttach() {
@@ -173,7 +139,12 @@ export default function CountryGroupDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <form id={FORM_ID} className="grid gap-4" onSubmit={handleSubmit} noValidate>
+        <form
+          id={FORM_ID}
+          className="grid gap-4"
+          onSubmit={handleSubmit}
+          noValidate
+        >
           <FieldGroup>
             <Field data-invalid={!!fieldErrors.name?.length}>
               <FieldLabel htmlFor="group_name">{t("nameLabel")}</FieldLabel>
@@ -191,7 +162,10 @@ export default function CountryGroupDialog({
         </form>
 
         {isEdit && (
-          <div className="grid gap-3 rounded-lg border p-4" data-slot="group-members">
+          <div
+            className="grid gap-3 rounded-lg border p-4"
+            data-slot="group-members"
+          >
             <h3 className="text-sm font-medium">{t("membersTitle")}</h3>
 
             {members.length === 0 ? (
@@ -208,7 +182,10 @@ export default function CountryGroupDialog({
                   >
                     <span>
                       <span className="font-medium">{country.code}</span>
-                      <span className="text-muted-foreground"> — {country.name}</span>
+                      <span className="text-muted-foreground">
+                        {" "}
+                        — {country.name}
+                      </span>
                     </span>
                     <Button
                       type="button"

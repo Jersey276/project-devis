@@ -22,11 +22,21 @@
   },
   "nav": {
     "appGroupLabel": "Application",
+    "userGroupLabel": "Menu utilisateur",
+    "adminGroupLabel": "Administration",
+    "viewSwitchLabel": "Vue de la sidebar",
+    "userViewButton": "Utilisateur",
+    "adminViewButton": "Admin",
     "quote": "Devis",
+    "schedule": "Échéanciers",
     "invoices": "Factures",
     "clients": "Clients",
+    "users": "Utilisateurs",
     "countries": "Pays",
     "taxes": "Taxes",
+    "templates": "Templates",
+    "subscriptions": "Abonnements",
+    "analytics": "Analytiques",
     "test": "Test"
   },
   "breadcrumb": {},
@@ -55,7 +65,7 @@
       "emailLabel": "Email",
       "emailHint": "Nous l'utiliserons pour vous contacter. Votre email ne sera jamais partagé.",
       "passwordLabel": "Mot de passe",
-      "passwordHint": "Au moins 8 caractères.",
+      "passwordHint": "12+ caractères avec majuscule, minuscule, chiffre et caractère spécial.",
       "confirmPasswordLabel": "Confirmer le mot de passe",
       "confirmPasswordHint": "Veuillez confirmer votre mot de passe.",
       "confirmMismatch": "Les mots de passe ne correspondent pas.",
@@ -71,14 +81,45 @@
       "failureToast": "Échec de l'inscription. Veuillez réessayer.",
       "validation": {
         "required": "Ce champ est obligatoire.",
-        "invalidFormat": "Format invalide.",
-        "tooShort": "Trop court (8 caractères minimum).",
+        "emailInvalidFormat": "Format invalide.",
+        "invalidFormat": "Format invalide (majuscule, minuscule, chiffre et caractère spécial requis).",
+        "tooShort": "Trop court (12 caractères minimum).",
         "emailInUse": "Cette adresse email est déjà utilisée.",
         "unknown": "Erreur de validation ({code})."
       }
     },
     "forgetPassword": {
-      "title": "Mot de passe oublié"
+      "title": "Mot de passe oublié",
+      "description": "Saisissez votre email pour recevoir un lien de réinitialisation.",
+      "emailLabel": "Email",
+      "submit": "Envoyer le lien",
+      "submitLoading": "Envoi…",
+      "successToast": "Si un compte existe, un email de réinitialisation a été envoyé.",
+      "failureToast": "Impossible de traiter votre demande pour le moment.",
+      "rateLimitedToast": "Trop de demandes. Veuillez réessayer plus tard.",
+      "backToLoginPrompt": "Vous vous souvenez de votre mot de passe ?",
+      "backToLoginLink": "Se connecter"
+    },
+    "resetPassword": {
+      "title": "Réinitialiser le mot de passe",
+      "description": "Saisissez votre nouveau mot de passe.",
+      "newPasswordLabel": "Nouveau mot de passe",
+      "newPasswordHint": "12+ caractères avec majuscule, minuscule, chiffre et caractère spécial.",
+      "confirmPasswordLabel": "Confirmer le mot de passe",
+      "confirmMismatch": "Les mots de passe ne correspondent pas.",
+      "submit": "Mettre à jour le mot de passe",
+      "submitLoading": "Mise à jour…",
+      "successToast": "Mot de passe réinitialisé. Vous pouvez vous connecter.",
+      "failureToast": "Impossible de réinitialiser le mot de passe.",
+      "invalidTokenToast": "Le lien de réinitialisation est invalide ou déjà utilisé.",
+      "expiredTokenToast": "Le lien de réinitialisation a expiré.",
+      "weakPasswordToast": "Le mot de passe ne respecte pas la politique de sécurité.",
+      "rateLimitedToast": "Trop de demandes. Veuillez réessayer plus tard.",
+      "invalidLinkTitle": "Lien de réinitialisation invalide",
+      "invalidLinkDescription": "Le lien est manquant ou mal formé. Demandez un nouveau lien.",
+      "requestNewLink": "Demander un nouveau lien",
+      "backToLoginPrompt": "Retour à la connexion :",
+      "backToLoginLink": "Se connecter"
     },
     "invite": {}
   },
@@ -86,6 +127,8 @@
     "list": {
       "title": "Devis",
       "newButton": "Nouveau devis",
+      "newBlank": "Devis vierge",
+      "newFromTemplate": "Depuis un template",
       "columns": {
         "id": "ID",
         "project": "Projet",
@@ -96,9 +139,12 @@
       "actions": {
         "view": "Voir",
         "viewEdit": "Voir/Modifier",
-        "exportPdf": "Exporter PDF"
+        "exportPdf": "Exporter PDF",
+        "saveAsTemplate": "Enregistrer comme template"
       },
       "exportFailedToast": "Échec de l'export.",
+      "saveAsTemplateSuccessToast": "Template enregistré.",
+      "saveAsTemplateFailedToast": "Impossible d'enregistrer le template.",
       "empty": "Aucun devis pour le moment."
     },
     "form": {
@@ -109,6 +155,8 @@
       "notFoundToast": "Devis introuvable.",
       "exportButton": "Exporter",
       "exportFailedToast": "Échec de l'export.",
+      "saveAsTemplateButton": "Enregistrer comme template",
+      "saveAsTemplateSuccessToast": "Template enregistré.",
       "dropButton": "Abandonner",
       "dropDialog": {
         "title": "Abandonner ce devis ?",
@@ -134,7 +182,10 @@
         "userAddressSaveFailedToast": "Échec de l'enregistrement de l'adresse du prestataire.",
         "lineSaveFailedToast": "Échec d'enregistrement de la ligne.",
         "lineAddFailedToast": "Impossible d'ajouter la ligne.",
-        "lineRemoveFailedToast": "Impossible de supprimer la ligne."
+        "lineRemoveFailedToast": "Impossible de supprimer la ligne.",
+        "lineAddFromTemplateFailedToast": "Impossible d'ajouter la ligne depuis le template.",
+        "saveLineAsTemplateFailedToast": "Impossible d'enregistrer la ligne comme template.",
+        "saveQuoteAsTemplateFailedToast": "Impossible d'enregistrer le devis comme template."
       }
     },
     "steps": {
@@ -153,8 +204,11 @@
         "addressEmpty": "Aucune adresse trouvée.",
         "userAddressLabel": "Adresse du prestataire",
         "userAddressPlaceholder": "Sélectionner une adresse",
-        "userAddressPlaceholderEmpty": "Aucune adresse enregistrée — ajoutez-en une dans votre profil.",
-        "userAddressEmpty": "Aucune adresse trouvée."
+        "userAddressPlaceholderEmpty": "Aucune adresse enregistrée",
+        "userAddressEmpty": "Aucune adresse trouvée.",
+        "addClientButton": "Nouveau client",
+        "addAddressButton": "Nouvelle adresse",
+        "addUserAddressButton": "Nouvelle adresse"
       },
       "items": {
         "label": "Éléments du devis",
@@ -168,6 +222,30 @@
         "lineNamePlaceholder": "Prestation",
         "deleteAria": "Supprimer la ligne",
         "addAria": "Ajouter une ligne",
+        "addTypeAria": "Ajouter un autre type de ligne",
+        "addLineInGroup": "Ajouter une ligne dans ce groupe",
+        "addLineInGroupAria": "Ajouter une ligne dans le groupe",
+        "addChildTypeAria": "Ajouter un autre type de ligne dans ce groupe",
+        "addFromTemplateAria": "Ajouter depuis un template",
+        "lineKinds": {
+          "line": "Ligne simple",
+          "text": "Ligne texte",
+          "group": "Groupe",
+          "detailed": "Ligne détaillée",
+          "subline": "Sous-ligne"
+        },
+        "sublines": {
+          "name": "Désignation",
+          "quantity": "Quantité",
+          "unit": "Unité",
+          "unitPrice": "PU HT (€)",
+          "option": "Option",
+          "unitPlaceholder": "m², ml…",
+          "addAria": "Ajouter une sous-ligne",
+          "deleteAria": "Supprimer la sous-ligne"
+        },
+        "saveAsTemplate": "Enregistrer comme template",
+        "deleteLine": "Supprimer la ligne",
         "savingAria": "Enregistrement en cours",
         "savedAria": "Enregistré",
         "errorAria": "Échec d'enregistrement",
@@ -243,6 +321,10 @@
       "addressFailedToast": "Client créé, mais l'adresse n'a pas pu être enregistrée. Vous pouvez l'ajouter depuis la fiche client.",
       "addressDefaultName": "Adresse principale"
     },
+    "dialog": {
+      "createTitle": "Nouveau client",
+      "createSuccessToast": "Client créé."
+    },
     "edit": {
       "title": "Modifier le client",
       "description": "Mettez à jour les informations principales du client.",
@@ -302,6 +384,7 @@
       },
       "actionsLabel": "Actions",
       "addButton": "Ajouter une adresse",
+      "readonly": "Compte suspendu: les adresses sont en lecture seule.",
       "deleteSuccessToast": "Adresse supprimée.",
       "empty": "Aucune adresse pour le moment.",
       "deleteDialog": {
@@ -320,6 +403,10 @@
     }
   },
   "admin": {
+    "guard": {
+      "loading": "Vérification des droits administrateur...",
+      "forbidden": "Accès refusé. Cette section est réservée aux super administrateurs actifs."
+    },
     "countries": {
       "tabs": {
         "countries": "Pays",
@@ -415,20 +502,140 @@
         "createSuccessToast": "Taxe ajoutée.",
         "updateSuccessToast": "Taxe mise à jour."
       }
+    },
+    "users": {
+      "title": "Utilisateurs",
+      "columns": {
+        "firstName": "Prénom",
+        "lastName": "Nom",
+        "email": "Adresse mail",
+        "role": "Rôle",
+        "lastLogin": "Dernière connexion"
+      },
+      "roleUser": "user",
+      "roleAdmin": "admin",
+      "neverLoggedIn": "Jamais connecté",
+      "actionsLabel": "Actions",
+      "actions": {
+        "suspend": "Suspendre"
+      },
+      "empty": "Aucun utilisateur pour le moment.",
+      "suspendDialog": {
+        "title": "Suspendre ce compte ?",
+        "description": "L'utilisateur ne pourra plus se connecter tant que le compte est suspendu."
+      },
+      "suspendSuccessToast": "Compte suspendu.",
+      "dialog": {
+        "title": "Modifier le compte",
+        "firstNameLabel": "Prénom",
+        "lastNameLabel": "Nom",
+        "emailLabel": "Adresse mail",
+        "roleLabel": "Rôle",
+        "roleUser": "user",
+        "roleAdmin": "admin",
+        "planLabel": "Plan",
+        "planPlaceholder": "Ex: starter, pro, enterprise",
+        "phoneLabel": "Téléphone",
+        "companyLabel": "Société",
+        "sirenLabel": "SIREN",
+        "vatLabel": "N° de TVA",
+        "updateSuccessToast": "Compte mis à jour."
+      }
+    },
+    "plans": {
+      "title": "Plans d'abonnement",
+      "actionsLabel": "Actions",
+      "columns": {
+        "name": "Nom",
+        "tier": "Tier",
+        "price": "Prix",
+        "billingCycle": "Cycle",
+        "stripePriceId": "Stripe Price ID",
+        "status": "Statut"
+      },
+      "billingCycle": {
+        "monthly": "Mensuel",
+        "yearly": "Annuel",
+        "none": "Gratuit"
+      },
+      "active": "Actif",
+      "inactive": "Inactif",
+      "actions": {
+        "edit": "Modifier le plan"
+      },
+      "editDialog": {
+        "title": "Modifier le plan",
+        "nameLabel": "Nom",
+        "priceLabelEuros": "Prix (€)",
+        "billingCycleLabel": "Cycle de facturation",
+        "billingCyclePlaceholder": "Sélectionner un cycle",
+        "stripePriceIdLabel": "Stripe Price ID",
+        "stripePriceIdHint": "Copier depuis le Dashboard Stripe → Products → Price ID (price_xxx). Laisser vide pour les plans gratuits.",
+        "featuresLabel": "Limites du plan",
+        "features": {
+          "max_schedules": "Échéanciers max",
+          "max_templates": "Templates max",
+          "unlimited": "Illimité"
+        },
+        "confirm": "Enregistrer",
+        "successToast": "Plan mis à jour.",
+        "errorToast": "Impossible de mettre à jour le plan."
+      }
+    },
+    "subscriptions": {
+      "title": "Abonnements",
+      "actionsLabel": "Actions",
+      "empty": "Aucun abonnement pour le moment.",
+      "columns": {
+        "userId": "ID Utilisateur",
+        "plan": "Plan",
+        "status": "Statut",
+        "updatedAt": "Mis à jour"
+      },
+      "actions": {
+        "changePlan": "Changer de plan"
+      },
+      "changePlanDialog": {
+        "title": "Modifier le plan",
+        "planLabel": "Nouveau plan",
+        "planPlaceholder": "Sélectionner un plan",
+        "confirm": "Confirmer",
+        "successToast": "Plan mis à jour.",
+        "errorToast": "Impossible de mettre à jour le plan."
+      },
+      "tiers": {
+        "free": "Gratuit",
+        "pro": "Pro",
+        "enterprise": "Enterprise"
+      }
+    },
+    "analytics": {
+      "title": "Analytiques",
+      "totalActive": "Abonnements actifs",
+      "totalRevenue": "Revenu total",
+      "monthRevenue": "Revenu du mois",
+      "planDistribution": "Répartition des plans",
+      "monthlyRevenue": "Revenu mensuel (12 derniers mois)",
+      "loading": "Chargement des statistiques…",
+      "noData": "Aucune donnée disponible."
     }
   },
   "profile": {
     "title": "Mon profil",
     "badge": "Mon compte",
+    "suspendedBadge": "Compte suspendu",
+    "suspendedNotice": "Votre compte est suspendu. Les modifications sont désactivées.",
     "loadingFull": "Chargement de votre profil…",
     "tabs": {
       "information": "Information",
       "addresses": "Adresses",
-      "connection": "Connexion"
+      "connection": "Connexion",
+      "subscription": "Abonnement"
     },
     "userInfo": {
       "emailLabel": "Email",
       "emailHint": "L'adresse email se modifie depuis l'onglet Connexion.",
+      "suspendedNotice": "Votre compte est suspendu. Les informations sont en lecture seule.",
       "phoneLabel": "Téléphone",
       "companyLabel": "Société",
       "sirenLabel": "SIREN",
@@ -438,6 +645,7 @@
     "connection": {
       "emailLabel": "Adresse mail",
       "emailHint": "Le changement d'adresse email n'est pas encore disponible.",
+      "suspendedNotice": "Votre compte est suspendu. Le changement de mot de passe est désactivé.",
       "oldPasswordLabel": "Mot de passe actuel",
       "newPasswordLabel": "Nouveau mot de passe",
       "newPasswordHint": "8 caractères minimum.",
@@ -456,5 +664,103 @@
       "logoutFailure": "La déconnexion a échoué."
     }
   },
-  "errors": {}
+  "errors": {},
+  "templates": {
+    "breadcrumb": {
+      "list": "Templates",
+      "create": "Nouveau template"
+    },
+    "tabs": {
+      "lines": "Lignes",
+      "quotes": "Devis"
+    },
+    "list": {
+      "title": "Templates",
+      "new": "Nouveau template",
+      "empty": "Aucun template pour le moment.",
+      "columns": {
+        "name": "Nom",
+        "createdAt": "Date de création",
+        "actions": "Actions"
+      },
+      "actions": {
+        "edit": "Modifier"
+      },
+      "loadFailedToast": "Impossible de charger les templates."
+    },
+    "create": {
+      "title": "Nouveau template",
+      "coming_soon": "Formulaire de création à venir."
+    },
+    "editLine": {
+      "title": "Modifier le template de ligne",
+      "templateNameLabel": "Nom du template",
+      "lineNameLabel": "Description",
+      "quantityLabel": "Quantité",
+      "unitPriceLabel": "Prix unitaire (€)",
+      "taxLabel": "TVA",
+      "saveSuccessToast": "Template mis à jour.",
+      "saveFailedToast": "Impossible de mettre à jour le template.",
+      "loadFailedToast": "Impossible de charger le template."
+    },
+    "editQuote": {
+      "title": "Modifier le template de devis",
+      "templateNameLabel": "Nom du template",
+      "saveSuccessToast": "Template mis à jour.",
+      "saveFailedToast": "Impossible de mettre à jour le template.",
+      "loadFailedToast": "Impossible de charger le template."
+    }
+  },
+  "template": {
+    "saveDialog": {
+      "title": "Enregistrer comme template",
+      "description": "Donnez un nom à votre template.",
+      "nameLabel": "Nom du template",
+      "namePlaceholder": "Ex : Installation standard",
+      "confirm": "Enregistrer"
+    },
+    "selectLinePopover": {
+      "empty": "Aucun template de ligne disponible.",
+      "searchPlaceholder": "Rechercher un template…",
+      "noResults": "Aucun résultat."
+    },
+    "selectQuoteDialog": {
+      "title": "Créer depuis un template",
+      "description": "Choisissez un modèle de devis.",
+      "empty": "Aucun template de devis disponible."
+    }
+  },
+  "subscription": {
+    "guard": {
+      "loading": "Vérification de votre abonnement…",
+      "forbidden": "Cette fonctionnalité est réservée aux abonnés Pro et Enterprise.",
+      "upgradePrompt": "Mettre à niveau"
+    },
+    "tab": {
+      "currentPlan": "Mon abonnement actuel",
+      "freePlan": "Gratuit — pas de renouvellement",
+      "renewsOn": "Renouvellement le {date}",
+      "cancelPending": "Résiliation en cours — accès jusqu'au {date}",
+      "subscribeCta": "S'abonner",
+      "cancelCta": "Résilier l'abonnement",
+      "perMonth": "/mois",
+      "currentPlanBadge": "Plan actuel",
+      "cancelSuccess": "Résiliation programmée.",
+      "cancelError": "Impossible de résilier l'abonnement.",
+      "features": {
+        "max_schedules": "Échéanciers",
+        "max_templates": "Templates",
+        "unlimited": "Illimité"
+      }
+    },
+    "paymentDialog": {
+      "title": "Passer au plan {name}",
+      "loading": "Préparation du paiement…",
+      "confirmButton": "Confirmer le paiement",
+      "cancel": "Annuler",
+      "success": "Abonnement activé !",
+      "error": "Le paiement a échoué.",
+      "processingError": "Une erreur est survenue lors du traitement."
+    }
+  }
 }

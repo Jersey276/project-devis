@@ -17,6 +17,19 @@ describe("Countries page", () => {
     groups?: typeof GROUPS;
   }) {
     cy.login();
+    cy.intercept("GET", "/api/auth/me", {
+      statusCode: 200,
+      body: {
+        success: true,
+        auth: {
+          user_id: "u1",
+          email: "admin@test.fr",
+          role: "super_admin",
+          account_status: "active",
+          subscription_tier: "free",
+        },
+      },
+    }).as("getAuthMe");
     cy.intercept("GET", "/api/users/countries", {
       statusCode: 200,
       body: { success: true, countries: opts?.countries ?? COUNTRIES },
@@ -52,12 +65,10 @@ describe("Countries page", () => {
     beforeEach(() => stubCountriesPage());
 
     it("exposes Pays and Taxes entries", () => {
-      cy.intercept("GET", "/api/users/me", {
-        statusCode: 200,
-        body: { success: true, user: { user_id: "u1", email: "x@y.z" } },
-      });
       cy.visit("/countries");
+      cy.wait("@getAuthMe");
       cy.wait("@getCountries");
+      cy.contains("button", "Admin").click();
       cy.contains("a", "Pays").should("have.attr", "href", "/countries");
       cy.contains("a", "Taxes").should("have.attr", "href", "/taxes");
     });
@@ -249,7 +260,7 @@ describe("Countries page", () => {
       cy.contains("Modifier").click();
 
       cy.get("input[name='name']").should("have.value", "Union européenne");
-      cy.get("input[name='name']").clear().type("UE");
+      cy.get("input[name='name']").clear().should("have.value", "").type("UE");
       cy.contains("[data-slot='dialog-content'] button", "Enregistrer").click();
 
       cy.wait("@updateGroup").then((interception) => {
@@ -287,9 +298,11 @@ describe("Countries page", () => {
       cy.contains("Modifier").click();
 
       cy.get("[data-slot='group-members']").within(() => {
-        cy.get("input[name='attach_country_id']").type("Belg");
+        cy.get("input[name='attach_country_id']").click();
       });
-      cy.contains("[data-slot='combobox-item']", "Belgique").click({ force: true });
+      cy.contains("[data-slot='combobox-item']", "Belgique").click({
+        force: true,
+      });
       cy.contains("[data-slot='group-members'] button", "Ajouter").click();
 
       cy.wait("@attach");

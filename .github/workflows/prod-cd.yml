@@ -46,6 +46,10 @@ jobs:
             context: ./backend
             dockerfile: ./backend/Dockerfile
             build_args: "SERVICE_NAME=export"
+          - name: schedule
+            context: ./backend
+            dockerfile: ./backend/Dockerfile
+            build_args: "SERVICE_NAME=schedule"
     steps:
       - uses: actions/checkout@v6
 

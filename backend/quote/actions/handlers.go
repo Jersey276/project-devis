@@ -50,6 +50,10 @@ func (s *Server) ContinueQuote(ctx context.Context, req *quoteGrpc.ContinueQuote
 	return quote.Continue(ctx, s.db, req)
 }
 
+func (s *Server) SendQuote(ctx context.Context, req *quoteGrpc.SendQuoteRequest) (*quoteGrpc.SendQuoteResponse, error) {
+	return quote.Send(ctx, s.db, req)
+}
+
 // ─── Line ────────────────────────────────────────────────────────────────────
 
 func (s *Server) CreateQuoteLine(ctx context.Context, req *quoteGrpc.CreateQuoteLineRequest) (*quoteGrpc.CreateQuoteLineResponse, error) {

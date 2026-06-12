@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useCountries } from "@/hooks/use-countries";
 import { useTranslations } from "next-intl";
 import {
   AlertDialog,
@@ -25,9 +26,9 @@ import {
 } from "@/components/custom/data-table";
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import AddressDialog, {
+  backendAddressToExisting,
   type ExistingAddress,
 } from "@/components/address/address-dialog";
-import { apiFetch } from "@/lib/api";
 import { type Country } from "@/components/address/address-form";
 import {
   archiveAddress,
@@ -51,16 +52,18 @@ function formatAddress(address: BackendAddress, countries: Country[]): string {
 type AddressesTableProps = {
   ownerType: "user" | "client";
   ownerId: string;
+  readOnly?: boolean;
 };
 
 export default function AddressesTable({
   ownerType,
   ownerId,
+  readOnly = false,
 }: AddressesTableProps) {
   const t = useTranslations("address.list");
   const tCommon = useTranslations("common");
   const [addresses, setAddresses] = useState<BackendAddress[]>([]);
-  const [countries, setCountries] = useState<Country[]>([]);
+  const countries = useCountries();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<ExistingAddress | null>(null);
   const [pendingDelete, setPendingDelete] = useState<BackendAddress | null>(
@@ -79,38 +82,20 @@ export default function AddressesTable({
     reload();
   }, [reload]);
 
-  useEffect(() => {
-    let cancelled = false;
-    apiFetch("/api/users/countries").then(({ ok, body }) => {
-      if (cancelled) return;
-      if (ok && Array.isArray(body.countries)) {
-        setCountries(body.countries as Country[]);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   function openCreate() {
+    if (readOnly) return;
     setEditing(null);
     setDrawerOpen(true);
   }
 
   function openEdit(address: BackendAddress) {
-    setEditing({
-      id: address.id,
-      name: address.name,
-      street: address.street,
-      additional_street: address.additional_street ?? "",
-      city: address.city,
-      zip_code: address.zip_code,
-      country_id: address.country_id,
-    });
+    if (readOnly) return;
+    setEditing(backendAddressToExisting(address));
     setDrawerOpen(true);
   }
 
   async function confirmDelete() {
+    if (readOnly) return;
     if (!pendingDelete) return;
     const { ok, body } = await archiveAddress(
       buildOwner(ownerType, ownerId),
@@ -131,23 +116,29 @@ export default function AddressesTable({
       label: tCommon("actions.edit"),
       icon: PencilIcon,
       callback: (row) => openEdit(row as BackendAddress),
+      hidden: readOnly,
     },
     {
       type: "callback",
       label: tCommon("actions.delete"),
       icon: Trash2Icon,
       callback: (row) => setPendingDelete(row as BackendAddress),
+      hidden: readOnly,
     },
   ];
 
   return (
     <div className="grid gap-4">
-      <div className="flex justify-end">
-        <Button type="button" onClick={openCreate}>
-          <PlusIcon />
-          {t("addButton")}
-        </Button>
-      </div>
+      {!readOnly ? (
+        <div className="flex justify-end">
+          <Button type="button" onClick={openCreate}>
+            <PlusIcon />
+            {t("addButton")}
+          </Button>
+        </div>
+      ) : (
+        <p className="text-muted-foreground text-sm">{t("readonly")}</p>
+      )}
 
       <DataTable datas={addresses} row_actions={rowActions} sortBy="">
         <DataTableHeader>
@@ -184,14 +175,16 @@ export default function AddressesTable({
         </DataTableBody>
       </DataTable>
 
-      <AddressDialog
-        ownerType={ownerType}
-        ownerId={ownerId}
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-        address={editing}
-        onSaved={reload}
-      />
+      {!readOnly ? (
+        <AddressDialog
+          ownerType={ownerType}
+          ownerId={ownerId}
+          open={drawerOpen}
+          onOpenChange={setDrawerOpen}
+          address={editing}
+          onSaved={reload}
+        />
+      ) : null}
 
       <AlertDialog
         open={pendingDelete !== null}
@@ -208,10 +201,7 @@ export default function AddressesTable({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{tCommon("actions.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={confirmDelete}
-            >
+            <AlertDialogAction variant="destructive" onClick={confirmDelete}>
               {tCommon("actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>

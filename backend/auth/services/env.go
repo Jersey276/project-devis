@@ -23,6 +23,14 @@ const (
 	DBPasswordFile          EnvKey = "DB_PASSWORD_FILE"
 	DBName                  EnvKey = "DB_NAME"
 	UserServiceAddress      EnvKey = "USER_SERVICE_ADDRESS"
+	SMTPHost                EnvKey = "SMTP_HOST"
+	SMTPPort                EnvKey = "SMTP_PORT"
+	SMTPUser                EnvKey = "SMTP_USER"
+	SMTPPassword            EnvKey = "SMTP_PASSWORD"
+	SMTPFrom                EnvKey = "SMTP_FROM"
+	ResetPasswordBaseURL    EnvKey = "RESET_PASSWORD_BASE_URL"
+	ResendAPIKey            EnvKey = "RESEND_API_KEY"
+	VerifyEmailBaseURL      EnvKey = "VERIFY_EMAIL_BASE_URL"
 )
 
 func (key EnvKey) GetValue() string {

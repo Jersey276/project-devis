@@ -77,16 +77,6 @@ function DataTable({
     "asc" | "desc"
   >(sortDirection ?? "asc");
 
-  React.useEffect(() => {
-    setCurrentSortBy(sortBy);
-  }, [sortBy]);
-
-  React.useEffect(() => {
-    if (sortDirection) {
-      setCurrentSortDirection(sortDirection);
-    }
-  }, [sortDirection]);
-
   const setSort = React.useCallback(
     (column: string, direction: "asc" | "desc") => {
       setCurrentSortBy(column);
@@ -174,7 +164,9 @@ function DataTableRowActions({
   row?: object;
 }) {
   const { row_actions } = useDataContext();
-  if (!row_actions || row_actions.length === 0) {
+  const visibleActions =
+    row_actions?.filter((element) => !element.hidden) ?? [];
+  if (visibleActions.length === 0) {
     return null;
   }
   return (
@@ -185,7 +177,7 @@ function DataTableRowActions({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {row_actions?.map((element) => {
+        {visibleActions.map((element) => {
           if (element.type === "link" && element.href) {
             return (
               <DropdownMenuItem key={element.label} asChild>

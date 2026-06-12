@@ -16,6 +16,7 @@ service QuoteService {
     rpc TrashQuotes(TrashQuotesRequest) returns (GenericResponse);
     rpc DropQuote(DropQuoteRequest) returns (GenericResponse);
     rpc ContinueQuote(ContinueQuoteRequest) returns (GenericResponse);
+    rpc SendQuote(SendQuoteRequest) returns (SendQuoteResponse);
 
     // Line
     rpc CreateQuoteLine(CreateQuoteLineRequest) returns (CreateQuoteLineResponse);
@@ -29,6 +30,11 @@ service QuoteService {
 message GenericResponse {
     bool success = 1;
     int32 code = 2;
+}
+
+message ValidationError {
+    string field   = 1;
+    string message = 2;
 }
 
 // ─── Quote ───────────────────────────────────────────────────────────────────
@@ -64,6 +70,7 @@ message CreateQuoteResponse {
     bool success = 1;
     int32 code = 2;
     string quote_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message GetQuoteRequest {
@@ -101,6 +108,7 @@ message UpdateQuoteRequest {
 message UpdateQuoteResponse {
     bool success = 1;
     int32 code = 2;
+    repeated ValidationError validation_errors = 3;
 }
 
 message DeleteQuoteRequest {
@@ -130,6 +138,18 @@ message DropQuoteRequest {
 message ContinueQuoteRequest {
     string quote_id = 1;
     string user_id = 2;
+}
+
+message SendQuoteRequest {
+    string quote_id  = 1;
+    string user_id   = 2;
+}
+
+message SendQuoteResponse {
+    bool   success   = 1;
+    int32  code      = 2;
+    string client_id = 3;
+    string name      = 4;
 }
 
 // ─── Line ────────────────────────────────────────────────────────────────────
@@ -164,6 +184,7 @@ message CreateQuoteLineResponse {
     bool success = 1;
     int32 code = 2;
     string line_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message GetQuoteLineRequest {
@@ -215,6 +236,7 @@ message UpdateQuoteLineRequest {
 message UpdateQuoteLineResponse {
     bool success = 1;
     int32 code = 2;
+    repeated ValidationError validation_errors = 3;
 }
 
 message DeleteQuoteLineRequest {

@@ -12,6 +12,8 @@ service AuthService {
     rpc Login(LoginRequest) returns (LoginResponse);
     // ResetPassword initiates a password reset process
     rpc ResetPassword(ResetPasswordRequest) returns (GenericResponse);
+    // ConfirmResetPassword completes a password reset using a token
+    rpc ConfirmResetPassword(ConfirmResetPasswordRequest) returns (GenericResponse);
     // UpdatePassword changes a user's password
     rpc UpdatePassword(UpdatePasswordRequest) returns (GenericResponse);
     // VerifyEmail confirms a user's email address
@@ -20,6 +22,14 @@ service AuthService {
     rpc RefreshToken(RefreshTokenRequest) returns (LoginResponse);
     // Logout invalidates a refresh token
     rpc Logout(LogoutRequest) returns (GenericResponse);
+    // IntrospectToken validates access token against current auth state.
+    rpc IntrospectToken(IntrospectTokenRequest) returns (IntrospectTokenResponse);
+    // UpdateSubscriptionTier updates a user's subscription tier and invalidates existing tokens.
+    rpc UpdateSubscriptionTier(UpdateSubscriptionTierRequest) returns (GenericResponse);
+    // ResendEmailVerification re-sends the verification email for an unverified account.
+    rpc ResendEmailVerification(ResendEmailVerificationRequest) returns (GenericResponse);
+    // UpdateRole updates a user's role and invalidates existing tokens.
+    rpc UpdateRole(UpdateRoleRequest) returns (GenericResponse);
 }
 
 // RegisterRequest contains user registration information
@@ -48,6 +58,7 @@ message UpdatePasswordRequest {
     string email = 1;
     string old_password = 2;
     string new_password = 3;
+    string current_refresh_token = 4;
 }
 
 message GenericResponse {
@@ -57,6 +68,11 @@ message GenericResponse {
 
 message ResetPasswordRequest {
     string email = 1;
+}
+
+message ConfirmResetPasswordRequest {
+    string token = 1;
+    string new_password = 2;
 }
 
 message VerifyEmailRequest {
@@ -81,4 +97,37 @@ message FormGenericResponse {
 message FormFieldError {
     string field = 1;
     repeated int32 error_code = 2;
+}
+
+message IntrospectTokenRequest {
+    string token = 1;
+}
+
+message AccessContext {
+    string user_id = 1;
+    string email = 2;
+    string role = 3;
+    string account_status = 4;
+    string subscription_tier = 5;
+    int32 session_version = 6;
+}
+
+message IntrospectTokenResponse {
+    bool success = 1;
+    int32 code = 2;
+    AccessContext context = 3;
+}
+
+message UpdateSubscriptionTierRequest {
+    string user_id = 1;
+    string tier    = 2;
+}
+
+message ResendEmailVerificationRequest {
+    string user_id = 1;
+}
+
+message UpdateRoleRequest {
+    string user_id = 1;
+    string role    = 2;
 }

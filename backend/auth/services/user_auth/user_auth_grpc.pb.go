@@ -4,6 +4,9 @@
 // - protoc             v7.34.0
 // source: services/user_auth/user_auth.proto
 
+// Package matches the users service so the wire format aligns:
+// /users.UserService/CreateUser and /users.UserService/DeleteUser
+
 package user_auth
 
 import (
@@ -19,8 +22,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_CreateUser_FullMethodName = "/users.UserService/CreateUser"
-	UserService_DeleteUser_FullMethodName = "/users.UserService/DeleteUser"
+	UserService_CreateUser_FullMethodName               = "/users.UserService/CreateUser"
+	UserService_DeleteUser_FullMethodName               = "/users.UserService/DeleteUser"
+	UserService_GetUserAccessInfoByEmail_FullMethodName = "/users.UserService/GetUserAccessInfoByEmail"
+	UserService_GetUserAccessInfo_FullMethodName        = "/users.UserService/GetUserAccessInfo"
+	UserService_TouchUserLastLogin_FullMethodName       = "/users.UserService/TouchUserLastLogin"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -33,6 +39,12 @@ type UserServiceClient interface {
 	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
 	// DeleteUser removes a user from the users service (used for rollback on failed registration).
 	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// Resolve a user account by email for authentication flows.
+	GetUserAccessInfoByEmail(ctx context.Context, in *GetUserAccessInfoByEmailRequest, opts ...grpc.CallOption) (*GetUserAccessInfoResponse, error)
+	// GetUserSecurityStatus checks account suspension state.
+	GetUserAccessInfo(ctx context.Context, in *GetUserAccessInfoRequest, opts ...grpc.CallOption) (*GetUserAccessInfoResponse, error)
+	// TouchUserLastLogin stores the timestamp of the latest successful login.
+	TouchUserLastLogin(ctx context.Context, in *TouchUserLastLoginRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 }
 
 type userServiceClient struct {
@@ -63,6 +75,36 @@ func (c *userServiceClient) DeleteUser(ctx context.Context, in *DeleteUserReques
 	return out, nil
 }
 
+func (c *userServiceClient) GetUserAccessInfoByEmail(ctx context.Context, in *GetUserAccessInfoByEmailRequest, opts ...grpc.CallOption) (*GetUserAccessInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserAccessInfoResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUserAccessInfoByEmail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetUserAccessInfo(ctx context.Context, in *GetUserAccessInfoRequest, opts ...grpc.CallOption) (*GetUserAccessInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserAccessInfoResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUserAccessInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) TouchUserLastLogin(ctx context.Context, in *TouchUserLastLoginRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, UserService_TouchUserLastLogin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
@@ -73,6 +115,12 @@ type UserServiceServer interface {
 	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
 	// DeleteUser removes a user from the users service (used for rollback on failed registration).
 	DeleteUser(context.Context, *DeleteUserRequest) (*GenericResponse, error)
+	// Resolve a user account by email for authentication flows.
+	GetUserAccessInfoByEmail(context.Context, *GetUserAccessInfoByEmailRequest) (*GetUserAccessInfoResponse, error)
+	// GetUserSecurityStatus checks account suspension state.
+	GetUserAccessInfo(context.Context, *GetUserAccessInfoRequest) (*GetUserAccessInfoResponse, error)
+	// TouchUserLastLogin stores the timestamp of the latest successful login.
+	TouchUserLastLogin(context.Context, *TouchUserLastLoginRequest) (*GenericResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -88,6 +136,15 @@ func (UnimplementedUserServiceServer) CreateUser(context.Context, *CreateUserReq
 }
 func (UnimplementedUserServiceServer) DeleteUser(context.Context, *DeleteUserRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteUser not implemented")
+}
+func (UnimplementedUserServiceServer) GetUserAccessInfoByEmail(context.Context, *GetUserAccessInfoByEmailRequest) (*GetUserAccessInfoResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUserAccessInfoByEmail not implemented")
+}
+func (UnimplementedUserServiceServer) GetUserAccessInfo(context.Context, *GetUserAccessInfoRequest) (*GetUserAccessInfoResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUserAccessInfo not implemented")
+}
+func (UnimplementedUserServiceServer) TouchUserLastLogin(context.Context, *TouchUserLastLoginRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method TouchUserLastLogin not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -146,6 +203,60 @@ func _UserService_DeleteUser_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_GetUserAccessInfoByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserAccessInfoByEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUserAccessInfoByEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUserAccessInfoByEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUserAccessInfoByEmail(ctx, req.(*GetUserAccessInfoByEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetUserAccessInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserAccessInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUserAccessInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUserAccessInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUserAccessInfo(ctx, req.(*GetUserAccessInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_TouchUserLastLogin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TouchUserLastLoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).TouchUserLastLogin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_TouchUserLastLogin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).TouchUserLastLogin(ctx, req.(*TouchUserLastLoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -160,6 +271,18 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteUser",
 			Handler:    _UserService_DeleteUser_Handler,
+		},
+		{
+			MethodName: "GetUserAccessInfoByEmail",
+			Handler:    _UserService_GetUserAccessInfoByEmail_Handler,
+		},
+		{
+			MethodName: "GetUserAccessInfo",
+			Handler:    _UserService_GetUserAccessInfo_Handler,
+		},
+		{
+			MethodName: "TouchUserLastLogin",
+			Handler:    _UserService_TouchUserLastLogin_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -88,6 +88,9 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 	// Phase 2: GetClient, GetAddress (client side) and GetAddress (user side)
 	// all need ids from the quote.
 	q := qResp.Quote
+	if q.State == quote.QuoteState_QUOTE_STATE_DROP {
+		return fail(codes.QuoteRefused), nil
+	}
 	lines := qResp.Lines
 	var (
 		client     *users.Client

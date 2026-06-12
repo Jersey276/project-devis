@@ -19,38 +19,44 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_CreateUser_FullMethodName         = "/users.UserService/CreateUser"
-	UserService_GetUser_FullMethodName            = "/users.UserService/GetUser"
-	UserService_UpdateUser_FullMethodName         = "/users.UserService/UpdateUser"
-	UserService_DeleteUser_FullMethodName         = "/users.UserService/DeleteUser"
-	UserService_CreateClient_FullMethodName       = "/users.UserService/CreateClient"
-	UserService_GetClient_FullMethodName          = "/users.UserService/GetClient"
-	UserService_ListClients_FullMethodName        = "/users.UserService/ListClients"
-	UserService_UpdateClient_FullMethodName       = "/users.UserService/UpdateClient"
-	UserService_ArchiveClient_FullMethodName      = "/users.UserService/ArchiveClient"
-	UserService_CreateAddress_FullMethodName      = "/users.UserService/CreateAddress"
-	UserService_GetAddress_FullMethodName         = "/users.UserService/GetAddress"
-	UserService_ListAddresses_FullMethodName      = "/users.UserService/ListAddresses"
-	UserService_UpdateAddress_FullMethodName      = "/users.UserService/UpdateAddress"
-	UserService_ArchiveAddress_FullMethodName     = "/users.UserService/ArchiveAddress"
-	UserService_CreateCountry_FullMethodName      = "/users.UserService/CreateCountry"
-	UserService_GetCountry_FullMethodName         = "/users.UserService/GetCountry"
-	UserService_ListCountries_FullMethodName      = "/users.UserService/ListCountries"
-	UserService_UpdateCountry_FullMethodName      = "/users.UserService/UpdateCountry"
-	UserService_DeleteCountry_FullMethodName      = "/users.UserService/DeleteCountry"
-	UserService_CreateCountryGroup_FullMethodName = "/users.UserService/CreateCountryGroup"
-	UserService_GetCountryGroup_FullMethodName    = "/users.UserService/GetCountryGroup"
-	UserService_ListCountryGroups_FullMethodName  = "/users.UserService/ListCountryGroups"
-	UserService_UpdateCountryGroup_FullMethodName = "/users.UserService/UpdateCountryGroup"
-	UserService_DeleteCountryGroup_FullMethodName = "/users.UserService/DeleteCountryGroup"
-	UserService_AttachCountry_FullMethodName      = "/users.UserService/AttachCountry"
-	UserService_DetachCountry_FullMethodName      = "/users.UserService/DetachCountry"
-	UserService_CreateTax_FullMethodName          = "/users.UserService/CreateTax"
-	UserService_GetTax_FullMethodName             = "/users.UserService/GetTax"
-	UserService_ListTaxes_FullMethodName          = "/users.UserService/ListTaxes"
-	UserService_ListTaxesForUser_FullMethodName   = "/users.UserService/ListTaxesForUser"
-	UserService_UpdateTax_FullMethodName          = "/users.UserService/UpdateTax"
-	UserService_DeleteTax_FullMethodName          = "/users.UserService/DeleteTax"
+	UserService_CreateUser_FullMethodName               = "/users.UserService/CreateUser"
+	UserService_GetUser_FullMethodName                  = "/users.UserService/GetUser"
+	UserService_UpdateUser_FullMethodName               = "/users.UserService/UpdateUser"
+	UserService_DeleteUser_FullMethodName               = "/users.UserService/DeleteUser"
+	UserService_GetUserAccessInfo_FullMethodName        = "/users.UserService/GetUserAccessInfo"
+	UserService_GetUserAccessInfoByEmail_FullMethodName = "/users.UserService/GetUserAccessInfoByEmail"
+	UserService_ListAdminAccounts_FullMethodName        = "/users.UserService/ListAdminAccounts"
+	UserService_UpdateAdminAccount_FullMethodName       = "/users.UserService/UpdateAdminAccount"
+	UserService_SuspendAdminAccount_FullMethodName      = "/users.UserService/SuspendAdminAccount"
+	UserService_TouchUserLastLogin_FullMethodName       = "/users.UserService/TouchUserLastLogin"
+	UserService_CreateClient_FullMethodName             = "/users.UserService/CreateClient"
+	UserService_GetClient_FullMethodName                = "/users.UserService/GetClient"
+	UserService_ListClients_FullMethodName              = "/users.UserService/ListClients"
+	UserService_UpdateClient_FullMethodName             = "/users.UserService/UpdateClient"
+	UserService_ArchiveClient_FullMethodName            = "/users.UserService/ArchiveClient"
+	UserService_CreateAddress_FullMethodName            = "/users.UserService/CreateAddress"
+	UserService_GetAddress_FullMethodName               = "/users.UserService/GetAddress"
+	UserService_ListAddresses_FullMethodName            = "/users.UserService/ListAddresses"
+	UserService_UpdateAddress_FullMethodName            = "/users.UserService/UpdateAddress"
+	UserService_ArchiveAddress_FullMethodName           = "/users.UserService/ArchiveAddress"
+	UserService_CreateCountry_FullMethodName            = "/users.UserService/CreateCountry"
+	UserService_GetCountry_FullMethodName               = "/users.UserService/GetCountry"
+	UserService_ListCountries_FullMethodName            = "/users.UserService/ListCountries"
+	UserService_UpdateCountry_FullMethodName            = "/users.UserService/UpdateCountry"
+	UserService_DeleteCountry_FullMethodName            = "/users.UserService/DeleteCountry"
+	UserService_CreateCountryGroup_FullMethodName       = "/users.UserService/CreateCountryGroup"
+	UserService_GetCountryGroup_FullMethodName          = "/users.UserService/GetCountryGroup"
+	UserService_ListCountryGroups_FullMethodName        = "/users.UserService/ListCountryGroups"
+	UserService_UpdateCountryGroup_FullMethodName       = "/users.UserService/UpdateCountryGroup"
+	UserService_DeleteCountryGroup_FullMethodName       = "/users.UserService/DeleteCountryGroup"
+	UserService_AttachCountry_FullMethodName            = "/users.UserService/AttachCountry"
+	UserService_DetachCountry_FullMethodName            = "/users.UserService/DetachCountry"
+	UserService_CreateTax_FullMethodName                = "/users.UserService/CreateTax"
+	UserService_GetTax_FullMethodName                   = "/users.UserService/GetTax"
+	UserService_ListTaxes_FullMethodName                = "/users.UserService/ListTaxes"
+	UserService_ListTaxesForUser_FullMethodName         = "/users.UserService/ListTaxesForUser"
+	UserService_UpdateTax_FullMethodName                = "/users.UserService/UpdateTax"
+	UserService_DeleteTax_FullMethodName                = "/users.UserService/DeleteTax"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -62,6 +68,12 @@ type UserServiceClient interface {
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
 	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	GetUserAccessInfo(ctx context.Context, in *GetUserAccessInfoRequest, opts ...grpc.CallOption) (*GetUserAccessInfoResponse, error)
+	GetUserAccessInfoByEmail(ctx context.Context, in *GetUserAccessInfoByEmailRequest, opts ...grpc.CallOption) (*GetUserAccessInfoResponse, error)
+	ListAdminAccounts(ctx context.Context, in *ListAdminAccountsRequest, opts ...grpc.CallOption) (*ListAdminAccountsResponse, error)
+	UpdateAdminAccount(ctx context.Context, in *UpdateAdminAccountRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	SuspendAdminAccount(ctx context.Context, in *SuspendAdminAccountRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	TouchUserLastLogin(ctx context.Context, in *TouchUserLastLoginRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	// Client
 	CreateClient(ctx context.Context, in *CreateClientRequest, opts ...grpc.CallOption) (*CreateClientResponse, error)
 	GetClient(ctx context.Context, in *GetClientRequest, opts ...grpc.CallOption) (*GetClientResponse, error)
@@ -139,6 +151,66 @@ func (c *userServiceClient) DeleteUser(ctx context.Context, in *DeleteUserReques
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GenericResponse)
 	err := c.cc.Invoke(ctx, UserService_DeleteUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetUserAccessInfo(ctx context.Context, in *GetUserAccessInfoRequest, opts ...grpc.CallOption) (*GetUserAccessInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserAccessInfoResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUserAccessInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetUserAccessInfoByEmail(ctx context.Context, in *GetUserAccessInfoByEmailRequest, opts ...grpc.CallOption) (*GetUserAccessInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserAccessInfoResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUserAccessInfoByEmail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) ListAdminAccounts(ctx context.Context, in *ListAdminAccountsRequest, opts ...grpc.CallOption) (*ListAdminAccountsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAdminAccountsResponse)
+	err := c.cc.Invoke(ctx, UserService_ListAdminAccounts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) UpdateAdminAccount(ctx context.Context, in *UpdateAdminAccountRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, UserService_UpdateAdminAccount_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) SuspendAdminAccount(ctx context.Context, in *SuspendAdminAccountRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, UserService_SuspendAdminAccount_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) TouchUserLastLogin(ctx context.Context, in *TouchUserLastLoginRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, UserService_TouchUserLastLogin_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -434,6 +506,12 @@ type UserServiceServer interface {
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
 	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
 	DeleteUser(context.Context, *DeleteUserRequest) (*GenericResponse, error)
+	GetUserAccessInfo(context.Context, *GetUserAccessInfoRequest) (*GetUserAccessInfoResponse, error)
+	GetUserAccessInfoByEmail(context.Context, *GetUserAccessInfoByEmailRequest) (*GetUserAccessInfoResponse, error)
+	ListAdminAccounts(context.Context, *ListAdminAccountsRequest) (*ListAdminAccountsResponse, error)
+	UpdateAdminAccount(context.Context, *UpdateAdminAccountRequest) (*GenericResponse, error)
+	SuspendAdminAccount(context.Context, *SuspendAdminAccountRequest) (*GenericResponse, error)
+	TouchUserLastLogin(context.Context, *TouchUserLastLoginRequest) (*GenericResponse, error)
 	// Client
 	CreateClient(context.Context, *CreateClientRequest) (*CreateClientResponse, error)
 	GetClient(context.Context, *GetClientRequest) (*GetClientResponse, error)
@@ -488,6 +566,24 @@ func (UnimplementedUserServiceServer) UpdateUser(context.Context, *UpdateUserReq
 }
 func (UnimplementedUserServiceServer) DeleteUser(context.Context, *DeleteUserRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteUser not implemented")
+}
+func (UnimplementedUserServiceServer) GetUserAccessInfo(context.Context, *GetUserAccessInfoRequest) (*GetUserAccessInfoResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUserAccessInfo not implemented")
+}
+func (UnimplementedUserServiceServer) GetUserAccessInfoByEmail(context.Context, *GetUserAccessInfoByEmailRequest) (*GetUserAccessInfoResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUserAccessInfoByEmail not implemented")
+}
+func (UnimplementedUserServiceServer) ListAdminAccounts(context.Context, *ListAdminAccountsRequest) (*ListAdminAccountsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListAdminAccounts not implemented")
+}
+func (UnimplementedUserServiceServer) UpdateAdminAccount(context.Context, *UpdateAdminAccountRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateAdminAccount not implemented")
+}
+func (UnimplementedUserServiceServer) SuspendAdminAccount(context.Context, *SuspendAdminAccountRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SuspendAdminAccount not implemented")
+}
+func (UnimplementedUserServiceServer) TouchUserLastLogin(context.Context, *TouchUserLastLoginRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method TouchUserLastLogin not implemented")
 }
 func (UnimplementedUserServiceServer) CreateClient(context.Context, *CreateClientRequest) (*CreateClientResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateClient not implemented")
@@ -662,6 +758,114 @@ func _UserService_DeleteUser_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).DeleteUser(ctx, req.(*DeleteUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetUserAccessInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserAccessInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUserAccessInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUserAccessInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUserAccessInfo(ctx, req.(*GetUserAccessInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetUserAccessInfoByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserAccessInfoByEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUserAccessInfoByEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUserAccessInfoByEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUserAccessInfoByEmail(ctx, req.(*GetUserAccessInfoByEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_ListAdminAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAdminAccountsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).ListAdminAccounts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_ListAdminAccounts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).ListAdminAccounts(ctx, req.(*ListAdminAccountsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_UpdateAdminAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateAdminAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UpdateAdminAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_UpdateAdminAccount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UpdateAdminAccount(ctx, req.(*UpdateAdminAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_SuspendAdminAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SuspendAdminAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).SuspendAdminAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_SuspendAdminAccount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).SuspendAdminAccount(ctx, req.(*SuspendAdminAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_TouchUserLastLogin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TouchUserLastLoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).TouchUserLastLogin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_TouchUserLastLogin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).TouchUserLastLogin(ctx, req.(*TouchUserLastLoginRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1192,6 +1396,30 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteUser",
 			Handler:    _UserService_DeleteUser_Handler,
+		},
+		{
+			MethodName: "GetUserAccessInfo",
+			Handler:    _UserService_GetUserAccessInfo_Handler,
+		},
+		{
+			MethodName: "GetUserAccessInfoByEmail",
+			Handler:    _UserService_GetUserAccessInfoByEmail_Handler,
+		},
+		{
+			MethodName: "ListAdminAccounts",
+			Handler:    _UserService_ListAdminAccounts_Handler,
+		},
+		{
+			MethodName: "UpdateAdminAccount",
+			Handler:    _UserService_UpdateAdminAccount_Handler,
+		},
+		{
+			MethodName: "SuspendAdminAccount",
+			Handler:    _UserService_SuspendAdminAccount_Handler,
+		},
+		{
+			MethodName: "TouchUserLastLogin",
+			Handler:    _UserService_TouchUserLastLogin_Handler,
 		},
 		{
 			MethodName: "CreateClient",

@@ -78,3 +78,14 @@ func DeleteAllRefreshTokens(ctx context.Context, db *sql.DB, userID string) erro
 	_, err := db.ExecContext(ctx, "DELETE FROM refresh_tokens WHERE user_id = $1", userID)
 	return err
 }
+
+func DeleteOtherRefreshTokensTx(ctx context.Context, tx *sql.Tx, userID, currentRawToken string) error {
+	if currentRawToken == "" {
+		_, err := tx.ExecContext(ctx, "DELETE FROM refresh_tokens WHERE user_id = $1", userID)
+		return err
+	}
+
+	currentHash := hashToken(currentRawToken)
+	_, err := tx.ExecContext(ctx, "DELETE FROM refresh_tokens WHERE user_id = $1 AND token_hash <> $2", userID, currentHash)
+	return err
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   DataTable,
@@ -13,17 +13,30 @@ import {
   DataTableRowActions,
   DataTableSortableHead,
 } from "@/components/custom/data-table";
-import { listQuotes } from "@/lib/services/quotes";
+import { listQuotes, getQuote } from "@/lib/services/quotes";
 import { exportQuotePdf } from "@/lib/services/export";
+import {
+  createTemplate,
+  createTemplateLine,
+  deleteTemplate,
+} from "@/lib/services/templates";
 import { useMode } from "@/lib/mode-context";
 import { formatEurosFromCents } from "@/lib/utils";
 import {
   type BackendQuote,
+  type BackendQuoteLine,
   type QuoteListState,
   quoteListState,
 } from "@/types/backend";
-import { DownloadIcon, PencilIcon } from "lucide-react";
+import {
+  BookmarkIcon,
+  CalendarIcon,
+  DownloadIcon,
+  PencilIcon,
+} from "lucide-react";
 import { toast } from "sonner";
+import SaveTemplateDialog from "@/components/template/save-template-dialog";
+import CreateScheduleDialog from "@/components/schedule/create-schedule-dialog";
 
 type QuoteListItem = {
   id: string;
@@ -37,6 +50,79 @@ export default function QuoteListTable() {
   const t = useTranslations("quote.list");
   const tStatus = useTranslations("status.quote");
   const [items, setItems] = useState<QuoteListItem[]>([]);
+  const [saveTemplateQuoteId, setSaveTemplateQuoteId] = useState<string | null>(
+    null,
+  );
+  const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false);
+  const [scheduleQuoteId, setScheduleQuoteId] = useState<string | null>(null);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+
+  const saveTemplateDefaultName = useMemo(
+    () =>
+      saveTemplateQuoteId != null
+        ? (items.find((i) => i.id === saveTemplateQuoteId)?.projectName ?? "")
+        : "",
+    [saveTemplateQuoteId, items],
+  );
+
+  const handleSaveAsTemplate = useCallback((row: object) => {
+    const item = row as QuoteListItem;
+    setSaveTemplateQuoteId(item.id);
+    setSaveTemplateDialogOpen(true);
+  }, []);
+
+  const handleConfirmSaveAsTemplate = useCallback(
+    async (name: string): Promise<boolean> => {
+      if (!saveTemplateQuoteId) return false;
+      const { ok, body } = await getQuote(saveTemplateQuoteId);
+      if (!ok || !body.success) {
+        toast.error(t("saveAsTemplateFailedToast"));
+        return false;
+      }
+      const lines = (body.lines ?? []) as BackendQuoteLine[];
+      const tplRes = await createTemplate({
+        templateType: "quote_document",
+        targetResource: "quote",
+        name,
+      });
+      if (!tplRes.ok || !tplRes.body.success) {
+        toast.error(
+          (tplRes.body.message as string) ?? t("saveAsTemplateFailedToast"),
+        );
+        return false;
+      }
+      const templateId = tplRes.body.template_id as string;
+      const sorted = [...lines].sort((a, b) => a.position - b.position);
+      const lineIdMap = new Map<string, string>();
+      for (const [idx, line] of sorted.entries()) {
+        const templateParentId = line.data.parent_line_id
+          ? (lineIdMap.get(line.data.parent_line_id) ??
+            line.data.parent_line_id)
+          : undefined;
+        const lineRes = await createTemplateLine(templateId, {
+          type: line.type,
+          name: line.name,
+          quantity: Number(line.quantity),
+          unit: line.unit ?? undefined,
+          unitPriceEuros: line.unit_price / 100,
+          position: idx,
+          taxId: line.tax_id ?? null,
+          data: { ...line.data, parent_line_id: templateParentId },
+        });
+        if (!lineRes.ok || !lineRes.body.success) {
+          await deleteTemplate(templateId);
+          toast.error(
+            (lineRes.body.message as string) ?? t("saveAsTemplateFailedToast"),
+          );
+          return false;
+        }
+        lineIdMap.set(line.line_id, lineRes.body.line_id as string);
+      }
+      toast.success(t("saveAsTemplateSuccessToast"));
+      return true;
+    },
+    [saveTemplateQuoteId, t],
+  );
 
   const rowActions = useMemo<DataTableRowAction[]>(
     () => [
@@ -59,8 +145,26 @@ export default function QuoteListTable() {
           });
         },
       },
+      {
+        type: "callback",
+        label: "Créer un échéancier",
+        icon: CalendarIcon,
+        hidden: isCustomer,
+        callback: (row) => {
+          const id = (row as { id: string }).id;
+          setScheduleQuoteId(id);
+          setScheduleDialogOpen(true);
+        },
+      },
+      {
+        type: "callback",
+        label: t("actions.saveAsTemplate"),
+        icon: BookmarkIcon,
+        hidden: isCustomer,
+        callback: handleSaveAsTemplate,
+      },
     ],
-    [isCustomer, t],
+    [isCustomer, t, handleSaveAsTemplate],
   );
 
   useEffect(() => {
@@ -91,52 +195,72 @@ export default function QuoteListTable() {
   const visibleItems = isCustomer ? [] : items;
 
   return (
-    <DataTable
-      datas={visibleItems}
-      sortBy="id"
-      sortDirection="asc"
-      row_actions={rowActions}
-    >
-      <DataTableHeader>
-        <DataTableRow>
-          <DataTableSortableHead name="id">{t("columns.id")}</DataTableSortableHead>
-          <DataTableSortableHead name="projectName">
-            {t("columns.project")}
-          </DataTableSortableHead>
-          <DataTableSortableHead name="status">{t("columns.status")}</DataTableSortableHead>
-          <DataTableSortableHead name="totalTtc">
-            {t("columns.totalTtc")}
-          </DataTableSortableHead>
-          <DataTableHead>{t("columns.actions")}</DataTableHead>
-        </DataTableRow>
-      </DataTableHeader>
-      <DataTableBody>
-        {visibleItems.length === 0 ? (
+    <>
+      <DataTable
+        datas={visibleItems}
+        sortBy="id"
+        sortDirection="asc"
+        row_actions={rowActions}
+      >
+        <DataTableHeader>
           <DataTableRow>
-            <DataTableCell className="text-muted-foreground">
-              {t("empty")}
-            </DataTableCell>
-            <DataTableCell> </DataTableCell>
-            <DataTableCell> </DataTableCell>
-            <DataTableCell> </DataTableCell>
-            <DataTableCell> </DataTableCell>
+            <DataTableSortableHead name="id">
+              {t("columns.id")}
+            </DataTableSortableHead>
+            <DataTableSortableHead name="projectName">
+              {t("columns.project")}
+            </DataTableSortableHead>
+            <DataTableSortableHead name="status">
+              {t("columns.status")}
+            </DataTableSortableHead>
+            <DataTableSortableHead name="totalTtc">
+              {t("columns.totalTtc")}
+            </DataTableSortableHead>
+            <DataTableHead>{t("columns.actions")}</DataTableHead>
           </DataTableRow>
-        ) : (
-          visibleItems.map((quote) => (
-            <DataTableRow key={quote.id}>
-              <DataTableCell>{quote.id}</DataTableCell>
-              <DataTableCell>{quote.projectName}</DataTableCell>
-              <DataTableCell>{tStatus(quote.status)}</DataTableCell>
-              <DataTableCell className="tabular-nums">
-                {formatEurosFromCents(quote.totalTtc)}
+        </DataTableHeader>
+        <DataTableBody>
+          {visibleItems.length === 0 ? (
+            <DataTableRow>
+              <DataTableCell className="text-muted-foreground">
+                {t("empty")}
               </DataTableCell>
-              <DataTableCell>
-                <DataTableRowActions id={quote.id} row={quote} />
-              </DataTableCell>
+              <DataTableCell> </DataTableCell>
+              <DataTableCell> </DataTableCell>
+              <DataTableCell> </DataTableCell>
+              <DataTableCell> </DataTableCell>
             </DataTableRow>
-          ))
-        )}
-      </DataTableBody>
-    </DataTable>
+          ) : (
+            visibleItems.map((quote) => (
+              <DataTableRow key={quote.id}>
+                <DataTableCell>{quote.id}</DataTableCell>
+                <DataTableCell>{quote.projectName}</DataTableCell>
+                <DataTableCell>{tStatus(quote.status)}</DataTableCell>
+                <DataTableCell className="tabular-nums">
+                  {formatEurosFromCents(quote.totalTtc)}
+                </DataTableCell>
+                <DataTableCell>
+                  <DataTableRowActions id={quote.id} row={quote} />
+                </DataTableCell>
+              </DataTableRow>
+            ))
+          )}
+        </DataTableBody>
+      </DataTable>
+
+      <SaveTemplateDialog
+        open={saveTemplateDialogOpen}
+        onOpenChange={setSaveTemplateDialogOpen}
+        defaultName={saveTemplateDefaultName}
+        onSave={handleConfirmSaveAsTemplate}
+      />
+
+      <CreateScheduleDialog
+        open={scheduleDialogOpen}
+        onOpenChange={setScheduleDialogOpen}
+        initialQuoteId={scheduleQuoteId ?? undefined}
+        lockQuote
+      />
+    </>
   );
 }

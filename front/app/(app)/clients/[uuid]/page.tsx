@@ -62,9 +62,7 @@ export default function ClientProfilePage() {
         toast.success(t("deleteSuccessToast"));
         router.push("/clients");
       } else {
-        toast.error(
-          (body.message as string) ?? t("deleteFailedToast"),
-        );
+        toast.error((body.message as string) ?? t("deleteFailedToast"));
         setArchiving(false);
       }
     } catch {
@@ -90,7 +88,8 @@ export default function ClientProfilePage() {
           <div className="space-y-1">
             <CardTitle>{t("title")}</CardTitle>
             <CardDescription>
-              {t("idLabel")} {client.client_id} • {client.first_name} {client.last_name}
+              {t("idLabel")} {client.client_id} • {client.first_name}{" "}
+              {client.last_name}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -124,7 +123,9 @@ export default function ClientProfilePage() {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>{tCommon("actions.cancel")}</AlertDialogCancel>
+                  <AlertDialogCancel>
+                    {tCommon("actions.cancel")}
+                  </AlertDialogCancel>
                   <AlertDialogAction
                     variant="destructive"
                     onClick={handleArchive}
@@ -145,32 +146,39 @@ export default function ClientProfilePage() {
           </CardHeader>
           <CardContent className="space-y-1 text-sm">
             <p>
-              <span className="font-medium">{t("info.firstName")}</span> {client.first_name}
+              <span className="font-medium">{t("info.firstName")}</span>{" "}
+              {client.first_name}
             </p>
             <p>
-              <span className="font-medium">{t("info.lastName")}</span> {client.last_name}
+              <span className="font-medium">{t("info.lastName")}</span>{" "}
+              {client.last_name}
             </p>
             <p>
-              <span className="font-medium">{t("info.email")}</span> {client.email}
+              <span className="font-medium">{t("info.email")}</span>{" "}
+              {client.email}
             </p>
             {client.phone && (
               <p>
-                <span className="font-medium">{t("info.phone")}</span> {client.phone}
+                <span className="font-medium">{t("info.phone")}</span>{" "}
+                {client.phone}
               </p>
             )}
             {client.company && (
               <p>
-                <span className="font-medium">{t("info.company")}</span> {client.company}
+                <span className="font-medium">{t("info.company")}</span>{" "}
+                {client.company}
               </p>
             )}
             {client.siren && (
               <p>
-                <span className="font-medium">{t("info.siren")}</span> {client.siren}
+                <span className="font-medium">{t("info.siren")}</span>{" "}
+                {client.siren}
               </p>
             )}
             {client.vat && (
               <p>
-                <span className="font-medium">{t("info.vat")}</span> {client.vat}
+                <span className="font-medium">{t("info.vat")}</span>{" "}
+                {client.vat}
               </p>
             )}
           </CardContent>

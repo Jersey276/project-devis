@@ -74,7 +74,13 @@ describe("Clients", () => {
         statusCode: 201,
         body: { success: true, address_id: 99 },
       }).as("createAddress");
-      stubGet(client({ client_id: "c-new", first_name: "Alice", last_name: "Martin" }));
+      stubGet(
+        client({
+          client_id: "c-new",
+          first_name: "Alice",
+          last_name: "Martin",
+        }),
+      );
 
       cy.visit("/clients/create");
       cy.get("input[name='first_name']").type("Alice");
@@ -87,7 +93,9 @@ describe("Clients", () => {
       cy.get("input[name='zip_code']").type("75001");
       cy.wait("@getCountries");
       cy.get("input[name='country_id']").click();
-      cy.contains("[data-slot='combobox-item']", "France").click({ force: true });
+      cy.contains("[data-slot='combobox-item']", "France").click({
+        force: true,
+      });
 
       cy.contains("button", "Créer le compte client").click();
 

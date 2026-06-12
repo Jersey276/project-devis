@@ -10,6 +10,12 @@ service UserService {
     rpc GetUser(GetUserRequest) returns (GetUserResponse);
     rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
     rpc DeleteUser(DeleteUserRequest) returns (GenericResponse);
+    rpc GetUserAccessInfo(GetUserAccessInfoRequest) returns (GetUserAccessInfoResponse);
+    rpc GetUserAccessInfoByEmail(GetUserAccessInfoByEmailRequest) returns (GetUserAccessInfoResponse);
+    rpc ListAdminAccounts(ListAdminAccountsRequest) returns (ListAdminAccountsResponse);
+    rpc UpdateAdminAccount(UpdateAdminAccountRequest) returns (GenericResponse);
+    rpc SuspendAdminAccount(SuspendAdminAccountRequest) returns (GenericResponse);
+    rpc TouchUserLastLogin(TouchUserLastLoginRequest) returns (GenericResponse);
 
     // Client
     rpc CreateClient(CreateClientRequest) returns (CreateClientResponse);
@@ -55,6 +61,11 @@ message GenericResponse {
     int32 code = 2;
 }
 
+message ValidationError {
+    string field   = 1;
+    string message = 2;
+}
+
 // ─── User ────────────────────────────────────────────────────────────────────
 
 message User {
@@ -65,6 +76,7 @@ message User {
     string siren = 5;
     string vat = 6;
     string logo_url = 7;
+    bool suspended = 8;
 }
 
 message CreateUserRequest {
@@ -75,6 +87,7 @@ message CreateUserResponse {
     bool success = 1;
     int32 code = 2;
     string user_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message GetUserRequest {
@@ -102,6 +115,67 @@ message UpdateUserResponse {
 }
 
 message DeleteUserRequest {
+    string user_id = 1;
+}
+
+message GetUserAccessInfoRequest {
+    string user_id = 1;
+}
+
+message GetUserAccessInfoByEmailRequest {
+    string email = 1;
+}
+
+message GetUserAccessInfoResponse {
+    bool success = 1;
+    int32 code = 2;
+    string user_id = 3;
+    string email = 4;
+    string role = 5;
+    bool suspended = 6;
+}
+
+message AdminAccount {
+    string user_id = 1;
+    string first_name = 2;
+    string last_name = 3;
+    string email = 4;
+    string role = 5;
+    string plan = 6;
+    string last_login_at = 7;
+    bool suspended = 8;
+    string phone = 9;
+    string company = 10;
+    string siren = 11;
+    string vat = 12;
+}
+
+message ListAdminAccountsRequest {}
+
+message ListAdminAccountsResponse {
+    bool success = 1;
+    int32 code = 2;
+    repeated AdminAccount accounts = 3;
+}
+
+message UpdateAdminAccountRequest {
+    string user_id = 1;
+    string first_name = 2;
+    string last_name = 3;
+    string email = 4;
+    string role = 5;
+    string plan = 6;
+    string phone = 7;
+    string company = 8;
+    string siren = 9;
+    string vat = 10;
+}
+
+message SuspendAdminAccountRequest {
+    string user_id = 1;
+}
+
+message TouchUserLastLoginRequest {
     string user_id = 1;
 }
 
@@ -135,6 +209,7 @@ message CreateClientResponse {
     bool success = 1;
     int32 code = 2;
     string client_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message GetClientRequest {
@@ -174,6 +249,7 @@ message UpdateClientRequest {
 message UpdateClientResponse {
     bool success = 1;
     int32 code = 2;
+    repeated ValidationError validation_errors = 3;
 }
 
 message ArchiveClientRequest {
@@ -224,6 +300,7 @@ message CreateAddressResponse {
     bool success = 1;
     int32 code = 2;
     int32 address_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message GetAddressRequest {
@@ -269,6 +346,7 @@ message UpdateAddressRequest {
 message UpdateAddressResponse {
     bool success = 1;
     int32 code = 2;
+    repeated ValidationError validation_errors = 3;
 }
 
 message ArchiveAddressRequest {
@@ -295,6 +373,7 @@ message CreateCountryResponse {
     bool success = 1;
     int32 code = 2;
     int32 country_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message GetCountryRequest {
@@ -324,6 +403,7 @@ message UpdateCountryRequest {
 message UpdateCountryResponse {
     bool success = 1;
     int32 code = 2;
+    repeated ValidationError validation_errors = 3;
 }
 
 message DeleteCountryRequest {
@@ -347,6 +427,7 @@ message CreateCountryGroupResponse {
     bool success = 1;
     int32 code = 2;
     int32 country_group_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message GetCountryGroupRequest {
@@ -375,6 +456,7 @@ message UpdateCountryGroupRequest {
 message UpdateCountryGroupResponse {
     bool success = 1;
     int32 code = 2;
+    repeated ValidationError validation_errors = 3;
 }
 
 message DeleteCountryGroupRequest {
@@ -416,6 +498,7 @@ message CreateTaxResponse {
     bool success = 1;
     int32 code = 2;
     int32 tax_id = 3;
+    repeated ValidationError validation_errors = 4;
 }
 
 message GetTaxRequest {
@@ -457,6 +540,7 @@ message UpdateTaxResponse {
     bool success = 1;
     int32 code = 2;
     int32 tax_id = 3; // id of the current version after update (may be a new row)
+    repeated ValidationError validation_errors = 4;
 }
 
 message DeleteTaxRequest {

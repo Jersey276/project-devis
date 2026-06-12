@@ -94,7 +94,7 @@ export default function LoginForm({
                     {t("passwordLabel")}
                   </FieldLabel>
                   <a
-                    href="#"
+                    href="/forget-password"
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                   >
                     {t("forgotLink")}

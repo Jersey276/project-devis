@@ -43,7 +43,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import TestToast from "@/components/custom/test/test-toast";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { ComponentExample } from "@/components/component-example";
 
 export default function testPage() {
@@ -127,7 +134,7 @@ export default function testPage() {
         <CardContent className="grid grid-cols-2 gap-2">
           <Field>
             <Label>Enter something:</Label>
-            <Input placeholder="Type something..."  />
+            <Input placeholder="Type something..." />
           </Field>
           <Field>
             <Label>Select a framework:</Label>
@@ -221,7 +228,6 @@ export default function testPage() {
           <CardAction>Card Action</CardAction>
         </CardHeader>
         <CardContent>
-
           <ResponsiveDialog>
             <ResponsiveDialogTrigger>
               Open Responsive Dialog
@@ -244,7 +250,7 @@ export default function testPage() {
           <p>Card Footer</p>
         </CardFooter>
       </Card>
-      
+
       {/* sonner */}
       <Card>
         <CardHeader>
@@ -290,7 +296,7 @@ export default function testPage() {
       </Card>
       <div className="col-span-3 h-16">
         <ComponentExample />
-        </div>
+      </div>
     </div>
   );
 }

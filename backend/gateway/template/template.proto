@@ -1,0 +1,186 @@
+syntax = "proto3";
+
+package template;
+
+option go_package = "gateway/template";
+
+service TemplateService {
+    // Template
+    rpc ListTemplates(ListTemplatesRequest)     returns (ListTemplatesResponse);
+    rpc CreateTemplate(CreateTemplateRequest)   returns (CreateTemplateResponse);
+    rpc GetTemplate(GetTemplateRequest)         returns (GetTemplateResponse);
+    rpc UpdateTemplate(UpdateTemplateRequest)   returns (UpdateTemplateResponse);
+    rpc DeleteTemplate(DeleteTemplateRequest)   returns (GenericResponse);
+    rpc ArchiveTemplate(ArchiveTemplateRequest) returns (GenericResponse);
+    rpc RestoreTemplate(RestoreTemplateRequest) returns (GenericResponse);
+
+    // Line
+    rpc ListTemplateLines(ListTemplateLinesRequest)     returns (ListTemplateLinesResponse);
+    rpc CreateTemplateLine(CreateTemplateLineRequest)   returns (CreateTemplateLineResponse);
+    rpc UpdateTemplateLine(UpdateTemplateLineRequest)   returns (UpdateTemplateLineResponse);
+    rpc DeleteTemplateLine(DeleteTemplateLineRequest)   returns (GenericResponse);
+}
+
+message GenericResponse {
+    bool  success = 1;
+    int32 code    = 2;
+}
+
+message ValidationError {
+    string field   = 1;
+    string message = 2;
+}
+
+// ─── Template ─────────────────────────────────────────────────────────────────
+
+message Template {
+    string template_id     = 1;
+    string user_id         = 2;
+    string template_type   = 3;
+    string target_resource = 4;
+    string name            = 5;
+    string archived_at     = 6;
+    int32  payload_version = 7;
+    string payload         = 8;
+    string created_at      = 9;
+    string updated_at      = 10;
+}
+
+message ListTemplatesRequest {
+    string user_id         = 1;
+    bool   include_archived = 2;
+    string template_type   = 3;
+}
+
+message ListTemplatesResponse {
+    bool             success   = 1;
+    int32            code      = 2;
+    repeated Template templates = 3;
+}
+
+message CreateTemplateRequest {
+    string user_id         = 1;
+    string template_type   = 2;
+    string target_resource = 3;
+    string name            = 4;
+}
+
+message CreateTemplateResponse {
+    bool   success     = 1;
+    int32  code        = 2;
+    string template_id = 3;
+    repeated ValidationError validation_errors = 4;
+}
+
+message GetTemplateRequest {
+    string template_id = 1;
+    string user_id     = 2;
+}
+
+message GetTemplateResponse {
+    bool     success  = 1;
+    int32    code     = 2;
+    Template template = 3;
+}
+
+message UpdateTemplateRequest {
+    string template_id     = 1;
+    string user_id         = 2;
+    string name            = 3;
+    string target_resource = 4;
+    string payload         = 5;
+    int32  payload_version = 6;
+}
+
+message UpdateTemplateResponse {
+    bool  success = 1;
+    int32 code    = 2;
+    repeated ValidationError validation_errors = 3;
+}
+
+message DeleteTemplateRequest {
+    string template_id = 1;
+    string user_id     = 2;
+}
+
+message ArchiveTemplateRequest {
+    string template_id = 1;
+    string user_id     = 2;
+}
+
+message RestoreTemplateRequest {
+    string template_id = 1;
+    string user_id     = 2;
+}
+
+// ─── Line ─────────────────────────────────────────────────────────────────────
+
+message TemplateLine {
+    string line_id     = 1;
+    string template_id = 2;
+    string type        = 3;
+    string name        = 4;
+    string quantity    = 5;
+    string unit        = 6;
+    int64  unit_price  = 7;
+    string data        = 8;
+    int32  position    = 9;
+    int32  tax_id      = 10;
+}
+
+message ListTemplateLinesRequest {
+    string template_id = 1;
+    string user_id     = 2;
+}
+
+message ListTemplateLinesResponse {
+    bool                  success = 1;
+    int32                 code    = 2;
+    repeated TemplateLine lines   = 3;
+}
+
+message CreateTemplateLineRequest {
+    string template_id = 1;
+    string user_id     = 2;
+    string type        = 3;
+    string name        = 4;
+    string quantity    = 5;
+    string unit        = 6;
+    int64  unit_price  = 7;
+    string data        = 8;
+    int32  position    = 9;
+    int32  tax_id      = 10;
+}
+
+message CreateTemplateLineResponse {
+    bool   success = 1;
+    int32  code    = 2;
+    string line_id = 3;
+    repeated ValidationError validation_errors = 4;
+}
+
+message UpdateTemplateLineRequest {
+    string line_id     = 1;
+    string template_id = 2;
+    string user_id     = 3;
+    string type        = 4;
+    string name        = 5;
+    string quantity    = 6;
+    string unit        = 7;
+    int64  unit_price  = 8;
+    string data        = 9;
+    int32  position    = 10;
+    int32  tax_id      = 11;
+}
+
+message UpdateTemplateLineResponse {
+    bool  success = 1;
+    int32 code    = 2;
+    repeated ValidationError validation_errors = 3;
+}
+
+message DeleteTemplateLineRequest {
+    string line_id     = 1;
+    string template_id = 2;
+    string user_id     = 3;
+}

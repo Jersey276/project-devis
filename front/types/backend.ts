@@ -17,6 +17,24 @@ export type BackendQuote = {
 
 export type BackendQuoteLineType = "simple" | "multiple";
 
+export type QuoteLineKind = "line" | "text" | "group" | "detailed" | "subline";
+
+export type QuoteLineData = {
+  kind?: QuoteLineKind;
+  description?: string;
+  option?: boolean;
+  parent_line_id?: string;
+  sublines?: Array<{
+    name: string;
+    quantity: string;
+    unit?: string;
+    unit_price: number;
+    option?: boolean;
+    /** Frontend-only stable React key — stripped before API calls. */
+    _key?: string;
+  }>;
+};
+
 export type BackendQuoteLine = {
   line_id: string;
   quote_id: string;
@@ -25,7 +43,7 @@ export type BackendQuoteLine = {
   quantity: string;
   unit: string;
   unit_price: number;
-  data: Record<string, unknown>;
+  data: QuoteLineData;
   position: number;
   tax_id: number | null;
 };
@@ -48,6 +66,40 @@ export function quoteListState(quote: BackendQuote): QuoteListState {
   if (quote.archived_at) return "archived";
   return quote.state ?? "draft";
 }
+
+export type BackendTemplateType =
+  | "quote_document"
+  | "quote_line"
+  | "document_design";
+export type BackendTemplateTargetResource = "quote" | "invoice" | "schedule";
+
+export type BackendTemplate = {
+  template_id: string;
+  user_id: string;
+  template_type: BackendTemplateType;
+  target_resource: BackendTemplateTargetResource;
+  name: string;
+  archived_at: string | null;
+  payload_version: number;
+  payload: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BackendTemplateLine = {
+  line_id: string;
+  template_id: string;
+  type: string;
+  name: string;
+  quantity: string;
+  unit: string | null;
+  unit_price: number;
+  data: QuoteLineData;
+  position: number;
+  tax_id: number | null;
+  created_at: string;
+  updated_at: string;
+};
 
 export type BackendClient = {
   client_id: string;
@@ -77,4 +129,92 @@ export type BackendAddress = {
   email: string;
   phone: string;
   archived: boolean;
+};
+
+export type BackendScheduleStatus = "DRAFT" | "NEGOCIATE" | "DENIED" | "VALID";
+
+export type BackendScheduleSummary = {
+  schedule_id: string;
+  quote_id: string;
+  status: BackendScheduleStatus;
+  name: string;
+  start_month: string;
+  duration_months: number;
+};
+
+export type BackendScheduleLineSummary = {
+  quote_line_id: string;
+  planned_cents: number;
+  expected_cents: number;
+};
+
+export type BackendScheduleColumnTotal = {
+  month_index: number;
+  amount_cents: number;
+};
+
+export type BackendScheduleCell = {
+  quote_line_id: string;
+  month_index: number;
+  amount_cents: number;
+};
+
+export type BackendScheduleDetails = {
+  schedule_id: string;
+  quote_id: string;
+  status: BackendScheduleStatus;
+  name: string;
+  start_month: string;
+  duration_months: number;
+  lines: BackendScheduleLineSummary[];
+  cells?: BackendScheduleCell[];
+  column_totals: BackendScheduleColumnTotal[];
+  quote_total_cents: number;
+  planned_total_cents: number;
+};
+
+export type ScheduleBalanceState = "under" | "balanced" | "over";
+
+export function scheduleBalanceState(
+  plannedCents: number,
+  expectedCents: number,
+): ScheduleBalanceState {
+  if (plannedCents < expectedCents) return "under";
+  if (plannedCents > expectedCents) return "over";
+  return "balanced";
+}
+
+export type SubscriptionTier = "free" | "pro" | "enterprise";
+
+export type BackendPlan = {
+  plan_id: number;
+  name: string;
+  tier: SubscriptionTier;
+  price_cents: number;
+  billing_cycle: "monthly" | "yearly" | "none";
+  features: Record<string, number>;
+  active: boolean;
+  stripe_price_id?: string | null;
+};
+
+export type BackendSubscription = {
+  subscription_id: string;
+  user_id: string;
+  plan_id: number;
+  tier: SubscriptionTier;
+  status: "active" | "cancelled" | "expired";
+  current_period_start: string;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  stripe_subscription_id: string | null;
+  updated_at: string;
+};
+
+export type PlanDistributionEntry = { tier: SubscriptionTier; count: number };
+export type MonthlyRevenueEntry = { month: string; revenue_cents: number };
+export type AdminStats = {
+  total_active_subscriptions: number;
+  total_revenue_cents: number;
+  plan_distribution: PlanDistributionEntry[];
+  monthly_revenue: MonthlyRevenueEntry[];
 };

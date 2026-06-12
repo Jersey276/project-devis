@@ -25,48 +25,49 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { DownloadIcon, Loader2Icon } from "lucide-react";
+import {
+  DownloadIcon,
+  BookmarkIcon,
+  Loader2Icon,
+  CalendarIcon,
+} from "lucide-react";
 import QuoteStepBasicInfo from "@/components/quote/steps/quote-step-basic-info";
-import QuoteStepItems, {
-  type QuoteItemRow as RenderedRow,
-} from "@/components/quote/steps/quote-step-items";
+import QuoteStepItems from "@/components/quote/steps/quote-step-items";
 import QuoteStepSummary from "@/components/quote/steps/quote-step-summary";
 import {
   continueQuote,
   createLine,
   createQuote,
-  deleteLine,
   dropQuote,
   getQuote,
-  type LineDraft,
-  updateLine,
   updateQuote,
 } from "@/lib/services/quotes";
 import { exportQuotePdf } from "@/lib/services/export";
-import { listClients } from "@/lib/services/clients";
-import { listAddresses } from "@/lib/services/addresses";
-import { listAvailableTaxesForUser } from "@/lib/services/taxes";
-import { apiFetch, fieldErrorsFromBody, type FieldErrors } from "@/lib/api";
+import { listTemplateLines } from "@/lib/services/templates";
+import { fieldErrorsFromBody, type FieldErrors } from "@/lib/api";
 import { useMode } from "@/lib/mode-context";
 import {
-  type BackendAddress,
-  type BackendClient,
   type BackendQuote,
   type BackendQuoteLine,
   type BackendQuoteState,
-  type BackendTax,
+  type BackendTemplateLine,
 } from "@/types/backend";
-
-type FormItem = RenderedRow & { position: number };
+import {
+  computeTotals,
+  rowFromBackendLine,
+  type FormItem,
+  useQuoteLines,
+} from "@/hooks/use-quote-lines";
+import { useQuoteReferenceData } from "@/hooks/use-quote-reference-data";
+import SaveTemplateDialog from "@/components/template/save-template-dialog";
+import CreateScheduleDialog from "@/components/schedule/create-schedule-dialog";
 
 type QuoteFormProps = {
   quoteId?: string;
 };
 
 const STEP_KEYS = ["basicInfo", "items"] as const;
-
 const SAVE_DEBOUNCE_MS = 600;
-const SAVED_INDICATOR_MS = 1500;
 
 const STATE_BADGE_VARIANT: Record<
   BackendQuoteState,
@@ -77,29 +78,6 @@ const STATE_BADGE_VARIANT: Record<
   validated: "default",
   drop: "destructive",
 };
-
-function rowFromBackendLine(line: BackendQuoteLine): FormItem {
-  return {
-    lineId: line.line_id,
-    name: line.name,
-    quantity: Number(line.quantity),
-    unitPriceEuros: line.unit_price / 100,
-    position: line.position,
-    taxId: line.tax_id ?? null,
-    saveStatus: "idle",
-  };
-}
-
-function lineDraftFromRow(row: FormItem): LineDraft {
-  return {
-    type: "simple",
-    name: row.name,
-    quantity: row.quantity,
-    unitPriceEuros: row.unitPriceEuros,
-    position: row.position,
-    taxId: row.taxId,
-  };
-}
 
 export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const router = useRouter();
@@ -121,6 +99,12 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const templateIdFromQuery = useMemo(
+    () => searchParams.get("template") ?? null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
   const [step, setStep] = useState(initialStep);
   const [loading, setLoading] = useState(!isCreate);
   const [notFound, setNotFound] = useState(false);
@@ -128,32 +112,20 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const [clientId, setClientId] = useState("");
   const [addressId, setAddressId] = useState<number | null>(null);
   const [userAddressId, setUserAddressId] = useState<number | null>(null);
-  const [clients, setClients] = useState<BackendClient[]>([]);
-  const [addresses, setAddresses] = useState<BackendAddress[]>([]);
-  const [userAddresses, setUserAddresses] = useState<BackendAddress[]>([]);
   const [items, setItems] = useState<FormItem[]>([]);
-  const [availableTaxes, setAvailableTaxes] = useState<BackendTax[]>([]);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [creating, setCreating] = useState(false);
-  const [adding, setAdding] = useState(false);
   const [quoteState, setQuoteState] = useState<BackendQuoteState>("draft");
   const [transitioning, setTransitioning] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
+  const [createScheduleOpen, setCreateScheduleOpen] = useState(false);
 
   const isReadonly =
     isCustomer || quoteState === "validated" || quoteState === "drop";
 
-  const itemsRef = useRef(items);
-  itemsRef.current = items;
   const projectNameRef = useRef(projectName);
-  projectNameRef.current = projectName;
-
-  const lineTimersRef = useRef(
-    new Map<string, ReturnType<typeof setTimeout>>(),
-  );
-  const savedIndicatorTimersRef = useRef(
-    new Map<string, ReturnType<typeof setTimeout>>(),
-  );
+  useEffect(() => { projectNameRef.current = projectName; }, [projectName]);
   const nameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initial fetch (edit mode only)
@@ -178,170 +150,52 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       setItems(sorted.map(rowFromBackendLine));
       setLoading(false);
     });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [quoteId, t]);
-
-  // Load clients (always — needed for create and to display in edit)
-  useEffect(() => {
-    let cancelled = false;
-    listClients().then(({ ok, body }) => {
-      if (cancelled) return;
-      if (ok && Array.isArray(body.clients)) {
-        setClients(body.clients as BackendClient[]);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Load the current user's addresses. Step 1 picks the provider
-  // (prestataire) address from this list; step 2 uses it to scope the
-  // available taxes. The listAddresses owner needs the concrete user_id, so
-  // we fetch /me first — the gateway resolves the authenticated user there.
-  useEffect(() => {
-    if (isCustomer) return;
-    let cancelled = false;
-    (async () => {
-      const meRes = await apiFetch("/api/users/me");
-      if (cancelled || !meRes.ok || !meRes.body.success || !meRes.body.user) {
-        return;
-      }
-      const meId = (meRes.body.user as { user_id: string }).user_id;
-      const { ok, body } = await listAddresses({
-        type: "user",
-        userId: meId,
-      });
-      if (cancelled) return;
-      if (ok && Array.isArray(body.addresses)) {
-        setUserAddresses(body.addresses as BackendAddress[]);
-      } else {
-        setUserAddresses([]);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [isCustomer]);
-
-  // Load taxes available for the current user (resolved from their first
-  // address). Existing lines may reference superseded taxes (the tax was
-  // edited or retired after the quote was created); we forward those ids
-  // as include_ids so the combobox can still render the historical label.
-  // Gated on `loading` so we don't fire twice in edit mode (once before
-  // getQuote resolves, once after items populate).
-  //
-  // The orphan list is filtered against the *current* (non-superseded)
-  // taxes already loaded — never against ALL availableTaxes. Filtering
-  // against the full set would drop the orphan from include_ids on the
-  // next render, triggering a re-fetch that returns only currents and
-  // erases the orphan from availableTaxes. Cycle would oscillate.
-  const currentTaxIds = useMemo(
-    () =>
-      new Set(availableTaxes.filter((t) => !t.superseded_at).map((t) => t.id)),
-    [availableTaxes],
-  );
-  const includeTaxIds = useMemo(() => {
-    const ids = items
-      .map((i) => i.taxId)
-      .filter((id): id is number => id != null && !currentTaxIds.has(id));
-    return [...new Set(ids)].sort((a, b) => a - b);
-  }, [items, currentTaxIds]);
-  const includeTaxIdsKey = includeTaxIds.join(",");
-
-  useEffect(() => {
-    if (loading) return;
-    let cancelled = false;
-    listAvailableTaxesForUser(includeTaxIds, userAddressId ?? undefined).then(
-      ({ ok, body }) => {
-        if (cancelled) return;
-        if (ok && Array.isArray(body.taxes)) {
-          setAvailableTaxes(body.taxes as BackendTax[]);
-        } else {
-          setAvailableTaxes([]);
-        }
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-    // includeTaxIds is reference-unstable; key it via the joined string.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, includeTaxIdsKey, userAddressId]);
-
-  // Load addresses for the selected client; reset address when client changes.
-  useEffect(() => {
-    if (!clientId) {
-      setAddresses([]);
-      return;
-    }
-    let cancelled = false;
-    listAddresses({ type: "client", clientId }).then(({ ok, body }) => {
-      if (cancelled) return;
-      if (ok && Array.isArray(body.addresses)) {
-        setAddresses(body.addresses as BackendAddress[]);
-      } else {
-        setAddresses([]);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [clientId]);
 
   useEffect(() => {
     if (notFound) router.replace("/quote");
   }, [notFound, router]);
 
-  // Cleanup timers on unmount
   useEffect(() => {
-    const lineTimers = lineTimersRef.current;
-    const savedTimers = savedIndicatorTimersRef.current;
     return () => {
-      for (const timer of lineTimers.values()) clearTimeout(timer);
-      lineTimers.clear();
-      for (const timer of savedTimers.values()) clearTimeout(timer);
-      savedTimers.clear();
       if (nameTimerRef.current) clearTimeout(nameTimerRef.current);
     };
   }, []);
 
-  const taxById = useMemo(
-    () => new Map(availableTaxes.map((t) => [t.id, t])),
-    [availableTaxes],
-  );
+  const {
+    clients,
+    userId,
+    userAddresses,
+    addresses,
+    availableTaxes,
+    taxById,
+    defaultTaxId,
+    refreshClients,
+    refreshUserAddresses,
+    refreshClientAddresses,
+  } = useQuoteReferenceData({ clientId, userAddressId, isCustomer, loading, items });
 
-  const defaultTaxId = useMemo(
-    () => availableTaxes.find((t) => t.is_default)?.id ?? null,
-    [availableTaxes],
-  );
+  const {
+    adding,
+    handleNameChange,
+    handleQuantityChange,
+    handleUnitPriceChange,
+    handleTaxChange,
+    handleDescriptionChange,
+    handleOptionChange,
+    handleSublineAdd,
+    handleSublineChange,
+    handleSublineRemove,
+    handleAddItem,
+    handleAddChildItem,
+    handleRemoveItem,
+    handleAddItemFromTemplate,
+    handleSaveLineAsTemplate,
+    handleSaveQuoteAsTemplate,
+  } = useQuoteLines({ quoteId, isReadonly, defaultTaxId, items, setItems });
 
-  const totals = useMemo(() => {
-    const ht = items.reduce(
-      (acc, item) => acc + item.quantity * item.unitPriceEuros,
-      0,
-    );
-    const breakdown = new Map<number, { tax: BackendTax; amount: number }>();
-    for (const item of items) {
-      if (item.taxId == null) continue;
-      const tax = taxById.get(item.taxId);
-      if (!tax) continue;
-      const lineHT = item.quantity * item.unitPriceEuros;
-      const taxAmount = (lineHT * Number(tax.rate)) / 100;
-      const cur = breakdown.get(tax.id);
-      breakdown.set(tax.id, {
-        tax,
-        amount: (cur?.amount ?? 0) + taxAmount,
-      });
-    }
-    const sortedBreakdown = Array.from(breakdown.values()).sort(
-      (a, b) => Number(a.tax.rate) - Number(b.tax.rate),
-    );
-    const ttc = ht + sortedBreakdown.reduce((acc, b) => acc + b.amount, 0);
-    return { ht, breakdown: sortedBreakdown, ttc };
-  }, [items, taxById]);
+  const totals = useMemo(() => computeTotals(items, taxById), [items, taxById]);
 
   // ────────────────────────────────────────────────────────────
   // Step 1 handlers
@@ -358,9 +212,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         if (current.length === 0) return;
         const { ok, body } = await updateQuote(quoteId, { name: current });
         if (!ok || !body.success) {
-          toast.error(
-            (body.message as string) ?? t("errors.nameSaveFailedToast"),
-          );
+          toast.error((body.message as string) ?? t("errors.nameSaveFailedToast"));
         }
       }, SAVE_DEBOUNCE_MS);
     },
@@ -370,22 +222,11 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const handleNextFromStep1 = useCallback(async () => {
     const trimmed = projectName.trim();
     const localErrors: FieldErrors = {};
-    if (trimmed.length === 0) {
-      localErrors.name = [t("errors.requiredField")];
-    }
-    if (!clientId) {
-      localErrors.client_id = [t("errors.selectClient")];
-    }
-    if (!addressId) {
-      localErrors.address_id = [t("errors.selectAddress")];
-    }
-    if (!userAddressId) {
-      localErrors.user_address_id = [t("errors.selectUserAddress")];
-    }
-    if (Object.keys(localErrors).length > 0) {
-      setErrors(localErrors);
-      return;
-    }
+    if (trimmed.length === 0) localErrors.name = [t("errors.requiredField")];
+    if (!clientId) localErrors.client_id = [t("errors.selectClient")];
+    if (!addressId) localErrors.address_id = [t("errors.selectAddress")];
+    if (!userAddressId) localErrors.user_address_id = [t("errors.selectUserAddress")];
+    if (Object.keys(localErrors).length > 0) { setErrors(localErrors); return; }
 
     if (isCreate) {
       setCreating(true);
@@ -398,6 +239,28 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         });
         if (ok && body.success) {
           const newId = body.quote_id as string;
+          if (templateIdFromQuery) {
+            const linesRes = await listTemplateLines(templateIdFromQuery);
+            if (linesRes.ok && Array.isArray(linesRes.body.lines)) {
+              const sorted = (linesRes.body.lines as BackendTemplateLine[]).sort(
+                (a, b) => a.position - b.position,
+              );
+              await Promise.all(
+                sorted.map((tl, idx) =>
+                  createLine(newId, {
+                    type: tl.type === "multiple" ? "multiple" : "simple",
+                    name: tl.name,
+                    quantity: Number(tl.quantity),
+                    unit: tl.unit ?? undefined,
+                    unitPriceEuros: tl.unit_price / 100,
+                    position: idx,
+                    taxId: tl.tax_id ?? null,
+                    data: tl.data,
+                  }),
+                ),
+              );
+            }
+          }
           router.replace(`/quote/${newId}?step=2`);
           return;
         }
@@ -414,223 +277,21 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       return;
     }
     setStep(1);
-  }, [
-    addressId,
-    clientId,
-    isCreate,
-    projectName,
-    router,
-    t,
-    tCommon,
-    userAddressId,
-  ]);
-
-  // ────────────────────────────────────────────────────────────
-  // Step 2 handlers
-
-  const setRow = useCallback((lineId: string, patch: Partial<FormItem>) => {
-    setItems((prev) =>
-      prev.map((row) => (row.lineId === lineId ? { ...row, ...patch } : row)),
-    );
-  }, []);
-
-  const scheduleLineSave = useCallback(
-    (lineId: string) => {
-      if (!quoteId || isReadonly) return;
-
-      const existingSaved = savedIndicatorTimersRef.current.get(lineId);
-      if (existingSaved) {
-        clearTimeout(existingSaved);
-        savedIndicatorTimersRef.current.delete(lineId);
-      }
-      const existingTimer = lineTimersRef.current.get(lineId);
-      if (existingTimer) clearTimeout(existingTimer);
-
-      setRow(lineId, { saveStatus: "saving" });
-
-      const timer = setTimeout(async () => {
-        lineTimersRef.current.delete(lineId);
-        const current = itemsRef.current.find((r) => r.lineId === lineId);
-        if (!current) return;
-        const { ok, body } = await updateLine(
-          quoteId,
-          lineId,
-          lineDraftFromRow(current),
-        );
-        if (ok && body.success) {
-          setRow(lineId, { saveStatus: "saved" });
-          const savedTimer = setTimeout(() => {
-            savedIndicatorTimersRef.current.delete(lineId);
-            setRow(lineId, { saveStatus: "idle" });
-          }, SAVED_INDICATOR_MS);
-          savedIndicatorTimersRef.current.set(lineId, savedTimer);
-        } else {
-          setRow(lineId, { saveStatus: "error" });
-          toast.error(
-            (body.message as string) ?? t("errors.lineSaveFailedToast"),
-          );
-        }
-      }, SAVE_DEBOUNCE_MS);
-
-      lineTimersRef.current.set(lineId, timer);
-    },
-    [isReadonly, quoteId, setRow, t],
-  );
-
-  const handleDrop = useCallback(async () => {
-    if (!quoteId || transitioning) return;
-    setTransitioning(true);
-    try {
-      const { ok, body } = await dropQuote(quoteId);
-      if (ok && body.success) {
-        setQuoteState("drop");
-      } else {
-        toast.error((body.message as string) ?? t("dropFailedToast"));
-      }
-    } finally {
-      setTransitioning(false);
-    }
-  }, [quoteId, transitioning, t]);
-
-  const handleContinue = useCallback(async () => {
-    if (!quoteId || transitioning) return;
-    setTransitioning(true);
-    try {
-      const { ok, body } = await continueQuote(quoteId);
-      if (ok && body.success) {
-        setQuoteState("draft");
-      } else {
-        toast.error((body.message as string) ?? t("continueFailedToast"));
-      }
-    } finally {
-      setTransitioning(false);
-    }
-  }, [quoteId, transitioning, t]);
-
-  const handleExport = useCallback(async () => {
-    if (!quoteId || isExporting) return;
-    setIsExporting(true);
-    try {
-      await exportQuotePdf(quoteId);
-    } catch (err) {
-      console.error("export quote pdf failed", err);
-      toast.error(t("exportFailedToast"));
-    } finally {
-      setIsExporting(false);
-    }
-  }, [quoteId, isExporting, t]);
-
-  const handleAddItem = useCallback(async () => {
-    if (!quoteId || adding) return;
-    setAdding(true);
-    try {
-      const draft: LineDraft = {
-        type: "simple",
-        name: "",
-        quantity: 1,
-        unitPriceEuros: 0,
-        position: itemsRef.current.length,
-        taxId: defaultTaxId,
-      };
-      const { ok, body } = await createLine(quoteId, draft);
-      if (ok && body.success) {
-        const newLineId = body.line_id as string;
-        setItems((prev) => [
-          ...prev,
-          {
-            lineId: newLineId,
-            name: "",
-            quantity: 1,
-            unitPriceEuros: 0,
-            position: prev.length,
-            taxId: defaultTaxId,
-            saveStatus: "idle",
-          },
-        ]);
-      } else {
-        toast.error((body.message as string) ?? t("errors.lineAddFailedToast"));
-      }
-    } finally {
-      setAdding(false);
-    }
-  }, [adding, quoteId, defaultTaxId, t]);
-
-  const handleRemoveItem = useCallback(
-    async (lineId: string) => {
-      if (!quoteId) return;
-      if (itemsRef.current.length <= 1) return;
-      const timer = lineTimersRef.current.get(lineId);
-      if (timer) {
-        clearTimeout(timer);
-        lineTimersRef.current.delete(lineId);
-      }
-      const previous = itemsRef.current;
-      setItems((prev) => prev.filter((row) => row.lineId !== lineId));
-      const { ok, body } = await deleteLine(quoteId, lineId);
-      if (!ok || !body.success) {
-        toast.error(
-          (body.message as string) ?? t("errors.lineRemoveFailedToast"),
-        );
-        setItems(previous);
-      }
-    },
-    [quoteId, t],
-  );
-
-  const handleNameChange = useCallback(
-    (lineId: string, value: string) => {
-      setRow(lineId, { name: value });
-      scheduleLineSave(lineId);
-    },
-    [scheduleLineSave, setRow],
-  );
-
-  const handleQuantityChange = useCallback(
-    (lineId: string, value: number) => {
-      setRow(lineId, { quantity: Number.isFinite(value) ? value : 0 });
-      scheduleLineSave(lineId);
-    },
-    [scheduleLineSave, setRow],
-  );
-
-  const handleUnitPriceChange = useCallback(
-    (lineId: string, value: number) => {
-      setRow(lineId, {
-        unitPriceEuros: Number.isFinite(value) ? value : 0,
-      });
-      scheduleLineSave(lineId);
-    },
-    [scheduleLineSave, setRow],
-  );
-
-  const handleTaxChange = useCallback(
-    (lineId: string, taxId: number | null) => {
-      setRow(lineId, { taxId });
-      scheduleLineSave(lineId);
-    },
-    [scheduleLineSave, setRow],
-  );
+  }, [addressId, clientId, isCreate, projectName, router, t, tCommon, templateIdFromQuery, userAddressId]);
 
   const handleClientIdChange = useCallback(
     (value: string) => {
       setClientId(value);
       setAddressId(null);
       setErrors((prev) => ({ ...prev, client_id: [], address_id: [] }));
-      // Edit mode: persist immediately. Create mode persists on Suivant.
-      // We can't write address_id=0 here because the user must pick one for
-      // the new client; the next picker change will persist both.
       if (!quoteId || isReadonly || !value) return;
       const name = projectNameRef.current.trim();
       if (name.length === 0) return;
-      void updateQuote(quoteId, { name, clientId: value }).then(
-        ({ ok, body }) => {
-          if (!ok || !body.success) {
-            toast.error(
-              (body.message as string) ?? t("errors.clientSaveFailedToast"),
-            );
-          }
-        },
-      );
+      void updateQuote(quoteId, { name, clientId: value }).then(({ ok, body }) => {
+        if (!ok || !body.success) {
+          toast.error((body.message as string) ?? t("errors.clientSaveFailedToast"));
+        }
+      });
     },
     [isReadonly, quoteId, t],
   );
@@ -642,15 +303,11 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       if (!quoteId || isReadonly || value == null) return;
       const name = projectNameRef.current.trim();
       if (name.length === 0) return;
-      void updateQuote(quoteId, { name, addressId: value }).then(
-        ({ ok, body }) => {
-          if (!ok || !body.success) {
-            toast.error(
-              (body.message as string) ?? t("errors.addressSaveFailedToast"),
-            );
-          }
-        },
-      );
+      void updateQuote(quoteId, { name, addressId: value }).then(({ ok, body }) => {
+        if (!ok || !body.success) {
+          toast.error((body.message as string) ?? t("errors.addressSaveFailedToast"));
+        }
+      });
     },
     [isReadonly, quoteId, t],
   );
@@ -662,19 +319,45 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       if (!quoteId || isReadonly || value == null) return;
       const name = projectNameRef.current.trim();
       if (name.length === 0) return;
-      void updateQuote(quoteId, { name, userAddressId: value }).then(
-        ({ ok, body }) => {
-          if (!ok || !body.success) {
-            toast.error(
-              (body.message as string) ??
-                t("errors.userAddressSaveFailedToast"),
-            );
-          }
-        },
-      );
+      void updateQuote(quoteId, { name, userAddressId: value }).then(({ ok, body }) => {
+        if (!ok || !body.success) {
+          toast.error((body.message as string) ?? t("errors.userAddressSaveFailedToast"));
+        }
+      });
     },
     [isReadonly, quoteId, t],
   );
+
+  const handleDrop = useCallback(async () => {
+    if (!quoteId || transitioning) return;
+    setTransitioning(true);
+    try {
+      const { ok, body } = await dropQuote(quoteId);
+      if (ok && body.success) { setQuoteState("drop"); }
+      else { toast.error((body.message as string) ?? t("dropFailedToast")); }
+    } finally { setTransitioning(false); }
+  }, [quoteId, transitioning, t]);
+
+  const handleContinue = useCallback(async () => {
+    if (!quoteId || transitioning) return;
+    setTransitioning(true);
+    try {
+      const { ok, body } = await continueQuote(quoteId);
+      if (ok && body.success) { setQuoteState("draft"); }
+      else { toast.error((body.message as string) ?? t("continueFailedToast")); }
+    } finally { setTransitioning(false); }
+  }, [quoteId, transitioning, t]);
+
+  const handleExport = useCallback(async () => {
+    if (!quoteId || isExporting) return;
+    setIsExporting(true);
+    try {
+      await exportQuotePdf(quoteId);
+    } catch (err) {
+      console.error("export quote pdf failed", err);
+      toast.error(t("exportFailedToast"));
+    } finally { setIsExporting(false); }
+  }, [quoteId, isExporting, t]);
 
   // ────────────────────────────────────────────────────────────
   // Render
@@ -700,9 +383,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     !creating;
 
   const showDropButton =
-    !isCustomer &&
-    !isCreate &&
-    (quoteState === "draft" || quoteState === "sent");
+    !isCustomer && !isCreate && (quoteState === "draft" || quoteState === "sent");
   const showContinueButton = !isCustomer && !isCreate && quoteState === "drop";
 
   return (
@@ -737,14 +418,30 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             {t("exportButton")}
           </Button>
         )}
+        {!isCreate && !isReadonly && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setSaveTemplateOpen(true)}
+          >
+            <BookmarkIcon className="size-4" />
+            {t("saveAsTemplateButton")}
+          </Button>
+        )}
+        {!isCreate && !isCustomer && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setCreateScheduleOpen(true)}
+          >
+            <CalendarIcon className="size-4" />
+            Créer un échéancier
+          </Button>
+        )}
         {showDropButton && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button
-                type="button"
-                variant="destructive"
-                disabled={transitioning}
-              >
+              <Button type="button" variant="destructive" disabled={transitioning}>
                 {t("dropButton")}
               </Button>
             </AlertDialogTrigger>
@@ -756,9 +453,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>
-                  {tCommon("actions.cancel")}
-                </AlertDialogCancel>
+                <AlertDialogCancel>{tCommon("actions.cancel")}</AlertDialogCancel>
                 <AlertDialogAction variant="destructive" onClick={handleDrop}>
                   {t("dropDialog.confirm")}
                 </AlertDialogAction>
@@ -767,11 +462,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           </AlertDialog>
         )}
         {showContinueButton && (
-          <Button
-            type="button"
-            onClick={handleContinue}
-            disabled={transitioning}
-          >
+          <Button type="button" onClick={handleContinue} disabled={transitioning}>
             {t("continueButton")}
           </Button>
         )}
@@ -789,9 +480,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
               className={`justify-start rounded-md border px-3 py-2 text-sm font-normal ${
                 step === index ? "bg-muted" : ""
               }`}
-              onClick={() => {
-                if (!isCreate) setStep(index);
-              }}
+              onClick={() => { if (!isCreate) setStep(index); }}
               disabled={isCreate}
             >
               {t("stepLabel", { n: index + 1, label: tSteps(`${key}.label`) })}
@@ -809,6 +498,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             clients={clients}
             addresses={addresses}
             userAddresses={userAddresses}
+            userId={userId}
             nameErrors={errors.name}
             clientErrors={errors.client_id}
             addressErrors={errors.address_id}
@@ -817,6 +507,9 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             onClientIdChange={handleClientIdChange}
             onAddressIdChange={handleAddressIdChange}
             onUserAddressIdChange={handleUserAddressIdChange}
+            onClientCreated={refreshClients}
+            onUserAddressCreated={refreshUserAddresses}
+            onClientAddressCreated={refreshClientAddresses}
           />
         )}
 
@@ -832,8 +525,16 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             onQuantityChange={handleQuantityChange}
             onUnitPriceChange={handleUnitPriceChange}
             onTaxChange={handleTaxChange}
+            onDescriptionChange={handleDescriptionChange}
+            onOptionChange={handleOptionChange}
             onRemoveItem={handleRemoveItem}
             onAddItem={handleAddItem}
+            onAddChildItem={handleAddChildItem}
+            onSublineAdd={!isCreate && !isReadonly ? handleSublineAdd : undefined}
+            onSublineChange={!isCreate && !isReadonly ? handleSublineChange : undefined}
+            onSublineRemove={!isCreate && !isReadonly ? handleSublineRemove : undefined}
+            onSaveLineAsTemplate={!isCreate && !isReadonly ? handleSaveLineAsTemplate : undefined}
+            onAddItemFromTemplate={!isCreate && !isReadonly ? handleAddItemFromTemplate : undefined}
           />
         )}
 
@@ -862,9 +563,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           ) : step < STEP_KEYS.length - 1 ? (
             <Button
               type="button"
-              onClick={() =>
-                setStep((s) => Math.min(STEP_KEYS.length - 1, s + 1))
-              }
+              onClick={() => setStep((s) => Math.min(STEP_KEYS.length - 1, s + 1))}
             >
               {t("next")}
             </Button>
@@ -879,6 +578,20 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           )}
         </div>
       </CardFooter>
+
+      <SaveTemplateDialog
+        open={saveTemplateOpen}
+        onOpenChange={setSaveTemplateOpen}
+        defaultName={projectName}
+        onSave={handleSaveQuoteAsTemplate}
+      />
+
+      <CreateScheduleDialog
+        open={createScheduleOpen}
+        onOpenChange={setCreateScheduleOpen}
+        initialQuoteId={quoteId}
+        lockQuote
+      />
     </Card>
   );
 }
