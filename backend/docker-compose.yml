@@ -1,6 +1,16 @@
 x-service-build: &service-build
   context: .
   dockerfile: Dockerfile
+  # Layer-cache directives, consumed only in CI. The workflow sets
+  # COMPOSE_BAKE=true so compose delegates the build to `buildx bake`, which
+  # honours cache_from/cache_to and scopes the GitHub Actions cache per bake
+  # target (i.e. per service) automatically — no cross-service collisions.
+  # Locally BUILDX_CACHE is unset → both lists resolve empty and the build is
+  # unchanged.
+  cache_from:
+    - ${BUILDX_CACHE:-}
+  cache_to:
+    - ${BUILDX_CACHE:-}
 
 x-postgres-build: &postgres-build
   context: .
