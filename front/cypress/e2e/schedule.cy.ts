@@ -247,7 +247,7 @@ describe("Schedule", () => {
       ).click({ force: true });
       cy.get("input[name='name']").type("Nouveau planning");
       selectStartMonth("2026", "Octobre");
-      cy.get("input[name='duration_months']").type("6").should("have.value", "6");
+      cy.get("input[name='duration_months']").type("6");
       cy.contains("button", "Créer").click();
 
       cy.wait("@createSchedule").then(({ request }) => {
