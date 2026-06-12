@@ -50,6 +50,18 @@ jobs:
             context: ./backend
             dockerfile: ./backend/Dockerfile
             build_args: "SERVICE_NAME=schedule"
+          - name: subscription
+            context: ./backend
+            dockerfile: ./backend/Dockerfile
+            build_args: "SERVICE_NAME=subscription"
+          - name: template
+            context: ./backend
+            dockerfile: ./backend/Dockerfile
+            build_args: "SERVICE_NAME=template"
+          - name: email
+            context: ./backend
+            dockerfile: ./backend/Dockerfile
+            build_args: "SERVICE_NAME=email"
     steps:
       - uses: actions/checkout@v6
 
