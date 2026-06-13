@@ -6,6 +6,7 @@ import PageBreadcrumb from "@/components/custom/page-breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSchedule, updateScheduleCell } from "@/lib/services/schedules";
 import { exportSchedulePdf } from "@/lib/services/export";
+import GenerateInvoiceFromScheduleDialog from "@/components/invoice/generate-invoice-from-schedule-dialog";
 import {
   type BackendScheduleDetails,
   type ScheduleBalanceState,
@@ -251,6 +252,7 @@ export default function ScheduleDetailsPage() {
   >({});
   const [cellErrors, setCellErrors] = useState<Record<string, string>>({});
   const [isExporting, setIsExporting] = useState(false);
+  const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
 
   const breadcrumbs = useMemo(
     () => [
@@ -562,6 +564,15 @@ export default function ScheduleDetailsPage() {
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <CardTitle>Échéancier {scheduleId}</CardTitle>
           <div className="flex items-center gap-2">
+            {schedule?.status === "VALID" ? (
+              <Button
+                type="button"
+                onClick={() => setInvoiceDialogOpen(true)}
+                disabled={loading || !scheduleId}
+              >
+                Générer une facture
+              </Button>
+            ) : null}
             <Button
               type="button"
               variant="outline"
@@ -813,6 +824,16 @@ export default function ScheduleDetailsPage() {
           ) : null}
         </CardContent>
       </Card>
+
+      {schedule ? (
+        <GenerateInvoiceFromScheduleDialog
+          open={invoiceDialogOpen}
+          onOpenChange={setInvoiceDialogOpen}
+          scheduleId={scheduleId}
+          durationMonths={schedule.duration_months}
+          columnTotals={schedule.column_totals}
+        />
+      ) : null}
     </>
   );
 }

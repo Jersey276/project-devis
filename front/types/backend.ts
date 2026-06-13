@@ -1,4 +1,8 @@
-export type BackendQuoteState = "draft" | "sent" | "validated" | "drop";
+export type BackendQuoteState =
+  | "draft"
+  | "negociation"
+  | "validated"
+  | "drop";
 
 export type BackendQuote = {
   quote_id: string;
@@ -193,6 +197,74 @@ export type BackendScheduleDetails = {
   column_totals: BackendScheduleColumnTotal[];
   quote_total_cents: number;
   planned_total_cents: number;
+};
+
+// ─── Invoice ─────────────────────────────────────────────────────────────────
+
+export type BackendInvoiceStatus = "DRAFT" | "ISSUED" | "PAID" | "CANCELLED";
+
+export type BackendInvoiceSummary = {
+  invoice_id: string;
+  invoice_number: string;
+  status: BackendInvoiceStatus;
+  quote_id: string;
+  schedule_id: string;
+  issued_at: string;
+  due_date: string;
+  total_ttc_cents: number;
+};
+
+export type BackendInvoiceParty = {
+  company: string;
+  first_name: string;
+  last_name: string;
+  siren: string;
+  vat: string;
+  email: string;
+  phone: string;
+  logo_url: string;
+  street: string;
+  additional_street: string;
+  zip_code: string;
+  city: string;
+};
+
+export type BackendInvoiceLine = {
+  quote_line_id: string;
+  name: string;
+  unit: string;
+  quantity: string;
+  unit_price_cents: number;
+  line_ht_cents: number;
+  tax_id: number;
+  tax_rate: string;
+  tax_label: string;
+};
+
+export type BackendInvoiceVatLine = {
+  tax_rate: string;
+  base_ht_cents: number;
+  vat_cents: number;
+};
+
+export type BackendInvoiceDetails = {
+  invoice_id: string;
+  quote_id: string;
+  schedule_id: string;
+  billed_month_indexes: number[];
+  status: BackendInvoiceStatus;
+  invoice_number: string;
+  issued_at: string;
+  sale_date: string;
+  due_date: string;
+  issuer: BackendInvoiceParty;
+  client: BackendInvoiceParty;
+  lines: BackendInvoiceLine[];
+  vat_breakdown: BackendInvoiceVatLine[];
+  total_ht_cents: number;
+  total_vat_cents: number;
+  total_ttc_cents: number;
+  vat_exempt: boolean;
 };
 
 export type ScheduleBalanceState = "under" | "balanced" | "over";

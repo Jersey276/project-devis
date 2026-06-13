@@ -14,6 +14,7 @@ import {
   CreditCardIcon,
   BarChart2Icon,
   CoinsIcon,
+  ReceiptEuroIcon,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "../ui/button";
@@ -72,12 +73,12 @@ const items: SidebarItem[] = [
     icon: QuoteIcon,
     modes: ["provider"],
   },
-  // {
-  //   key: "invoices",
-  //   url: "/invoice",
-  //   icon: ReceiptEuroIcon,
-  //   modes: ["provider"],
-  // },
+  {
+    key: "invoices",
+    url: "/invoice",
+    icon: ReceiptEuroIcon,
+    modes: ["provider"],
+  },
   {
     key: "clients",
     url: "/clients",

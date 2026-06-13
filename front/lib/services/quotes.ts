@@ -97,6 +97,18 @@ export async function continueQuote(quoteId: string): Promise<ApiResult> {
   });
 }
 
+export async function validateQuote(quoteId: string): Promise<ApiResult> {
+  return apiFetch(`/api/quotes/${encodeURIComponent(quoteId)}/validate`, {
+    method: "POST",
+  });
+}
+
+export async function negociateQuote(quoteId: string): Promise<ApiResult> {
+  return apiFetch(`/api/quotes/${encodeURIComponent(quoteId)}/negociate`, {
+    method: "POST",
+  });
+}
+
 export async function createLine(
   quoteId: string,
   draft: LineDraft,

@@ -141,6 +141,34 @@
     "invite": {}
   },
   "quote": {
+    "stateDropdown": {
+      "trigger": "Changer l'état",
+      "error": "Le changement d'état a échoué.",
+      "transitions": {
+        "validate": "Valider",
+        "negociate": "Mettre en négociation",
+        "drop": "Refuser",
+        "continue": "Reprendre"
+      },
+      "confirm": {
+        "cancel": "Annuler",
+        "validate": {
+          "title": "Valider ce devis ?",
+          "description": "La validation verrouille le devis et permet de générer une facture. Cette action est définitive.",
+          "confirm": "Valider"
+        },
+        "negociate": {
+          "title": "Mettre ce devis en négociation ?",
+          "description": "Le devis sera envoyé au client par email (avec le PDF) et passera en état « En négociation ».",
+          "confirm": "Mettre en négociation"
+        },
+        "drop": {
+          "title": "Refuser ce devis ?",
+          "description": "Le devis sera marqué comme abandonné. Vous pourrez le reprendre ensuite.",
+          "confirm": "Refuser"
+        }
+      }
+    },
     "list": {
       "title": "Devis",
       "newButton": "Nouveau devis",
@@ -174,15 +202,6 @@
       "exportFailedToast": "Échec de l'export.",
       "saveAsTemplateButton": "Enregistrer comme template",
       "saveAsTemplateSuccessToast": "Template enregistré.",
-      "dropButton": "Abandonner",
-      "dropDialog": {
-        "title": "Abandonner ce devis ?",
-        "description": "Le devis ne pourra plus être modifié. Vous pourrez le réactiver via le bouton Continuer.",
-        "confirm": "Confirmer"
-      },
-      "dropFailedToast": "Impossible d'abandonner le devis.",
-      "continueButton": "Continuer",
-      "continueFailedToast": "Impossible de réactiver le devis.",
       "stepLabel": "Étape {n} · {label}",
       "prev": "Précédent",
       "next": "Suivant",
@@ -288,7 +307,7 @@
   "status": {
     "quote": {
       "draft": "Brouillon",
-      "sent": "Envoyé",
+      "negociation": "En négociation",
       "validated": "Validé",
       "drop": "Abandonné",
       "archived": "Archivé"
@@ -414,12 +433,79 @@
     }
   },
   "invoice": {
+    "status": {
+      "DRAFT": "Brouillon",
+      "ISSUED": "Émise",
+      "PAID": "Payée",
+      "CANCELLED": "Annulée"
+    },
     "list": {
       "title": "Factures",
-      "placeholder": "Page des factures"
+      "empty": "Aucune facture.",
+      "loadError": "Impossible de charger les factures.",
+      "pdfError": "Export PDF impossible.",
+      "actionError": "L'action a échoué.",
+      "columns": {
+        "number": "Numéro",
+        "status": "Statut",
+        "quote": "Devis",
+        "dueDate": "Échéance",
+        "totalTtc": "Total TTC",
+        "actions": "Actions"
+      },
+      "actions": {
+        "open": "Ouvrir",
+        "downloadPdf": "Télécharger le PDF",
+        "markPaid": "Marquer payée",
+        "cancel": "Annuler"
+      }
     },
     "detail": {
-      "title": "Détail de la facture {id}"
+      "titleNumbered": "Facture N° {number}",
+      "titleDraft": "Facture (brouillon)",
+      "loading": "Chargement…",
+      "loadError": "Impossible de charger la facture.",
+      "notFound": "Facture introuvable.",
+      "pdfError": "Export PDF impossible.",
+      "actionError": "L'action a échoué.",
+      "downloadPdf": "Télécharger le PDF",
+      "markPaid": "Marquer payée",
+      "cancel": "Annuler",
+      "issuer": "Émetteur",
+      "client": "Client",
+      "saleDate": "Date de vente",
+      "dueDate": "Échéance",
+      "issuedAt": "Émise le",
+      "lines": {
+        "name": "Désignation",
+        "quantity": "Qté",
+        "unit": "Unité",
+        "unitPrice": "PU HT",
+        "vat": "TVA",
+        "totalHt": "Total HT"
+      },
+      "totals": {
+        "ht": "Total HT",
+        "vat": "Total TVA",
+        "ttc": "Total TTC"
+      },
+      "vatExemptNotice": "TVA non applicable, art. 293 B du CGI."
+    },
+    "generateFromSchedule": {
+      "title": "Générer une facture",
+      "description": "Sélectionnez les mois de l'échéancier à facturer.",
+      "month": "Mois {index}",
+      "selectedTotal": "Total sélectionné",
+      "issueNow": "Émettre immédiatement (attribue le numéro de facture)",
+      "cancel": "Annuler",
+      "submit": "Générer",
+      "submitting": "Génération…",
+      "error": "La génération de la facture a échoué."
+    },
+    "generateFromQuote": {
+      "generate": "Générer une facture",
+      "submitting": "Génération…",
+      "error": "La génération de la facture a échoué."
     }
   },
   "admin": {

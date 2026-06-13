@@ -13,3 +13,10 @@ export async function exportSchedulePdf(scheduleId: string): Promise<void> {
     `echeancier-${scheduleId}.pdf`,
   );
 }
+
+export async function exportInvoicePdf(invoiceId: string): Promise<void> {
+  await downloadBlob(
+    `/api/export/invoices/${encodeURIComponent(invoiceId)}`,
+    `facture-${invoiceId}.pdf`,
+  );
+}

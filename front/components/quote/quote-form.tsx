@@ -15,17 +15,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
   DownloadIcon,
   BookmarkIcon,
   Loader2Icon,
@@ -35,14 +24,14 @@ import QuoteStepBasicInfo from "@/components/quote/steps/quote-step-basic-info";
 import QuoteStepItems from "@/components/quote/steps/quote-step-items";
 import QuoteStepSummary from "@/components/quote/steps/quote-step-summary";
 import {
-  continueQuote,
   createLine,
   createQuote,
-  dropQuote,
   getQuote,
   updateQuote,
 } from "@/lib/services/quotes";
 import { exportQuotePdf } from "@/lib/services/export";
+import GenerateInvoiceFromQuoteButton from "@/components/invoice/generate-invoice-from-quote-button";
+import QuoteStateDropdown from "@/components/quote/quote-state-dropdown";
 import { listTemplateLines } from "@/lib/services/templates";
 import { fieldErrorsFromBody, type FieldErrors } from "@/lib/api";
 import { useMode } from "@/lib/mode-context";
@@ -74,7 +63,7 @@ const STATE_BADGE_VARIANT: Record<
   "default" | "secondary" | "destructive"
 > = {
   draft: "secondary",
-  sent: "default",
+  negociation: "default",
   validated: "default",
   drop: "destructive",
 };
@@ -116,7 +105,6 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [creating, setCreating] = useState(false);
   const [quoteState, setQuoteState] = useState<BackendQuoteState>("draft");
-  const [transitioning, setTransitioning] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [createScheduleOpen, setCreateScheduleOpen] = useState(false);
@@ -330,26 +318,6 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     [isReadonly, quoteId, t],
   );
 
-  const handleDrop = useCallback(async () => {
-    if (!quoteId || transitioning) return;
-    setTransitioning(true);
-    try {
-      const { ok, body } = await dropQuote(quoteId);
-      if (ok && body.success) { setQuoteState("drop"); }
-      else { toast.error((body.message as string) ?? t("dropFailedToast")); }
-    } finally { setTransitioning(false); }
-  }, [quoteId, transitioning, t]);
-
-  const handleContinue = useCallback(async () => {
-    if (!quoteId || transitioning) return;
-    setTransitioning(true);
-    try {
-      const { ok, body } = await continueQuote(quoteId);
-      if (ok && body.success) { setQuoteState("draft"); }
-      else { toast.error((body.message as string) ?? t("continueFailedToast")); }
-    } finally { setTransitioning(false); }
-  }, [quoteId, transitioning, t]);
-
   const handleExport = useCallback(async () => {
     if (!quoteId || isExporting) return;
     setIsExporting(true);
@@ -384,10 +352,6 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     !!userAddressId &&
     !creating;
 
-  const showDropButton =
-    !isCustomer && !isCreate && (quoteState === "draft" || quoteState === "sent");
-  const showContinueButton = !isCustomer && !isCreate && quoteState === "drop";
-
   return (
     <Card data-quote-state={quoteState}>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
@@ -420,6 +384,13 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             {t("exportButton")}
           </Button>
         )}
+        {!isCreate && quoteId ? (
+          <GenerateInvoiceFromQuoteButton
+            quoteId={quoteId}
+            validated={quoteState === "validated"}
+            onError={(message) => toast.error(message)}
+          />
+        ) : null}
         {!isCreate && !isReadonly && (
           <Button
             type="button"
@@ -440,33 +411,13 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             Créer un échéancier
           </Button>
         )}
-        {showDropButton && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button type="button" variant="destructive" disabled={transitioning}>
-                {t("dropButton")}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t("dropDialog.title")}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {t("dropDialog.description")}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{tCommon("actions.cancel")}</AlertDialogCancel>
-                <AlertDialogAction variant="destructive" onClick={handleDrop}>
-                  {t("dropDialog.confirm")}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
-        {showContinueButton && (
-          <Button type="button" onClick={handleContinue} disabled={transitioning}>
-            {t("continueButton")}
-          </Button>
+        {!isCustomer && !isCreate && quoteId && (
+          <QuoteStateDropdown
+            quoteId={quoteId}
+            state={quoteState}
+            onChanged={(next) => setQuoteState(next)}
+            onError={(message) => toast.error(message)}
+          />
         )}
       </CardHeader>
 
