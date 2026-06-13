@@ -1,0 +1,284 @@
+package controllers
+
+import (
+	"net/http"
+	"os"
+
+	invoice "gateway/invoice"
+
+	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+)
+
+const (
+	InvoiceCodeNotFound            int32 = 1001
+	InvoiceCodeAlreadyExists       int32 = 1002
+	InvoiceCodeInvalidInput        int32 = 1003
+	InvoiceCodeSourceNotEligible   int32 = 4001
+	InvoiceCodeQuoteHasSchedule    int32 = 4002
+	InvoiceCodeInvoiceFinalized    int32 = 4003
+	InvoiceCodeMonthsAlreadyBilled int32 = 4004
+	InvoiceCodeDependencyMissing   int32 = 4005
+	InvoiceCodeInternalError       int32 = 2001
+)
+
+func invoiceValidationErrors(errs []*invoice.ValidationError) []FieldError {
+	out := make([]FieldError, len(errs))
+	for i, e := range errs {
+		out[i] = FieldError{Field: e.Field, Message: e.Message}
+	}
+	return out
+}
+
+var invoiceErrors = &serviceErrors{
+	codes: map[int32]codeMapping{
+		InvoiceCodeNotFound:            {http.StatusNotFound, "Facture introuvable."},
+		InvoiceCodeAlreadyExists:       {http.StatusConflict, "Cette facture existe déjà."},
+		InvoiceCodeInvalidInput:        {http.StatusBadRequest, "Données invalides."},
+		InvoiceCodeSourceNotEligible:   {http.StatusUnprocessableEntity, "La source n'est pas éligible à la facturation."},
+		InvoiceCodeQuoteHasSchedule:    {http.StatusConflict, "Un échéancier existe pour ce devis : facturez depuis l'échéancier."},
+		InvoiceCodeInvoiceFinalized:    {http.StatusConflict, "Cette facture est émise et ne peut plus être modifiée."},
+		InvoiceCodeMonthsAlreadyBilled: {http.StatusConflict, "Certains mois sélectionnés sont déjà facturés."},
+		InvoiceCodeDependencyMissing:   {http.StatusUnprocessableEntity, "La facture fait référence à un client ou une adresse introuvable."},
+		InvoiceCodeInternalError:       {http.StatusInternalServerError, "Une erreur interne est survenue."},
+	},
+	unavailableMessage: "Service de facturation indisponible.",
+}
+
+// InvoicesRoutes wires the /invoices API group against the invoice gRPC service.
+func InvoicesRoutes(r *gin.RouterGroup) {
+	address := os.Getenv("INVOICE_SERVICE_ADDRESS")
+	if address == "" {
+		address = "localhost:50059"
+	}
+	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic("failed to connect to invoice gRPC server: " + err.Error())
+	}
+	client := invoice.NewInvoiceServiceClient(conn)
+
+	r.GET("", func(c *gin.Context) { ListInvoices(c, client) })
+	r.POST("/from-schedule", func(c *gin.Context) { CreateInvoiceFromSchedule(c, client) })
+	r.POST("/from-quote", func(c *gin.Context) { CreateInvoiceFromQuote(c, client) })
+
+	one := r.Group("/:id")
+	one.GET("", func(c *gin.Context) { GetInvoice(c, client) })
+	one.POST("/issue", func(c *gin.Context) { IssueInvoice(c, client) })
+	one.POST("/cancel", func(c *gin.Context) { CancelInvoice(c, client) })
+	one.POST("/paid", func(c *gin.Context) { MarkInvoicePaid(c, client) })
+}
+
+func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient) {
+	resp, err := client.ListInvoices(c.Request.Context(), &invoice.ListInvoicesRequest{
+		UserId:  userIDFromCtx(c),
+		QuoteId: c.Query("quote_id"),
+	})
+	if err != nil {
+		invoiceErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		invoiceErrors.reply(c, resp.Code)
+		return
+	}
+	out := make([]gin.H, 0, len(resp.Invoices))
+	for _, in := range resp.Invoices {
+		out = append(out, gin.H{
+			"invoice_id":      in.InvoiceId,
+			"invoice_number":  in.InvoiceNumber,
+			"status":          in.Status,
+			"quote_id":        in.QuoteId,
+			"schedule_id":     in.ScheduleId,
+			"issued_at":       in.IssuedAt,
+			"due_date":        in.DueDate,
+			"total_ttc_cents": in.TotalTtcCents,
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "invoices": out})
+}
+
+func CreateInvoiceFromSchedule(c *gin.Context, client invoice.InvoiceServiceClient) {
+	var input struct {
+		ScheduleID   string  `json:"schedule_id" binding:"required"`
+		MonthIndexes []int32 `json:"month_indexes" binding:"required"`
+		SaleDate     string  `json:"sale_date"`
+		DueInDays    int32   `json:"due_in_days"`
+		IssueNow     bool    `json:"issue_now"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+	resp, err := client.CreateInvoiceFromSchedule(c.Request.Context(), &invoice.CreateInvoiceFromScheduleRequest{
+		UserId:       userIDFromCtx(c),
+		ScheduleId:   input.ScheduleID,
+		MonthIndexes: input.MonthIndexes,
+		SaleDate:     input.SaleDate,
+		DueInDays:    input.DueInDays,
+		IssueNow:     input.IssueNow,
+	})
+	replyCreate(c, resp, err)
+}
+
+func CreateInvoiceFromQuote(c *gin.Context, client invoice.InvoiceServiceClient) {
+	var input struct {
+		QuoteID   string `json:"quote_id" binding:"required"`
+		SaleDate  string `json:"sale_date"`
+		DueInDays int32  `json:"due_in_days"`
+		IssueNow  bool   `json:"issue_now"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+	resp, err := client.CreateInvoiceFromQuote(c.Request.Context(), &invoice.CreateInvoiceFromQuoteRequest{
+		UserId:    userIDFromCtx(c),
+		QuoteId:   input.QuoteID,
+		SaleDate:  input.SaleDate,
+		DueInDays: input.DueInDays,
+		IssueNow:  input.IssueNow,
+	})
+	replyCreate(c, resp, err)
+}
+
+func IssueInvoice(c *gin.Context, client invoice.InvoiceServiceClient) {
+	resp, err := client.IssueInvoice(c.Request.Context(), &invoice.IssueInvoiceRequest{
+		InvoiceId: c.Param("id"),
+		UserId:    userIDFromCtx(c),
+	})
+	replyCreate(c, resp, err)
+}
+
+func GetInvoice(c *gin.Context, client invoice.InvoiceServiceClient) {
+	resp, err := client.GetInvoice(c.Request.Context(), &invoice.GetInvoiceRequest{
+		InvoiceId: c.Param("id"),
+		UserId:    userIDFromCtx(c),
+	})
+	if err != nil {
+		invoiceErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		invoiceErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "invoice": invoiceDetailsToJSON(resp.Invoice)})
+}
+
+func CancelInvoice(c *gin.Context, client invoice.InvoiceServiceClient) {
+	resp, err := client.CancelInvoice(c.Request.Context(), &invoice.CancelInvoiceRequest{
+		InvoiceId: c.Param("id"),
+		UserId:    userIDFromCtx(c),
+	})
+	replyGeneric(c, resp, err)
+}
+
+func MarkInvoicePaid(c *gin.Context, client invoice.InvoiceServiceClient) {
+	resp, err := client.MarkInvoicePaid(c.Request.Context(), &invoice.MarkInvoicePaidRequest{
+		InvoiceId: c.Param("id"),
+		UserId:    userIDFromCtx(c),
+	})
+	replyGeneric(c, resp, err)
+}
+
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
+func replyCreate(c *gin.Context, resp *invoice.CreateInvoiceResponse, err error) {
+	if err != nil {
+		invoiceErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		if len(resp.ValidationErrors) > 0 {
+			invoiceErrors.replyWithValidation(c, resp.Code, invoiceValidationErrors(resp.ValidationErrors))
+		} else {
+			invoiceErrors.reply(c, resp.Code)
+		}
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{
+		"success":        true,
+		"invoice_id":     resp.InvoiceId,
+		"invoice_number": resp.InvoiceNumber,
+	})
+}
+
+func replyGeneric(c *gin.Context, resp *invoice.GenericResponse, err error) {
+	if err != nil {
+		invoiceErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		invoiceErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func invoicePartyToJSON(p *invoice.InvoiceParty) gin.H {
+	if p == nil {
+		return gin.H{}
+	}
+	return gin.H{
+		"company":           p.Company,
+		"first_name":        p.FirstName,
+		"last_name":         p.LastName,
+		"siren":             p.Siren,
+		"vat":               p.Vat,
+		"email":             p.Email,
+		"phone":             p.Phone,
+		"logo_url":          p.LogoUrl,
+		"street":            p.Street,
+		"additional_street": p.AdditionalStreet,
+		"zip_code":          p.ZipCode,
+		"city":              p.City,
+	}
+}
+
+func invoiceDetailsToJSON(d *invoice.InvoiceDetails) gin.H {
+	if d == nil {
+		return gin.H{}
+	}
+	lines := make([]gin.H, 0, len(d.Lines))
+	for _, l := range d.Lines {
+		lines = append(lines, gin.H{
+			"quote_line_id":    l.QuoteLineId,
+			"name":             l.Name,
+			"unit":             l.Unit,
+			"quantity":         l.Quantity,
+			"unit_price_cents": l.UnitPriceCents,
+			"line_ht_cents":    l.LineHtCents,
+			"tax_id":           l.TaxId,
+			"tax_rate":         l.TaxRate,
+			"tax_label":        l.TaxLabel,
+		})
+	}
+	vat := make([]gin.H, 0, len(d.VatBreakdown))
+	for _, v := range d.VatBreakdown {
+		vat = append(vat, gin.H{
+			"tax_rate":      v.TaxRate,
+			"base_ht_cents": v.BaseHtCents,
+			"vat_cents":     v.VatCents,
+		})
+	}
+	return gin.H{
+		"invoice_id":           d.InvoiceId,
+		"quote_id":             d.QuoteId,
+		"schedule_id":          d.ScheduleId,
+		"billed_month_indexes": d.BilledMonthIndexes,
+		"status":               d.Status,
+		"invoice_number":       d.InvoiceNumber,
+		"issued_at":            d.IssuedAt,
+		"sale_date":            d.SaleDate,
+		"due_date":             d.DueDate,
+		"issuer":               invoicePartyToJSON(d.Issuer),
+		"client":               invoicePartyToJSON(d.Client),
+		"lines":                lines,
+		"vat_breakdown":        vat,
+		"total_ht_cents":       d.TotalHtCents,
+		"total_vat_cents":      d.TotalVatCents,
+		"total_ttc_cents":      d.TotalTtcCents,
+		"vat_exempt":           d.VatExempt,
+	}
+}

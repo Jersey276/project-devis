@@ -58,6 +58,7 @@ func ExportRoutes(r *gin.RouterGroup) {
 
 	r.GET("/quotes/:id", func(c *gin.Context) { ExportQuote(c, exportClient) })
 	r.GET("/schedules/:id", func(c *gin.Context) { ExportSchedule(c, exportClient) })
+	r.GET("/invoices/:id", func(c *gin.Context) { ExportInvoice(c, exportClient) })
 }
 
 func ExportQuote(c *gin.Context, client export.ExportServiceClient) {
@@ -95,6 +96,29 @@ func ExportSchedule(c *gin.Context, exportClient export.ExportServiceClient) {
 	filename := exportResp.Filename
 	if strings.TrimSpace(filename) == "" {
 		filename = fmt.Sprintf("echeancier-%s.pdf", scheduleID)
+	}
+	c.Header("Content-Disposition", contentDispositionAttachment(filename))
+	c.Data(http.StatusOK, "application/pdf", exportResp.Pdf)
+}
+
+func ExportInvoice(c *gin.Context, exportClient export.ExportServiceClient) {
+	invoiceID := c.Param("id")
+	exportResp, err := exportClient.ExportInvoice(c.Request.Context(), &export.ExportInvoiceRequest{
+		InvoiceId: invoiceID,
+		UserId:    userIDFromCtx(c),
+	})
+	if err != nil {
+		exportErrors.unavailable(c)
+		return
+	}
+	if !exportResp.Success {
+		exportErrors.reply(c, exportResp.Code)
+		return
+	}
+
+	filename := exportResp.Filename
+	if strings.TrimSpace(filename) == "" {
+		filename = fmt.Sprintf("facture-%s.pdf", invoiceID)
 	}
 	c.Header("Content-Disposition", contentDispositionAttachment(filename))
 	c.Data(http.StatusOK, "application/pdf", exportResp.Pdf)
