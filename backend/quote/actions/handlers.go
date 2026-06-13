@@ -51,8 +51,12 @@ func (s *Server) ContinueQuote(ctx context.Context, req *quoteGrpc.ContinueQuote
 	return quote.Continue(ctx, s.db, req)
 }
 
-func (s *Server) SendQuote(ctx context.Context, req *quoteGrpc.SendQuoteRequest) (*quoteGrpc.SendQuoteResponse, error) {
-	return quote.Send(ctx, s.db, req)
+func (s *Server) ValidateQuote(ctx context.Context, req *quoteGrpc.ValidateQuoteRequest) (*quoteGrpc.GenericResponse, error) {
+	return quote.Validate(ctx, s.db, req)
+}
+
+func (s *Server) NegociateQuote(ctx context.Context, req *quoteGrpc.NegociateQuoteRequest) (*quoteGrpc.NegociateQuoteResponse, error) {
+	return quote.Negociate(ctx, s.db, req)
 }
 
 // ─── Line ────────────────────────────────────────────────────────────────────

@@ -16,7 +16,8 @@ service QuoteService {
     rpc TrashQuotes(TrashQuotesRequest) returns (GenericResponse);
     rpc DropQuote(DropQuoteRequest) returns (GenericResponse);
     rpc ContinueQuote(ContinueQuoteRequest) returns (GenericResponse);
-    rpc SendQuote(SendQuoteRequest) returns (SendQuoteResponse);
+    rpc ValidateQuote(ValidateQuoteRequest) returns (GenericResponse);
+    rpc NegociateQuote(NegociateQuoteRequest) returns (NegociateQuoteResponse);
 
     // Line
     rpc CreateQuoteLine(CreateQuoteLineRequest) returns (CreateQuoteLineResponse);
@@ -52,6 +53,7 @@ enum QuoteState {
     QUOTE_STATE_SENT        = 2;
     QUOTE_STATE_VALIDATED   = 3;
     QUOTE_STATE_DROP        = 4;
+    QUOTE_STATE_NEGOCIATION = 5;
 }
 
 message Quote {
@@ -147,12 +149,19 @@ message ContinueQuoteRequest {
     string user_id = 2;
 }
 
-message SendQuoteRequest {
-    string quote_id  = 1;
-    string user_id   = 2;
+message ValidateQuoteRequest {
+    string quote_id = 1;
+    string user_id = 2;
 }
 
-message SendQuoteResponse {
+message NegociateQuoteRequest {
+    string quote_id = 1;
+    string user_id = 2;
+}
+
+// NegociateQuoteResponse carries the client_id and quote name so the gateway can
+// notify the client by email (sending the quote is part of entering negotiation).
+message NegociateQuoteResponse {
     bool   success   = 1;
     int32  code      = 2;
     string client_id = 3;
