@@ -23,6 +23,7 @@ const (
 	ScheduleService_UpdateScheduleCell_FullMethodName = "/schedule.ScheduleService/UpdateScheduleCell"
 	ScheduleService_ValidateSchedule_FullMethodName   = "/schedule.ScheduleService/ValidateSchedule"
 	ScheduleService_GetSchedule_FullMethodName        = "/schedule.ScheduleService/GetSchedule"
+	ScheduleService_GetScheduleCells_FullMethodName   = "/schedule.ScheduleService/GetScheduleCells"
 	ScheduleService_ListSchedules_FullMethodName      = "/schedule.ScheduleService/ListSchedules"
 )
 
@@ -34,6 +35,7 @@ type ScheduleServiceClient interface {
 	UpdateScheduleCell(ctx context.Context, in *UpdateScheduleCellRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	ValidateSchedule(ctx context.Context, in *ValidateScheduleRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	GetSchedule(ctx context.Context, in *GetScheduleRequest, opts ...grpc.CallOption) (*GetScheduleResponse, error)
+	GetScheduleCells(ctx context.Context, in *GetScheduleCellsRequest, opts ...grpc.CallOption) (*GetScheduleCellsResponse, error)
 	ListSchedules(ctx context.Context, in *ListSchedulesRequest, opts ...grpc.CallOption) (*ListSchedulesResponse, error)
 }
 
@@ -85,6 +87,16 @@ func (c *scheduleServiceClient) GetSchedule(ctx context.Context, in *GetSchedule
 	return out, nil
 }
 
+func (c *scheduleServiceClient) GetScheduleCells(ctx context.Context, in *GetScheduleCellsRequest, opts ...grpc.CallOption) (*GetScheduleCellsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetScheduleCellsResponse)
+	err := c.cc.Invoke(ctx, ScheduleService_GetScheduleCells_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *scheduleServiceClient) ListSchedules(ctx context.Context, in *ListSchedulesRequest, opts ...grpc.CallOption) (*ListSchedulesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListSchedulesResponse)
@@ -103,6 +115,7 @@ type ScheduleServiceServer interface {
 	UpdateScheduleCell(context.Context, *UpdateScheduleCellRequest) (*GenericResponse, error)
 	ValidateSchedule(context.Context, *ValidateScheduleRequest) (*GenericResponse, error)
 	GetSchedule(context.Context, *GetScheduleRequest) (*GetScheduleResponse, error)
+	GetScheduleCells(context.Context, *GetScheduleCellsRequest) (*GetScheduleCellsResponse, error)
 	ListSchedules(context.Context, *ListSchedulesRequest) (*ListSchedulesResponse, error)
 	mustEmbedUnimplementedScheduleServiceServer()
 }
@@ -125,6 +138,9 @@ func (UnimplementedScheduleServiceServer) ValidateSchedule(context.Context, *Val
 }
 func (UnimplementedScheduleServiceServer) GetSchedule(context.Context, *GetScheduleRequest) (*GetScheduleResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetSchedule not implemented")
+}
+func (UnimplementedScheduleServiceServer) GetScheduleCells(context.Context, *GetScheduleCellsRequest) (*GetScheduleCellsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetScheduleCells not implemented")
 }
 func (UnimplementedScheduleServiceServer) ListSchedules(context.Context, *ListSchedulesRequest) (*ListSchedulesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListSchedules not implemented")
@@ -222,6 +238,24 @@ func _ScheduleService_GetSchedule_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ScheduleService_GetScheduleCells_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetScheduleCellsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScheduleServiceServer).GetScheduleCells(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ScheduleService_GetScheduleCells_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScheduleServiceServer).GetScheduleCells(ctx, req.(*GetScheduleCellsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ScheduleService_ListSchedules_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListSchedulesRequest)
 	if err := dec(in); err != nil {
@@ -262,6 +296,10 @@ var ScheduleService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSchedule",
 			Handler:    _ScheduleService_GetSchedule_Handler,
+		},
+		{
+			MethodName: "GetScheduleCells",
+			Handler:    _ScheduleService_GetScheduleCells_Handler,
 		},
 		{
 			MethodName: "ListSchedules",
