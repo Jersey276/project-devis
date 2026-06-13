@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v7.34.0
-// source: services/grpc/export.proto
+// source: export.proto
 
 package grpc
 
@@ -31,7 +31,7 @@ type ExportQuoteRequest struct {
 
 func (x *ExportQuoteRequest) Reset() {
 	*x = ExportQuoteRequest{}
-	mi := &file_services_grpc_export_proto_msgTypes[0]
+	mi := &file_export_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -43,7 +43,7 @@ func (x *ExportQuoteRequest) String() string {
 func (*ExportQuoteRequest) ProtoMessage() {}
 
 func (x *ExportQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_export_proto_msgTypes[0]
+	mi := &file_export_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -56,7 +56,7 @@ func (x *ExportQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportQuoteRequest.ProtoReflect.Descriptor instead.
 func (*ExportQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_services_grpc_export_proto_rawDescGZIP(), []int{0}
+	return file_export_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ExportQuoteRequest) GetQuoteId() string {
@@ -85,7 +85,7 @@ type ExportQuoteResponse struct {
 
 func (x *ExportQuoteResponse) Reset() {
 	*x = ExportQuoteResponse{}
-	mi := &file_services_grpc_export_proto_msgTypes[1]
+	mi := &file_export_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -97,7 +97,7 @@ func (x *ExportQuoteResponse) String() string {
 func (*ExportQuoteResponse) ProtoMessage() {}
 
 func (x *ExportQuoteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_export_proto_msgTypes[1]
+	mi := &file_export_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -110,7 +110,7 @@ func (x *ExportQuoteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportQuoteResponse.ProtoReflect.Descriptor instead.
 func (*ExportQuoteResponse) Descriptor() ([]byte, []int) {
-	return file_services_grpc_export_proto_rawDescGZIP(), []int{1}
+	return file_export_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ExportQuoteResponse) GetSuccess() bool {
@@ -151,7 +151,7 @@ type ExportScheduleRequest struct {
 
 func (x *ExportScheduleRequest) Reset() {
 	*x = ExportScheduleRequest{}
-	mi := &file_services_grpc_export_proto_msgTypes[2]
+	mi := &file_export_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -163,7 +163,7 @@ func (x *ExportScheduleRequest) String() string {
 func (*ExportScheduleRequest) ProtoMessage() {}
 
 func (x *ExportScheduleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_grpc_export_proto_msgTypes[2]
+	mi := &file_export_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -176,7 +176,7 @@ func (x *ExportScheduleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportScheduleRequest.ProtoReflect.Descriptor instead.
 func (*ExportScheduleRequest) Descriptor() ([]byte, []int) {
-	return file_services_grpc_export_proto_rawDescGZIP(), []int{2}
+	return file_export_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ExportScheduleRequest) GetScheduleId() string {
@@ -193,11 +193,63 @@ func (x *ExportScheduleRequest) GetUserId() string {
 	return ""
 }
 
-var File_services_grpc_export_proto protoreflect.FileDescriptor
+type ExportInvoiceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	InvoiceId     string                 `protobuf:"bytes,1,opt,name=invoice_id,json=invoiceId,proto3" json:"invoice_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
 
-const file_services_grpc_export_proto_rawDesc = "" +
+func (x *ExportInvoiceRequest) Reset() {
+	*x = ExportInvoiceRequest{}
+	mi := &file_export_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExportInvoiceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExportInvoiceRequest) ProtoMessage() {}
+
+func (x *ExportInvoiceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_export_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExportInvoiceRequest.ProtoReflect.Descriptor instead.
+func (*ExportInvoiceRequest) Descriptor() ([]byte, []int) {
+	return file_export_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ExportInvoiceRequest) GetInvoiceId() string {
+	if x != nil {
+		return x.InvoiceId
+	}
+	return ""
+}
+
+func (x *ExportInvoiceRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+var File_export_proto protoreflect.FileDescriptor
+
+const file_export_proto_rawDesc = "" +
 	"\n" +
-	"\x1aservices/grpc/export.proto\x12\x06export\"H\n" +
+	"\fexport.proto\x12\x06export\"H\n" +
 	"\x12ExportQuoteRequest\x12\x19\n" +
 	"\bquote_id\x18\x01 \x01(\tR\aquoteId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\"q\n" +
@@ -209,61 +261,69 @@ const file_services_grpc_export_proto_rawDesc = "" +
 	"\x15ExportScheduleRequest\x12\x1f\n" +
 	"\vschedule_id\x18\x01 \x01(\tR\n" +
 	"scheduleId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId2\xa5\x01\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"N\n" +
+	"\x14ExportInvoiceRequest\x12\x1d\n" +
+	"\n" +
+	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId2\xf1\x01\n" +
 	"\rExportService\x12F\n" +
 	"\vExportQuote\x12\x1a.export.ExportQuoteRequest\x1a\x1b.export.ExportQuoteResponse\x12L\n" +
-	"\x0eExportSchedule\x12\x1d.export.ExportScheduleRequest\x1a\x1b.export.ExportQuoteResponseB$Z\"project-devis-export/services/grpcb\x06proto3"
+	"\x0eExportSchedule\x12\x1d.export.ExportScheduleRequest\x1a\x1b.export.ExportQuoteResponse\x12J\n" +
+	"\rExportInvoice\x12\x1c.export.ExportInvoiceRequest\x1a\x1b.export.ExportQuoteResponseB$Z\"project-devis-export/services/grpcb\x06proto3"
 
 var (
-	file_services_grpc_export_proto_rawDescOnce sync.Once
-	file_services_grpc_export_proto_rawDescData []byte
+	file_export_proto_rawDescOnce sync.Once
+	file_export_proto_rawDescData []byte
 )
 
-func file_services_grpc_export_proto_rawDescGZIP() []byte {
-	file_services_grpc_export_proto_rawDescOnce.Do(func() {
-		file_services_grpc_export_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_services_grpc_export_proto_rawDesc), len(file_services_grpc_export_proto_rawDesc)))
+func file_export_proto_rawDescGZIP() []byte {
+	file_export_proto_rawDescOnce.Do(func() {
+		file_export_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_export_proto_rawDesc), len(file_export_proto_rawDesc)))
 	})
-	return file_services_grpc_export_proto_rawDescData
+	return file_export_proto_rawDescData
 }
 
-var file_services_grpc_export_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_services_grpc_export_proto_goTypes = []any{
+var file_export_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_export_proto_goTypes = []any{
 	(*ExportQuoteRequest)(nil),    // 0: export.ExportQuoteRequest
 	(*ExportQuoteResponse)(nil),   // 1: export.ExportQuoteResponse
 	(*ExportScheduleRequest)(nil), // 2: export.ExportScheduleRequest
+	(*ExportInvoiceRequest)(nil),  // 3: export.ExportInvoiceRequest
 }
-var file_services_grpc_export_proto_depIdxs = []int32{
+var file_export_proto_depIdxs = []int32{
 	0, // 0: export.ExportService.ExportQuote:input_type -> export.ExportQuoteRequest
 	2, // 1: export.ExportService.ExportSchedule:input_type -> export.ExportScheduleRequest
-	1, // 2: export.ExportService.ExportQuote:output_type -> export.ExportQuoteResponse
-	1, // 3: export.ExportService.ExportSchedule:output_type -> export.ExportQuoteResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	3, // 2: export.ExportService.ExportInvoice:input_type -> export.ExportInvoiceRequest
+	1, // 3: export.ExportService.ExportQuote:output_type -> export.ExportQuoteResponse
+	1, // 4: export.ExportService.ExportSchedule:output_type -> export.ExportQuoteResponse
+	1, // 5: export.ExportService.ExportInvoice:output_type -> export.ExportQuoteResponse
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_services_grpc_export_proto_init() }
-func file_services_grpc_export_proto_init() {
-	if File_services_grpc_export_proto != nil {
+func init() { file_export_proto_init() }
+func file_export_proto_init() {
+	if File_export_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_services_grpc_export_proto_rawDesc), len(file_services_grpc_export_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_export_proto_rawDesc), len(file_export_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_services_grpc_export_proto_goTypes,
-		DependencyIndexes: file_services_grpc_export_proto_depIdxs,
-		MessageInfos:      file_services_grpc_export_proto_msgTypes,
+		GoTypes:           file_export_proto_goTypes,
+		DependencyIndexes: file_export_proto_depIdxs,
+		MessageInfos:      file_export_proto_msgTypes,
 	}.Build()
-	File_services_grpc_export_proto = out.File
-	file_services_grpc_export_proto_goTypes = nil
-	file_services_grpc_export_proto_depIdxs = nil
+	File_export_proto = out.File
+	file_export_proto_goTypes = nil
+	file_export_proto_depIdxs = nil
 }
