@@ -135,7 +135,10 @@ func (nopQuoteClient) DropQuote(context.Context, *quote.DropQuoteRequest, ...grp
 func (nopQuoteClient) ContinueQuote(context.Context, *quote.ContinueQuoteRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
 	return nil, nil
 }
-func (nopQuoteClient) SendQuote(context.Context, *quote.SendQuoteRequest, ...grpc.CallOption) (*quote.SendQuoteResponse, error) {
+func (nopQuoteClient) ValidateQuote(context.Context, *quote.ValidateQuoteRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) NegociateQuote(context.Context, *quote.NegociateQuoteRequest, ...grpc.CallOption) (*quote.NegociateQuoteResponse, error) {
 	return nil, nil
 }
 func (nopQuoteClient) CreateQuoteLine(context.Context, *quote.CreateQuoteLineRequest, ...grpc.CallOption) (*quote.CreateQuoteLineResponse, error) {
