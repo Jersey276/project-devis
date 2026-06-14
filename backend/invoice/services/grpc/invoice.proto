@@ -9,6 +9,9 @@ service InvoiceService {
     rpc CreateInvoiceFromQuote(CreateInvoiceFromQuoteRequest) returns (CreateInvoiceResponse);
     rpc IssueInvoice(IssueInvoiceRequest) returns (CreateInvoiceResponse);
     rpc MarkInvoicePaid(MarkInvoicePaidRequest) returns (GenericResponse);
+    // Delete a still-unissued invoice. Allowed only while DRAFT (no number, no
+    // snapshot, no seal); an issued invoice stays immutable.
+    rpc DeleteDraftInvoice(DeleteDraftInvoiceRequest) returns (GenericResponse);
     rpc GetInvoice(GetInvoiceRequest) returns (GetInvoiceResponse);
     rpc ListInvoices(ListInvoicesRequest) returns (ListInvoicesResponse);
 
@@ -65,6 +68,11 @@ message IssueInvoiceRequest {
 }
 
 message MarkInvoicePaidRequest {
+    string invoice_id = 1;
+    string user_id    = 2;
+}
+
+message DeleteDraftInvoiceRequest {
     string invoice_id = 1;
     string user_id    = 2;
 }

@@ -74,6 +74,14 @@ export async function markInvoicePaid(invoiceId: string): Promise<ApiResult> {
   });
 }
 
+// Delete a DRAFT invoice. The backend refuses it once the invoice is issued
+// (sealed/immutable), returning a finalized error.
+export async function deleteDraftInvoice(invoiceId: string): Promise<ApiResult> {
+  return apiFetch(`/api/invoices/${encodeURIComponent(invoiceId)}`, {
+    method: "DELETE",
+  });
+}
+
 export type CreateCreditNotePayload = {
   positions?: number[]; // empty/undefined = total credit of the remainder
   reason?: string;

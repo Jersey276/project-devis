@@ -75,6 +75,7 @@ func InvoicesRoutes(r *gin.RouterGroup) {
 
 	one := r.Group("/:id")
 	one.GET("", func(c *gin.Context) { GetInvoice(c, client) })
+	one.DELETE("", func(c *gin.Context) { DeleteDraftInvoice(c, client) })
 	one.POST("/issue", func(c *gin.Context) { IssueInvoice(c, client) })
 	one.POST("/paid", func(c *gin.Context) { MarkInvoicePaid(c, client) })
 	one.POST("/credit-notes", func(c *gin.Context) { CreateCreditNote(c, client) })
@@ -235,6 +236,14 @@ func VerifyChain(c *gin.Context, client invoice.InvoiceServiceClient) {
 
 func MarkInvoicePaid(c *gin.Context, client invoice.InvoiceServiceClient) {
 	resp, err := client.MarkInvoicePaid(c.Request.Context(), &invoice.MarkInvoicePaidRequest{
+		InvoiceId: c.Param("id"),
+		UserId:    userIDFromCtx(c),
+	})
+	replyGeneric(c, resp, err)
+}
+
+func DeleteDraftInvoice(c *gin.Context, client invoice.InvoiceServiceClient) {
+	resp, err := client.DeleteDraftInvoice(c.Request.Context(), &invoice.DeleteDraftInvoiceRequest{
 		InvoiceId: c.Param("id"),
 		UserId:    userIDFromCtx(c),
 	})

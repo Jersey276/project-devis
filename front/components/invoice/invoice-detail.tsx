@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   Card,
@@ -9,10 +10,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import InvoiceStatusBadge from "@/components/invoice/invoice-status-badge";
 import CreateCreditNoteDialog from "@/components/invoice/create-credit-note-dialog";
 import LinkedCreditNotes from "@/components/invoice/linked-credit-notes";
 import {
+  deleteDraftInvoice,
   getInvoice,
   markInvoicePaid,
   readInvoiceFromBody,
@@ -40,12 +52,14 @@ function partyLines(p: BackendInvoiceParty | undefined): string[] {
 
 export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
   const t = useTranslations("invoice.detail");
+  const router = useRouter();
   const [invoice, setInvoice] = useState<BackendInvoiceDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [creditDialogOpen, setCreditDialogOpen] = useState(false);
   const [creditRefresh, setCreditRefresh] = useState(0);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const load = useCallback(async () => {
     const { ok, body } = await getInvoice(invoiceId);
@@ -91,6 +105,18 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
     else void load();
   }
 
+  async function onConfirmDelete() {
+    setBusy(true);
+    const { ok, body } = await deleteDraftInvoice(invoiceId);
+    setBusy(false);
+    setDeleteDialogOpen(false);
+    if (!ok || !body.success) {
+      setError((body.message as string) ?? t("deleteError"));
+      return;
+    }
+    router.push("/invoice");
+  }
+
   if (loading) return <p>{t("loading")}</p>;
   if (error && !invoice) return <p className="text-destructive">{error}</p>;
   if (!invoice) return <p className="text-destructive">{t("notFound")}</p>;
@@ -108,6 +134,16 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
           <Button type="button" variant="outline" onClick={onDownload}>
             {t("downloadPdf")}
           </Button>
+          {invoice.status === "DRAFT" ? (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+              disabled={busy}
+            >
+              {t("deleteDraft")}
+            </Button>
+          ) : null}
           {invoice.status === "ISSUED" ? (
             <Button type="button" variant="outline" onClick={onMarkPaid} disabled={busy}>
               {t("markPaid")}
@@ -223,6 +259,29 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
           void load();
         }}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("deleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("deleteConfirmBody")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>
+              {t("deleteCancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={onConfirmDelete}
+              disabled={busy}
+            >
+              {t("deleteConfirmAction")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

@@ -23,6 +23,7 @@ const (
 	InvoiceService_CreateInvoiceFromQuote_FullMethodName    = "/invoice.InvoiceService/CreateInvoiceFromQuote"
 	InvoiceService_IssueInvoice_FullMethodName              = "/invoice.InvoiceService/IssueInvoice"
 	InvoiceService_MarkInvoicePaid_FullMethodName           = "/invoice.InvoiceService/MarkInvoicePaid"
+	InvoiceService_DeleteDraftInvoice_FullMethodName        = "/invoice.InvoiceService/DeleteDraftInvoice"
 	InvoiceService_GetInvoice_FullMethodName                = "/invoice.InvoiceService/GetInvoice"
 	InvoiceService_ListInvoices_FullMethodName              = "/invoice.InvoiceService/ListInvoices"
 	InvoiceService_CreateCreditNote_FullMethodName          = "/invoice.InvoiceService/CreateCreditNote"
@@ -39,6 +40,9 @@ type InvoiceServiceClient interface {
 	CreateInvoiceFromQuote(ctx context.Context, in *CreateInvoiceFromQuoteRequest, opts ...grpc.CallOption) (*CreateInvoiceResponse, error)
 	IssueInvoice(ctx context.Context, in *IssueInvoiceRequest, opts ...grpc.CallOption) (*CreateInvoiceResponse, error)
 	MarkInvoicePaid(ctx context.Context, in *MarkInvoicePaidRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// Delete a still-unissued invoice. Allowed only while DRAFT (no number, no
+	// snapshot, no seal); an issued invoice stays immutable.
+	DeleteDraftInvoice(ctx context.Context, in *DeleteDraftInvoiceRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	GetInvoice(ctx context.Context, in *GetInvoiceRequest, opts ...grpc.CallOption) (*GetInvoiceResponse, error)
 	ListInvoices(ctx context.Context, in *ListInvoicesRequest, opts ...grpc.CallOption) (*ListInvoicesResponse, error)
 	// Credit notes (avoirs). Crediting replaces invoice cancellation: it
@@ -92,6 +96,16 @@ func (c *invoiceServiceClient) MarkInvoicePaid(ctx context.Context, in *MarkInvo
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GenericResponse)
 	err := c.cc.Invoke(ctx, InvoiceService_MarkInvoicePaid_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *invoiceServiceClient) DeleteDraftInvoice(ctx context.Context, in *DeleteDraftInvoiceRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, InvoiceService_DeleteDraftInvoice_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -166,6 +180,9 @@ type InvoiceServiceServer interface {
 	CreateInvoiceFromQuote(context.Context, *CreateInvoiceFromQuoteRequest) (*CreateInvoiceResponse, error)
 	IssueInvoice(context.Context, *IssueInvoiceRequest) (*CreateInvoiceResponse, error)
 	MarkInvoicePaid(context.Context, *MarkInvoicePaidRequest) (*GenericResponse, error)
+	// Delete a still-unissued invoice. Allowed only while DRAFT (no number, no
+	// snapshot, no seal); an issued invoice stays immutable.
+	DeleteDraftInvoice(context.Context, *DeleteDraftInvoiceRequest) (*GenericResponse, error)
 	GetInvoice(context.Context, *GetInvoiceRequest) (*GetInvoiceResponse, error)
 	ListInvoices(context.Context, *ListInvoicesRequest) (*ListInvoicesResponse, error)
 	// Credit notes (avoirs). Crediting replaces invoice cancellation: it
@@ -196,6 +213,9 @@ func (UnimplementedInvoiceServiceServer) IssueInvoice(context.Context, *IssueInv
 }
 func (UnimplementedInvoiceServiceServer) MarkInvoicePaid(context.Context, *MarkInvoicePaidRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method MarkInvoicePaid not implemented")
+}
+func (UnimplementedInvoiceServiceServer) DeleteDraftInvoice(context.Context, *DeleteDraftInvoiceRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteDraftInvoice not implemented")
 }
 func (UnimplementedInvoiceServiceServer) GetInvoice(context.Context, *GetInvoiceRequest) (*GetInvoiceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetInvoice not implemented")
@@ -304,6 +324,24 @@ func _InvoiceService_MarkInvoicePaid_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(InvoiceServiceServer).MarkInvoicePaid(ctx, req.(*MarkInvoicePaidRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InvoiceService_DeleteDraftInvoice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteDraftInvoiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InvoiceServiceServer).DeleteDraftInvoice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InvoiceService_DeleteDraftInvoice_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InvoiceServiceServer).DeleteDraftInvoice(ctx, req.(*DeleteDraftInvoiceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -438,6 +476,10 @@ var InvoiceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "MarkInvoicePaid",
 			Handler:    _InvoiceService_MarkInvoicePaid_Handler,
+		},
+		{
+			MethodName: "DeleteDraftInvoice",
+			Handler:    _InvoiceService_DeleteDraftInvoice_Handler,
 		},
 		{
 			MethodName: "GetInvoice",

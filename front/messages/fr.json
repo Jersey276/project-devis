@@ -457,8 +457,14 @@
       "actions": {
         "open": "Ouvrir",
         "downloadPdf": "Télécharger le PDF",
-        "markPaid": "Marquer payée"
-      }
+        "markPaid": "Marquer payée",
+        "deleteDraft": "Supprimer le brouillon"
+      },
+      "deleteError": "La suppression du brouillon a échoué.",
+      "deleteConfirmTitle": "Supprimer ce brouillon ?",
+      "deleteConfirmBody": "Ce brouillon sera définitivement supprimé. Cette action est sans effet sur les factures déjà émises.",
+      "deleteConfirmAction": "Supprimer",
+      "deleteCancel": "Annuler"
     },
     "detail": {
       "titleNumbered": "Facture N° {number}",
@@ -470,6 +476,12 @@
       "actionError": "L'action a échoué.",
       "downloadPdf": "Télécharger le PDF",
       "markPaid": "Marquer payée",
+      "deleteDraft": "Supprimer le brouillon",
+      "deleteError": "La suppression du brouillon a échoué.",
+      "deleteConfirmTitle": "Supprimer ce brouillon ?",
+      "deleteConfirmBody": "Ce brouillon sera définitivement supprimé. Cette action est sans effet sur les factures déjà émises.",
+      "deleteConfirmAction": "Supprimer",
+      "deleteCancel": "Annuler",
       "createCreditNote": "Créer un avoir",
       "issuer": "Émetteur",
       "client": "Client",

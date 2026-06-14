@@ -13,8 +13,19 @@ import {
   DataTableRowActions,
   DataTableSortableHead,
 } from "@/components/custom/data-table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import InvoiceStatusBadge from "@/components/invoice/invoice-status-badge";
 import {
+  deleteDraftInvoice,
   listInvoices,
   markInvoicePaid,
   readInvoicesFromBody,
@@ -50,6 +61,8 @@ export default function InvoiceListTable() {
   const t = useTranslations("invoice.list");
   const [items, setItems] = useState<InvoiceRow[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const refresh = useCallback(async () => {
     const { ok, body } = await listInvoices();
@@ -104,9 +117,31 @@ export default function InvoiceListTable() {
           });
         },
       },
+      {
+        type: "callback",
+        label: t("actions.deleteDraft"),
+        callback: (row) => {
+          const r = row as InvoiceRow;
+          if (r.status !== "DRAFT") return;
+          setPendingDeleteId(r.id);
+        },
+      },
     ],
     [t, refresh],
   );
+
+  async function onConfirmDelete() {
+    if (!pendingDeleteId) return;
+    setBusy(true);
+    const { ok, body } = await deleteDraftInvoice(pendingDeleteId);
+    setBusy(false);
+    setPendingDeleteId(null);
+    if (!ok || !body.success) {
+      setError((body.message as string) ?? t("deleteError"));
+      return;
+    }
+    void refresh();
+  }
 
   return (
     <>
@@ -170,6 +205,34 @@ export default function InvoiceListTable() {
           )}
         </DataTableBody>
       </DataTable>
+
+      <AlertDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeleteId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("deleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("deleteConfirmBody")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>
+              {t("deleteCancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={onConfirmDelete}
+              disabled={busy}
+            >
+              {t("deleteConfirmAction")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
