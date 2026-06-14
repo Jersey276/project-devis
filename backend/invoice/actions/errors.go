@@ -16,6 +16,7 @@ const (
 	CodeCreditNoteLineAlreadyCredited = codes.CreditNoteLineAlreadyCredited
 	CodeInvoiceNotIssued              = codes.InvoiceNotIssued
 	CodeCreditNoteNoLinesLeft         = codes.CreditNoteNoLinesLeft
+	CodeSealError                     = codes.SealError
 
 	CodeInternalError = codes.InternalError
 )

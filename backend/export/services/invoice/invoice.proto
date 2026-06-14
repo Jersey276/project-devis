@@ -17,6 +17,9 @@ service InvoiceService {
     rpc CreateCreditNote(CreateCreditNoteRequest) returns (CreateCreditNoteResponse);
     rpc GetCreditNote(GetCreditNoteRequest) returns (GetCreditNoteResponse);
     rpc ListCreditNotes(ListCreditNotesRequest) returns (ListCreditNotesResponse);
+
+    // Inalterability: recompute and verify the issuer's seal chain.
+    rpc VerifyChain(VerifyChainRequest) returns (VerifyChainResponse);
 }
 
 message GenericResponse {
@@ -224,4 +227,21 @@ message ListCreditNotesResponse {
     bool                       success      = 1;
     int32                      code         = 2;
     repeated CreditNoteSummary credit_notes = 3;
+}
+
+// ─── Inalterability ──────────────────────────────────────────────────────────
+
+message VerifyChainRequest {
+    string user_id = 1;
+}
+
+message VerifyChainResponse {
+    bool   success         = 1;
+    int32  code            = 2;
+    bool   ok              = 3;  // chain intact
+    int64  checked         = 4;  // number of links verified
+    string broken_doc_id   = 5;  // first broken link (empty if ok)
+    string broken_doc_type = 6;
+    int64  broken_index    = 7;
+    string reason          = 8;
 }

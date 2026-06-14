@@ -28,6 +28,7 @@ const (
 	InvoiceService_CreateCreditNote_FullMethodName          = "/invoice.InvoiceService/CreateCreditNote"
 	InvoiceService_GetCreditNote_FullMethodName             = "/invoice.InvoiceService/GetCreditNote"
 	InvoiceService_ListCreditNotes_FullMethodName           = "/invoice.InvoiceService/ListCreditNotes"
+	InvoiceService_VerifyChain_FullMethodName               = "/invoice.InvoiceService/VerifyChain"
 )
 
 // InvoiceServiceClient is the client API for InvoiceService service.
@@ -45,6 +46,8 @@ type InvoiceServiceClient interface {
 	CreateCreditNote(ctx context.Context, in *CreateCreditNoteRequest, opts ...grpc.CallOption) (*CreateCreditNoteResponse, error)
 	GetCreditNote(ctx context.Context, in *GetCreditNoteRequest, opts ...grpc.CallOption) (*GetCreditNoteResponse, error)
 	ListCreditNotes(ctx context.Context, in *ListCreditNotesRequest, opts ...grpc.CallOption) (*ListCreditNotesResponse, error)
+	// Inalterability: recompute and verify the issuer's seal chain.
+	VerifyChain(ctx context.Context, in *VerifyChainRequest, opts ...grpc.CallOption) (*VerifyChainResponse, error)
 }
 
 type invoiceServiceClient struct {
@@ -145,6 +148,16 @@ func (c *invoiceServiceClient) ListCreditNotes(ctx context.Context, in *ListCred
 	return out, nil
 }
 
+func (c *invoiceServiceClient) VerifyChain(ctx context.Context, in *VerifyChainRequest, opts ...grpc.CallOption) (*VerifyChainResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(VerifyChainResponse)
+	err := c.cc.Invoke(ctx, InvoiceService_VerifyChain_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InvoiceServiceServer is the server API for InvoiceService service.
 // All implementations must embed UnimplementedInvoiceServiceServer
 // for forward compatibility.
@@ -160,6 +173,8 @@ type InvoiceServiceServer interface {
 	CreateCreditNote(context.Context, *CreateCreditNoteRequest) (*CreateCreditNoteResponse, error)
 	GetCreditNote(context.Context, *GetCreditNoteRequest) (*GetCreditNoteResponse, error)
 	ListCreditNotes(context.Context, *ListCreditNotesRequest) (*ListCreditNotesResponse, error)
+	// Inalterability: recompute and verify the issuer's seal chain.
+	VerifyChain(context.Context, *VerifyChainRequest) (*VerifyChainResponse, error)
 	mustEmbedUnimplementedInvoiceServiceServer()
 }
 
@@ -196,6 +211,9 @@ func (UnimplementedInvoiceServiceServer) GetCreditNote(context.Context, *GetCred
 }
 func (UnimplementedInvoiceServiceServer) ListCreditNotes(context.Context, *ListCreditNotesRequest) (*ListCreditNotesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListCreditNotes not implemented")
+}
+func (UnimplementedInvoiceServiceServer) VerifyChain(context.Context, *VerifyChainRequest) (*VerifyChainResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method VerifyChain not implemented")
 }
 func (UnimplementedInvoiceServiceServer) mustEmbedUnimplementedInvoiceServiceServer() {}
 func (UnimplementedInvoiceServiceServer) testEmbeddedByValue()                        {}
@@ -380,6 +398,24 @@ func _InvoiceService_ListCreditNotes_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InvoiceService_VerifyChain_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyChainRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InvoiceServiceServer).VerifyChain(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InvoiceService_VerifyChain_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InvoiceServiceServer).VerifyChain(ctx, req.(*VerifyChainRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InvoiceService_ServiceDesc is the grpc.ServiceDesc for InvoiceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -422,6 +458,10 @@ var InvoiceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListCreditNotes",
 			Handler:    _InvoiceService_ListCreditNotes_Handler,
+		},
+		{
+			MethodName: "VerifyChain",
+			Handler:    _InvoiceService_VerifyChain_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

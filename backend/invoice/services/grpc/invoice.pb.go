@@ -1903,6 +1903,150 @@ func (x *ListCreditNotesResponse) GetCreditNotes() []*CreditNoteSummary {
 	return nil
 }
 
+type VerifyChainRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VerifyChainRequest) Reset() {
+	*x = VerifyChainRequest{}
+	mi := &file_invoice_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VerifyChainRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VerifyChainRequest) ProtoMessage() {}
+
+func (x *VerifyChainRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_invoice_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VerifyChainRequest.ProtoReflect.Descriptor instead.
+func (*VerifyChainRequest) Descriptor() ([]byte, []int) {
+	return file_invoice_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *VerifyChainRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type VerifyChainResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	Ok            bool                   `protobuf:"varint,3,opt,name=ok,proto3" json:"ok,omitempty"`                                       // chain intact
+	Checked       int64                  `protobuf:"varint,4,opt,name=checked,proto3" json:"checked,omitempty"`                             // number of links verified
+	BrokenDocId   string                 `protobuf:"bytes,5,opt,name=broken_doc_id,json=brokenDocId,proto3" json:"broken_doc_id,omitempty"` // first broken link (empty if ok)
+	BrokenDocType string                 `protobuf:"bytes,6,opt,name=broken_doc_type,json=brokenDocType,proto3" json:"broken_doc_type,omitempty"`
+	BrokenIndex   int64                  `protobuf:"varint,7,opt,name=broken_index,json=brokenIndex,proto3" json:"broken_index,omitempty"`
+	Reason        string                 `protobuf:"bytes,8,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VerifyChainResponse) Reset() {
+	*x = VerifyChainResponse{}
+	mi := &file_invoice_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VerifyChainResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VerifyChainResponse) ProtoMessage() {}
+
+func (x *VerifyChainResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_invoice_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VerifyChainResponse.ProtoReflect.Descriptor instead.
+func (*VerifyChainResponse) Descriptor() ([]byte, []int) {
+	return file_invoice_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *VerifyChainResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *VerifyChainResponse) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *VerifyChainResponse) GetOk() bool {
+	if x != nil {
+		return x.Ok
+	}
+	return false
+}
+
+func (x *VerifyChainResponse) GetChecked() int64 {
+	if x != nil {
+		return x.Checked
+	}
+	return 0
+}
+
+func (x *VerifyChainResponse) GetBrokenDocId() string {
+	if x != nil {
+		return x.BrokenDocId
+	}
+	return ""
+}
+
+func (x *VerifyChainResponse) GetBrokenDocType() string {
+	if x != nil {
+		return x.BrokenDocType
+	}
+	return ""
+}
+
+func (x *VerifyChainResponse) GetBrokenIndex() int64 {
+	if x != nil {
+		return x.BrokenIndex
+	}
+	return 0
+}
+
+func (x *VerifyChainResponse) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
 var File_invoice_proto protoreflect.FileDescriptor
 
 const file_invoice_proto_rawDesc = "" +
@@ -2078,7 +2222,18 @@ const file_invoice_proto_rawDesc = "" +
 	"\x17ListCreditNotesResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12=\n" +
-	"\fcredit_notes\x18\x03 \x03(\v2\x1a.invoice.CreditNoteSummaryR\vcreditNotes2\x89\x06\n" +
+	"\fcredit_notes\x18\x03 \x03(\v2\x1a.invoice.CreditNoteSummaryR\vcreditNotes\"-\n" +
+	"\x12VerifyChainRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"\xf4\x01\n" +
+	"\x13VerifyChainResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x0e\n" +
+	"\x02ok\x18\x03 \x01(\bR\x02ok\x12\x18\n" +
+	"\achecked\x18\x04 \x01(\x03R\achecked\x12\"\n" +
+	"\rbroken_doc_id\x18\x05 \x01(\tR\vbrokenDocId\x12&\n" +
+	"\x0fbroken_doc_type\x18\x06 \x01(\tR\rbrokenDocType\x12!\n" +
+	"\fbroken_index\x18\a \x01(\x03R\vbrokenIndex\x12\x16\n" +
+	"\x06reason\x18\b \x01(\tR\x06reason2\xd3\x06\n" +
 	"\x0eInvoiceService\x12f\n" +
 	"\x19CreateInvoiceFromSchedule\x12).invoice.CreateInvoiceFromScheduleRequest\x1a\x1e.invoice.CreateInvoiceResponse\x12`\n" +
 	"\x16CreateInvoiceFromQuote\x12&.invoice.CreateInvoiceFromQuoteRequest\x1a\x1e.invoice.CreateInvoiceResponse\x12L\n" +
@@ -2089,7 +2244,8 @@ const file_invoice_proto_rawDesc = "" +
 	"\fListInvoices\x12\x1c.invoice.ListInvoicesRequest\x1a\x1d.invoice.ListInvoicesResponse\x12W\n" +
 	"\x10CreateCreditNote\x12 .invoice.CreateCreditNoteRequest\x1a!.invoice.CreateCreditNoteResponse\x12N\n" +
 	"\rGetCreditNote\x12\x1d.invoice.GetCreditNoteRequest\x1a\x1e.invoice.GetCreditNoteResponse\x12T\n" +
-	"\x0fListCreditNotes\x12\x1f.invoice.ListCreditNotesRequest\x1a .invoice.ListCreditNotesResponseB\x11Z\x0fgateway/invoiceb\x06proto3"
+	"\x0fListCreditNotes\x12\x1f.invoice.ListCreditNotesRequest\x1a .invoice.ListCreditNotesResponse\x12H\n" +
+	"\vVerifyChain\x12\x1b.invoice.VerifyChainRequest\x1a\x1c.invoice.VerifyChainResponseB\x11Z\x0fgateway/invoiceb\x06proto3"
 
 var (
 	file_invoice_proto_rawDescOnce sync.Once
@@ -2103,7 +2259,7 @@ func file_invoice_proto_rawDescGZIP() []byte {
 	return file_invoice_proto_rawDescData
 }
 
-var file_invoice_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_invoice_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_invoice_proto_goTypes = []any{
 	(*GenericResponse)(nil),                  // 0: invoice.GenericResponse
 	(*ValidationError)(nil),                  // 1: invoice.ValidationError
@@ -2129,6 +2285,8 @@ var file_invoice_proto_goTypes = []any{
 	(*ListCreditNotesRequest)(nil),           // 21: invoice.ListCreditNotesRequest
 	(*CreditNoteSummary)(nil),                // 22: invoice.CreditNoteSummary
 	(*ListCreditNotesResponse)(nil),          // 23: invoice.ListCreditNotesResponse
+	(*VerifyChainRequest)(nil),               // 24: invoice.VerifyChainRequest
+	(*VerifyChainResponse)(nil),              // 25: invoice.VerifyChainResponse
 }
 var file_invoice_proto_depIdxs = []int32{
 	1,  // 0: invoice.CreateInvoiceResponse.validation_errors:type_name -> invoice.ValidationError
@@ -2154,17 +2312,19 @@ var file_invoice_proto_depIdxs = []int32{
 	16, // 20: invoice.InvoiceService.CreateCreditNote:input_type -> invoice.CreateCreditNoteRequest
 	18, // 21: invoice.InvoiceService.GetCreditNote:input_type -> invoice.GetCreditNoteRequest
 	21, // 22: invoice.InvoiceService.ListCreditNotes:input_type -> invoice.ListCreditNotesRequest
-	4,  // 23: invoice.InvoiceService.CreateInvoiceFromSchedule:output_type -> invoice.CreateInvoiceResponse
-	4,  // 24: invoice.InvoiceService.CreateInvoiceFromQuote:output_type -> invoice.CreateInvoiceResponse
-	4,  // 25: invoice.InvoiceService.IssueInvoice:output_type -> invoice.CreateInvoiceResponse
-	0,  // 26: invoice.InvoiceService.MarkInvoicePaid:output_type -> invoice.GenericResponse
-	12, // 27: invoice.InvoiceService.GetInvoice:output_type -> invoice.GetInvoiceResponse
-	15, // 28: invoice.InvoiceService.ListInvoices:output_type -> invoice.ListInvoicesResponse
-	17, // 29: invoice.InvoiceService.CreateCreditNote:output_type -> invoice.CreateCreditNoteResponse
-	20, // 30: invoice.InvoiceService.GetCreditNote:output_type -> invoice.GetCreditNoteResponse
-	23, // 31: invoice.InvoiceService.ListCreditNotes:output_type -> invoice.ListCreditNotesResponse
-	23, // [23:32] is the sub-list for method output_type
-	14, // [14:23] is the sub-list for method input_type
+	24, // 23: invoice.InvoiceService.VerifyChain:input_type -> invoice.VerifyChainRequest
+	4,  // 24: invoice.InvoiceService.CreateInvoiceFromSchedule:output_type -> invoice.CreateInvoiceResponse
+	4,  // 25: invoice.InvoiceService.CreateInvoiceFromQuote:output_type -> invoice.CreateInvoiceResponse
+	4,  // 26: invoice.InvoiceService.IssueInvoice:output_type -> invoice.CreateInvoiceResponse
+	0,  // 27: invoice.InvoiceService.MarkInvoicePaid:output_type -> invoice.GenericResponse
+	12, // 28: invoice.InvoiceService.GetInvoice:output_type -> invoice.GetInvoiceResponse
+	15, // 29: invoice.InvoiceService.ListInvoices:output_type -> invoice.ListInvoicesResponse
+	17, // 30: invoice.InvoiceService.CreateCreditNote:output_type -> invoice.CreateCreditNoteResponse
+	20, // 31: invoice.InvoiceService.GetCreditNote:output_type -> invoice.GetCreditNoteResponse
+	23, // 32: invoice.InvoiceService.ListCreditNotes:output_type -> invoice.ListCreditNotesResponse
+	25, // 33: invoice.InvoiceService.VerifyChain:output_type -> invoice.VerifyChainResponse
+	24, // [24:34] is the sub-list for method output_type
+	14, // [14:24] is the sub-list for method input_type
 	14, // [14:14] is the sub-list for extension type_name
 	14, // [14:14] is the sub-list for extension extendee
 	0,  // [0:14] is the sub-list for field type_name
@@ -2181,7 +2341,7 @@ func file_invoice_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_invoice_proto_rawDesc), len(file_invoice_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   24,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

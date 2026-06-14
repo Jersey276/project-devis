@@ -129,6 +129,22 @@ func (s *Server) issue(ctx context.Context, invoiceID, userID, saleDate string, 
 		return &invoiceGrpc.CreateInvoiceResponse{Success: false, Code: codes.InternalError}, err
 	}
 
+	// Seal the invoice into the issuer's cryptographic chain (inalterability).
+	contentHash := computeContentHash(sealableDoc{
+		userID:    userID,
+		docType:   "INVOICE",
+		number:    number,
+		issuedAt:  issuedAt,
+		totalHT:   totals.totalHT,
+		totalVAT:  totals.totalVAT,
+		totalTTC:  totals.totalTTC,
+		vatExempt: resolved.vatExempt,
+		lines:     sealLinesFromSnapshots(resolved.lines),
+	})
+	if _, _, err := sealDocument(ctx, tx, userID, "INVOICE", invoiceID, contentHash); err != nil {
+		return &invoiceGrpc.CreateInvoiceResponse{Success: false, Code: codes.SealError}, err
+	}
+
 	if err := tx.Commit(); err != nil {
 		return &invoiceGrpc.CreateInvoiceResponse{Success: false, Code: codes.InternalError}, err
 	}

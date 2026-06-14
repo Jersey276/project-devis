@@ -45,10 +45,11 @@ func (s *Server) CreateCreditNote(ctx context.Context, req *invoiceGrpc.CreateCr
 	// Load the origin invoice: must exist and be ISSUED/PAID.
 	var status string
 	var vatExempt bool
+	var originInvoiceNumber sql.NullString
 	err = s.db.QueryRowContext(ctx,
-		`SELECT status, vat_exempt FROM invoices WHERE invoice_id=$1 AND user_id=$2`,
+		`SELECT status, vat_exempt, invoice_number FROM invoices WHERE invoice_id=$1 AND user_id=$2`,
 		req.InvoiceId, req.UserId,
-	).Scan(&status, &vatExempt)
+	).Scan(&status, &vatExempt, &originInvoiceNumber)
 	if err == sql.ErrNoRows {
 		return &invoiceGrpc.CreateCreditNoteResponse{Success: false, Code: codes.NotFound}, nil
 	}
@@ -158,6 +159,23 @@ func (s *Server) CreateCreditNote(ctx context.Context, req *invoiceGrpc.CreateCr
 			return &invoiceGrpc.CreateCreditNoteResponse{Success: false, Code: codes.CreditNoteLineAlreadyCredited}, nil
 		}
 		return &invoiceGrpc.CreateCreditNoteResponse{Success: false, Code: codes.InternalError}, err
+	}
+
+	// Seal the credit note into the issuer's cryptographic chain.
+	contentHash := computeContentHash(sealableDoc{
+		userID:              req.UserId,
+		docType:             "CREDIT_NOTE",
+		number:              number,
+		issuedAt:            issuedAt,
+		totalHT:             totals.totalHT,
+		totalVAT:            totals.totalVAT,
+		totalTTC:            totals.totalTTC,
+		vatExempt:           vatExempt,
+		originInvoiceNumber: originInvoiceNumber.String,
+		lines:               sealLinesFromCreditNoteLines(cnLines),
+	})
+	if _, _, err := sealDocument(ctx, tx, req.UserId, "CREDIT_NOTE", creditNoteID, contentHash); err != nil {
+		return &invoiceGrpc.CreateCreditNoteResponse{Success: false, Code: codes.SealError}, err
 	}
 
 	if err := tx.Commit(); err != nil {

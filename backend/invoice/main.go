@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"flag"
 	"fmt"
@@ -35,6 +36,12 @@ func main() {
 
 	db := services.ConnectDB()
 	services.RunMigrations(db, migrationsFS)
+
+	// Seal any legacy issued documents that predate the chaining feature, so the
+	// whole base becomes verifiable. Idempotent.
+	if err := actions.BackfillSeals(context.Background(), db); err != nil {
+		log.Fatalf("seal backfill: %v", err)
+	}
 
 	quoteAddr := envOrDefault("QUOTE_SERVICE_ADDRESS", "localhost:50053")
 	usersAddr := envOrDefault("USER_SERVICE_ADDRESS", "localhost:50052")

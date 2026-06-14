@@ -14,6 +14,7 @@ const (
 	CreditNoteLineAlreadyCredited int32 = 4006 // a selected line is already credited
 	InvoiceNotIssued              int32 = 4007 // the invoice is not ISSUED/PAID
 	CreditNoteNoLinesLeft         int32 = 4008 // total credit requested but nothing left
+	SealError                     int32 = 4009 // failed to seal the document at emission
 
 	InternalError int32 = 2001
 )

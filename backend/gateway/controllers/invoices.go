@@ -24,6 +24,7 @@ const (
 	InvoiceCodeCreditNoteLineAlreadyCredited int32 = 4006
 	InvoiceCodeInvoiceNotIssued              int32 = 4007
 	InvoiceCodeCreditNoteNoLinesLeft         int32 = 4008
+	InvoiceCodeSealError                     int32 = 4009
 
 	InvoiceCodeInternalError int32 = 2001
 )
@@ -49,6 +50,7 @@ var invoiceErrors = &serviceErrors{
 		InvoiceCodeCreditNoteLineAlreadyCredited: {http.StatusConflict, "Une ou plusieurs lignes sélectionnées ont déjà fait l'objet d'un avoir."},
 		InvoiceCodeInvoiceNotIssued:              {http.StatusConflict, "Seules les factures émises peuvent faire l'objet d'un avoir."},
 		InvoiceCodeCreditNoteNoLinesLeft:         {http.StatusConflict, "Toutes les lignes de cette facture ont déjà été avoirées."},
+		InvoiceCodeSealError:                     {http.StatusInternalServerError, "Une erreur interne est survenue."},
 		InvoiceCodeInternalError:       {http.StatusInternalServerError, "Une erreur interne est survenue."},
 	},
 	unavailableMessage: "Service de facturation indisponible.",
@@ -67,6 +69,7 @@ func InvoicesRoutes(r *gin.RouterGroup) {
 	client := invoice.NewInvoiceServiceClient(conn)
 
 	r.GET("", func(c *gin.Context) { ListInvoices(c, client) })
+	r.GET("/verify-chain", func(c *gin.Context) { VerifyChain(c, client) })
 	r.POST("/from-schedule", func(c *gin.Context) { CreateInvoiceFromSchedule(c, client) })
 	r.POST("/from-quote", func(c *gin.Context) { CreateInvoiceFromQuote(c, client) })
 
@@ -204,6 +207,29 @@ func CreateCreditNote(c *gin.Context, client invoice.InvoiceServiceClient) {
 		"success":            true,
 		"credit_note_id":     resp.CreditNoteId,
 		"credit_note_number": resp.CreditNoteNumber,
+	})
+}
+
+func VerifyChain(c *gin.Context, client invoice.InvoiceServiceClient) {
+	resp, err := client.VerifyChain(c.Request.Context(), &invoice.VerifyChainRequest{
+		UserId: userIDFromCtx(c),
+	})
+	if err != nil {
+		invoiceErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		invoiceErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success":         true,
+		"ok":              resp.Ok,
+		"checked":         resp.Checked,
+		"broken_doc_id":   resp.BrokenDocId,
+		"broken_doc_type": resp.BrokenDocType,
+		"broken_index":    resp.BrokenIndex,
+		"reason":          resp.Reason,
 	})
 }
 
