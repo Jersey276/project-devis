@@ -1,0 +1,161 @@
+package facturx
+
+import (
+	"bytes"
+	"encoding/xml"
+	"strings"
+	"testing"
+
+	invoicepb "project-devis-export/services/invoice"
+)
+
+// sampleInvoice is a two-line, two-rate issued invoice used across the tests.
+func sampleInvoice() *invoicepb.InvoiceDetails {
+	return &invoicepb.InvoiceDetails{
+		InvoiceNumber: "2026-0001",
+		IssuedAt:      "2026-06-14T10:30:00Z",
+		SaleDate:      "2026-06-10",
+		DueDate:       "2026-07-14",
+		Issuer: &invoicepb.InvoiceParty{
+			Company: "Acme SARL", Siren: "123456782", Vat: "FR12345678901",
+			Street: "1 rue A", ZipCode: "75001", City: "Paris",
+		},
+		Client: &invoicepb.InvoiceParty{
+			Company: "Buyer SAS", Siren: "987654321", Vat: "FR99887766554",
+			Street: "2 rue B", ZipCode: "69001", City: "Lyon",
+		},
+		Lines: []*invoicepb.InvoiceLine{
+			{Name: "Presta A", Quantity: "1", UnitPriceCents: 10000, LineHtCents: 10000, TaxRate: "20"},
+			{Name: "Presta B", Quantity: "2", UnitPriceCents: 2500, LineHtCents: 5000, TaxRate: "10"},
+		},
+		VatBreakdown: []*invoicepb.InvoiceVatLine{
+			{TaxRate: "20", BaseHtCents: 10000, VatCents: 2000},
+			{TaxRate: "10", BaseHtCents: 5000, VatCents: 500},
+		},
+		TotalHtCents:  15000,
+		TotalVatCents: 2500,
+		TotalTtcCents: 17500,
+	}
+}
+
+// Go's encoding/xml does not round-trip prefixed namespaces through XMLName, so
+// we assert on the generated wire text (which a real CII consumer resolves by
+// namespace URI). We do verify the document is at least well-formed XML.
+
+func mustBuild(t *testing.T, in *invoicepb.InvoiceDetails) string {
+	t.Helper()
+	out, err := Build(in)
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	if err := xml.Unmarshal(out, new(struct{ XMLName xml.Name })); err != nil {
+		t.Fatalf("generated XML is not well-formed: %v", err)
+	}
+	return string(out)
+}
+
+// count returns the number of occurrences of sub in s.
+func count(s, sub string) int { return strings.Count(s, sub) }
+
+func mustContain(t *testing.T, s, sub string) {
+	t.Helper()
+	if !strings.Contains(s, sub) {
+		t.Errorf("generated XML missing %q", sub)
+	}
+}
+
+func TestBuild_HeaderAndProfile(t *testing.T) {
+	out, err := Build(sampleInvoice())
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	if !bytes.HasPrefix(out, []byte(`<?xml version="1.0" encoding="UTF-8"?>`)) {
+		t.Error("missing XML declaration")
+	}
+	s := string(out)
+	mustContain(t, s, `xmlns:rsm="`+nsRSM+`"`)
+	mustContain(t, s, `<ram:ID>urn:cen.eu:en16931:2017</ram:ID>`)
+	mustContain(t, s, `<ram:ID>2026-0001</ram:ID>`)
+	mustContain(t, s, `<ram:TypeCode>380</ram:TypeCode>`)
+	mustContain(t, s, `<udt:DateTimeString format="102">20260614</udt:DateTimeString>`)
+}
+
+func TestBuild_Parties(t *testing.T) {
+	s := mustBuild(t, sampleInvoice())
+	mustContain(t, s, `<ram:Name>Acme SARL</ram:Name>`)
+	mustContain(t, s, `<ram:ID schemeID="0002">123456782</ram:ID>`) // seller SIREN
+	mustContain(t, s, `<ram:ID schemeID="VA">FR12345678901</ram:ID>`)
+	mustContain(t, s, `<ram:Name>Buyer SAS</ram:Name>`)
+	mustContain(t, s, `<ram:ID schemeID="0002">987654321</ram:ID>`) // buyer SIREN
+	mustContain(t, s, `<ram:CountryID>FR</ram:CountryID>`)
+}
+
+func TestBuild_TaxesAndTotals(t *testing.T) {
+	s := mustBuild(t, sampleInvoice())
+	// One header ApplicableTradeTax per rate. Header taxes carry BasisAmount;
+	// line taxes do not — so counting BasisAmount yields exactly the 2 rates.
+	if n := count(s, "<ram:BasisAmount>"); n != 2 {
+		t.Errorf("header tax groups (BasisAmount) = %d; want 2", n)
+	}
+	mustContain(t, s, `<ram:TaxBasisTotalAmount>150.00</ram:TaxBasisTotalAmount>`)
+	mustContain(t, s, `<ram:TaxTotalAmount currencyID="EUR">25.00</ram:TaxTotalAmount>`)
+	mustContain(t, s, `<ram:GrandTotalAmount>175.00</ram:GrandTotalAmount>`)
+	mustContain(t, s, `<ram:DuePayableAmount>175.00</ram:DuePayableAmount>`)
+	mustContain(t, s, `<ram:BasisAmount>100.00</ram:BasisAmount>`)
+}
+
+func TestBuild_Lines(t *testing.T) {
+	s := mustBuild(t, sampleInvoice())
+	if n := count(s, "<ram:IncludedSupplyChainTradeLineItem>"); n != 2 {
+		t.Errorf("line item count = %d; want 2", n)
+	}
+	mustContain(t, s, `<ram:LineID>1</ram:LineID>`)
+	mustContain(t, s, `<ram:LineID>2</ram:LineID>`)
+	mustContain(t, s, `<ram:BilledQuantity unitCode="C62">1</ram:BilledQuantity>`)
+	mustContain(t, s, `<ram:LineTotalAmount>100.00</ram:LineTotalAmount>`)
+	// Line taxes must NOT emit empty amount elements.
+	if strings.Contains(s, "<ram:CalculatedAmount></ram:CalculatedAmount>") {
+		t.Error("line tax emitted an empty CalculatedAmount element")
+	}
+}
+
+func TestBuild_VatExempt(t *testing.T) {
+	in := sampleInvoice()
+	in.VatExempt = true
+	in.VatBreakdown = nil
+	in.TotalVatCents = 0
+	in.TotalTtcCents = in.TotalHtCents
+	s := mustBuild(t, in)
+	mustContain(t, s, `<ram:CategoryCode>E</ram:CategoryCode>`)
+	mustContain(t, s, `<ram:ExemptionReason>`+exemptReason293B+`</ram:ExemptionReason>`)
+	if strings.Contains(s, "<ram:RateApplicablePercent>") {
+		t.Error("exempt invoice must not carry a VAT rate")
+	}
+}
+
+func TestBuild_ClientWithoutTaxIds(t *testing.T) {
+	in := sampleInvoice()
+	in.Client = &invoicepb.InvoiceParty{FirstName: "Jean", LastName: "Dupont", ZipCode: "75002", City: "Paris"}
+	s := mustBuild(t, in)
+	mustContain(t, s, `<ram:Name>Jean Dupont</ram:Name>`)
+	// Buyer block must not reference SIREN/VAT it does not have.
+	if count(s, `schemeID="0002"`) != 1 { // only the seller's SIREN remains
+		t.Errorf("buyer without SIREN should leave a single (seller) SIREN, got %d", count(s, `schemeID="0002"`))
+	}
+}
+
+func TestBuild_RejectsDraft(t *testing.T) {
+	in := sampleInvoice()
+	in.InvoiceNumber = ""
+	if _, err := Build(in); err == nil || !strings.Contains(err.Error(), "no number") {
+		t.Fatalf("Build should reject an unnumbered (draft) invoice, got err=%v", err)
+	}
+}
+
+func TestBuild_RejectsInconsistentTotals(t *testing.T) {
+	in := sampleInvoice()
+	in.TotalHtCents = 99999
+	if _, err := Build(in); err == nil || !strings.Contains(err.Error(), "HT") {
+		t.Fatalf("Build should reject inconsistent HT totals, got err=%v", err)
+	}
+}
