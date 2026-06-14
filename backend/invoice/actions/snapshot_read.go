@@ -13,14 +13,14 @@ func (s *Server) loadSnapshot(ctx context.Context, invoiceID string, details *in
 	err := s.db.QueryRowContext(ctx,
 		`SELECT issuer_company, issuer_siren, issuer_vat, issuer_email, issuer_phone, issuer_logo_url,
 		        issuer_street, issuer_additional, issuer_zip, issuer_city,
-		        client_first_name, client_last_name, client_company, client_email,
+		        client_first_name, client_last_name, client_company, client_siren, client_vat, client_email,
 		        client_street, client_additional, client_zip, client_city
 		 FROM invoice_party_snapshots WHERE invoice_id=$1`,
 		invoiceID,
 	).Scan(
 		&p.issuerCompany, &p.issuerSiren, &p.issuerVat, &p.issuerEmail, &p.issuerPhone, &p.issuerLogoURL,
 		&p.issuerStreet, &p.issuerAdditional, &p.issuerZip, &p.issuerCity,
-		&p.clientFirstName, &p.clientLastName, &p.clientCompany, &p.clientEmail,
+		&p.clientFirstName, &p.clientLastName, &p.clientCompany, &p.clientSiren, &p.clientVat, &p.clientEmail,
 		&p.clientStreet, &p.clientAdditional, &p.clientZip, &p.clientCity,
 	)
 	if err != nil {
@@ -89,6 +89,8 @@ func partyToProto(p partySnapshot, issuer bool) *invoiceGrpc.InvoiceParty {
 		Company:          p.clientCompany,
 		FirstName:        p.clientFirstName,
 		LastName:         p.clientLastName,
+		Siren:            p.clientSiren,
+		Vat:              p.clientVat,
 		Email:            p.clientEmail,
 		Street:           p.clientStreet,
 		AdditionalStreet: p.clientAdditional,

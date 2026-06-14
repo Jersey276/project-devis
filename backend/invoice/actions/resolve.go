@@ -31,6 +31,8 @@ type partySnapshot struct {
 	clientFirstName  string
 	clientLastName   string
 	clientCompany    string
+	clientSiren      string
+	clientVat        string
 	clientEmail      string
 	clientStreet     string
 	clientAdditional string
@@ -277,6 +279,8 @@ func buildPartySnapshot(user *usersGrpc.User, userAddr *usersGrpc.Address, clien
 		p.clientFirstName = client.GetFirstName()
 		p.clientLastName = client.GetLastName()
 		p.clientCompany = client.GetCompany()
+		p.clientSiren = client.GetSiren()
+		p.clientVat = client.GetVat()
 		p.clientEmail = client.GetEmail()
 	}
 	if clientAddr != nil {
