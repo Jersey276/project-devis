@@ -10,5 +10,10 @@ const (
 	InvoiceFinalized    int32 = 4003 // already ISSUED/CANCELLED — immutable
 	MonthsAlreadyBilled int32 = 4004 // some requested months are already invoiced
 	DependencyMissing   int32 = 4005 // a referenced client/address is missing
-	InternalError       int32 = 2001
+
+	CreditNoteLineAlreadyCredited int32 = 4006 // a selected line is already credited
+	InvoiceNotIssued              int32 = 4007 // the invoice is not ISSUED/PAID
+	CreditNoteNoLinesLeft         int32 = 4008 // total credit requested but nothing left
+
+	InternalError int32 = 2001
 )

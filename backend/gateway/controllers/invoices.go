@@ -20,7 +20,12 @@ const (
 	InvoiceCodeInvoiceFinalized    int32 = 4003
 	InvoiceCodeMonthsAlreadyBilled int32 = 4004
 	InvoiceCodeDependencyMissing   int32 = 4005
-	InvoiceCodeInternalError       int32 = 2001
+
+	InvoiceCodeCreditNoteLineAlreadyCredited int32 = 4006
+	InvoiceCodeInvoiceNotIssued              int32 = 4007
+	InvoiceCodeCreditNoteNoLinesLeft         int32 = 4008
+
+	InvoiceCodeInternalError int32 = 2001
 )
 
 func invoiceValidationErrors(errs []*invoice.ValidationError) []FieldError {
@@ -41,6 +46,9 @@ var invoiceErrors = &serviceErrors{
 		InvoiceCodeInvoiceFinalized:    {http.StatusConflict, "Cette facture est émise et ne peut plus être modifiée."},
 		InvoiceCodeMonthsAlreadyBilled: {http.StatusConflict, "Certains mois sélectionnés sont déjà facturés."},
 		InvoiceCodeDependencyMissing:   {http.StatusUnprocessableEntity, "La facture fait référence à un client ou une adresse introuvable."},
+		InvoiceCodeCreditNoteLineAlreadyCredited: {http.StatusConflict, "Une ou plusieurs lignes sélectionnées ont déjà fait l'objet d'un avoir."},
+		InvoiceCodeInvoiceNotIssued:              {http.StatusConflict, "Seules les factures émises peuvent faire l'objet d'un avoir."},
+		InvoiceCodeCreditNoteNoLinesLeft:         {http.StatusConflict, "Toutes les lignes de cette facture ont déjà été avoirées."},
 		InvoiceCodeInternalError:       {http.StatusInternalServerError, "Une erreur interne est survenue."},
 	},
 	unavailableMessage: "Service de facturation indisponible.",
@@ -65,8 +73,8 @@ func InvoicesRoutes(r *gin.RouterGroup) {
 	one := r.Group("/:id")
 	one.GET("", func(c *gin.Context) { GetInvoice(c, client) })
 	one.POST("/issue", func(c *gin.Context) { IssueInvoice(c, client) })
-	one.POST("/cancel", func(c *gin.Context) { CancelInvoice(c, client) })
 	one.POST("/paid", func(c *gin.Context) { MarkInvoicePaid(c, client) })
+	one.POST("/credit-notes", func(c *gin.Context) { CreateCreditNote(c, client) })
 }
 
 func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient) {
@@ -166,12 +174,37 @@ func GetInvoice(c *gin.Context, client invoice.InvoiceServiceClient) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "invoice": invoiceDetailsToJSON(resp.Invoice)})
 }
 
-func CancelInvoice(c *gin.Context, client invoice.InvoiceServiceClient) {
-	resp, err := client.CancelInvoice(c.Request.Context(), &invoice.CancelInvoiceRequest{
-		InvoiceId: c.Param("id"),
+func CreateCreditNote(c *gin.Context, client invoice.InvoiceServiceClient) {
+	var input struct {
+		Positions []int32 `json:"positions"`
+		Reason    string  `json:"reason"`
+	}
+	// positions optional (empty = total credit); bind is tolerant of empty body.
+	_ = c.ShouldBindJSON(&input)
+
+	resp, err := client.CreateCreditNote(c.Request.Context(), &invoice.CreateCreditNoteRequest{
 		UserId:    userIDFromCtx(c),
+		InvoiceId: c.Param("id"),
+		Positions: input.Positions,
+		Reason:    input.Reason,
 	})
-	replyGeneric(c, resp, err)
+	if err != nil {
+		invoiceErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		if len(resp.ValidationErrors) > 0 {
+			invoiceErrors.replyWithValidation(c, resp.Code, invoiceValidationErrors(resp.ValidationErrors))
+		} else {
+			invoiceErrors.reply(c, resp.Code)
+		}
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{
+		"success":            true,
+		"credit_note_id":     resp.CreditNoteId,
+		"credit_note_number": resp.CreditNoteNumber,
+	})
 }
 
 func MarkInvoicePaid(c *gin.Context, client invoice.InvoiceServiceClient) {
@@ -280,5 +313,6 @@ func invoiceDetailsToJSON(d *invoice.InvoiceDetails) gin.H {
 		"total_vat_cents":      d.TotalVatCents,
 		"total_ttc_cents":      d.TotalTtcCents,
 		"vat_exempt":           d.VatExempt,
+		"credited_positions":   d.CreditedPositions,
 	}
 }

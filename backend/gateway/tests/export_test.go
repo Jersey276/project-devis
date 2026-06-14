@@ -24,6 +24,9 @@ type mockExportClient struct {
 	invoiceResponse  *export.ExportQuoteResponse
 	invoiceErr       error
 	lastInvoiceReq   *export.ExportInvoiceRequest
+	creditNoteResponse *export.ExportQuoteResponse
+	creditNoteErr      error
+	lastCreditNoteReq  *export.ExportCreditNoteRequest
 }
 
 func (m *mockExportClient) ExportQuote(_ context.Context, req *export.ExportQuoteRequest, _ ...grpc.CallOption) (*export.ExportQuoteResponse, error) {
@@ -48,6 +51,14 @@ func (m *mockExportClient) ExportInvoice(_ context.Context, req *export.ExportIn
 		return nil, m.invoiceErr
 	}
 	return m.invoiceResponse, nil
+}
+
+func (m *mockExportClient) ExportCreditNote(_ context.Context, req *export.ExportCreditNoteRequest, _ ...grpc.CallOption) (*export.ExportQuoteResponse, error) {
+	m.lastCreditNoteReq = req
+	if m.creditNoteErr != nil {
+		return nil, m.creditNoteErr
+	}
+	return m.creditNoteResponse, nil
 }
 
 func setupExportRouter(exportClient export.ExportServiceClient) *gin.Engine {

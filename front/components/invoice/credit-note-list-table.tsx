@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   DataTable,
@@ -13,58 +13,43 @@ import {
   DataTableRowActions,
   DataTableSortableHead,
 } from "@/components/custom/data-table";
-import InvoiceStatusBadge from "@/components/invoice/invoice-status-badge";
+import { Badge } from "@/components/ui/badge";
 import {
-  listInvoices,
-  markInvoicePaid,
-  readInvoicesFromBody,
+  listCreditNotes,
+  readCreditNotesFromBody,
 } from "@/lib/services/invoices";
-import { exportInvoicePdf } from "@/lib/services/export";
+import { exportCreditNotePdf } from "@/lib/services/export";
 import { formatEurosFromCents } from "@/lib/utils";
-import type {
-  BackendInvoiceStatus,
-  BackendInvoiceSummary,
-} from "@/types/backend";
+import type { BackendCreditNoteSummary } from "@/types/backend";
 
-type InvoiceRow = {
+type CreditNoteRow = {
   id: string;
   number: string;
-  status: BackendInvoiceStatus;
-  quoteId: string;
-  dueDate: string;
+  invoiceNumber: string;
+  issuedAt: string;
+  isTotal: boolean;
   totalTtc: number;
 };
 
-function toRows(invoices: BackendInvoiceSummary[]): InvoiceRow[] {
-  return invoices.map((i) => ({
-    id: i.invoice_id,
-    number: i.invoice_number,
-    status: i.status,
-    quoteId: i.quote_id,
-    dueDate: i.due_date,
-    totalTtc: i.total_ttc_cents,
+function toRows(items: BackendCreditNoteSummary[]): CreditNoteRow[] {
+  return items.map((cn) => ({
+    id: cn.credit_note_id,
+    number: cn.credit_note_number,
+    invoiceNumber: cn.invoice_number,
+    issuedAt: cn.issued_at,
+    isTotal: cn.is_total,
+    totalTtc: cn.total_ttc_cents,
   }));
 }
 
-export default function InvoiceListTable() {
-  const t = useTranslations("invoice.list");
-  const [items, setItems] = useState<InvoiceRow[]>([]);
+export default function CreditNoteListTable() {
+  const t = useTranslations("creditNote.list");
+  const [items, setItems] = useState<CreditNoteRow[]>([]);
   const [error, setError] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    const { ok, body } = await listInvoices();
-    if (!ok || !body.success) {
-      setItems([]);
-      setError((body.message as string) ?? t("loadError"));
-      return;
-    }
-    setError(null);
-    setItems(toRows(readInvoicesFromBody(body)));
-  }, [t]);
 
   useEffect(() => {
     let cancelled = false;
-    listInvoices().then(({ ok, body }) => {
+    listCreditNotes().then(({ ok, body }) => {
       if (cancelled) return;
       if (!ok || !body.success) {
         setItems([]);
@@ -72,7 +57,7 @@ export default function InvoiceListTable() {
         return;
       }
       setError(null);
-      setItems(toRows(readInvoicesFromBody(body)));
+      setItems(toRows(readCreditNotesFromBody(body)));
     });
     return () => {
       cancelled = true;
@@ -81,31 +66,18 @@ export default function InvoiceListTable() {
 
   const rowActions = useMemo<DataTableRowAction[]>(
     () => [
-      { type: "link", label: t("actions.open"), href: "/invoice/{id}" },
+      { type: "link", label: t("actions.open"), href: "/credit-note/{id}" },
       {
         type: "callback",
         label: t("actions.downloadPdf"),
         callback: (row) => {
-          void exportInvoicePdf((row as InvoiceRow).id).catch(() =>
+          void exportCreditNotePdf((row as CreditNoteRow).id).catch(() =>
             setError(t("pdfError")),
           );
         },
       },
-      {
-        type: "callback",
-        label: t("actions.markPaid"),
-        callback: (row) => {
-          const r = row as InvoiceRow;
-          if (r.status !== "ISSUED") return;
-          void markInvoicePaid(r.id).then(({ ok, body }) => {
-            if (!ok || !body.success)
-              setError((body.message as string) ?? t("actionError"));
-            else void refresh();
-          });
-        },
-      },
     ],
-    [t, refresh],
+    [t],
   );
 
   return (
@@ -123,14 +95,14 @@ export default function InvoiceListTable() {
             <DataTableSortableHead name="number">
               {t("columns.number")}
             </DataTableSortableHead>
-            <DataTableSortableHead name="status">
-              {t("columns.status")}
+            <DataTableSortableHead name="invoiceNumber">
+              {t("columns.invoice")}
             </DataTableSortableHead>
-            <DataTableSortableHead name="quoteId">
-              {t("columns.quote")}
+            <DataTableSortableHead name="isTotal">
+              {t("columns.type")}
             </DataTableSortableHead>
-            <DataTableSortableHead name="dueDate">
-              {t("columns.dueDate")}
+            <DataTableSortableHead name="issuedAt">
+              {t("columns.issuedAt")}
             </DataTableSortableHead>
             <DataTableSortableHead name="totalTtc">
               {t("columns.totalTtc")}
@@ -153,14 +125,16 @@ export default function InvoiceListTable() {
           ) : (
             items.map((item) => (
               <DataTableRow key={item.id}>
-                <DataTableCell>{item.number || "—"}</DataTableCell>
+                <DataTableCell>{item.number}</DataTableCell>
+                <DataTableCell>{item.invoiceNumber || "—"}</DataTableCell>
                 <DataTableCell>
-                  <InvoiceStatusBadge status={item.status} />
+                  <Badge variant={item.isTotal ? "default" : "secondary"}>
+                    {item.isTotal ? t("total") : t("partial")}
+                  </Badge>
                 </DataTableCell>
-                <DataTableCell>{item.quoteId}</DataTableCell>
-                <DataTableCell>{item.dueDate || "—"}</DataTableCell>
+                <DataTableCell>{item.issuedAt || "—"}</DataTableCell>
                 <DataTableCell className="tabular-nums">
-                  {formatEurosFromCents(item.totalTtc)}
+                  -{formatEurosFromCents(item.totalTtc)}
                 </DataTableCell>
                 <DataTableCell>
                   <DataTableRowActions id={item.id} row={item} />

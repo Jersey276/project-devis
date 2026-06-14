@@ -13,3 +13,6 @@ var ScheduleHTML []byte
 
 //go:embed invoice.html
 var InvoiceHTML []byte
+
+//go:embed credit_note.html
+var CreditNoteHTML []byte

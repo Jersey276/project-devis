@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 
+	creditnoteexport "project-devis-export/actions/creditnote"
 	invoiceexport "project-devis-export/actions/invoice"
 	quoteexport "project-devis-export/actions/quote"
 	scheduleexport "project-devis-export/actions/schedule"
@@ -19,4 +20,8 @@ func (s *Server) ExportSchedule(ctx context.Context, req *exportGrpc.ExportSched
 
 func (s *Server) ExportInvoice(ctx context.Context, req *exportGrpc.ExportInvoiceRequest) (*exportGrpc.ExportQuoteResponse, error) {
 	return invoiceexport.Export(ctx, s.invoice, s.gotenberg, req)
+}
+
+func (s *Server) ExportCreditNote(ctx context.Context, req *exportGrpc.ExportCreditNoteRequest) (*exportGrpc.ExportQuoteResponse, error) {
+	return creditnoteexport.Export(ctx, s.invoice, s.gotenberg, req)
 }

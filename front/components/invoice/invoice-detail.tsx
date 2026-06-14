@@ -10,8 +10,9 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import InvoiceStatusBadge from "@/components/invoice/invoice-status-badge";
+import CreateCreditNoteDialog from "@/components/invoice/create-credit-note-dialog";
+import LinkedCreditNotes from "@/components/invoice/linked-credit-notes";
 import {
-  cancelInvoice,
   getInvoice,
   markInvoicePaid,
   readInvoiceFromBody,
@@ -43,6 +44,8 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [creditDialogOpen, setCreditDialogOpen] = useState(false);
+  const [creditRefresh, setCreditRefresh] = useState(0);
 
   const load = useCallback(async () => {
     const { ok, body } = await getInvoice(invoiceId);
@@ -88,14 +91,6 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
     else void load();
   }
 
-  async function onCancel() {
-    setBusy(true);
-    const { ok, body } = await cancelInvoice(invoiceId);
-    setBusy(false);
-    if (!ok || !body.success) setError((body.message as string) ?? t("actionError"));
-    else void load();
-  }
-
   if (loading) return <p>{t("loading")}</p>;
   if (error && !invoice) return <p className="text-destructive">{error}</p>;
   if (!invoice) return <p className="text-destructive">{t("notFound")}</p>;
@@ -119,8 +114,13 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
             </Button>
           ) : null}
           {invoice.status === "ISSUED" || invoice.status === "PAID" ? (
-            <Button type="button" variant="destructive" onClick={onCancel} disabled={busy}>
-              {t("cancel")}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCreditDialogOpen(true)}
+              disabled={busy}
+            >
+              {t("createCreditNote")}
             </Button>
           ) : null}
         </div>
@@ -208,7 +208,21 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
         {invoice.vat_exempt ? (
           <p className="text-xs text-muted-foreground">{t("vatExemptNotice")}</p>
         ) : null}
+
+        {invoice.status === "ISSUED" || invoice.status === "PAID" ? (
+          <LinkedCreditNotes invoiceId={invoiceId} refreshKey={creditRefresh} />
+        ) : null}
       </CardContent>
+
+      <CreateCreditNoteDialog
+        open={creditDialogOpen}
+        onOpenChange={setCreditDialogOpen}
+        invoice={invoice}
+        onCreated={() => {
+          setCreditRefresh((n) => n + 1);
+          void load();
+        }}
+      />
     </Card>
   );
 }

@@ -1,5 +1,7 @@
 import { apiFetch, type ApiResult } from "@/lib/api";
 import type {
+  BackendCreditNoteDetails,
+  BackendCreditNoteSummary,
   BackendInvoiceDetails,
   BackendInvoiceSummary,
 } from "@/types/backend";
@@ -66,16 +68,43 @@ export async function issueInvoice(invoiceId: string): Promise<ApiResult> {
   });
 }
 
-export async function cancelInvoice(invoiceId: string): Promise<ApiResult> {
-  return apiFetch(`/api/invoices/${encodeURIComponent(invoiceId)}/cancel`, {
-    method: "POST",
-  });
-}
-
 export async function markInvoicePaid(invoiceId: string): Promise<ApiResult> {
   return apiFetch(`/api/invoices/${encodeURIComponent(invoiceId)}/paid`, {
     method: "POST",
   });
+}
+
+export type CreateCreditNotePayload = {
+  positions?: number[]; // empty/undefined = total credit of the remainder
+  reason?: string;
+};
+
+export async function createCreditNote(
+  invoiceId: string,
+  payload: CreateCreditNotePayload = {},
+): Promise<ApiResult> {
+  return apiFetch(
+    `/api/invoices/${encodeURIComponent(invoiceId)}/credit-notes`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        positions: payload.positions ?? [],
+        reason: payload.reason ?? "",
+      }),
+    },
+  );
+}
+
+export async function getCreditNote(creditNoteId: string): Promise<ApiResult> {
+  return apiFetch(`/api/credit-notes/${encodeURIComponent(creditNoteId)}`);
+}
+
+export async function listCreditNotes(invoiceId?: string): Promise<ApiResult> {
+  const i = invoiceId?.trim();
+  const path = i
+    ? `/api/credit-notes?invoice_id=${encodeURIComponent(i)}`
+    : "/api/credit-notes";
+  return apiFetch(path);
 }
 
 export function readInvoicesFromBody(
@@ -90,4 +119,18 @@ export function readInvoiceFromBody(
 ): BackendInvoiceDetails | null {
   if (!body.invoice || typeof body.invoice !== "object") return null;
   return body.invoice as BackendInvoiceDetails;
+}
+
+export function readCreditNotesFromBody(
+  body: Record<string, unknown>,
+): BackendCreditNoteSummary[] {
+  if (!Array.isArray(body.credit_notes)) return [];
+  return body.credit_notes as BackendCreditNoteSummary[];
+}
+
+export function readCreditNoteFromBody(
+  body: Record<string, unknown>,
+): BackendCreditNoteDetails | null {
+  if (!body.credit_note || typeof body.credit_note !== "object") return null;
+  return body.credit_note as BackendCreditNoteDetails;
 }

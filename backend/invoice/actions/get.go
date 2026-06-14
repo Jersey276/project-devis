@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 	"database/sql"
+	"sort"
 	"strings"
 	"time"
 
@@ -78,6 +79,20 @@ func (s *Server) GetInvoice(ctx context.Context, req *invoiceGrpc.GetInvoiceRequ
 	// ISSUED/PAID/CANCELLED: read the frozen snapshot.
 	if err := s.loadSnapshot(ctx, req.InvoiceId, details); err != nil {
 		return &invoiceGrpc.GetInvoiceResponse{Success: false, Code: codes.InternalError}, err
+	}
+
+	// Expose which lines are already credited so the UI can grey them out.
+	if status == "ISSUED" || status == "PAID" {
+		credited, err := s.creditedPositions(ctx, req.InvoiceId)
+		if err != nil {
+			return &invoiceGrpc.GetInvoiceResponse{Success: false, Code: codes.InternalError}, err
+		}
+		positions := make([]int32, 0, len(credited))
+		for p := range credited {
+			positions = append(positions, p)
+		}
+		sort.Slice(positions, func(i, j int) bool { return positions[i] < positions[j] })
+		details.CreditedPositions = positions
 	}
 	return &invoiceGrpc.GetInvoiceResponse{Success: true, Code: codes.Success, Invoice: details}, nil
 }

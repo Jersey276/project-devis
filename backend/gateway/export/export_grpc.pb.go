@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ExportService_ExportQuote_FullMethodName    = "/export.ExportService/ExportQuote"
-	ExportService_ExportSchedule_FullMethodName = "/export.ExportService/ExportSchedule"
-	ExportService_ExportInvoice_FullMethodName  = "/export.ExportService/ExportInvoice"
+	ExportService_ExportQuote_FullMethodName      = "/export.ExportService/ExportQuote"
+	ExportService_ExportSchedule_FullMethodName   = "/export.ExportService/ExportSchedule"
+	ExportService_ExportInvoice_FullMethodName    = "/export.ExportService/ExportInvoice"
+	ExportService_ExportCreditNote_FullMethodName = "/export.ExportService/ExportCreditNote"
 )
 
 // ExportServiceClient is the client API for ExportService service.
@@ -31,6 +32,7 @@ type ExportServiceClient interface {
 	ExportQuote(ctx context.Context, in *ExportQuoteRequest, opts ...grpc.CallOption) (*ExportQuoteResponse, error)
 	ExportSchedule(ctx context.Context, in *ExportScheduleRequest, opts ...grpc.CallOption) (*ExportQuoteResponse, error)
 	ExportInvoice(ctx context.Context, in *ExportInvoiceRequest, opts ...grpc.CallOption) (*ExportQuoteResponse, error)
+	ExportCreditNote(ctx context.Context, in *ExportCreditNoteRequest, opts ...grpc.CallOption) (*ExportQuoteResponse, error)
 }
 
 type exportServiceClient struct {
@@ -71,6 +73,16 @@ func (c *exportServiceClient) ExportInvoice(ctx context.Context, in *ExportInvoi
 	return out, nil
 }
 
+func (c *exportServiceClient) ExportCreditNote(ctx context.Context, in *ExportCreditNoteRequest, opts ...grpc.CallOption) (*ExportQuoteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExportQuoteResponse)
+	err := c.cc.Invoke(ctx, ExportService_ExportCreditNote_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ExportServiceServer is the server API for ExportService service.
 // All implementations must embed UnimplementedExportServiceServer
 // for forward compatibility.
@@ -78,6 +90,7 @@ type ExportServiceServer interface {
 	ExportQuote(context.Context, *ExportQuoteRequest) (*ExportQuoteResponse, error)
 	ExportSchedule(context.Context, *ExportScheduleRequest) (*ExportQuoteResponse, error)
 	ExportInvoice(context.Context, *ExportInvoiceRequest) (*ExportQuoteResponse, error)
+	ExportCreditNote(context.Context, *ExportCreditNoteRequest) (*ExportQuoteResponse, error)
 	mustEmbedUnimplementedExportServiceServer()
 }
 
@@ -96,6 +109,9 @@ func (UnimplementedExportServiceServer) ExportSchedule(context.Context, *ExportS
 }
 func (UnimplementedExportServiceServer) ExportInvoice(context.Context, *ExportInvoiceRequest) (*ExportQuoteResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ExportInvoice not implemented")
+}
+func (UnimplementedExportServiceServer) ExportCreditNote(context.Context, *ExportCreditNoteRequest) (*ExportQuoteResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ExportCreditNote not implemented")
 }
 func (UnimplementedExportServiceServer) mustEmbedUnimplementedExportServiceServer() {}
 func (UnimplementedExportServiceServer) testEmbeddedByValue()                       {}
@@ -172,6 +188,24 @@ func _ExportService_ExportInvoice_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ExportService_ExportCreditNote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExportCreditNoteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExportServiceServer).ExportCreditNote(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExportService_ExportCreditNote_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExportServiceServer).ExportCreditNote(ctx, req.(*ExportCreditNoteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ExportService_ServiceDesc is the grpc.ServiceDesc for ExportService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +224,10 @@ var ExportService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ExportInvoice",
 			Handler:    _ExportService_ExportInvoice_Handler,
+		},
+		{
+			MethodName: "ExportCreditNote",
+			Handler:    _ExportService_ExportCreditNote_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

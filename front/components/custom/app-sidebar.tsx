@@ -38,6 +38,7 @@ type NavKey =
   | "quote"
   | "schedule"
   | "invoices"
+  | "creditNotes"
   | "clients"
   | "fees"
   | "users"
@@ -76,6 +77,12 @@ const items: SidebarItem[] = [
   {
     key: "invoices",
     url: "/invoice",
+    icon: ReceiptEuroIcon,
+    modes: ["provider"],
+  },
+  {
+    key: "creditNotes",
+    url: "/credit-note",
     icon: ReceiptEuroIcon,
     modes: ["provider"],
   },

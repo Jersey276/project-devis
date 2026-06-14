@@ -22,10 +22,12 @@ const (
 	InvoiceService_CreateInvoiceFromSchedule_FullMethodName = "/invoice.InvoiceService/CreateInvoiceFromSchedule"
 	InvoiceService_CreateInvoiceFromQuote_FullMethodName    = "/invoice.InvoiceService/CreateInvoiceFromQuote"
 	InvoiceService_IssueInvoice_FullMethodName              = "/invoice.InvoiceService/IssueInvoice"
-	InvoiceService_CancelInvoice_FullMethodName             = "/invoice.InvoiceService/CancelInvoice"
 	InvoiceService_MarkInvoicePaid_FullMethodName           = "/invoice.InvoiceService/MarkInvoicePaid"
 	InvoiceService_GetInvoice_FullMethodName                = "/invoice.InvoiceService/GetInvoice"
 	InvoiceService_ListInvoices_FullMethodName              = "/invoice.InvoiceService/ListInvoices"
+	InvoiceService_CreateCreditNote_FullMethodName          = "/invoice.InvoiceService/CreateCreditNote"
+	InvoiceService_GetCreditNote_FullMethodName             = "/invoice.InvoiceService/GetCreditNote"
+	InvoiceService_ListCreditNotes_FullMethodName           = "/invoice.InvoiceService/ListCreditNotes"
 )
 
 // InvoiceServiceClient is the client API for InvoiceService service.
@@ -35,10 +37,14 @@ type InvoiceServiceClient interface {
 	CreateInvoiceFromSchedule(ctx context.Context, in *CreateInvoiceFromScheduleRequest, opts ...grpc.CallOption) (*CreateInvoiceResponse, error)
 	CreateInvoiceFromQuote(ctx context.Context, in *CreateInvoiceFromQuoteRequest, opts ...grpc.CallOption) (*CreateInvoiceResponse, error)
 	IssueInvoice(ctx context.Context, in *IssueInvoiceRequest, opts ...grpc.CallOption) (*CreateInvoiceResponse, error)
-	CancelInvoice(ctx context.Context, in *CancelInvoiceRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	MarkInvoicePaid(ctx context.Context, in *MarkInvoicePaidRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	GetInvoice(ctx context.Context, in *GetInvoiceRequest, opts ...grpc.CallOption) (*GetInvoiceResponse, error)
 	ListInvoices(ctx context.Context, in *ListInvoicesRequest, opts ...grpc.CallOption) (*ListInvoicesResponse, error)
+	// Credit notes (avoirs). Crediting replaces invoice cancellation: it
+	// neutralises part or all of an issued invoice without changing its status.
+	CreateCreditNote(ctx context.Context, in *CreateCreditNoteRequest, opts ...grpc.CallOption) (*CreateCreditNoteResponse, error)
+	GetCreditNote(ctx context.Context, in *GetCreditNoteRequest, opts ...grpc.CallOption) (*GetCreditNoteResponse, error)
+	ListCreditNotes(ctx context.Context, in *ListCreditNotesRequest, opts ...grpc.CallOption) (*ListCreditNotesResponse, error)
 }
 
 type invoiceServiceClient struct {
@@ -79,16 +85,6 @@ func (c *invoiceServiceClient) IssueInvoice(ctx context.Context, in *IssueInvoic
 	return out, nil
 }
 
-func (c *invoiceServiceClient) CancelInvoice(ctx context.Context, in *CancelInvoiceRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GenericResponse)
-	err := c.cc.Invoke(ctx, InvoiceService_CancelInvoice_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *invoiceServiceClient) MarkInvoicePaid(ctx context.Context, in *MarkInvoicePaidRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GenericResponse)
@@ -119,6 +115,36 @@ func (c *invoiceServiceClient) ListInvoices(ctx context.Context, in *ListInvoice
 	return out, nil
 }
 
+func (c *invoiceServiceClient) CreateCreditNote(ctx context.Context, in *CreateCreditNoteRequest, opts ...grpc.CallOption) (*CreateCreditNoteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateCreditNoteResponse)
+	err := c.cc.Invoke(ctx, InvoiceService_CreateCreditNote_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *invoiceServiceClient) GetCreditNote(ctx context.Context, in *GetCreditNoteRequest, opts ...grpc.CallOption) (*GetCreditNoteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetCreditNoteResponse)
+	err := c.cc.Invoke(ctx, InvoiceService_GetCreditNote_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *invoiceServiceClient) ListCreditNotes(ctx context.Context, in *ListCreditNotesRequest, opts ...grpc.CallOption) (*ListCreditNotesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListCreditNotesResponse)
+	err := c.cc.Invoke(ctx, InvoiceService_ListCreditNotes_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InvoiceServiceServer is the server API for InvoiceService service.
 // All implementations must embed UnimplementedInvoiceServiceServer
 // for forward compatibility.
@@ -126,10 +152,14 @@ type InvoiceServiceServer interface {
 	CreateInvoiceFromSchedule(context.Context, *CreateInvoiceFromScheduleRequest) (*CreateInvoiceResponse, error)
 	CreateInvoiceFromQuote(context.Context, *CreateInvoiceFromQuoteRequest) (*CreateInvoiceResponse, error)
 	IssueInvoice(context.Context, *IssueInvoiceRequest) (*CreateInvoiceResponse, error)
-	CancelInvoice(context.Context, *CancelInvoiceRequest) (*GenericResponse, error)
 	MarkInvoicePaid(context.Context, *MarkInvoicePaidRequest) (*GenericResponse, error)
 	GetInvoice(context.Context, *GetInvoiceRequest) (*GetInvoiceResponse, error)
 	ListInvoices(context.Context, *ListInvoicesRequest) (*ListInvoicesResponse, error)
+	// Credit notes (avoirs). Crediting replaces invoice cancellation: it
+	// neutralises part or all of an issued invoice without changing its status.
+	CreateCreditNote(context.Context, *CreateCreditNoteRequest) (*CreateCreditNoteResponse, error)
+	GetCreditNote(context.Context, *GetCreditNoteRequest) (*GetCreditNoteResponse, error)
+	ListCreditNotes(context.Context, *ListCreditNotesRequest) (*ListCreditNotesResponse, error)
 	mustEmbedUnimplementedInvoiceServiceServer()
 }
 
@@ -149,9 +179,6 @@ func (UnimplementedInvoiceServiceServer) CreateInvoiceFromQuote(context.Context,
 func (UnimplementedInvoiceServiceServer) IssueInvoice(context.Context, *IssueInvoiceRequest) (*CreateInvoiceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method IssueInvoice not implemented")
 }
-func (UnimplementedInvoiceServiceServer) CancelInvoice(context.Context, *CancelInvoiceRequest) (*GenericResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method CancelInvoice not implemented")
-}
 func (UnimplementedInvoiceServiceServer) MarkInvoicePaid(context.Context, *MarkInvoicePaidRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method MarkInvoicePaid not implemented")
 }
@@ -160,6 +187,15 @@ func (UnimplementedInvoiceServiceServer) GetInvoice(context.Context, *GetInvoice
 }
 func (UnimplementedInvoiceServiceServer) ListInvoices(context.Context, *ListInvoicesRequest) (*ListInvoicesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListInvoices not implemented")
+}
+func (UnimplementedInvoiceServiceServer) CreateCreditNote(context.Context, *CreateCreditNoteRequest) (*CreateCreditNoteResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateCreditNote not implemented")
+}
+func (UnimplementedInvoiceServiceServer) GetCreditNote(context.Context, *GetCreditNoteRequest) (*GetCreditNoteResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetCreditNote not implemented")
+}
+func (UnimplementedInvoiceServiceServer) ListCreditNotes(context.Context, *ListCreditNotesRequest) (*ListCreditNotesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListCreditNotes not implemented")
 }
 func (UnimplementedInvoiceServiceServer) mustEmbedUnimplementedInvoiceServiceServer() {}
 func (UnimplementedInvoiceServiceServer) testEmbeddedByValue()                        {}
@@ -236,24 +272,6 @@ func _InvoiceService_IssueInvoice_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _InvoiceService_CancelInvoice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CancelInvoiceRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(InvoiceServiceServer).CancelInvoice(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: InvoiceService_CancelInvoice_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InvoiceServiceServer).CancelInvoice(ctx, req.(*CancelInvoiceRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _InvoiceService_MarkInvoicePaid_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MarkInvoicePaidRequest)
 	if err := dec(in); err != nil {
@@ -308,6 +326,60 @@ func _InvoiceService_ListInvoices_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InvoiceService_CreateCreditNote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateCreditNoteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InvoiceServiceServer).CreateCreditNote(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InvoiceService_CreateCreditNote_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InvoiceServiceServer).CreateCreditNote(ctx, req.(*CreateCreditNoteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InvoiceService_GetCreditNote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCreditNoteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InvoiceServiceServer).GetCreditNote(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InvoiceService_GetCreditNote_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InvoiceServiceServer).GetCreditNote(ctx, req.(*GetCreditNoteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InvoiceService_ListCreditNotes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCreditNotesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InvoiceServiceServer).ListCreditNotes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InvoiceService_ListCreditNotes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InvoiceServiceServer).ListCreditNotes(ctx, req.(*ListCreditNotesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InvoiceService_ServiceDesc is the grpc.ServiceDesc for InvoiceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -328,10 +400,6 @@ var InvoiceService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _InvoiceService_IssueInvoice_Handler,
 		},
 		{
-			MethodName: "CancelInvoice",
-			Handler:    _InvoiceService_CancelInvoice_Handler,
-		},
-		{
 			MethodName: "MarkInvoicePaid",
 			Handler:    _InvoiceService_MarkInvoicePaid_Handler,
 		},
@@ -342,6 +410,18 @@ var InvoiceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListInvoices",
 			Handler:    _InvoiceService_ListInvoices_Handler,
+		},
+		{
+			MethodName: "CreateCreditNote",
+			Handler:    _InvoiceService_CreateCreditNote_Handler,
+		},
+		{
+			MethodName: "GetCreditNote",
+			Handler:    _InvoiceService_GetCreditNote_Handler,
+		},
+		{
+			MethodName: "ListCreditNotes",
+			Handler:    _InvoiceService_ListCreditNotes_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -8,10 +8,15 @@ service InvoiceService {
     rpc CreateInvoiceFromSchedule(CreateInvoiceFromScheduleRequest) returns (CreateInvoiceResponse);
     rpc CreateInvoiceFromQuote(CreateInvoiceFromQuoteRequest) returns (CreateInvoiceResponse);
     rpc IssueInvoice(IssueInvoiceRequest) returns (CreateInvoiceResponse);
-    rpc CancelInvoice(CancelInvoiceRequest) returns (GenericResponse);
     rpc MarkInvoicePaid(MarkInvoicePaidRequest) returns (GenericResponse);
     rpc GetInvoice(GetInvoiceRequest) returns (GetInvoiceResponse);
     rpc ListInvoices(ListInvoicesRequest) returns (ListInvoicesResponse);
+
+    // Credit notes (avoirs). Crediting replaces invoice cancellation: it
+    // neutralises part or all of an issued invoice without changing its status.
+    rpc CreateCreditNote(CreateCreditNoteRequest) returns (CreateCreditNoteResponse);
+    rpc GetCreditNote(GetCreditNoteRequest) returns (GetCreditNoteResponse);
+    rpc ListCreditNotes(ListCreditNotesRequest) returns (ListCreditNotesResponse);
 }
 
 message GenericResponse {
@@ -52,11 +57,6 @@ message CreateInvoiceResponse {
 }
 
 message IssueInvoiceRequest {
-    string invoice_id = 1;
-    string user_id    = 2;
-}
-
-message CancelInvoiceRequest {
     string invoice_id = 1;
     string user_id    = 2;
 }
@@ -125,6 +125,9 @@ message InvoiceDetails {
     int64  total_vat_cents       = 16;
     int64  total_ttc_cents       = 17;
     bool   vat_exempt            = 18;
+    // Line positions already credited by an existing credit note (ISSUED/PAID
+    // invoices only). The UI greys these out in the credit-note dialog.
+    repeated int32 credited_positions = 19;
 }
 
 message GetInvoiceResponse {
@@ -153,4 +156,72 @@ message ListInvoicesResponse {
     bool                    success  = 1;
     int32                   code     = 2;
     repeated InvoiceSummary invoices = 3;
+}
+
+// ─── Credit notes (avoirs) ───────────────────────────────────────────────────
+
+message CreateCreditNoteRequest {
+    string user_id    = 1;
+    string invoice_id = 2;
+    repeated int32 positions = 3;  // invoice_line_snapshots positions; empty = total of the remainder
+    string reason     = 4;         // optional
+}
+
+message CreateCreditNoteResponse {
+    bool   success            = 1;
+    int32  code               = 2;
+    string credit_note_id     = 3;
+    string credit_note_number = 4;
+    repeated ValidationError validation_errors = 5;
+}
+
+message GetCreditNoteRequest {
+    string credit_note_id = 1;
+    string user_id        = 2;
+}
+
+message CreditNoteDetails {
+    string credit_note_id     = 1;
+    string user_id            = 2;
+    string invoice_id         = 3;
+    string invoice_number     = 4;   // origin invoice number (legal reference)
+    string credit_note_number = 5;
+    string issued_at          = 6;
+    string reason             = 7;
+    bool   is_total           = 8;
+    InvoiceParty issuer       = 9;
+    InvoiceParty client       = 10;
+    repeated InvoiceLine lines = 11;  // amounts positive; negated at render
+    repeated InvoiceVatLine vat_breakdown = 12;
+    int64  total_ht_cents     = 13;
+    int64  total_vat_cents    = 14;
+    int64  total_ttc_cents    = 15;
+    bool   vat_exempt         = 16;
+}
+
+message GetCreditNoteResponse {
+    bool              success     = 1;
+    int32             code        = 2;
+    CreditNoteDetails credit_note = 3;
+}
+
+message ListCreditNotesRequest {
+    string user_id    = 1;
+    string invoice_id = 2;  // optional filter
+}
+
+message CreditNoteSummary {
+    string credit_note_id     = 1;
+    string credit_note_number = 2;
+    string invoice_id         = 3;
+    string invoice_number     = 4;
+    string issued_at          = 5;
+    bool   is_total           = 6;
+    int64  total_ttc_cents    = 7;
+}
+
+message ListCreditNotesResponse {
+    bool                       success      = 1;
+    int32                      code         = 2;
+    repeated CreditNoteSummary credit_notes = 3;
 }

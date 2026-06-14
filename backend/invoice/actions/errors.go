@@ -12,5 +12,10 @@ const (
 	CodeInvoiceFinalized    = codes.InvoiceFinalized
 	CodeMonthsAlreadyBilled = codes.MonthsAlreadyBilled
 	CodeDependencyMissing   = codes.DependencyMissing
-	CodeInternalError       = codes.InternalError
+
+	CodeCreditNoteLineAlreadyCredited = codes.CreditNoteLineAlreadyCredited
+	CodeInvoiceNotIssued              = codes.InvoiceNotIssued
+	CodeCreditNoteNoLinesLeft         = codes.CreditNoteNoLinesLeft
+
+	CodeInternalError = codes.InternalError
 )

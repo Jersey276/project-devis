@@ -245,6 +245,58 @@ func (x *ExportInvoiceRequest) GetUserId() string {
 	return ""
 }
 
+type ExportCreditNoteRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CreditNoteId  string                 `protobuf:"bytes,1,opt,name=credit_note_id,json=creditNoteId,proto3" json:"credit_note_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExportCreditNoteRequest) Reset() {
+	*x = ExportCreditNoteRequest{}
+	mi := &file_export_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExportCreditNoteRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExportCreditNoteRequest) ProtoMessage() {}
+
+func (x *ExportCreditNoteRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_export_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExportCreditNoteRequest.ProtoReflect.Descriptor instead.
+func (*ExportCreditNoteRequest) Descriptor() ([]byte, []int) {
+	return file_export_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ExportCreditNoteRequest) GetCreditNoteId() string {
+	if x != nil {
+		return x.CreditNoteId
+	}
+	return ""
+}
+
+func (x *ExportCreditNoteRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
 var File_export_proto protoreflect.FileDescriptor
 
 const file_export_proto_rawDesc = "" +
@@ -265,11 +317,15 @@ const file_export_proto_rawDesc = "" +
 	"\x14ExportInvoiceRequest\x12\x1d\n" +
 	"\n" +
 	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId2\xf1\x01\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"X\n" +
+	"\x17ExportCreditNoteRequest\x12$\n" +
+	"\x0ecredit_note_id\x18\x01 \x01(\tR\fcreditNoteId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId2\xc3\x02\n" +
 	"\rExportService\x12F\n" +
 	"\vExportQuote\x12\x1a.export.ExportQuoteRequest\x1a\x1b.export.ExportQuoteResponse\x12L\n" +
 	"\x0eExportSchedule\x12\x1d.export.ExportScheduleRequest\x1a\x1b.export.ExportQuoteResponse\x12J\n" +
-	"\rExportInvoice\x12\x1c.export.ExportInvoiceRequest\x1a\x1b.export.ExportQuoteResponseB\x10Z\x0egateway/exportb\x06proto3"
+	"\rExportInvoice\x12\x1c.export.ExportInvoiceRequest\x1a\x1b.export.ExportQuoteResponse\x12P\n" +
+	"\x10ExportCreditNote\x12\x1f.export.ExportCreditNoteRequest\x1a\x1b.export.ExportQuoteResponseB\x10Z\x0egateway/exportb\x06proto3"
 
 var (
 	file_export_proto_rawDescOnce sync.Once
@@ -283,22 +339,25 @@ func file_export_proto_rawDescGZIP() []byte {
 	return file_export_proto_rawDescData
 }
 
-var file_export_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_export_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_export_proto_goTypes = []any{
-	(*ExportQuoteRequest)(nil),    // 0: export.ExportQuoteRequest
-	(*ExportQuoteResponse)(nil),   // 1: export.ExportQuoteResponse
-	(*ExportScheduleRequest)(nil), // 2: export.ExportScheduleRequest
-	(*ExportInvoiceRequest)(nil),  // 3: export.ExportInvoiceRequest
+	(*ExportQuoteRequest)(nil),      // 0: export.ExportQuoteRequest
+	(*ExportQuoteResponse)(nil),     // 1: export.ExportQuoteResponse
+	(*ExportScheduleRequest)(nil),   // 2: export.ExportScheduleRequest
+	(*ExportInvoiceRequest)(nil),    // 3: export.ExportInvoiceRequest
+	(*ExportCreditNoteRequest)(nil), // 4: export.ExportCreditNoteRequest
 }
 var file_export_proto_depIdxs = []int32{
 	0, // 0: export.ExportService.ExportQuote:input_type -> export.ExportQuoteRequest
 	2, // 1: export.ExportService.ExportSchedule:input_type -> export.ExportScheduleRequest
 	3, // 2: export.ExportService.ExportInvoice:input_type -> export.ExportInvoiceRequest
-	1, // 3: export.ExportService.ExportQuote:output_type -> export.ExportQuoteResponse
-	1, // 4: export.ExportService.ExportSchedule:output_type -> export.ExportQuoteResponse
-	1, // 5: export.ExportService.ExportInvoice:output_type -> export.ExportQuoteResponse
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
+	4, // 3: export.ExportService.ExportCreditNote:input_type -> export.ExportCreditNoteRequest
+	1, // 4: export.ExportService.ExportQuote:output_type -> export.ExportQuoteResponse
+	1, // 5: export.ExportService.ExportSchedule:output_type -> export.ExportQuoteResponse
+	1, // 6: export.ExportService.ExportInvoice:output_type -> export.ExportQuoteResponse
+	1, // 7: export.ExportService.ExportCreditNote:output_type -> export.ExportQuoteResponse
+	4, // [4:8] is the sub-list for method output_type
+	0, // [0:4] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -315,7 +374,7 @@ func file_export_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_export_proto_rawDesc), len(file_export_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -30,6 +30,7 @@
     "quote": "Devis",
     "schedule": "Échéanciers",
     "invoices": "Factures",
+    "creditNotes": "Avoirs",
     "clients": "Clients",
     "fees": "Frais",
     "users": "Utilisateurs",
@@ -456,8 +457,7 @@
       "actions": {
         "open": "Ouvrir",
         "downloadPdf": "Télécharger le PDF",
-        "markPaid": "Marquer payée",
-        "cancel": "Annuler"
+        "markPaid": "Marquer payée"
       }
     },
     "detail": {
@@ -470,7 +470,7 @@
       "actionError": "L'action a échoué.",
       "downloadPdf": "Télécharger le PDF",
       "markPaid": "Marquer payée",
-      "cancel": "Annuler",
+      "createCreditNote": "Créer un avoir",
       "issuer": "Émetteur",
       "client": "Client",
       "saleDate": "Date de vente",
@@ -506,6 +506,72 @@
       "generate": "Générer une facture",
       "submitting": "Génération…",
       "error": "La génération de la facture a échoué."
+    }
+  },
+  "creditNote": {
+    "list": {
+      "title": "Avoirs",
+      "empty": "Aucun avoir.",
+      "loadError": "Impossible de charger les avoirs.",
+      "pdfError": "Export PDF impossible.",
+      "total": "Total",
+      "partial": "Partiel",
+      "columns": {
+        "number": "Numéro",
+        "invoice": "Facture",
+        "type": "Type",
+        "issuedAt": "Date",
+        "totalTtc": "Montant TTC",
+        "actions": "Actions"
+      },
+      "actions": {
+        "open": "Ouvrir",
+        "downloadPdf": "Télécharger le PDF"
+      }
+    },
+    "create": {
+      "title": "Créer un avoir",
+      "selectLines": "Sélectionnez les lignes à avoirer",
+      "alreadyCredited": "déjà avoirée",
+      "totalCredit": "Tout sélectionner",
+      "selectedTotal": "Total sélectionné",
+      "reason": "Motif (optionnel)",
+      "cancel": "Annuler",
+      "submit": "Créer l'avoir",
+      "submitting": "Création…",
+      "error": "La création de l'avoir a échoué."
+    },
+    "detail": {
+      "breadcrumb": "Avoir",
+      "title": "Avoir N° {number}",
+      "originInvoice": "En référence à la facture N° {number}",
+      "loading": "Chargement…",
+      "loadError": "Impossible de charger l'avoir.",
+      "notFound": "Avoir introuvable.",
+      "pdfError": "Export PDF impossible.",
+      "downloadPdf": "Télécharger le PDF",
+      "issuer": "Émetteur",
+      "client": "Client",
+      "lines": {
+        "name": "Désignation",
+        "quantity": "Qté",
+        "unit": "Unité",
+        "unitPrice": "PU HT",
+        "vat": "TVA",
+        "totalHt": "Total HT"
+      },
+      "totals": {
+        "ht": "Total HT",
+        "vat": "Total TVA",
+        "ttc": "Total TTC"
+      },
+      "vatExemptNotice": "TVA non applicable, art. 293 B du CGI."
+    },
+    "linkedSection": {
+      "title": "Avoirs",
+      "total": "Avoir total",
+      "partial": "Avoir partiel",
+      "downloadPdf": "PDF"
     }
   },
   "admin": {

@@ -20,3 +20,10 @@ export async function exportInvoicePdf(invoiceId: string): Promise<void> {
     `facture-${invoiceId}.pdf`,
   );
 }
+
+export async function exportCreditNotePdf(creditNoteId: string): Promise<void> {
+  await downloadBlob(
+    `/api/export/credit-notes/${encodeURIComponent(creditNoteId)}`,
+    `avoir-${creditNoteId}.pdf`,
+  );
+}

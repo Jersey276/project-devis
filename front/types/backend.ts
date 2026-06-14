@@ -265,6 +265,35 @@ export type BackendInvoiceDetails = {
   total_vat_cents: number;
   total_ttc_cents: number;
   vat_exempt: boolean;
+  credited_positions: number[];
+};
+
+export type BackendCreditNoteSummary = {
+  credit_note_id: string;
+  credit_note_number: string;
+  invoice_id: string;
+  invoice_number: string;
+  issued_at: string;
+  is_total: boolean;
+  total_ttc_cents: number;
+};
+
+export type BackendCreditNoteDetails = {
+  credit_note_id: string;
+  invoice_id: string;
+  invoice_number: string;
+  credit_note_number: string;
+  issued_at: string;
+  reason: string;
+  is_total: boolean;
+  issuer: BackendInvoiceParty;
+  client: BackendInvoiceParty;
+  lines: BackendInvoiceLine[];
+  vat_breakdown: BackendInvoiceVatLine[];
+  total_ht_cents: number;
+  total_vat_cents: number;
+  total_ttc_cents: number;
+  vat_exempt: boolean;
 };
 
 export type ScheduleBalanceState = "under" | "balanced" | "over";

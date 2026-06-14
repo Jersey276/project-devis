@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>AVOIR{{if .CreditNoteNumber}} {{.CreditNoteNumber}}{{end}}</title>
+<style>
+  @page { size: A4; margin: 15mm; }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 9pt; color: #111; margin: 0; }
+
+  .parties { display: flex; gap: 10mm; margin-bottom: 8mm; }
+  .party { flex: 1; }
+  .party.right { text-align: right; }
+  .party .name { font-weight: 700; font-size: 12pt; margin-bottom: 1mm; }
+  .party .logo { display: block; max-height: 18mm; max-width: 60mm; margin-bottom: 2mm; }
+  .party .row { line-height: 1.35; }
+
+  .doc-title { font-size: 16pt; font-weight: 700; margin: 4mm 0 1mm; }
+  .doc-meta  { font-size: 10pt; margin: 0 0 6mm; line-height: 1.5; }
+  .doc-meta .label { color: #555; }
+
+  table.lines { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.lines th, table.lines td { border: 1px solid #444; padding: 1.5mm 2mm; }
+  table.lines th { background: #e6e6e6; font-weight: 700; }
+  table.lines th.qty, table.lines th.unit, table.lines th.rate,
+  table.lines td.qty, table.lines td.unit, table.lines td.rate { text-align: center; }
+  table.lines th.price, table.lines th.total,
+  table.lines td.price, table.lines td.total { text-align: right; white-space: nowrap; }
+  table.lines tr { page-break-inside: avoid; }
+  table.lines thead { display: table-header-group; }
+
+  .totals { margin-top: 5mm; width: 70mm; margin-left: auto; }
+  .totals table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  .totals td { padding: 1mm 2mm; }
+  .totals td.amount { text-align: right; white-space: nowrap; }
+  .totals tr.grand td { font-weight: 700; font-size: 11pt; border-top: 1px solid #444; }
+
+  .vat-table { margin-top: 5mm; width: 90mm; }
+  .vat-table table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+  .vat-table th, .vat-table td { border: 1px solid #888; padding: 1mm 2mm; }
+  .vat-table th { background: #f0f0f0; }
+  .vat-table td.amount { text-align: right; white-space: nowrap; }
+
+  .legal { margin-top: 12mm; font-size: 7.5pt; color: #444; line-height: 1.4; border-top: 1px solid #ccc; padding-top: 3mm; }
+</style>
+</head>
+<body>
+  <section class="parties">
+    <div class="party left">
+      {{if .Issuer.LogoURL}}<img class="logo" src="{{.Issuer.LogoURL}}" alt="">{{end}}
+      {{if .Issuer.Title}}<div class="name">{{.Issuer.Title}}</div>{{end}}
+      {{range .Issuer.Lines}}<div class="row">{{.}}</div>{{end}}
+    </div>
+    <div class="party right">
+      {{if .Recipient.Title}}<div class="name">{{.Recipient.Title}}</div>{{end}}
+      {{range .Recipient.Lines}}<div class="row">{{.}}</div>{{end}}
+    </div>
+  </section>
+
+  <h1 class="doc-title">AVOIR{{if .CreditNoteNumber}} N° {{.CreditNoteNumber}}{{end}}</h1>
+  <div class="doc-meta">
+    {{if .IssuedAt}}<div><span class="label">Date d'émission :</span> {{.IssuedAt}}</div>{{end}}
+    {{if .InvoiceNumber}}<div><span class="label">En référence à la facture N° :</span> {{.InvoiceNumber}}</div>{{end}}
+    {{if .Reason}}<div><span class="label">Motif :</span> {{.Reason}}</div>{{end}}
+  </div>
+
+  <table class="lines">
+    <thead>
+      <tr>
+        <th class="name">Désignation</th>
+        <th class="qty">Qté</th>
+        <th class="unit">Unité</th>
+        <th class="price">PU HT</th>
+        {{if not .VatExempt}}<th class="rate">TVA</th>{{end}}
+        <th class="total">Total HT</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .Lines}}
+      <tr>
+        <td class="name">{{.Name}}</td>
+        <td class="qty">{{.Quantity}}</td>
+        <td class="unit">{{.Unit}}</td>
+        <td class="price">{{.UnitPrice}}</td>
+        {{if not $.VatExempt}}<td class="rate">{{.TaxRate}}</td>{{end}}
+        <td class="total">{{.Total}}</td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+
+  {{if and (not .VatExempt) .VatBreakdown}}
+  <div class="vat-table">
+    <table>
+      <thead>
+        <tr><th>Taux TVA</th><th>Base HT</th><th>Montant TVA</th></tr>
+      </thead>
+      <tbody>
+        {{range .VatBreakdown}}
+        <tr>
+          <td>{{.Rate}}</td>
+          <td class="amount">{{.Base}}</td>
+          <td class="amount">{{.VAT}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{end}}
+
+  <div class="totals">
+    <table>
+      <tr><td>Total HT</td><td class="amount">{{.TotalHT}}</td></tr>
+      {{if not .VatExempt}}<tr><td>Total TVA</td><td class="amount">{{.TotalVAT}}</td></tr>{{end}}
+      <tr class="grand"><td>Total TTC</td><td class="amount">{{.TotalTTC}}</td></tr>
+    </table>
+  </div>
+
+  <div class="legal">
+    {{if .VatExempt}}<p>TVA non applicable, art. 293 B du CGI.</p>{{end}}
+    <p>Avoir établi en rectification de la facture mentionnée ci-dessus.</p>
+  </div>
+</body>
+</html>
