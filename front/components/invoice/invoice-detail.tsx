@@ -29,7 +29,7 @@ import {
   markInvoicePaid,
   readInvoiceFromBody,
 } from "@/lib/services/invoices";
-import { exportInvoicePdf } from "@/lib/services/export";
+import { exportInvoiceFacturx, exportInvoicePdf } from "@/lib/services/export";
 import { formatEurosFromCents } from "@/lib/utils";
 import type { BackendInvoiceDetails, BackendInvoiceParty } from "@/types/backend";
 
@@ -97,6 +97,14 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
     }
   }
 
+  async function onDownloadFacturx() {
+    try {
+      await exportInvoiceFacturx(invoiceId);
+    } catch {
+      setError(t("facturxError"));
+    }
+  }
+
   async function onMarkPaid() {
     setBusy(true);
     const { ok, body } = await markInvoicePaid(invoiceId);
@@ -134,6 +142,11 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
           <Button type="button" variant="outline" onClick={onDownload}>
             {t("downloadPdf")}
           </Button>
+          {invoice.status !== "DRAFT" ? (
+            <Button type="button" variant="outline" onClick={onDownloadFacturx}>
+              {t("downloadFacturx")}
+            </Button>
+          ) : null}
           {invoice.status === "DRAFT" ? (
             <Button
               type="button"

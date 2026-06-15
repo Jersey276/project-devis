@@ -107,6 +107,7 @@ func ExportInvoice(c *gin.Context, exportClient export.ExportServiceClient) {
 	exportResp, err := exportClient.ExportInvoice(c.Request.Context(), &export.ExportInvoiceRequest{
 		InvoiceId: invoiceID,
 		UserId:    userIDFromCtx(c),
+		Facturx:   c.Query("facturx") == "1",
 	})
 	if err != nil {
 		exportErrors.unavailable(c)

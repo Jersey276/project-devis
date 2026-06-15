@@ -475,6 +475,8 @@
       "pdfError": "Export PDF impossible.",
       "actionError": "L'action a échoué.",
       "downloadPdf": "Télécharger le PDF",
+      "downloadFacturx": "Télécharger Factur-X",
+      "facturxError": "Export Factur-X impossible.",
       "markPaid": "Marquer payée",
       "deleteDraft": "Supprimer le brouillon",
       "deleteError": "La suppression du brouillon a échoué.",

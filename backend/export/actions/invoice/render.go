@@ -54,12 +54,30 @@ type viewModel struct {
 }
 
 func Render(ctx context.Context, gt pdfConverter, in *invoicepb.InvoiceDetails) ([]byte, error) {
+	html, err := renderHTML(in)
+	if err != nil {
+		return nil, err
+	}
+	return gt.Convert(ctx, html)
+}
+
+// RenderPDFA3 renders the same invoice HTML but as a PDF/A-3 (the base for a
+// Factur-X document).
+func RenderPDFA3(ctx context.Context, gt pdfConverter, in *invoicepb.InvoiceDetails) ([]byte, error) {
+	html, err := renderHTML(in)
+	if err != nil {
+		return nil, err
+	}
+	return gt.ConvertPDFA3(ctx, html)
+}
+
+func renderHTML(in *invoicepb.InvoiceDetails) ([]byte, error) {
 	vm := buildViewModel(in)
 	var html bytes.Buffer
 	if err := invoiceTpl.Execute(&html, vm); err != nil {
 		return nil, fmt.Errorf("render invoice template: %w", err)
 	}
-	return gt.Convert(ctx, html.Bytes())
+	return html.Bytes(), nil
 }
 
 func buildViewModel(in *invoicepb.InvoiceDetails) viewModel {

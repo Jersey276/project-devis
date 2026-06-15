@@ -21,6 +21,14 @@ export async function exportInvoicePdf(invoiceId: string): Promise<void> {
   );
 }
 
+// Factur-X: hybrid PDF/A-3 with the embedded EN 16931 XML. Issued invoices only.
+export async function exportInvoiceFacturx(invoiceId: string): Promise<void> {
+  await downloadBlob(
+    `/api/export/invoices/${encodeURIComponent(invoiceId)}?facturx=1`,
+    `facture-${invoiceId}.pdf`,
+  );
+}
+
 export async function exportCreditNotePdf(creditNoteId: string): Promise<void> {
   await downloadBlob(
     `/api/export/credit-notes/${encodeURIComponent(creditNoteId)}`,

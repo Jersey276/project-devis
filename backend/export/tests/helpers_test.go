@@ -56,12 +56,25 @@ func (f *fakeUsers) GetAddress(ctx context.Context, in *users.GetAddressRequest,
 }
 
 // fakeGotenberg satisfies the orchestrator's unexported pdfConverter interface
-// (structural typing — any Convert(ctx, []byte) ([]byte, error) works).
+// (structural typing — Convert + ConvertPDFA3). Call counters let tests assert
+// which path ran (e.g. that a draft never reaches PDF/A rendering).
 type fakeGotenberg struct {
-	convert func(context.Context, []byte) ([]byte, error)
+	convert      func(context.Context, []byte) ([]byte, error)
+	convertPDFA3 func(context.Context, []byte) ([]byte, error)
+	convertCalls int
+	pdfa3Calls   int
 }
 
 func (f *fakeGotenberg) Convert(ctx context.Context, html []byte) ([]byte, error) {
+	f.convertCalls++
+	return f.convert(ctx, html)
+}
+
+func (f *fakeGotenberg) ConvertPDFA3(ctx context.Context, html []byte) ([]byte, error) {
+	f.pdfa3Calls++
+	if f.convertPDFA3 != nil {
+		return f.convertPDFA3(ctx, html)
+	}
 	return f.convert(ctx, html)
 }
 
