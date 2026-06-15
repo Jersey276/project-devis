@@ -13,7 +13,10 @@ import {
   getCreditNote,
   readCreditNoteFromBody,
 } from "@/lib/services/invoices";
-import { exportCreditNotePdf } from "@/lib/services/export";
+import {
+  exportCreditNoteFacturx,
+  exportCreditNotePdf,
+} from "@/lib/services/export";
 import { formatEurosFromCents } from "@/lib/utils";
 import type {
   BackendCreditNoteDetails,
@@ -71,6 +74,14 @@ export default function CreditNoteDetail({
     }
   }
 
+  async function onDownloadFacturx() {
+    try {
+      await exportCreditNoteFacturx(creditNoteId);
+    } catch {
+      setError(t("facturxError"));
+    }
+  }
+
   if (loading) return <p>{t("loading")}</p>;
   if (error && !cn) return <p className="text-destructive">{error}</p>;
   if (!cn) return <p className="text-destructive">{t("notFound")}</p>;
@@ -79,9 +90,14 @@ export default function CreditNoteDetail({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-4">
         <CardTitle>{t("title", { number: cn.credit_note_number })}</CardTitle>
-        <Button type="button" variant="outline" onClick={onDownload}>
-          {t("downloadPdf")}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="outline" onClick={onDownload}>
+            {t("downloadPdf")}
+          </Button>
+          <Button type="button" variant="outline" onClick={onDownloadFacturx}>
+            {t("downloadFacturx")}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {error ? <p className="text-sm text-destructive">{error}</p> : null}

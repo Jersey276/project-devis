@@ -37,4 +37,5 @@ message ExportInvoiceRequest {
 message ExportCreditNoteRequest {
     string credit_note_id = 1;
     string user_id        = 2;
+    bool   facturx        = 3;  // if true, return a Factur-X PDF/A-3 (issued only)
 }

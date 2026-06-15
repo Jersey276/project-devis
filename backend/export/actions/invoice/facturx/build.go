@@ -10,6 +10,30 @@ import (
 
 const xmlHeader = `<?xml version="1.0" encoding="UTF-8"?>` + "\n"
 
+// docInput is the normalized view the CII builder works on. Both an invoice
+// (380) and a credit note (381) map onto it, so the structured-document logic
+// (lines, parties, taxes, totals) is written once. Fields a given document type
+// lacks (a credit note has no due/sale date; an invoice has no referenced
+// document) are simply left zero.
+type docInput struct {
+	typeCode    string
+	number      string
+	issuedAt    string
+	saleDate    string
+	dueDate     string
+	referencedInvoice string // BT-3, credit note only
+
+	issuer *invoicepb.InvoiceParty
+	client *invoicepb.InvoiceParty
+	lines  []*invoicepb.InvoiceLine
+	vat    []*invoicepb.InvoiceVatLine
+
+	totalHtCents  int64
+	totalVatCents int64
+	totalTtcCents int64
+	vatExempt     bool
+}
+
 // Build renders the EN 16931 CII XML for an issued invoice. It returns an error
 // for inputs that cannot yield a valid invoice (a draft has no number; figures
 // must be internally consistent), so the caller never emits a broken Factur-X.
@@ -17,14 +41,61 @@ func Build(in *invoicepb.InvoiceDetails) ([]byte, error) {
 	if in == nil {
 		return nil, fmt.Errorf("facturx: nil invoice")
 	}
-	number := strings.TrimSpace(in.GetInvoiceNumber())
-	if number == "" {
-		return nil, fmt.Errorf("facturx: invoice has no number (not issued); cannot build EN 16931 XML")
+	return build(docInput{
+		typeCode:      typeCodeInvoice,
+		number:        strings.TrimSpace(in.GetInvoiceNumber()),
+		issuedAt:      in.GetIssuedAt(),
+		saleDate:      in.GetSaleDate(),
+		dueDate:       in.GetDueDate(),
+		issuer:        in.GetIssuer(),
+		client:        in.GetClient(),
+		lines:         in.GetLines(),
+		vat:           in.GetVatBreakdown(),
+		totalHtCents:  in.GetTotalHtCents(),
+		totalVatCents: in.GetTotalVatCents(),
+		totalTtcCents: in.GetTotalTtcCents(),
+		vatExempt:     in.GetVatExempt(),
+	}, "invoice")
+}
+
+// BuildCreditNote renders the EN 16931 CII XML for an issued credit note (type
+// 381). Snapshot amounts are stored positive and stay positive here: in CII the
+// document type, not the sign, signals a credit. The original invoice number is
+// carried as BT-3 (InvoiceReferencedDocument), mandatory for a credit note.
+func BuildCreditNote(cn *invoicepb.CreditNoteDetails) ([]byte, error) {
+	if cn == nil {
+		return nil, fmt.Errorf("facturx: nil credit note")
 	}
-	if len(in.GetLines()) == 0 {
-		return nil, fmt.Errorf("facturx: invoice %s has no lines", number)
+	ref := strings.TrimSpace(cn.GetInvoiceNumber())
+	if ref == "" {
+		return nil, fmt.Errorf("facturx: credit note %s references no invoice number (BT-3 required)", strings.TrimSpace(cn.GetCreditNoteNumber()))
 	}
-	if err := checkConsistency(in); err != nil {
+	return build(docInput{
+		typeCode:          typeCodeCreditNote,
+		number:            strings.TrimSpace(cn.GetCreditNoteNumber()),
+		issuedAt:          cn.GetIssuedAt(),
+		referencedInvoice: ref,
+		issuer:            cn.GetIssuer(),
+		client:            cn.GetClient(),
+		lines:             cn.GetLines(),
+		vat:               cn.GetVatBreakdown(),
+		totalHtCents:      cn.GetTotalHtCents(),
+		totalVatCents:     cn.GetTotalVatCents(),
+		totalTtcCents:     cn.GetTotalTtcCents(),
+		vatExempt:         cn.GetVatExempt(),
+	}, "credit note")
+}
+
+// build is the shared CII document builder. kind names the document in error
+// messages ("invoice" / "credit note").
+func build(d docInput, kind string) ([]byte, error) {
+	if d.number == "" {
+		return nil, fmt.Errorf("facturx: %s has no number (not issued); cannot build EN 16931 XML", kind)
+	}
+	if len(d.lines) == 0 {
+		return nil, fmt.Errorf("facturx: %s %s has no lines", kind, d.number)
+	}
+	if err := checkConsistency(d); err != nil {
 		return nil, err
 	}
 
@@ -36,15 +107,15 @@ func Build(in *invoicepb.InvoiceDetails) ([]byte, error) {
 			Guideline: guidelineParameter{ID: guidelineEN16931},
 		},
 		Document: exchangedDocument{
-			ID:            number,
-			TypeCode:      typeCodeInvoice,
-			IssueDateTime: dateWrap(in.GetIssuedAt()),
+			ID:            d.number,
+			TypeCode:      d.typeCode,
+			IssueDateTime: dateWrap(d.issuedAt),
 		},
 		Transaction: supplyChainTradeTransaction{
-			Lines:      buildLines(in),
-			Agreement:  buildAgreement(in),
-			Delivery:   buildDelivery(in),
-			Settlement: buildSettlement(in),
+			Lines:      buildLines(d),
+			Agreement:  buildAgreement(d),
+			Delivery:   buildDelivery(d),
+			Settlement: buildSettlement(d),
 		},
 	}
 
@@ -57,28 +128,28 @@ func Build(in *invoicepb.InvoiceDetails) ([]byte, error) {
 
 // checkConsistency guards against a snapshot whose totals do not add up — the
 // generator copies frozen figures, so any mismatch is a data bug, not rounding.
-func checkConsistency(in *invoicepb.InvoiceDetails) error {
+func checkConsistency(d docInput) error {
 	var lineSum int64
-	for _, l := range in.GetLines() {
+	for _, l := range d.lines {
 		lineSum += l.GetLineHtCents()
 	}
-	if lineSum != in.GetTotalHtCents() {
-		return fmt.Errorf("facturx: line HT sum %d != total HT %d", lineSum, in.GetTotalHtCents())
+	if lineSum != d.totalHtCents {
+		return fmt.Errorf("facturx: line HT sum %d != total HT %d", lineSum, d.totalHtCents)
 	}
 	var vatSum int64
-	for _, v := range in.GetVatBreakdown() {
+	for _, v := range d.vat {
 		vatSum += v.GetVatCents()
 	}
-	if vatSum != in.GetTotalVatCents() {
-		return fmt.Errorf("facturx: VAT breakdown sum %d != total VAT %d", vatSum, in.GetTotalVatCents())
+	if vatSum != d.totalVatCents {
+		return fmt.Errorf("facturx: VAT breakdown sum %d != total VAT %d", vatSum, d.totalVatCents)
 	}
 	return nil
 }
 
-func buildLines(in *invoicepb.InvoiceDetails) []lineItem {
-	exempt := in.GetVatExempt()
-	out := make([]lineItem, 0, len(in.GetLines()))
-	for i, l := range in.GetLines() {
+func buildLines(d docInput) []lineItem {
+	exempt := d.vatExempt
+	out := make([]lineItem, 0, len(d.lines))
+	for i, l := range d.lines {
 		out = append(out, lineItem{
 			DocLine: lineDocument{LineID: fmt.Sprintf("%d", i+1)},
 			Product: tradeProduct{Name: l.GetName()},
@@ -110,10 +181,10 @@ func lineTax(rate string, exempt bool) tradeTax {
 	return t
 }
 
-func buildAgreement(in *invoicepb.InvoiceDetails) headerTradeAgreement {
+func buildAgreement(d docInput) headerTradeAgreement {
 	return headerTradeAgreement{
-		Seller: party(in.GetIssuer()),
-		Buyer:  party(in.GetClient()),
+		Seller: party(d.issuer),
+		Buyer:  party(d.client),
 	}
 }
 
@@ -155,49 +226,51 @@ func address(p *invoicepb.InvoiceParty) *postalAddress {
 	}
 }
 
-func buildDelivery(in *invoicepb.InvoiceDetails) headerTradeDelivery {
-	d := dateCII(in.GetSaleDate())
-	if d == "" {
+func buildDelivery(d docInput) headerTradeDelivery {
+	dt := dateCII(d.saleDate)
+	if dt == "" {
 		return headerTradeDelivery{}
 	}
 	return headerTradeDelivery{
-		Event: &supplyChainEvent{OccurrenceDateTime: dateWrapRaw(d)},
+		Event: &supplyChainEvent{OccurrenceDateTime: dateWrapRaw(dt)},
 	}
 }
 
-func buildSettlement(in *invoicepb.InvoiceDetails) headerTradeSettlement {
+func buildSettlement(d docInput) headerTradeSettlement {
 	s := headerTradeSettlement{
 		CurrencyCode: currencyEUR,
-		Taxes:        buildTaxes(in),
+		Taxes:        buildTaxes(d),
 		Summation: monetarySummation{
-			LineTotalAmount:     amountFromCents(in.GetTotalHtCents()),
-			TaxBasisTotalAmount: amountFromCents(in.GetTotalHtCents()),
-			TaxTotalAmount:      currencyAmount{CurrencyID: currencyEUR, Value: amountFromCents(in.GetTotalVatCents())},
-			GrandTotalAmount:    amountFromCents(in.GetTotalTtcCents()),
-			DuePayableAmount:    amountFromCents(in.GetTotalTtcCents()),
+			LineTotalAmount:     amountFromCents(d.totalHtCents),
+			TaxBasisTotalAmount: amountFromCents(d.totalHtCents),
+			TaxTotalAmount:      currencyAmount{CurrencyID: currencyEUR, Value: amountFromCents(d.totalVatCents)},
+			GrandTotalAmount:    amountFromCents(d.totalTtcCents),
+			DuePayableAmount:    amountFromCents(d.totalTtcCents),
 		},
 	}
-	if due := dateCII(in.GetDueDate()); due != "" {
+	if due := dateCII(d.dueDate); due != "" {
 		s.PaymentTerms = &paymentTerms{DueDate: dateWrapRaw(due)}
+	}
+	if d.referencedInvoice != "" {
+		s.InvoiceReferenced = &referencedDocument{IssuerAssignedID: d.referencedInvoice}
 	}
 	return s
 }
 
 // buildTaxes emits one ApplicableTradeTax per VAT-breakdown bucket. Under the
-// franchise the whole invoice is a single exempt group.
-func buildTaxes(in *invoicepb.InvoiceDetails) []tradeTax {
-	exempt := in.GetVatExempt()
-	if exempt {
+// franchise the whole document is a single exempt group.
+func buildTaxes(d docInput) []tradeTax {
+	if d.vatExempt {
 		return []tradeTax{{
 			CalculatedAmount: amountFromCents(0),
 			TypeCode:         "VAT",
 			ExemptionReason:  exemptReason293B,
-			BasisAmount:      amountFromCents(in.GetTotalHtCents()),
+			BasisAmount:      amountFromCents(d.totalHtCents),
 			CategoryCode:     categoryExempt,
 		}}
 	}
-	out := make([]tradeTax, 0, len(in.GetVatBreakdown()))
-	for _, v := range in.GetVatBreakdown() {
+	out := make([]tradeTax, 0, len(d.vat))
+	for _, v := range d.vat {
 		out = append(out, tradeTax{
 			CalculatedAmount:      amountFromCents(v.GetVatCents()),
 			TypeCode:              "VAT",

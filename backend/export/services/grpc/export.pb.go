@@ -257,6 +257,7 @@ type ExportCreditNoteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CreditNoteId  string                 `protobuf:"bytes,1,opt,name=credit_note_id,json=creditNoteId,proto3" json:"credit_note_id,omitempty"`
 	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Facturx       bool                   `protobuf:"varint,3,opt,name=facturx,proto3" json:"facturx,omitempty"` // if true, return a Factur-X PDF/A-3 (issued only)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -305,6 +306,13 @@ func (x *ExportCreditNoteRequest) GetUserId() string {
 	return ""
 }
 
+func (x *ExportCreditNoteRequest) GetFacturx() bool {
+	if x != nil {
+		return x.Facturx
+	}
+	return false
+}
+
 var File_export_proto protoreflect.FileDescriptor
 
 const file_export_proto_rawDesc = "" +
@@ -326,10 +334,11 @@ const file_export_proto_rawDesc = "" +
 	"\n" +
 	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x18\n" +
-	"\afacturx\x18\x03 \x01(\bR\afacturx\"X\n" +
+	"\afacturx\x18\x03 \x01(\bR\afacturx\"r\n" +
 	"\x17ExportCreditNoteRequest\x12$\n" +
 	"\x0ecredit_note_id\x18\x01 \x01(\tR\fcreditNoteId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId2\xc3\x02\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x18\n" +
+	"\afacturx\x18\x03 \x01(\bR\afacturx2\xc3\x02\n" +
 	"\rExportService\x12F\n" +
 	"\vExportQuote\x12\x1a.export.ExportQuoteRequest\x1a\x1b.export.ExportQuoteResponse\x12L\n" +
 	"\x0eExportSchedule\x12\x1d.export.ExportScheduleRequest\x1a\x1b.export.ExportQuoteResponse\x12J\n" +

@@ -564,6 +564,8 @@
       "notFound": "Avoir introuvable.",
       "pdfError": "Export PDF impossible.",
       "downloadPdf": "Télécharger le PDF",
+      "downloadFacturx": "Télécharger Factur-X",
+      "facturxError": "Export Factur-X impossible.",
       "issuer": "Émetteur",
       "client": "Client",
       "lines": {

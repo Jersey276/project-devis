@@ -150,6 +150,17 @@ type headerTradeSettlement struct {
 	Taxes        []tradeTax         `xml:"ram:ApplicableTradeTax"`
 	PaymentTerms *paymentTerms      `xml:"ram:SpecifiedTradePaymentTerms,omitempty"`
 	Summation    monetarySummation  `xml:"ram:SpecifiedTradeSettlementHeaderMonetarySummation"`
+	// InvoiceReferenced carries BT-3 — the original invoice a credit note (381)
+	// rebills against. Absent on a plain invoice (380).
+	InvoiceReferenced *referencedDocument `xml:"ram:InvoiceReferencedDocument,omitempty"`
+}
+
+// referencedDocument is a CII ReferencedDocument: the credit note points back at
+// its source invoice by number (BT-3). The optional FormattedIssueDateTime is
+// omitted — it lives in the qdt namespace and the snapshot does not carry the
+// original invoice's issue date, while BT-3 only requires the number.
+type referencedDocument struct {
+	IssuerAssignedID string `xml:"ram:IssuerAssignedID"`
 }
 
 // tradeTax is used both at header level (CalculatedAmount/BasisAmount filled)

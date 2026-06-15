@@ -1,6 +1,7 @@
 // Package facturx builds the EN 16931 (Cross Industry Invoice, CII) XML payload
-// of a Factur-X invoice from an immutable invoice snapshot. It is pure: it only
-// reads an *invoicepb.InvoiceDetails and returns XML bytes — no I/O, no PDF.
+// of a Factur-X document from an immutable snapshot — an invoice (Build, type
+// 380) or a credit note (BuildCreditNote, type 381). It is pure: it only reads
+// the snapshot proto and returns XML bytes — no I/O, no PDF.
 //
 // Scope note: this package produces the structured XML only. Embedding it into a
 // PDF/A-3 (attachment + AFRelationship + urn:factur-x XMP) is a separate step.
@@ -18,7 +19,9 @@ const (
 	guidelineEN16931 = "urn:cen.eu:en16931:2017"
 	// typeCodeInvoice is UNTDID 1001 code 380 = commercial invoice.
 	typeCodeInvoice = "380"
-	currencyEUR     = "EUR"
+	// typeCodeCreditNote is UNTDID 1001 code 381 = credit note.
+	typeCodeCreditNote = "381"
+	currencyEUR        = "EUR"
 	// countryFR: the snapshot has no structured country, FR is assumed (documented
 	// limitation — revisit if cross-border issuing is ever supported).
 	countryFR = "FR"

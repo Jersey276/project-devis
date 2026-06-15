@@ -51,12 +51,30 @@ type viewModel struct {
 }
 
 func Render(ctx context.Context, gt pdfConverter, cn *invoicepb.CreditNoteDetails) ([]byte, error) {
+	html, err := renderHTML(cn)
+	if err != nil {
+		return nil, err
+	}
+	return gt.Convert(ctx, html)
+}
+
+// RenderPDFA3 renders the same credit note HTML as a PDF/A-3 (the base for a
+// Factur-X document).
+func RenderPDFA3(ctx context.Context, gt pdfConverter, cn *invoicepb.CreditNoteDetails) ([]byte, error) {
+	html, err := renderHTML(cn)
+	if err != nil {
+		return nil, err
+	}
+	return gt.ConvertPDFA3(ctx, html)
+}
+
+func renderHTML(cn *invoicepb.CreditNoteDetails) ([]byte, error) {
 	vm := buildViewModel(cn)
 	var html bytes.Buffer
 	if err := creditNoteTpl.Execute(&html, vm); err != nil {
 		return nil, fmt.Errorf("render credit note template: %w", err)
 	}
-	return gt.Convert(ctx, html.Bytes())
+	return html.Bytes(), nil
 }
 
 func buildViewModel(cn *invoicepb.CreditNoteDetails) viewModel {

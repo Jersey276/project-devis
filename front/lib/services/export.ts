@@ -35,3 +35,12 @@ export async function exportCreditNotePdf(creditNoteId: string): Promise<void> {
     `avoir-${creditNoteId}.pdf`,
   );
 }
+
+// Factur-X: hybrid PDF/A-3 with the embedded EN 16931 XML (type 381). Issued
+// credit notes only.
+export async function exportCreditNoteFacturx(creditNoteId: string): Promise<void> {
+  await downloadBlob(
+    `/api/export/credit-notes/${encodeURIComponent(creditNoteId)}?facturx=1`,
+    `avoir-${creditNoteId}.pdf`,
+  );
+}
