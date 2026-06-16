@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import OAuthButtons from "@/components/auth/oauth-buttons";
 import {
   Card,
   CardContent,
@@ -172,9 +173,7 @@ export default function RegisterForm({
               <FieldGroup>
                 <Field>
                   <Button type="submit">{t("submit")}</Button>
-                  <Button variant="outline" type="button">
-                    {t("googleSubmit")}
-                  </Button>
+                  <OAuthButtons next="/quote" />
                   <FieldDescription className="px-6 text-center">
                     {t("loginPrompt")} <a href="/login">{t("loginLink")}</a>
                   </FieldDescription>
