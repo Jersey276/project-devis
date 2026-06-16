@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -31,13 +32,26 @@ type ProfileTab = (typeof PROFILE_TABS)[number];
 export default function ProfileContent() {
   const t = useTranslations("profile");
   const tCommon = useTranslations("common");
+  const tOAuthErrors = useTranslations("auth.oauth.errors");
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const requestedTab = useSearchParams().get("tab");
+  const searchParams = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const oauthLinked = searchParams.get("oauth_linked");
+  const oauthError = searchParams.get("oauth_error");
   const defaultTab: ProfileTab =
     requestedTab && (PROFILE_TABS as readonly string[]).includes(requestedTab)
       ? (requestedTab as ProfileTab)
       : "information";
+
+  // Surface the outcome of an OAuth account-linking round-trip.
+  useEffect(() => {
+    if (oauthLinked) {
+      toast.success(t("connection.oauthLinkedToast"));
+    } else if (oauthError) {
+      toast.error(tOAuthErrors(oauthError as never));
+    }
+  }, [oauthLinked, oauthError, t, tOAuthErrors]);
 
   useEffect(() => {
     let cancelled = false;

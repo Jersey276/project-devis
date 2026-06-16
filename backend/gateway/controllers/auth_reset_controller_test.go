@@ -64,6 +64,24 @@ func (m *mockAuthClient) RefreshToken(context.Context, *auth.RefreshTokenRequest
 	return &auth.LoginResponse{Success: true, Token: &token, RefreshToken: &refresh}, nil
 }
 
+func (m *mockAuthClient) OAuthLogin(context.Context, *auth.OAuthLoginRequest, ...grpc.CallOption) (*auth.LoginResponse, error) {
+	token := "token"
+	refresh := "refresh"
+	return &auth.LoginResponse{Success: true, Token: &token, RefreshToken: &refresh}, nil
+}
+
+func (m *mockAuthClient) LinkOAuthIdentity(context.Context, *auth.LinkOAuthIdentityRequest, ...grpc.CallOption) (*auth.GenericResponse, error) {
+	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
+}
+
+func (m *mockAuthClient) UnlinkOAuthIdentity(context.Context, *auth.UnlinkOAuthIdentityRequest, ...grpc.CallOption) (*auth.GenericResponse, error) {
+	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
+}
+
+func (m *mockAuthClient) ListOAuthIdentities(context.Context, *auth.ListOAuthIdentitiesRequest, ...grpc.CallOption) (*auth.ListOAuthIdentitiesResponse, error) {
+	return &auth.ListOAuthIdentitiesResponse{Success: true, Code: CodeSuccess}, nil
+}
+
 func (m *mockAuthClient) Logout(context.Context, *auth.LogoutRequest, ...grpc.CallOption) (*auth.GenericResponse, error) {
 	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
 }

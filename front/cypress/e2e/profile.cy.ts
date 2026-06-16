@@ -46,6 +46,10 @@ function stubProfile(addresses = INITIAL_ADDRESSES) {
     statusCode: 200,
     body: { success: true, addresses },
   }).as("getAddresses");
+  cy.intercept("GET", "/api/auth/oauth-identities", {
+    statusCode: 200,
+    body: { success: true, identities: [], has_password: true },
+  }).as("getOAuthIdentities");
   cy.intercept("GET", "/api/subscriptions/me", {
     statusCode: 200,
     body: {

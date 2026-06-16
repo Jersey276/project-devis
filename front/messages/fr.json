@@ -53,7 +53,6 @@
       "forgotLink": "Mot de passe oublié ?",
       "rememberMeLabel": "Se souvenir de moi",
       "submit": "Se connecter",
-      "googleSubmit": "Se connecter avec Google",
       "signupPrompt": "Pas encore de compte ?",
       "signupLink": "Créer un compte",
       "successToast": "Connexion réussie.",
@@ -70,7 +69,6 @@
       "confirmPasswordHint": "Veuillez confirmer votre mot de passe.",
       "confirmMismatch": "Les mots de passe ne correspondent pas.",
       "submit": "Créer le compte",
-      "googleSubmit": "S'inscrire avec Google",
       "loginPrompt": "Déjà un compte ?",
       "loginLink": "Se connecter",
       "termsPrefix": "En cliquant sur continuer, vous acceptez nos",
@@ -86,6 +84,24 @@
         "tooShort": "Trop court (12 caractères minimum).",
         "emailInUse": "Cette adresse email est déjà utilisée.",
         "unknown": "Erreur de validation ({code})."
+      }
+    },
+    "oauth": {
+      "google": "Continuer avec Google",
+      "github": "Continuer avec GitHub",
+      "microsoft": "Continuer avec Microsoft",
+      "connect": {
+        "google": "Connecter Google",
+        "github": "Connecter GitHub",
+        "microsoft": "Connecter Microsoft"
+      },
+      "errors": {
+        "state": "La session de connexion a expiré. Veuillez réessayer.",
+        "provider": "La connexion avec le fournisseur a échoué. Veuillez réessayer.",
+        "email_not_verified": "Votre adresse email n'est pas vérifiée par le fournisseur.",
+        "identity_taken": "Ce compte fournisseur est déjà lié à un autre utilisateur.",
+        "unknown_provider": "Fournisseur de connexion inconnu.",
+        "internal": "Une erreur est survenue. Veuillez réessayer."
       }
     },
     "forgetPassword": {
@@ -652,7 +668,15 @@
       "confirmPasswordLabel": "Confirmation",
       "confirmMismatch": "Les mots de passe ne correspondent pas.",
       "submit": "Mettre à jour le mot de passe",
-      "successToast": "Mot de passe mis à jour."
+      "successToast": "Mot de passe mis à jour.",
+      "oauthTitle": "Connexions externes",
+      "oauthHint": "Liez un fournisseur pour vous connecter sans mot de passe.",
+      "oauthLinkedToast": "Fournisseur lié à votre compte.",
+      "oauthUnlinkedToast": "Fournisseur dissocié.",
+      "oauthLoadError": "Impossible de charger les connexions externes.",
+      "linkedLabel": "Lié",
+      "disconnect": "Délier",
+      "lastMethodWarning": "Définissez un mot de passe avant de délier votre seule méthode de connexion."
     }
   },
   "user": {

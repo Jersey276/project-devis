@@ -18,6 +18,7 @@ import {
   toErrorProps,
 } from "@/lib/api";
 import { toast } from "sonner";
+import OAuthAccounts from "@/components/user/profile/oauth-accounts";
 
 type ConnectionFormProps = {
   email: string;
@@ -81,6 +82,7 @@ export default function ConnectionForm({
   }
 
   return (
+    <div className="grid gap-8">
     <form className="grid max-w-3xl gap-4" onSubmit={handleSubmit} noValidate>
       <FieldGroup>
         {readOnly ? (
@@ -163,5 +165,8 @@ export default function ConnectionForm({
         </Button>
       </div>
     </form>
+
+      <OAuthAccounts readOnly={readOnly} />
+    </div>
   );
 }

@@ -20,6 +20,14 @@ service AuthService {
     rpc VerifyEmail(VerifyEmailRequest) returns (GenericResponse);
     // RefreshToken generates new access and refresh tokens
     rpc RefreshToken(RefreshTokenRequest) returns (LoginResponse);
+    // OAuthLogin authenticates or provisions a user from a verified OAuth identity.
+    rpc OAuthLogin(OAuthLoginRequest) returns (LoginResponse);
+    // LinkOAuthIdentity attaches a verified OAuth identity to an authenticated user.
+    rpc LinkOAuthIdentity(LinkOAuthIdentityRequest) returns (GenericResponse);
+    // UnlinkOAuthIdentity removes a linked OAuth identity from a user.
+    rpc UnlinkOAuthIdentity(UnlinkOAuthIdentityRequest) returns (GenericResponse);
+    // ListOAuthIdentities returns the OAuth identities linked to a user.
+    rpc ListOAuthIdentities(ListOAuthIdentitiesRequest) returns (ListOAuthIdentitiesResponse);
     // Logout invalidates a refresh token
     rpc Logout(LogoutRequest) returns (GenericResponse);
     // IntrospectToken validates access token against current auth state.
@@ -52,6 +60,47 @@ message LoginResponse {
     optional int32 code = 3;
     optional string refresh_token = 4;
     optional bool remember_me = 5;
+}
+
+// OAuthLoginRequest carries a verified OAuth identity from the gateway.
+message OAuthLoginRequest {
+    string provider = 1;         // "google" | "github" | "microsoft"
+    string provider_user_id = 2; // stable provider "sub"/id
+    string email = 3;
+    bool email_verified = 4;
+    bool remember_me = 5;
+}
+
+// LinkOAuthIdentityRequest attaches a verified OAuth identity to an existing,
+// authenticated user (user_id resolved from the JWT at the gateway).
+message LinkOAuthIdentityRequest {
+    string user_id = 1;
+    string provider = 2;         // "google" | "github" | "microsoft"
+    string provider_user_id = 3; // stable provider "sub"/id
+    string email = 4;
+    bool email_verified = 5;
+}
+
+message UnlinkOAuthIdentityRequest {
+    string user_id = 1;
+    string provider = 2;
+}
+
+message ListOAuthIdentitiesRequest {
+    string user_id = 1;
+}
+
+// OAuthIdentity is a single linked provider for display purposes.
+message OAuthIdentity {
+    string provider = 1;
+    string email = 2;
+}
+
+message ListOAuthIdentitiesResponse {
+    bool success = 1;
+    int32 code = 2;
+    repeated OAuthIdentity identities = 3;
+    bool has_password = 4; // whether the account also has a password login
 }
 
 message UpdatePasswordRequest {

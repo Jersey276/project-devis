@@ -12,6 +12,10 @@ service AuthService {
     rpc UpdatePassword(UpdatePasswordRequest) returns (GenericResponse);
     rpc VerifyEmail(VerifyEmailRequest) returns (GenericResponse);
     rpc RefreshToken(RefreshTokenRequest) returns (LoginResponse);
+    rpc OAuthLogin(OAuthLoginRequest) returns (LoginResponse);
+    rpc LinkOAuthIdentity(LinkOAuthIdentityRequest) returns (GenericResponse);
+    rpc UnlinkOAuthIdentity(UnlinkOAuthIdentityRequest) returns (GenericResponse);
+    rpc ListOAuthIdentities(ListOAuthIdentitiesRequest) returns (ListOAuthIdentitiesResponse);
     rpc Logout(LogoutRequest) returns (GenericResponse);
     rpc IntrospectToken(IntrospectTokenRequest) returns (IntrospectTokenResponse);
     rpc UpdateSubscriptionTier(UpdateSubscriptionTierRequest) returns (GenericResponse);
@@ -37,6 +41,43 @@ message LoginResponse {
     optional int32 code = 3;
     optional string refresh_token = 4;
     optional bool remember_me = 5;
+}
+
+message OAuthLoginRequest {
+    string provider = 1;
+    string provider_user_id = 2;
+    string email = 3;
+    bool email_verified = 4;
+    bool remember_me = 5;
+}
+
+message LinkOAuthIdentityRequest {
+    string user_id = 1;
+    string provider = 2;
+    string provider_user_id = 3;
+    string email = 4;
+    bool email_verified = 5;
+}
+
+message UnlinkOAuthIdentityRequest {
+    string user_id = 1;
+    string provider = 2;
+}
+
+message ListOAuthIdentitiesRequest {
+    string user_id = 1;
+}
+
+message OAuthIdentity {
+    string provider = 1;
+    string email = 2;
+}
+
+message ListOAuthIdentitiesResponse {
+    bool success = 1;
+    int32 code = 2;
+    repeated OAuthIdentity identities = 3;
+    bool has_password = 4;
 }
 
 message UpdatePasswordRequest {

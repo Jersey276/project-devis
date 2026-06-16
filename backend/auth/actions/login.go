@@ -3,7 +3,6 @@ package actions
 import (
 	"context"
 	"database/sql"
-	"log"
 	"strings"
 
 	"project-devis-auth/services"
@@ -32,13 +31,15 @@ func (s *Server) Login(ctx context.Context, req *authGrpc.LoginRequest) (*authGr
 		return &authGrpc.LoginResponse{Success: false, Code: &code}, nil
 	}
 
-	var storedPassword, role, accountStatus, subscriptionTier string
-	var sessionVersion int32
+	// password is nullable: OAuth-only accounts have no password. A NULL/empty
+	// stored password can never match, so such accounts fail password login
+	// cleanly with invalid credentials.
+	var storedPassword sql.NullString
 	if err := s.db.QueryRowContext(
 		ctx,
-		"SELECT password, role, account_status, subscription_tier, session_version FROM auth WHERE user_id = $1",
+		"SELECT password FROM auth WHERE user_id = $1",
 		accessInfo.GetUserId(),
-	).Scan(&storedPassword, &role, &accountStatus, &subscriptionTier, &sessionVersion); err != nil {
+	).Scan(&storedPassword); err != nil {
 		if err == sql.ErrNoRows {
 			code := CodeUserNotFound
 			return &authGrpc.LoginResponse{Success: false, Code: &code}, nil
@@ -47,34 +48,17 @@ func (s *Server) Login(ctx context.Context, req *authGrpc.LoginRequest) (*authGr
 		return &authGrpc.LoginResponse{Success: false, Code: &code}, err
 	}
 
-	if !services.VerifyPassword(req.Password, storedPassword) {
+	if !storedPassword.Valid || !services.VerifyPassword(req.Password, storedPassword.String) {
 		code := CodeInvalidCredentials
 		return &authGrpc.LoginResponse{Success: false, Code: &code}, nil
 	}
 
-	accessToken, err := services.GenerateAccessToken(accessInfo.GetEmail(), accessInfo.GetUserId(), role, accountStatus, subscriptionTier, sessionVersion)
+	resp, err := s.issueLoginTokens(ctx, accessInfo.GetUserId(), accessInfo.GetEmail(), req.RememberMe)
 	if err != nil {
-		code := CodeInternalError
-		return &authGrpc.LoginResponse{Success: false, Code: &code}, err
+		return resp, err
 	}
 
-	refreshToken, err := services.GenerateRefreshToken(ctx, s.db, accessInfo.GetUserId(), req.RememberMe)
-	if err != nil {
-		code := CodeInternalError
-		return &authGrpc.LoginResponse{Success: false, Code: &code}, err
-	}
+	s.touchLastLogin(ctx, accessInfo.GetUserId())
 
-	if _, err := s.userClient.TouchUserLastLogin(ctx, &userGrpc.TouchUserLastLoginRequest{UserId: accessInfo.GetUserId()}); err != nil {
-		// Non-blocking metadata update.
-		log.Printf("touch last login failed for user %s: %v", accessInfo.GetUserId(), err)
-	}
-
-	code := CodeSuccess
-	return &authGrpc.LoginResponse{
-		Success:      true,
-		Code:         &code,
-		Token:        &accessToken,
-		RefreshToken: &refreshToken,
-		RememberMe:   &req.RememberMe,
-	}, nil
+	return resp, nil
 }

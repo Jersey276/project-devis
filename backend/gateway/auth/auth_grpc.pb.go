@@ -26,6 +26,10 @@ const (
 	AuthService_UpdatePassword_FullMethodName          = "/auth.AuthService/UpdatePassword"
 	AuthService_VerifyEmail_FullMethodName             = "/auth.AuthService/VerifyEmail"
 	AuthService_RefreshToken_FullMethodName            = "/auth.AuthService/RefreshToken"
+	AuthService_OAuthLogin_FullMethodName              = "/auth.AuthService/OAuthLogin"
+	AuthService_LinkOAuthIdentity_FullMethodName       = "/auth.AuthService/LinkOAuthIdentity"
+	AuthService_UnlinkOAuthIdentity_FullMethodName     = "/auth.AuthService/UnlinkOAuthIdentity"
+	AuthService_ListOAuthIdentities_FullMethodName     = "/auth.AuthService/ListOAuthIdentities"
 	AuthService_Logout_FullMethodName                  = "/auth.AuthService/Logout"
 	AuthService_IntrospectToken_FullMethodName         = "/auth.AuthService/IntrospectToken"
 	AuthService_UpdateSubscriptionTier_FullMethodName  = "/auth.AuthService/UpdateSubscriptionTier"
@@ -44,6 +48,10 @@ type AuthServiceClient interface {
 	UpdatePassword(ctx context.Context, in *UpdatePasswordRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	OAuthLogin(ctx context.Context, in *OAuthLoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	LinkOAuthIdentity(ctx context.Context, in *LinkOAuthIdentityRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	UnlinkOAuthIdentity(ctx context.Context, in *UnlinkOAuthIdentityRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	ListOAuthIdentities(ctx context.Context, in *ListOAuthIdentitiesRequest, opts ...grpc.CallOption) (*ListOAuthIdentitiesResponse, error)
 	Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	IntrospectToken(ctx context.Context, in *IntrospectTokenRequest, opts ...grpc.CallOption) (*IntrospectTokenResponse, error)
 	UpdateSubscriptionTier(ctx context.Context, in *UpdateSubscriptionTierRequest, opts ...grpc.CallOption) (*GenericResponse, error)
@@ -130,6 +138,46 @@ func (c *authServiceClient) RefreshToken(ctx context.Context, in *RefreshTokenRe
 	return out, nil
 }
 
+func (c *authServiceClient) OAuthLogin(ctx context.Context, in *OAuthLoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LoginResponse)
+	err := c.cc.Invoke(ctx, AuthService_OAuthLogin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) LinkOAuthIdentity(ctx context.Context, in *LinkOAuthIdentityRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, AuthService_LinkOAuthIdentity_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) UnlinkOAuthIdentity(ctx context.Context, in *UnlinkOAuthIdentityRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, AuthService_UnlinkOAuthIdentity_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) ListOAuthIdentities(ctx context.Context, in *ListOAuthIdentitiesRequest, opts ...grpc.CallOption) (*ListOAuthIdentitiesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListOAuthIdentitiesResponse)
+	err := c.cc.Invoke(ctx, AuthService_ListOAuthIdentities_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *authServiceClient) Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GenericResponse)
@@ -191,6 +239,10 @@ type AuthServiceServer interface {
 	UpdatePassword(context.Context, *UpdatePasswordRequest) (*GenericResponse, error)
 	VerifyEmail(context.Context, *VerifyEmailRequest) (*GenericResponse, error)
 	RefreshToken(context.Context, *RefreshTokenRequest) (*LoginResponse, error)
+	OAuthLogin(context.Context, *OAuthLoginRequest) (*LoginResponse, error)
+	LinkOAuthIdentity(context.Context, *LinkOAuthIdentityRequest) (*GenericResponse, error)
+	UnlinkOAuthIdentity(context.Context, *UnlinkOAuthIdentityRequest) (*GenericResponse, error)
+	ListOAuthIdentities(context.Context, *ListOAuthIdentitiesRequest) (*ListOAuthIdentitiesResponse, error)
 	Logout(context.Context, *LogoutRequest) (*GenericResponse, error)
 	IntrospectToken(context.Context, *IntrospectTokenRequest) (*IntrospectTokenResponse, error)
 	UpdateSubscriptionTier(context.Context, *UpdateSubscriptionTierRequest) (*GenericResponse, error)
@@ -227,6 +279,18 @@ func (UnimplementedAuthServiceServer) VerifyEmail(context.Context, *VerifyEmailR
 }
 func (UnimplementedAuthServiceServer) RefreshToken(context.Context, *RefreshTokenRequest) (*LoginResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RefreshToken not implemented")
+}
+func (UnimplementedAuthServiceServer) OAuthLogin(context.Context, *OAuthLoginRequest) (*LoginResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method OAuthLogin not implemented")
+}
+func (UnimplementedAuthServiceServer) LinkOAuthIdentity(context.Context, *LinkOAuthIdentityRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method LinkOAuthIdentity not implemented")
+}
+func (UnimplementedAuthServiceServer) UnlinkOAuthIdentity(context.Context, *UnlinkOAuthIdentityRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UnlinkOAuthIdentity not implemented")
+}
+func (UnimplementedAuthServiceServer) ListOAuthIdentities(context.Context, *ListOAuthIdentitiesRequest) (*ListOAuthIdentitiesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListOAuthIdentities not implemented")
 }
 func (UnimplementedAuthServiceServer) Logout(context.Context, *LogoutRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Logout not implemented")
@@ -390,6 +454,78 @@ func _AuthService_RefreshToken_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_OAuthLogin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OAuthLoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).OAuthLogin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_OAuthLogin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).OAuthLogin(ctx, req.(*OAuthLoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_LinkOAuthIdentity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LinkOAuthIdentityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).LinkOAuthIdentity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_LinkOAuthIdentity_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).LinkOAuthIdentity(ctx, req.(*LinkOAuthIdentityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_UnlinkOAuthIdentity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnlinkOAuthIdentityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).UnlinkOAuthIdentity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_UnlinkOAuthIdentity_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).UnlinkOAuthIdentity(ctx, req.(*UnlinkOAuthIdentityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_ListOAuthIdentities_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListOAuthIdentitiesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).ListOAuthIdentities(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_ListOAuthIdentities_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).ListOAuthIdentities(ctx, req.(*ListOAuthIdentitiesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AuthService_Logout_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LogoutRequest)
 	if err := dec(in); err != nil {
@@ -514,6 +650,22 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RefreshToken",
 			Handler:    _AuthService_RefreshToken_Handler,
+		},
+		{
+			MethodName: "OAuthLogin",
+			Handler:    _AuthService_OAuthLogin_Handler,
+		},
+		{
+			MethodName: "LinkOAuthIdentity",
+			Handler:    _AuthService_LinkOAuthIdentity_Handler,
+		},
+		{
+			MethodName: "UnlinkOAuthIdentity",
+			Handler:    _AuthService_UnlinkOAuthIdentity_Handler,
+		},
+		{
+			MethodName: "ListOAuthIdentities",
+			Handler:    _AuthService_ListOAuthIdentities_Handler,
 		},
 		{
 			MethodName: "Logout",
