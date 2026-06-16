@@ -40,106 +40,22 @@ func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*
 		}, err
 	}
 
-	// Pre-check: is this the very first registration? Used to set the admin role
-	// in the users service at creation time. The transaction below re-verifies
-	// under an advisory lock, so auth.role is always race-free.
-	var preCount int64
-	if err = s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM auth").Scan(&preCount); err != nil {
-		return &authGrpc.FormGenericResponse{
-			Success: false,
-			Code:    CodeInternalError,
-		}, err
-	}
-	isFirstUser := preCount == 0
-
-	insertResp, err := s.userClient.CreateUser(ctx, &userGrpc.CreateUserRequest{
-		Email:   normalizedEmail,
-		IsAdmin: isFirstUser,
-	})
-	if err != nil {
-		return &authGrpc.FormGenericResponse{
-			Success: false,
-			Code:    CodeUserServiceError,
-		}, err
-	}
-	if !insertResp.GetSuccess() {
-		code := insertResp.GetCode()
-		if code == 0 {
-			code = CodeUserServiceError
-		}
-		return &authGrpc.FormGenericResponse{
-			Success: false,
-			Code:    code,
-		}, nil
-	}
-
-	userID := insertResp.GetUserId()
-
 	hashedPassword, err := services.HashPassword(req.Password)
 	if err != nil {
-		s.rollbackUser(ctx, userID)
 		return &authGrpc.FormGenericResponse{
 			Success: false,
 			Code:    CodeInternalError,
 		}, err
 	}
 
-	tx, err := s.db.BeginTx(ctx, nil)
+	userID, err := s.provisionUser(ctx, normalizedEmail, hashedPassword, false)
 	if err != nil {
-		s.rollbackUser(ctx, userID)
-		return &authGrpc.FormGenericResponse{
-			Success: false,
-			Code:    CodeInternalError,
-		}, err
-	}
-
-	defer func() {
-		if err != nil {
-			_ = tx.Rollback()
+		if provErr, ok := err.(*provisionError); ok {
+			return &authGrpc.FormGenericResponse{
+				Success: false,
+				Code:    provErr.Code(),
+			}, nil
 		}
-	}()
-
-	if _, err = tx.ExecContext(ctx, "SELECT pg_advisory_xact_lock($1)", int64(2026052901)); err != nil {
-		s.rollbackUser(ctx, userID)
-		return &authGrpc.FormGenericResponse{
-			Success: false,
-			Code:    CodeInternalError,
-		}, err
-	}
-
-	role := "free_user"
-	var authCount int64
-	if err = tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM auth").Scan(&authCount); err != nil {
-		s.rollbackUser(ctx, userID)
-		return &authGrpc.FormGenericResponse{
-			Success: false,
-			Code:    CodeInternalError,
-		}, err
-	}
-	if authCount == 0 {
-		role = "super_admin"
-	}
-
-	_, err = tx.ExecContext(
-		ctx,
-		"INSERT INTO auth (user_id, email, password, role, account_status, subscription_tier) VALUES ($1, $2, $3, $4, $5, $6)",
-		userID,
-		normalizedEmail,
-		hashedPassword,
-		role,
-		"active",
-		"free",
-	)
-	if err != nil {
-		s.rollbackUser(ctx, userID)
-		return &authGrpc.FormGenericResponse{
-			Success: false,
-			Code:    CodeInternalError,
-		}, err
-	}
-
-	if err = tx.Commit(); err != nil {
-		s.rollbackUser(ctx, userID)
 		return &authGrpc.FormGenericResponse{
 			Success: false,
 			Code:    CodeInternalError,

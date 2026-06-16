@@ -15,6 +15,9 @@ const (
 	CodeInvalidVerificationToken int32 = 1010
 	CodeExpiredVerificationToken int32 = 1011
 	CodeAlreadyVerified          int32 = 1012
+	CodeOAuthEmailNotVerified    int32 = 1013
+	CodeOAuthIdentityTaken       int32 = 1014
+	CodeLastLoginMethod          int32 = 1015
 	CodeUserServiceError         int32 = 2001
 	CodeInternalError            int32 = 2002
 	CodeNotImplemented           int32 = 2003
