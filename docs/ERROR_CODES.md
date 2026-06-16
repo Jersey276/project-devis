@@ -25,6 +25,9 @@ Used by: auth service, forwarded as-is by the gateway.
 | `1006` | `CodeExpiredResetToken`   | Password reset token exists but has expired.                |
 | `1007` | `CodeWeakPassword`        | Password does not satisfy security policy requirements.     |
 | `1008` | `CodeSessionInvalidated`  | Access token session version is stale and has been revoked. |
+| `1013` | `CodeOAuthEmailNotVerified` | OAuth provider did not attest the email as verified.     |
+| `1014` | `CodeOAuthIdentityTaken`  | This OAuth identity is already linked to another account.    |
+| `1015` | `CodeLastLoginMethod`     | Cannot unlink the only remaining login method.              |
 | `2001` | `CodeUserServiceError`    | The user micro-service returned an error or is unreachable. |
 | `2002` | `CodeInternalError`       | Unexpected internal error in the auth service.              |
 | `2003` | `CodeNotImplemented`      | The requested feature is not yet implemented.               |
@@ -43,6 +46,9 @@ The gateway maps route response codes to HTTP status codes as follows:
 | `1006` | 410 Gone                  |
 | `1007` | 422 Unprocessable Entity  |
 | `1008` | 401 Unauthorized          |
+| `1013` | 422 Unprocessable Entity  |
+| `1014` | 409 Conflict              |
+| `1015` | 409 Conflict              |
 | `2001` | 502 Bad Gateway           |
 | `2002` | 500 Internal Server Error |
 | `2003` | 501 Not Implemented       |
