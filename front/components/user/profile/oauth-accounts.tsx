@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +35,8 @@ type OAuthAccountsProps = {
 export default function OAuthAccounts({ readOnly = false }: OAuthAccountsProps) {
   const t = useTranslations("profile.connection");
   const tCommon = useTranslations("common");
+  const tOAuthErrors = useTranslations("auth.oauth.errors");
+  const searchParams = useSearchParams();
   const [identities, setIdentities] = useState<LinkedIdentity[]>([]);
   const [hasPassword, setHasPassword] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -58,6 +61,20 @@ export default function OAuthAccounts({ readOnly = false }: OAuthAccountsProps) 
     // to avoid refetching when the translations function identity changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Surface the OAuth link outcome redirected back here by the gateway callback
+  // as ?oauth_linked=<provider> (success) or ?oauth_error=<slug> (failure).
+  const oauthLinked = searchParams.get("oauth_linked");
+  const oauthError = searchParams.get("oauth_error");
+  useEffect(() => {
+    if (oauthError) {
+      toast.error(tOAuthErrors(oauthError as never));
+    } else if (oauthLinked) {
+      toast.success(t("oauthLinkedToast"));
+    }
+    // `t`/`tOAuthErrors` are read at call time and intentionally excluded.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [oauthLinked, oauthError]);
 
   const isLastMethod = !hasPassword && identities.length <= 1;
 
