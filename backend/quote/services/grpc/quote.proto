@@ -25,6 +25,13 @@ service QuoteService {
     rpc ListUserQuoteLines(ListUserQuoteLinesRequest) returns (ListUserQuoteLinesResponse);
     rpc UpdateQuoteLine(UpdateQuoteLineRequest) returns (UpdateQuoteLineResponse);
     rpc DeleteQuoteLine(DeleteQuoteLineRequest) returns (GenericResponse);
+
+    // Fee (premium catalog)
+    rpc CreateFee(CreateFeeRequest) returns (CreateFeeResponse);
+    rpc GetFee(GetFeeRequest) returns (GetFeeResponse);
+    rpc ListFees(ListFeesRequest) returns (ListFeesResponse);
+    rpc UpdateFee(UpdateFeeRequest) returns (UpdateFeeResponse);
+    rpc ArchiveFee(ArchiveFeeRequest) returns (GenericResponse);
 }
 
 message GenericResponse {
@@ -241,5 +248,77 @@ message UpdateQuoteLineResponse {
 
 message DeleteQuoteLineRequest {
     string line_id = 1;
+    string user_id = 2;
+}
+
+// ─── Fee ─────────────────────────────────────────────────────────────────────
+
+message Fee {
+    string fee_id     = 1;
+    string user_id    = 2;
+    string category   = 3; // "fixed" | "service"
+    string name       = 4;
+    string unit       = 5;
+    int64  unit_price = 6;
+    int32  tax_id     = 7;
+    bool   archived   = 8;
+}
+
+message CreateFeeRequest {
+    string user_id    = 1;
+    string category   = 2;
+    string name       = 3;
+    string unit       = 4;
+    int64  unit_price = 5;
+    int32  tax_id     = 6;
+}
+
+message CreateFeeResponse {
+    bool   success = 1;
+    int32  code = 2;
+    string fee_id = 3;
+    repeated ValidationError validation_errors = 4;
+}
+
+message GetFeeRequest {
+    string fee_id = 1;
+    string user_id = 2;
+}
+
+message GetFeeResponse {
+    bool  success = 1;
+    int32 code = 2;
+    Fee   fee = 3;
+}
+
+message ListFeesRequest {
+    string user_id = 1;
+    bool   include_archived = 2;
+}
+
+message ListFeesResponse {
+    bool  success = 1;
+    int32 code = 2;
+    repeated Fee fees = 3;
+}
+
+message UpdateFeeRequest {
+    string fee_id     = 1;
+    string user_id    = 2;
+    string category   = 3;
+    string name       = 4;
+    string unit       = 5;
+    int64  unit_price = 6;
+    int32  tax_id     = 7;
+}
+
+message UpdateFeeResponse {
+    bool  success = 1;
+    int32 code = 2;
+    repeated ValidationError validation_errors = 3;
+}
+
+message ArchiveFeeRequest {
+    string fee_id = 1;
     string user_id = 2;
 }

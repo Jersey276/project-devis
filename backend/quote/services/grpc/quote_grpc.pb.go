@@ -36,6 +36,11 @@ const (
 	QuoteService_ListUserQuoteLines_FullMethodName = "/quote.QuoteService/ListUserQuoteLines"
 	QuoteService_UpdateQuoteLine_FullMethodName    = "/quote.QuoteService/UpdateQuoteLine"
 	QuoteService_DeleteQuoteLine_FullMethodName    = "/quote.QuoteService/DeleteQuoteLine"
+	QuoteService_CreateFee_FullMethodName          = "/quote.QuoteService/CreateFee"
+	QuoteService_GetFee_FullMethodName             = "/quote.QuoteService/GetFee"
+	QuoteService_ListFees_FullMethodName           = "/quote.QuoteService/ListFees"
+	QuoteService_UpdateFee_FullMethodName          = "/quote.QuoteService/UpdateFee"
+	QuoteService_ArchiveFee_FullMethodName         = "/quote.QuoteService/ArchiveFee"
 )
 
 // QuoteServiceClient is the client API for QuoteService service.
@@ -61,6 +66,12 @@ type QuoteServiceClient interface {
 	ListUserQuoteLines(ctx context.Context, in *ListUserQuoteLinesRequest, opts ...grpc.CallOption) (*ListUserQuoteLinesResponse, error)
 	UpdateQuoteLine(ctx context.Context, in *UpdateQuoteLineRequest, opts ...grpc.CallOption) (*UpdateQuoteLineResponse, error)
 	DeleteQuoteLine(ctx context.Context, in *DeleteQuoteLineRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// Fee (premium catalog)
+	CreateFee(ctx context.Context, in *CreateFeeRequest, opts ...grpc.CallOption) (*CreateFeeResponse, error)
+	GetFee(ctx context.Context, in *GetFeeRequest, opts ...grpc.CallOption) (*GetFeeResponse, error)
+	ListFees(ctx context.Context, in *ListFeesRequest, opts ...grpc.CallOption) (*ListFeesResponse, error)
+	UpdateFee(ctx context.Context, in *UpdateFeeRequest, opts ...grpc.CallOption) (*UpdateFeeResponse, error)
+	ArchiveFee(ctx context.Context, in *ArchiveFeeRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 }
 
 type quoteServiceClient struct {
@@ -241,6 +252,56 @@ func (c *quoteServiceClient) DeleteQuoteLine(ctx context.Context, in *DeleteQuot
 	return out, nil
 }
 
+func (c *quoteServiceClient) CreateFee(ctx context.Context, in *CreateFeeRequest, opts ...grpc.CallOption) (*CreateFeeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateFeeResponse)
+	err := c.cc.Invoke(ctx, QuoteService_CreateFee_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *quoteServiceClient) GetFee(ctx context.Context, in *GetFeeRequest, opts ...grpc.CallOption) (*GetFeeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetFeeResponse)
+	err := c.cc.Invoke(ctx, QuoteService_GetFee_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *quoteServiceClient) ListFees(ctx context.Context, in *ListFeesRequest, opts ...grpc.CallOption) (*ListFeesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFeesResponse)
+	err := c.cc.Invoke(ctx, QuoteService_ListFees_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *quoteServiceClient) UpdateFee(ctx context.Context, in *UpdateFeeRequest, opts ...grpc.CallOption) (*UpdateFeeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateFeeResponse)
+	err := c.cc.Invoke(ctx, QuoteService_UpdateFee_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *quoteServiceClient) ArchiveFee(ctx context.Context, in *ArchiveFeeRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, QuoteService_ArchiveFee_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QuoteServiceServer is the server API for QuoteService service.
 // All implementations must embed UnimplementedQuoteServiceServer
 // for forward compatibility.
@@ -264,6 +325,12 @@ type QuoteServiceServer interface {
 	ListUserQuoteLines(context.Context, *ListUserQuoteLinesRequest) (*ListUserQuoteLinesResponse, error)
 	UpdateQuoteLine(context.Context, *UpdateQuoteLineRequest) (*UpdateQuoteLineResponse, error)
 	DeleteQuoteLine(context.Context, *DeleteQuoteLineRequest) (*GenericResponse, error)
+	// Fee (premium catalog)
+	CreateFee(context.Context, *CreateFeeRequest) (*CreateFeeResponse, error)
+	GetFee(context.Context, *GetFeeRequest) (*GetFeeResponse, error)
+	ListFees(context.Context, *ListFeesRequest) (*ListFeesResponse, error)
+	UpdateFee(context.Context, *UpdateFeeRequest) (*UpdateFeeResponse, error)
+	ArchiveFee(context.Context, *ArchiveFeeRequest) (*GenericResponse, error)
 	mustEmbedUnimplementedQuoteServiceServer()
 }
 
@@ -324,6 +391,21 @@ func (UnimplementedQuoteServiceServer) UpdateQuoteLine(context.Context, *UpdateQ
 }
 func (UnimplementedQuoteServiceServer) DeleteQuoteLine(context.Context, *DeleteQuoteLineRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteQuoteLine not implemented")
+}
+func (UnimplementedQuoteServiceServer) CreateFee(context.Context, *CreateFeeRequest) (*CreateFeeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateFee not implemented")
+}
+func (UnimplementedQuoteServiceServer) GetFee(context.Context, *GetFeeRequest) (*GetFeeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetFee not implemented")
+}
+func (UnimplementedQuoteServiceServer) ListFees(context.Context, *ListFeesRequest) (*ListFeesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListFees not implemented")
+}
+func (UnimplementedQuoteServiceServer) UpdateFee(context.Context, *UpdateFeeRequest) (*UpdateFeeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateFee not implemented")
+}
+func (UnimplementedQuoteServiceServer) ArchiveFee(context.Context, *ArchiveFeeRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ArchiveFee not implemented")
 }
 func (UnimplementedQuoteServiceServer) mustEmbedUnimplementedQuoteServiceServer() {}
 func (UnimplementedQuoteServiceServer) testEmbeddedByValue()                      {}
@@ -652,6 +734,96 @@ func _QuoteService_DeleteQuoteLine_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _QuoteService_CreateFee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateFeeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuoteServiceServer).CreateFee(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QuoteService_CreateFee_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuoteServiceServer).CreateFee(ctx, req.(*CreateFeeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _QuoteService_GetFee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFeeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuoteServiceServer).GetFee(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QuoteService_GetFee_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuoteServiceServer).GetFee(ctx, req.(*GetFeeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _QuoteService_ListFees_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFeesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuoteServiceServer).ListFees(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QuoteService_ListFees_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuoteServiceServer).ListFees(ctx, req.(*ListFeesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _QuoteService_UpdateFee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateFeeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuoteServiceServer).UpdateFee(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QuoteService_UpdateFee_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuoteServiceServer).UpdateFee(ctx, req.(*UpdateFeeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _QuoteService_ArchiveFee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ArchiveFeeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuoteServiceServer).ArchiveFee(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QuoteService_ArchiveFee_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuoteServiceServer).ArchiveFee(ctx, req.(*ArchiveFeeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // QuoteService_ServiceDesc is the grpc.ServiceDesc for QuoteService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -726,6 +898,26 @@ var QuoteService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteQuoteLine",
 			Handler:    _QuoteService_DeleteQuoteLine_Handler,
+		},
+		{
+			MethodName: "CreateFee",
+			Handler:    _QuoteService_CreateFee_Handler,
+		},
+		{
+			MethodName: "GetFee",
+			Handler:    _QuoteService_GetFee_Handler,
+		},
+		{
+			MethodName: "ListFees",
+			Handler:    _QuoteService_ListFees_Handler,
+		},
+		{
+			MethodName: "UpdateFee",
+			Handler:    _QuoteService_UpdateFee_Handler,
+		},
+		{
+			MethodName: "ArchiveFee",
+			Handler:    _QuoteService_ArchiveFee_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

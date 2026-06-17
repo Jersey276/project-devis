@@ -156,6 +156,21 @@ func (nopQuoteClient) UpdateQuoteLine(context.Context, *quote.UpdateQuoteLineReq
 func (nopQuoteClient) DeleteQuoteLine(context.Context, *quote.DeleteQuoteLineRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
 	return nil, nil
 }
+func (nopQuoteClient) CreateFee(context.Context, *quote.CreateFeeRequest, ...grpc.CallOption) (*quote.CreateFeeResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) GetFee(context.Context, *quote.GetFeeRequest, ...grpc.CallOption) (*quote.GetFeeResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) ListFees(context.Context, *quote.ListFeesRequest, ...grpc.CallOption) (*quote.ListFeesResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) UpdateFee(context.Context, *quote.UpdateFeeRequest, ...grpc.CallOption) (*quote.UpdateFeeResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) ArchiveFee(context.Context, *quote.ArchiveFeeRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
+	return nil, nil
+}
 
 type nopUsersClient struct{}
 
