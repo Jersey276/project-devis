@@ -5,13 +5,14 @@ import (
 	"database/sql"
 	"encoding/json"
 
+	"project-devis-quote/actions/quote"
 	"project-devis-quote/actions/sqlutil"
 )
 
-// editableStates lists the quote states whose lines may still be rewritten when
-// a referenced fee changes. It mirrors quote.classifyEditable (draft/sent, not
-// archived); validated and drop quotes are immutable and never touched.
-var editableStates = []string{"draft", "sent"}
+// editableStates are the quote states whose lines may still be rewritten when a
+// referenced fee changes — the canonical set lives in quote.EditableStates
+// (draft/sent, non-archived). Validated and drop quotes are immutable.
+var editableStates = quote.EditableStates()
 
 // feeSnapshot is the set of fields copied from a fee onto every line that
 // references it.
@@ -91,11 +92,7 @@ func propagateSublines(ctx context.Context, db *sql.DB, userID, feeID string, sn
 	}
 	defer rows.Close()
 
-	type patch struct {
-		lineID string
-		data   string
-	}
-	var patches []patch
+	var lineIDs, datas []string
 	for rows.Next() {
 		var lineID, raw string
 		if err := rows.Scan(&lineID, &raw); err != nil {
@@ -127,21 +124,26 @@ func propagateSublines(ctx context.Context, db *sql.DB, userID, feeID string, sn
 		if err != nil {
 			continue
 		}
-		patches = append(patches, patch{lineID: lineID, data: string(clean)})
+		lineIDs = append(lineIDs, lineID)
+		datas = append(datas, string(clean))
 	}
 	if err := rows.Err(); err != nil {
 		return err
 	}
-
-	for _, p := range patches {
-		if _, err := db.ExecContext(ctx,
-			`UPDATE quote_lines SET data=$1::jsonb, updated_at=NOW() WHERE line_id=$2`,
-			p.data, p.lineID,
-		); err != nil {
-			return err
-		}
+	if len(lineIDs) == 0 {
+		return nil
 	}
-	return nil
+
+	// Single round-trip: zip the patched (line_id, data) pairs into a derived
+	// table and join on line_id, instead of one UPDATE per row.
+	_, err = db.ExecContext(ctx,
+		`UPDATE quote_lines l
+		 SET data = p.data::jsonb, updated_at = NOW()
+		 FROM (SELECT unnest($1::text[]) AS line_id, unnest($2::text[]) AS data) p
+		 WHERE l.line_id = p.line_id`,
+		sqlutil.StringArray(lineIDs), sqlutil.StringArray(datas),
+	)
+	return err
 }
 
 // sublineMatch builds the jsonb containment operand that pre-filters detailed

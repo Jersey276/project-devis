@@ -6,11 +6,13 @@ import (
 	quoteGrpc "project-devis-quote/services/grpc"
 )
 
+type rowScanner interface {
+	Scan(dest ...any) error
+}
+
 // scanFee maps a fees row into the proto message. Column order must match the
 // SELECT used by Get and List.
-func scanFee(rs interface {
-	Scan(dest ...any) error
-}) (*quoteGrpc.Fee, error) {
+func scanFee(rs rowScanner) (*quoteGrpc.Fee, error) {
 	var (
 		feeID      string
 		userID     string

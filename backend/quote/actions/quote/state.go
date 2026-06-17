@@ -15,6 +15,10 @@ const (
 	StateDrop      = "drop"
 )
 
+func EditableStates() []string {
+	return []string{StateDraft, StateSent}
+}
+
 func StateFromString(s string) quoteGrpc.QuoteState {
 	switch s {
 	case StateDraft:
