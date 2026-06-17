@@ -283,6 +283,11 @@ export default function QuoteStepItems({
       item.taxId != null ? (taxById.get(item.taxId) ?? null) : null;
     const canEditAdvanced = !!onDescriptionChange && !!onOptionChange;
     const showAdvanced = expandedLineId === item.lineId;
+    // A fee line mirrors a catalog entry: its name/price/unit are driven by the
+    // fee and may be overwritten by propagation, so they are locked here. The
+    // tax stays editable — the fee only seeds a default tax — as do quantity
+    // and the option flag.
+    const isFee = kind === "fee";
 
     return (
       <Fragment key={item.lineId}>
@@ -296,7 +301,7 @@ export default function QuoteStepItems({
                   onChange={(event) =>
                     onNameChange(item.lineId, event.target.value)
                   }
-                  disabled={isReadonly}
+                  disabled={isReadonly || isFee}
                   placeholder={t("lineNamePlaceholder")}
                 />
                 {kind !== "line" && (
@@ -356,7 +361,7 @@ export default function QuoteStepItems({
                 onChange={(event) =>
                   onUnitPriceChange(item.lineId, Number(event.target.value))
                 }
-                disabled={isReadonly || kind === "detailed"}
+                disabled={isReadonly || kind === "detailed" || isFee}
               />
             )}
           </TableCell>
@@ -541,7 +546,12 @@ export default function QuoteStepItems({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {sublines.map((subline, idx) => (
+                      {sublines.map((subline, idx) => {
+                        // A subline added from the catalog carries a fee_id; its
+                        // name/unit/price are catalog-driven, so lock them like a
+                        // fee line. Quantity and option stay editable.
+                        const sublineIsFee = !!subline.fee_id;
+                        return (
                         <TableRow key={subline._key ?? String(idx)}>
                           <TableCell>
                             <Input
@@ -551,7 +561,7 @@ export default function QuoteStepItems({
                                   name: e.target.value,
                                 })
                               }
-                              disabled={isReadonly}
+                              disabled={isReadonly || sublineIsFee}
                               placeholder={t("lineNamePlaceholder")}
                             />
                           </TableCell>
@@ -576,7 +586,7 @@ export default function QuoteStepItems({
                                   unit: e.target.value || undefined,
                                 })
                               }
-                              disabled={isReadonly}
+                              disabled={isReadonly || sublineIsFee}
                               placeholder={t("sublines.unitPlaceholder")}
                             />
                           </TableCell>
@@ -593,7 +603,7 @@ export default function QuoteStepItems({
                                   ),
                                 })
                               }
-                              disabled={isReadonly}
+                              disabled={isReadonly || sublineIsFee}
                             />
                           </TableCell>
                           <TableCell>
@@ -623,7 +633,8 @@ export default function QuoteStepItems({
                             )}
                           </TableCell>
                         </TableRow>
-                      ))}
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 )}

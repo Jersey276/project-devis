@@ -41,7 +41,7 @@ func Update(ctx context.Context, db *sql.DB, req *quoteGrpc.UpdateFeeRequest) (*
 
 	// Propagate the new snapshot to every non-validated quote that references
 	// this fee. Best-effort: a propagation failure must not fail the fee update.
-	snap := feeSnapshot{Name: req.Name, Unit: req.Unit, UnitPrice: req.UnitPrice, TaxID: req.TaxId}
+	snap := feeSnapshot{Name: req.Name, Unit: req.Unit, UnitPrice: req.UnitPrice}
 	if err := propagate(ctx, db, req.UserId, req.FeeId, snap); err != nil {
 		log.Printf("fee.Update: propagation failed for fee %s: %v", req.FeeId, err)
 	}

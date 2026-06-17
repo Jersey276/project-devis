@@ -73,8 +73,9 @@ func TestUpdateFee_PropagatesToEditableQuotes(t *testing.T) {
 		WithArgs("service", "Livraison", "h", int64(6000), int32(3), "fee-1", "user-1").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	// 2. Top-level fee lines refreshed, scoped to draft/sent quotes only.
-	mock.ExpectExec(`UPDATE quote_lines l\s+SET .* FROM quotes q\s+WHERE .* l\.fee_id = \$5 .* q\.state = ANY\(\$7\)`).
+	// 2. Top-level fee lines refreshed (name/unit/price only — tax_id is not
+	//    propagated), scoped to draft/sent quotes only.
+	mock.ExpectExec(`UPDATE quote_lines l\s+SET name=\$1, unit=\$2, unit_price=\$3, updated_at=NOW\(\) FROM quotes q\s+WHERE .* l\.fee_id = \$4 .* q\.state = ANY\(\$6\)`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	// 3. Detailed lines with fee sublines are read (same editable-states scope)...

@@ -14,13 +14,12 @@ import (
 // (draft/sent, non-archived). Validated and drop quotes are immutable.
 var editableStates = quote.EditableStates()
 
-// feeSnapshot is the set of fields copied from a fee onto every line that
-// references it.
+// feeSnapshot is the set of catalog-driven fields copied from a fee onto every
+// line that references it. tax_id is excluded on purpose — see propagateLines.
 type feeSnapshot struct {
 	Name      string
 	Unit      string
 	UnitPrice int64
-	TaxID     int32
 }
 
 // propagate rewrites the snapshot of every quote line referencing feeID, but
@@ -39,18 +38,20 @@ func propagate(ctx context.Context, db *sql.DB, userID, feeID string, snap feeSn
 }
 
 // propagateLines updates top-level fee lines via the indexed fee_id column.
+// tax_id is intentionally NOT propagated: the fee's tax is only a default that
+// the user may override per quote line, so propagation must not clobber it.
 func propagateLines(ctx context.Context, db *sql.DB, userID, feeID string, snap feeSnapshot) error {
 	_, err := db.ExecContext(ctx,
 		`UPDATE quote_lines l
-		 SET name=$1, unit=$2, unit_price=$3, tax_id=$4, updated_at=NOW()
+		 SET name=$1, unit=$2, unit_price=$3, updated_at=NOW()
 		 FROM quotes q
 		 WHERE l.quote_id = q.quote_id
-		   AND l.fee_id = $5
-		   AND q.user_id = $6
+		   AND l.fee_id = $4
+		   AND q.user_id = $5
 		   AND q.archived_at IS NULL
-		   AND q.state = ANY($7)`,
+		   AND q.state = ANY($6)`,
 		snap.Name, sqlutil.NullableStr(snap.Unit), snap.UnitPrice,
-		sqlutil.NullableInt32(snap.TaxID), feeID, userID, sqlutil.StringArray(editableStates),
+		feeID, userID, sqlutil.StringArray(editableStates),
 	)
 	return err
 }
