@@ -43,12 +43,15 @@ import {
   TriangleAlertIcon,
 } from "lucide-react";
 import type {
+  BackendFee,
   BackendTax,
   BackendQuoteLineType,
   QuoteLineData,
 } from "@/types/backend";
+import { CoinsIcon } from "lucide-react";
 import SaveTemplateDialog from "@/components/template/save-template-dialog";
 import SelectLineTemplatePopover from "@/components/template/select-line-template-popover";
+import SelectFeePopover from "@/components/fees/select-fee-popover";
 
 export type LineSaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -88,6 +91,8 @@ type QuoteStepItemsProps = {
   onRemoveItem: (lineId: string) => void;
   onAddItem: (kind?: QuoteLineData["kind"]) => void;
   onAddChildItem?: (parentLineId: string, kind?: QuoteLineData["kind"]) => void;
+  onAddFeeItem?: (fee: BackendFee) => void | Promise<void>;
+  onAddFeeSubline?: (lineId: string, fee: BackendFee) => void;
   onSublineAdd?: (lineId: string) => void;
   onSublineChange?: (
     lineId: string,
@@ -179,6 +184,8 @@ export default function QuoteStepItems({
   onRemoveItem,
   onAddItem,
   onAddChildItem,
+  onAddFeeItem,
+  onAddFeeSubline,
   onSublineAdd,
   onSublineChange,
   onSublineRemove,
@@ -210,6 +217,8 @@ export default function QuoteStepItems({
           return t("lineKinds.detailed");
         case "subline":
           return t("lineKinds.subline");
+        case "fee":
+          return t("lineKinds.fee");
         default:
           return t("lineKinds.line");
       }
@@ -618,18 +627,38 @@ export default function QuoteStepItems({
                     </TableBody>
                   </Table>
                 )}
-                {!isReadonly && onSublineAdd && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="h-auto w-full p-0"
-                    onClick={() => onSublineAdd(item.lineId)}
-                    aria-label={t("sublines.addAria")}
-                  >
-                    <Skeleton className="flex h-8 w-full items-center justify-center">
-                      <PlusIcon className="size-4" />
-                    </Skeleton>
-                  </Button>
+                {!isReadonly && (onSublineAdd || onAddFeeSubline) && (
+                  <div className="flex">
+                    {onSublineAdd && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-auto flex-1 p-0"
+                        onClick={() => onSublineAdd(item.lineId)}
+                        aria-label={t("sublines.addAria")}
+                      >
+                        <Skeleton className="flex h-8 w-full items-center justify-center">
+                          <PlusIcon className="size-4" />
+                        </Skeleton>
+                      </Button>
+                    )}
+                    {onAddFeeSubline && (
+                      <SelectFeePopover
+                        onSelect={(fee) => onAddFeeSubline(item.lineId, fee)}
+                      >
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="h-auto p-0"
+                          aria-label={t("sublines.addFeeAria")}
+                        >
+                          <Skeleton className="flex h-8 w-12 items-center justify-center">
+                            <CoinsIcon className="size-4" />
+                          </Skeleton>
+                        </Button>
+                      </SelectFeePopover>
+                    )}
+                  </div>
                 )}
               </div>
             </TableCell>
@@ -689,6 +718,24 @@ export default function QuoteStepItems({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          {onAddFeeItem && (
+            <SelectFeePopover
+              disabled={isAdding}
+              onSelect={(fee) => onAddFeeItem(fee)}
+            >
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-auto p-0"
+                disabled={isAdding}
+                aria-label={t("addFeeAria")}
+              >
+                <Skeleton className="flex h-14 w-14 items-center justify-center">
+                  <CoinsIcon className="size-5" />
+                </Skeleton>
+              </Button>
+            </SelectFeePopover>
+          )}
           {onAddItemFromTemplate && (
             <SelectLineTemplatePopover
               disabled={isAdding}

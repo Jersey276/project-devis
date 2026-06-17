@@ -17,19 +17,29 @@ export type BackendQuote = {
 
 export type BackendQuoteLineType = "simple" | "multiple";
 
-export type QuoteLineKind = "line" | "text" | "group" | "detailed" | "subline";
+export type QuoteLineKind =
+  | "line"
+  | "text"
+  | "group"
+  | "detailed"
+  | "subline"
+  | "fee";
 
 export type QuoteLineData = {
   kind?: QuoteLineKind;
   description?: string;
   option?: boolean;
   parent_line_id?: string;
+  /** Set on a top-level fee line (kind="fee"): the catalog entry it mirrors. */
+  fee_id?: string;
   sublines?: Array<{
     name: string;
     quantity: string;
     unit?: string;
     unit_price: number;
     option?: boolean;
+    /** Set when the subline was added from a fee catalog entry. */
+    fee_id?: string;
     /** Frontend-only stable React key — stripped before API calls. */
     _key?: string;
   }>;
@@ -58,6 +68,18 @@ export type BackendTax = {
   version?: number;
   superseded_at?: string;
   superseded_by?: number;
+};
+
+export type FeeCategory = "fixed" | "service";
+
+export type BackendFee = {
+  fee_id: string;
+  category: FeeCategory;
+  name: string;
+  unit: string;
+  unit_price: number;
+  tax_id: number | null;
+  archived: boolean;
 };
 
 export type QuoteListState = BackendQuoteState | "archived";
