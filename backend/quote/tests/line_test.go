@@ -19,7 +19,7 @@ func TestCreateLine_SimpleSuccess(t *testing.T) {
 
 	expectEditableCheck(mock, "q-1", "user-1", "draft")
 	mock.ExpectExec(`INSERT INTO quote_lines`).
-		WithArgs(sqlmock.AnyArg(), "q-1", "simple", "Item", "2", "u", int64(1500), `{"kind":"line"}`, int32(0), nil).
+		WithArgs(sqlmock.AnyArg(), "q-1", "simple", "Item", "2", "u", int64(1500), `{"kind":"line"}`, int32(0), nil, nil).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.CreateQuoteLine(context.Background(), &quoteGrpc.CreateQuoteLineRequest{
@@ -51,7 +51,7 @@ func TestCreateLine_MultipleSuccess(t *testing.T) {
 
 	expectEditableCheck(mock, "q-1", "user-1", "draft")
 	mock.ExpectExec(`INSERT INTO quote_lines`).
-		WithArgs(sqlmock.AnyArg(), "q-1", "multiple", "Pack", "1", nil, int64(0), multipleData, int32(0), nil).
+		WithArgs(sqlmock.AnyArg(), "q-1", "multiple", "Pack", "1", nil, int64(0), multipleData, int32(0), nil, nil).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.CreateQuoteLine(context.Background(), &quoteGrpc.CreateQuoteLineRequest{
@@ -100,7 +100,7 @@ func TestCreateLine_MultipleEmptySublines(t *testing.T) {
 
 	expectEditableCheck(mock, "q-1", "user-1", "draft")
 	mock.ExpectExec(`INSERT INTO quote_lines`).
-		WithArgs(sqlmock.AnyArg(), "q-1", "multiple", "X", "1", nil, int64(0), `{"kind":"detailed"}`, int32(0), nil).
+		WithArgs(sqlmock.AnyArg(), "q-1", "multiple", "X", "1", nil, int64(0), `{"kind":"detailed"}`, int32(0), nil, nil).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.CreateQuoteLine(context.Background(), &quoteGrpc.CreateQuoteLineRequest{
@@ -325,7 +325,7 @@ func TestUpdateLine_Success(t *testing.T) {
 
 	expectLineParentEditable(mock, "l-1", "user-1", "draft")
 	mock.ExpectExec(`UPDATE quote_lines\s+SET type`).
-		WithArgs("simple", "Item v2", "3", "u", int64(2000), `{"kind":"line"}`, int32(2), nil, "l-1").
+		WithArgs("simple", "Item v2", "3", "u", int64(2000), `{"kind":"line"}`, int32(2), nil, nil, "l-1").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	resp, err := srv.UpdateQuoteLine(context.Background(), &quoteGrpc.UpdateQuoteLineRequest{

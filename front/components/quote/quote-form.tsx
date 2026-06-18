@@ -189,6 +189,8 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     handleSublineRemove,
     handleAddItem,
     handleAddChildItem,
+    handleAddFeeItem,
+    handleAddFeeSubline,
     handleRemoveItem,
     handleAddItemFromTemplate,
     handleSaveLineAsTemplate,
@@ -530,6 +532,8 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             onRemoveItem={handleRemoveItem}
             onAddItem={handleAddItem}
             onAddChildItem={handleAddChildItem}
+            onAddFeeItem={!isCreate && !isReadonly ? handleAddFeeItem : undefined}
+            onAddFeeSubline={!isCreate && !isReadonly ? handleAddFeeSubline : undefined}
             onSublineAdd={!isCreate && !isReadonly ? handleSublineAdd : undefined}
             onSublineChange={!isCreate && !isReadonly ? handleSublineChange : undefined}
             onSublineRemove={!isCreate && !isReadonly ? handleSublineRemove : undefined}

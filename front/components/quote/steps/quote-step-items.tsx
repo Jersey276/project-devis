@@ -43,12 +43,15 @@ import {
   TriangleAlertIcon,
 } from "lucide-react";
 import type {
+  BackendFee,
   BackendTax,
   BackendQuoteLineType,
   QuoteLineData,
 } from "@/types/backend";
+import { CoinsIcon } from "lucide-react";
 import SaveTemplateDialog from "@/components/template/save-template-dialog";
 import SelectLineTemplatePopover from "@/components/template/select-line-template-popover";
+import SelectFeePopover from "@/components/fees/select-fee-popover";
 
 export type LineSaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -88,6 +91,8 @@ type QuoteStepItemsProps = {
   onRemoveItem: (lineId: string) => void;
   onAddItem: (kind?: QuoteLineData["kind"]) => void;
   onAddChildItem?: (parentLineId: string, kind?: QuoteLineData["kind"]) => void;
+  onAddFeeItem?: (fee: BackendFee) => void | Promise<void>;
+  onAddFeeSubline?: (lineId: string, fee: BackendFee) => void;
   onSublineAdd?: (lineId: string) => void;
   onSublineChange?: (
     lineId: string,
@@ -179,6 +184,8 @@ export default function QuoteStepItems({
   onRemoveItem,
   onAddItem,
   onAddChildItem,
+  onAddFeeItem,
+  onAddFeeSubline,
   onSublineAdd,
   onSublineChange,
   onSublineRemove,
@@ -210,6 +217,8 @@ export default function QuoteStepItems({
           return t("lineKinds.detailed");
         case "subline":
           return t("lineKinds.subline");
+        case "fee":
+          return t("lineKinds.fee");
         default:
           return t("lineKinds.line");
       }
@@ -274,6 +283,11 @@ export default function QuoteStepItems({
       item.taxId != null ? (taxById.get(item.taxId) ?? null) : null;
     const canEditAdvanced = !!onDescriptionChange && !!onOptionChange;
     const showAdvanced = expandedLineId === item.lineId;
+    // A fee line mirrors a catalog entry: its name/price/unit are driven by the
+    // fee and may be overwritten by propagation, so they are locked here. The
+    // tax stays editable — the fee only seeds a default tax — as do quantity
+    // and the option flag.
+    const isFee = kind === "fee";
 
     return (
       <Fragment key={item.lineId}>
@@ -287,7 +301,7 @@ export default function QuoteStepItems({
                   onChange={(event) =>
                     onNameChange(item.lineId, event.target.value)
                   }
-                  disabled={isReadonly}
+                  disabled={isReadonly || isFee}
                   placeholder={t("lineNamePlaceholder")}
                 />
                 {kind !== "line" && (
@@ -347,7 +361,7 @@ export default function QuoteStepItems({
                 onChange={(event) =>
                   onUnitPriceChange(item.lineId, Number(event.target.value))
                 }
-                disabled={isReadonly || kind === "detailed"}
+                disabled={isReadonly || kind === "detailed" || isFee}
               />
             )}
           </TableCell>
@@ -532,7 +546,12 @@ export default function QuoteStepItems({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {sublines.map((subline, idx) => (
+                      {sublines.map((subline, idx) => {
+                        // A subline added from the catalog carries a fee_id; its
+                        // name/unit/price are catalog-driven, so lock them like a
+                        // fee line. Quantity and option stay editable.
+                        const sublineIsFee = !!subline.fee_id;
+                        return (
                         <TableRow key={subline._key ?? String(idx)}>
                           <TableCell>
                             <Input
@@ -542,7 +561,7 @@ export default function QuoteStepItems({
                                   name: e.target.value,
                                 })
                               }
-                              disabled={isReadonly}
+                              disabled={isReadonly || sublineIsFee}
                               placeholder={t("lineNamePlaceholder")}
                             />
                           </TableCell>
@@ -567,7 +586,7 @@ export default function QuoteStepItems({
                                   unit: e.target.value || undefined,
                                 })
                               }
-                              disabled={isReadonly}
+                              disabled={isReadonly || sublineIsFee}
                               placeholder={t("sublines.unitPlaceholder")}
                             />
                           </TableCell>
@@ -584,7 +603,7 @@ export default function QuoteStepItems({
                                   ),
                                 })
                               }
-                              disabled={isReadonly}
+                              disabled={isReadonly || sublineIsFee}
                             />
                           </TableCell>
                           <TableCell>
@@ -614,22 +633,43 @@ export default function QuoteStepItems({
                             )}
                           </TableCell>
                         </TableRow>
-                      ))}
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 )}
-                {!isReadonly && onSublineAdd && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="h-auto w-full p-0"
-                    onClick={() => onSublineAdd(item.lineId)}
-                    aria-label={t("sublines.addAria")}
-                  >
-                    <Skeleton className="flex h-8 w-full items-center justify-center">
-                      <PlusIcon className="size-4" />
-                    </Skeleton>
-                  </Button>
+                {!isReadonly && (onSublineAdd || onAddFeeSubline) && (
+                  <div className="flex">
+                    {onSublineAdd && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-auto flex-1 p-0"
+                        onClick={() => onSublineAdd(item.lineId)}
+                        aria-label={t("sublines.addAria")}
+                      >
+                        <Skeleton className="flex h-8 w-full items-center justify-center">
+                          <PlusIcon className="size-4" />
+                        </Skeleton>
+                      </Button>
+                    )}
+                    {onAddFeeSubline && (
+                      <SelectFeePopover
+                        onSelect={(fee) => onAddFeeSubline(item.lineId, fee)}
+                      >
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="h-auto p-0"
+                          aria-label={t("sublines.addFeeAria")}
+                        >
+                          <Skeleton className="flex h-8 w-12 items-center justify-center">
+                            <CoinsIcon className="size-4" />
+                          </Skeleton>
+                        </Button>
+                      </SelectFeePopover>
+                    )}
+                  </div>
                 )}
               </div>
             </TableCell>
@@ -689,6 +729,24 @@ export default function QuoteStepItems({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          {onAddFeeItem && (
+            <SelectFeePopover
+              disabled={isAdding}
+              onSelect={(fee) => onAddFeeItem(fee)}
+            >
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-auto p-0"
+                disabled={isAdding}
+                aria-label={t("addFeeAria")}
+              >
+                <Skeleton className="flex h-14 w-14 items-center justify-center">
+                  <CoinsIcon className="size-5" />
+                </Skeleton>
+              </Button>
+            </SelectFeePopover>
+          )}
           {onAddItemFromTemplate && (
             <SelectLineTemplatePopover
               disabled={isAdding}

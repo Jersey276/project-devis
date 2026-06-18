@@ -13,6 +13,7 @@ import {
   WrenchIcon,
   CreditCardIcon,
   BarChart2Icon,
+  CoinsIcon,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "../ui/button";
@@ -37,6 +38,7 @@ type NavKey =
   | "schedule"
   | "invoices"
   | "clients"
+  | "fees"
   | "users"
   | "countries"
   | "taxes"
@@ -105,6 +107,12 @@ const items: SidebarItem[] = [
     modes: ["provider"],
     temp: true,
     adminOnly: true,
+  },
+  {
+    key: "fees",
+    url: "/fees",
+    icon: CoinsIcon,
+    modes: ["provider"],
   },
   {
     key: "templates",

@@ -55,6 +55,11 @@ func setupRouter() *gin.Engine {
 	schedules.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionSchedules))
 	controllers.SchedulesRoutes(schedules, emailNotifier)
 
+	fees := api.Group("/fees")
+	fees.Use(middleware.AuthRequired())
+	fees.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionFees))
+	controllers.FeesRoutes(fees)
+
 	plans := api.Group("/plans")
 	plans.Use(middleware.AuthRequired())
 	controllers.PlansRoutes(plans)

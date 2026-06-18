@@ -2088,6 +2088,686 @@ func (x *DeleteQuoteLineRequest) GetUserId() string {
 	return ""
 }
 
+type Fee struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FeeId         string                 `protobuf:"bytes,1,opt,name=fee_id,json=feeId,proto3" json:"fee_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Category      string                 `protobuf:"bytes,3,opt,name=category,proto3" json:"category,omitempty"` // "fixed" | "service"
+	Name          string                 `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
+	Unit          string                 `protobuf:"bytes,5,opt,name=unit,proto3" json:"unit,omitempty"`
+	UnitPrice     int64                  `protobuf:"varint,6,opt,name=unit_price,json=unitPrice,proto3" json:"unit_price,omitempty"`
+	TaxId         int32                  `protobuf:"varint,7,opt,name=tax_id,json=taxId,proto3" json:"tax_id,omitempty"`
+	Archived      bool                   `protobuf:"varint,8,opt,name=archived,proto3" json:"archived,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Fee) Reset() {
+	*x = Fee{}
+	mi := &file_quote_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Fee) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Fee) ProtoMessage() {}
+
+func (x *Fee) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Fee.ProtoReflect.Descriptor instead.
+func (*Fee) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *Fee) GetFeeId() string {
+	if x != nil {
+		return x.FeeId
+	}
+	return ""
+}
+
+func (x *Fee) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *Fee) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+func (x *Fee) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Fee) GetUnit() string {
+	if x != nil {
+		return x.Unit
+	}
+	return ""
+}
+
+func (x *Fee) GetUnitPrice() int64 {
+	if x != nil {
+		return x.UnitPrice
+	}
+	return 0
+}
+
+func (x *Fee) GetTaxId() int32 {
+	if x != nil {
+		return x.TaxId
+	}
+	return 0
+}
+
+func (x *Fee) GetArchived() bool {
+	if x != nil {
+		return x.Archived
+	}
+	return false
+}
+
+type CreateFeeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Category      string                 `protobuf:"bytes,2,opt,name=category,proto3" json:"category,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Unit          string                 `protobuf:"bytes,4,opt,name=unit,proto3" json:"unit,omitempty"`
+	UnitPrice     int64                  `protobuf:"varint,5,opt,name=unit_price,json=unitPrice,proto3" json:"unit_price,omitempty"`
+	TaxId         int32                  `protobuf:"varint,6,opt,name=tax_id,json=taxId,proto3" json:"tax_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateFeeRequest) Reset() {
+	*x = CreateFeeRequest{}
+	mi := &file_quote_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateFeeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateFeeRequest) ProtoMessage() {}
+
+func (x *CreateFeeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateFeeRequest.ProtoReflect.Descriptor instead.
+func (*CreateFeeRequest) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *CreateFeeRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *CreateFeeRequest) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+func (x *CreateFeeRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateFeeRequest) GetUnit() string {
+	if x != nil {
+		return x.Unit
+	}
+	return ""
+}
+
+func (x *CreateFeeRequest) GetUnitPrice() int64 {
+	if x != nil {
+		return x.UnitPrice
+	}
+	return 0
+}
+
+func (x *CreateFeeRequest) GetTaxId() int32 {
+	if x != nil {
+		return x.TaxId
+	}
+	return 0
+}
+
+type CreateFeeResponse struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Success          bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code             int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	FeeId            string                 `protobuf:"bytes,3,opt,name=fee_id,json=feeId,proto3" json:"fee_id,omitempty"`
+	ValidationErrors []*ValidationError     `protobuf:"bytes,4,rep,name=validation_errors,json=validationErrors,proto3" json:"validation_errors,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *CreateFeeResponse) Reset() {
+	*x = CreateFeeResponse{}
+	mi := &file_quote_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateFeeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateFeeResponse) ProtoMessage() {}
+
+func (x *CreateFeeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateFeeResponse.ProtoReflect.Descriptor instead.
+func (*CreateFeeResponse) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *CreateFeeResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *CreateFeeResponse) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *CreateFeeResponse) GetFeeId() string {
+	if x != nil {
+		return x.FeeId
+	}
+	return ""
+}
+
+func (x *CreateFeeResponse) GetValidationErrors() []*ValidationError {
+	if x != nil {
+		return x.ValidationErrors
+	}
+	return nil
+}
+
+type GetFeeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FeeId         string                 `protobuf:"bytes,1,opt,name=fee_id,json=feeId,proto3" json:"fee_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFeeRequest) Reset() {
+	*x = GetFeeRequest{}
+	mi := &file_quote_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFeeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFeeRequest) ProtoMessage() {}
+
+func (x *GetFeeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFeeRequest.ProtoReflect.Descriptor instead.
+func (*GetFeeRequest) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *GetFeeRequest) GetFeeId() string {
+	if x != nil {
+		return x.FeeId
+	}
+	return ""
+}
+
+func (x *GetFeeRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type GetFeeResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	Fee           *Fee                   `protobuf:"bytes,3,opt,name=fee,proto3" json:"fee,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFeeResponse) Reset() {
+	*x = GetFeeResponse{}
+	mi := &file_quote_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFeeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFeeResponse) ProtoMessage() {}
+
+func (x *GetFeeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFeeResponse.ProtoReflect.Descriptor instead.
+func (*GetFeeResponse) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *GetFeeResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *GetFeeResponse) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *GetFeeResponse) GetFee() *Fee {
+	if x != nil {
+		return x.Fee
+	}
+	return nil
+}
+
+type ListFeesRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	UserId          string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	IncludeArchived bool                   `protobuf:"varint,2,opt,name=include_archived,json=includeArchived,proto3" json:"include_archived,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ListFeesRequest) Reset() {
+	*x = ListFeesRequest{}
+	mi := &file_quote_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFeesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFeesRequest) ProtoMessage() {}
+
+func (x *ListFeesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFeesRequest.ProtoReflect.Descriptor instead.
+func (*ListFeesRequest) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *ListFeesRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *ListFeesRequest) GetIncludeArchived() bool {
+	if x != nil {
+		return x.IncludeArchived
+	}
+	return false
+}
+
+type ListFeesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	Fees          []*Fee                 `protobuf:"bytes,3,rep,name=fees,proto3" json:"fees,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFeesResponse) Reset() {
+	*x = ListFeesResponse{}
+	mi := &file_quote_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFeesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFeesResponse) ProtoMessage() {}
+
+func (x *ListFeesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFeesResponse.ProtoReflect.Descriptor instead.
+func (*ListFeesResponse) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *ListFeesResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ListFeesResponse) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *ListFeesResponse) GetFees() []*Fee {
+	if x != nil {
+		return x.Fees
+	}
+	return nil
+}
+
+type UpdateFeeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FeeId         string                 `protobuf:"bytes,1,opt,name=fee_id,json=feeId,proto3" json:"fee_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Category      string                 `protobuf:"bytes,3,opt,name=category,proto3" json:"category,omitempty"`
+	Name          string                 `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
+	Unit          string                 `protobuf:"bytes,5,opt,name=unit,proto3" json:"unit,omitempty"`
+	UnitPrice     int64                  `protobuf:"varint,6,opt,name=unit_price,json=unitPrice,proto3" json:"unit_price,omitempty"`
+	TaxId         int32                  `protobuf:"varint,7,opt,name=tax_id,json=taxId,proto3" json:"tax_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateFeeRequest) Reset() {
+	*x = UpdateFeeRequest{}
+	mi := &file_quote_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateFeeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateFeeRequest) ProtoMessage() {}
+
+func (x *UpdateFeeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateFeeRequest.ProtoReflect.Descriptor instead.
+func (*UpdateFeeRequest) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *UpdateFeeRequest) GetFeeId() string {
+	if x != nil {
+		return x.FeeId
+	}
+	return ""
+}
+
+func (x *UpdateFeeRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *UpdateFeeRequest) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+func (x *UpdateFeeRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *UpdateFeeRequest) GetUnit() string {
+	if x != nil {
+		return x.Unit
+	}
+	return ""
+}
+
+func (x *UpdateFeeRequest) GetUnitPrice() int64 {
+	if x != nil {
+		return x.UnitPrice
+	}
+	return 0
+}
+
+func (x *UpdateFeeRequest) GetTaxId() int32 {
+	if x != nil {
+		return x.TaxId
+	}
+	return 0
+}
+
+type UpdateFeeResponse struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Success          bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code             int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	ValidationErrors []*ValidationError     `protobuf:"bytes,3,rep,name=validation_errors,json=validationErrors,proto3" json:"validation_errors,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *UpdateFeeResponse) Reset() {
+	*x = UpdateFeeResponse{}
+	mi := &file_quote_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateFeeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateFeeResponse) ProtoMessage() {}
+
+func (x *UpdateFeeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateFeeResponse.ProtoReflect.Descriptor instead.
+func (*UpdateFeeResponse) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *UpdateFeeResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *UpdateFeeResponse) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *UpdateFeeResponse) GetValidationErrors() []*ValidationError {
+	if x != nil {
+		return x.ValidationErrors
+	}
+	return nil
+}
+
+type ArchiveFeeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FeeId         string                 `protobuf:"bytes,1,opt,name=fee_id,json=feeId,proto3" json:"fee_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ArchiveFeeRequest) Reset() {
+	*x = ArchiveFeeRequest{}
+	mi := &file_quote_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ArchiveFeeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ArchiveFeeRequest) ProtoMessage() {}
+
+func (x *ArchiveFeeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ArchiveFeeRequest.ProtoReflect.Descriptor instead.
+func (*ArchiveFeeRequest) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *ArchiveFeeRequest) GetFeeId() string {
+	if x != nil {
+		return x.FeeId
+	}
+	return ""
+}
+
+func (x *ArchiveFeeRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
 var File_quote_proto protoreflect.FileDescriptor
 
 const file_quote_proto_rawDesc = "" +
@@ -2244,6 +2924,61 @@ const file_quote_proto_rawDesc = "" +
 	"\x11validation_errors\x18\x03 \x03(\v2\x16.quote.ValidationErrorR\x10validationErrors\"J\n" +
 	"\x16DeleteQuoteLineRequest\x12\x17\n" +
 	"\aline_id\x18\x01 \x01(\tR\x06lineId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xcb\x01\n" +
+	"\x03Fee\x12\x15\n" +
+	"\x06fee_id\x18\x01 \x01(\tR\x05feeId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1a\n" +
+	"\bcategory\x18\x03 \x01(\tR\bcategory\x12\x12\n" +
+	"\x04name\x18\x04 \x01(\tR\x04name\x12\x12\n" +
+	"\x04unit\x18\x05 \x01(\tR\x04unit\x12\x1d\n" +
+	"\n" +
+	"unit_price\x18\x06 \x01(\x03R\tunitPrice\x12\x15\n" +
+	"\x06tax_id\x18\a \x01(\x05R\x05taxId\x12\x1a\n" +
+	"\barchived\x18\b \x01(\bR\barchived\"\xa5\x01\n" +
+	"\x10CreateFeeRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1a\n" +
+	"\bcategory\x18\x02 \x01(\tR\bcategory\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x12\n" +
+	"\x04unit\x18\x04 \x01(\tR\x04unit\x12\x1d\n" +
+	"\n" +
+	"unit_price\x18\x05 \x01(\x03R\tunitPrice\x12\x15\n" +
+	"\x06tax_id\x18\x06 \x01(\x05R\x05taxId\"\x9d\x01\n" +
+	"\x11CreateFeeResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x15\n" +
+	"\x06fee_id\x18\x03 \x01(\tR\x05feeId\x12C\n" +
+	"\x11validation_errors\x18\x04 \x03(\v2\x16.quote.ValidationErrorR\x10validationErrors\"?\n" +
+	"\rGetFeeRequest\x12\x15\n" +
+	"\x06fee_id\x18\x01 \x01(\tR\x05feeId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\\\n" +
+	"\x0eGetFeeResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x1c\n" +
+	"\x03fee\x18\x03 \x01(\v2\n" +
+	".quote.FeeR\x03fee\"U\n" +
+	"\x0fListFeesRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12)\n" +
+	"\x10include_archived\x18\x02 \x01(\bR\x0fincludeArchived\"`\n" +
+	"\x10ListFeesResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x1e\n" +
+	"\x04fees\x18\x03 \x03(\v2\n" +
+	".quote.FeeR\x04fees\"\xbc\x01\n" +
+	"\x10UpdateFeeRequest\x12\x15\n" +
+	"\x06fee_id\x18\x01 \x01(\tR\x05feeId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1a\n" +
+	"\bcategory\x18\x03 \x01(\tR\bcategory\x12\x12\n" +
+	"\x04name\x18\x04 \x01(\tR\x04name\x12\x12\n" +
+	"\x04unit\x18\x05 \x01(\tR\x04unit\x12\x1d\n" +
+	"\n" +
+	"unit_price\x18\x06 \x01(\x03R\tunitPrice\x12\x15\n" +
+	"\x06tax_id\x18\a \x01(\x05R\x05taxId\"\x86\x01\n" +
+	"\x11UpdateFeeResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x12C\n" +
+	"\x11validation_errors\x18\x03 \x03(\v2\x16.quote.ValidationErrorR\x10validationErrors\"C\n" +
+	"\x11ArchiveFeeRequest\x12\x15\n" +
+	"\x06fee_id\x18\x01 \x01(\tR\x05feeId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId*\x87\x01\n" +
 	"\n" +
 	"QuoteState\x12\x1b\n" +
@@ -2251,7 +2986,7 @@ const file_quote_proto_rawDesc = "" +
 	"\x11QUOTE_STATE_DRAFT\x10\x01\x12\x14\n" +
 	"\x10QUOTE_STATE_SENT\x10\x02\x12\x19\n" +
 	"\x15QUOTE_STATE_VALIDATED\x10\x03\x12\x14\n" +
-	"\x10QUOTE_STATE_DROP\x10\x042\xcb\t\n" +
+	"\x10QUOTE_STATE_DROP\x10\x042\xff\v\n" +
 	"\fQuoteService\x12D\n" +
 	"\vCreateQuote\x12\x19.quote.CreateQuoteRequest\x1a\x1a.quote.CreateQuoteResponse\x12;\n" +
 	"\bGetQuote\x12\x16.quote.GetQuoteRequest\x1a\x17.quote.GetQuoteResponse\x12A\n" +
@@ -2270,7 +3005,13 @@ const file_quote_proto_rawDesc = "" +
 	"\x0eListQuoteLines\x12\x1c.quote.ListQuoteLinesRequest\x1a\x1d.quote.ListQuoteLinesResponse\x12Y\n" +
 	"\x12ListUserQuoteLines\x12 .quote.ListUserQuoteLinesRequest\x1a!.quote.ListUserQuoteLinesResponse\x12P\n" +
 	"\x0fUpdateQuoteLine\x12\x1d.quote.UpdateQuoteLineRequest\x1a\x1e.quote.UpdateQuoteLineResponse\x12H\n" +
-	"\x0fDeleteQuoteLine\x12\x1d.quote.DeleteQuoteLineRequest\x1a\x16.quote.GenericResponseB\x0fZ\rgateway/quoteb\x06proto3"
+	"\x0fDeleteQuoteLine\x12\x1d.quote.DeleteQuoteLineRequest\x1a\x16.quote.GenericResponse\x12>\n" +
+	"\tCreateFee\x12\x17.quote.CreateFeeRequest\x1a\x18.quote.CreateFeeResponse\x125\n" +
+	"\x06GetFee\x12\x14.quote.GetFeeRequest\x1a\x15.quote.GetFeeResponse\x12;\n" +
+	"\bListFees\x12\x16.quote.ListFeesRequest\x1a\x17.quote.ListFeesResponse\x12>\n" +
+	"\tUpdateFee\x12\x17.quote.UpdateFeeRequest\x1a\x18.quote.UpdateFeeResponse\x12>\n" +
+	"\n" +
+	"ArchiveFee\x12\x18.quote.ArchiveFeeRequest\x1a\x16.quote.GenericResponseB\x0fZ\rgateway/quoteb\x06proto3"
 
 var (
 	file_quote_proto_rawDescOnce sync.Once
@@ -2285,7 +3026,7 @@ func file_quote_proto_rawDescGZIP() []byte {
 }
 
 var file_quote_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_quote_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
+var file_quote_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
 var file_quote_proto_goTypes = []any{
 	(QuoteState)(0),                    // 0: quote.QuoteState
 	(*GenericResponse)(nil),            // 1: quote.GenericResponse
@@ -2319,6 +3060,16 @@ var file_quote_proto_goTypes = []any{
 	(*UpdateQuoteLineRequest)(nil),     // 29: quote.UpdateQuoteLineRequest
 	(*UpdateQuoteLineResponse)(nil),    // 30: quote.UpdateQuoteLineResponse
 	(*DeleteQuoteLineRequest)(nil),     // 31: quote.DeleteQuoteLineRequest
+	(*Fee)(nil),                        // 32: quote.Fee
+	(*CreateFeeRequest)(nil),           // 33: quote.CreateFeeRequest
+	(*CreateFeeResponse)(nil),          // 34: quote.CreateFeeResponse
+	(*GetFeeRequest)(nil),              // 35: quote.GetFeeRequest
+	(*GetFeeResponse)(nil),             // 36: quote.GetFeeResponse
+	(*ListFeesRequest)(nil),            // 37: quote.ListFeesRequest
+	(*ListFeesResponse)(nil),           // 38: quote.ListFeesResponse
+	(*UpdateFeeRequest)(nil),           // 39: quote.UpdateFeeRequest
+	(*UpdateFeeResponse)(nil),          // 40: quote.UpdateFeeResponse
+	(*ArchiveFeeRequest)(nil),          // 41: quote.ArchiveFeeRequest
 }
 var file_quote_proto_depIdxs = []int32{
 	0,  // 0: quote.Quote.state:type_name -> quote.QuoteState
@@ -2332,45 +3083,59 @@ var file_quote_proto_depIdxs = []int32{
 	20, // 8: quote.ListQuoteLinesResponse.lines:type_name -> quote.QuoteLine
 	20, // 9: quote.ListUserQuoteLinesResponse.lines:type_name -> quote.QuoteLine
 	2,  // 10: quote.UpdateQuoteLineResponse.validation_errors:type_name -> quote.ValidationError
-	4,  // 11: quote.QuoteService.CreateQuote:input_type -> quote.CreateQuoteRequest
-	6,  // 12: quote.QuoteService.GetQuote:input_type -> quote.GetQuoteRequest
-	8,  // 13: quote.QuoteService.ListQuotes:input_type -> quote.ListQuotesRequest
-	10, // 14: quote.QuoteService.UpdateQuote:input_type -> quote.UpdateQuoteRequest
-	12, // 15: quote.QuoteService.DeleteQuote:input_type -> quote.DeleteQuoteRequest
-	13, // 16: quote.QuoteService.ArchiveQuote:input_type -> quote.ArchiveQuoteRequest
-	14, // 17: quote.QuoteService.RestoreQuote:input_type -> quote.RestoreQuoteRequest
-	15, // 18: quote.QuoteService.TrashQuotes:input_type -> quote.TrashQuotesRequest
-	16, // 19: quote.QuoteService.DropQuote:input_type -> quote.DropQuoteRequest
-	17, // 20: quote.QuoteService.ContinueQuote:input_type -> quote.ContinueQuoteRequest
-	18, // 21: quote.QuoteService.SendQuote:input_type -> quote.SendQuoteRequest
-	21, // 22: quote.QuoteService.CreateQuoteLine:input_type -> quote.CreateQuoteLineRequest
-	23, // 23: quote.QuoteService.GetQuoteLine:input_type -> quote.GetQuoteLineRequest
-	25, // 24: quote.QuoteService.ListQuoteLines:input_type -> quote.ListQuoteLinesRequest
-	27, // 25: quote.QuoteService.ListUserQuoteLines:input_type -> quote.ListUserQuoteLinesRequest
-	29, // 26: quote.QuoteService.UpdateQuoteLine:input_type -> quote.UpdateQuoteLineRequest
-	31, // 27: quote.QuoteService.DeleteQuoteLine:input_type -> quote.DeleteQuoteLineRequest
-	5,  // 28: quote.QuoteService.CreateQuote:output_type -> quote.CreateQuoteResponse
-	7,  // 29: quote.QuoteService.GetQuote:output_type -> quote.GetQuoteResponse
-	9,  // 30: quote.QuoteService.ListQuotes:output_type -> quote.ListQuotesResponse
-	11, // 31: quote.QuoteService.UpdateQuote:output_type -> quote.UpdateQuoteResponse
-	1,  // 32: quote.QuoteService.DeleteQuote:output_type -> quote.GenericResponse
-	1,  // 33: quote.QuoteService.ArchiveQuote:output_type -> quote.GenericResponse
-	1,  // 34: quote.QuoteService.RestoreQuote:output_type -> quote.GenericResponse
-	1,  // 35: quote.QuoteService.TrashQuotes:output_type -> quote.GenericResponse
-	1,  // 36: quote.QuoteService.DropQuote:output_type -> quote.GenericResponse
-	1,  // 37: quote.QuoteService.ContinueQuote:output_type -> quote.GenericResponse
-	19, // 38: quote.QuoteService.SendQuote:output_type -> quote.SendQuoteResponse
-	22, // 39: quote.QuoteService.CreateQuoteLine:output_type -> quote.CreateQuoteLineResponse
-	24, // 40: quote.QuoteService.GetQuoteLine:output_type -> quote.GetQuoteLineResponse
-	26, // 41: quote.QuoteService.ListQuoteLines:output_type -> quote.ListQuoteLinesResponse
-	28, // 42: quote.QuoteService.ListUserQuoteLines:output_type -> quote.ListUserQuoteLinesResponse
-	30, // 43: quote.QuoteService.UpdateQuoteLine:output_type -> quote.UpdateQuoteLineResponse
-	1,  // 44: quote.QuoteService.DeleteQuoteLine:output_type -> quote.GenericResponse
-	28, // [28:45] is the sub-list for method output_type
-	11, // [11:28] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	2,  // 11: quote.CreateFeeResponse.validation_errors:type_name -> quote.ValidationError
+	32, // 12: quote.GetFeeResponse.fee:type_name -> quote.Fee
+	32, // 13: quote.ListFeesResponse.fees:type_name -> quote.Fee
+	2,  // 14: quote.UpdateFeeResponse.validation_errors:type_name -> quote.ValidationError
+	4,  // 15: quote.QuoteService.CreateQuote:input_type -> quote.CreateQuoteRequest
+	6,  // 16: quote.QuoteService.GetQuote:input_type -> quote.GetQuoteRequest
+	8,  // 17: quote.QuoteService.ListQuotes:input_type -> quote.ListQuotesRequest
+	10, // 18: quote.QuoteService.UpdateQuote:input_type -> quote.UpdateQuoteRequest
+	12, // 19: quote.QuoteService.DeleteQuote:input_type -> quote.DeleteQuoteRequest
+	13, // 20: quote.QuoteService.ArchiveQuote:input_type -> quote.ArchiveQuoteRequest
+	14, // 21: quote.QuoteService.RestoreQuote:input_type -> quote.RestoreQuoteRequest
+	15, // 22: quote.QuoteService.TrashQuotes:input_type -> quote.TrashQuotesRequest
+	16, // 23: quote.QuoteService.DropQuote:input_type -> quote.DropQuoteRequest
+	17, // 24: quote.QuoteService.ContinueQuote:input_type -> quote.ContinueQuoteRequest
+	18, // 25: quote.QuoteService.SendQuote:input_type -> quote.SendQuoteRequest
+	21, // 26: quote.QuoteService.CreateQuoteLine:input_type -> quote.CreateQuoteLineRequest
+	23, // 27: quote.QuoteService.GetQuoteLine:input_type -> quote.GetQuoteLineRequest
+	25, // 28: quote.QuoteService.ListQuoteLines:input_type -> quote.ListQuoteLinesRequest
+	27, // 29: quote.QuoteService.ListUserQuoteLines:input_type -> quote.ListUserQuoteLinesRequest
+	29, // 30: quote.QuoteService.UpdateQuoteLine:input_type -> quote.UpdateQuoteLineRequest
+	31, // 31: quote.QuoteService.DeleteQuoteLine:input_type -> quote.DeleteQuoteLineRequest
+	33, // 32: quote.QuoteService.CreateFee:input_type -> quote.CreateFeeRequest
+	35, // 33: quote.QuoteService.GetFee:input_type -> quote.GetFeeRequest
+	37, // 34: quote.QuoteService.ListFees:input_type -> quote.ListFeesRequest
+	39, // 35: quote.QuoteService.UpdateFee:input_type -> quote.UpdateFeeRequest
+	41, // 36: quote.QuoteService.ArchiveFee:input_type -> quote.ArchiveFeeRequest
+	5,  // 37: quote.QuoteService.CreateQuote:output_type -> quote.CreateQuoteResponse
+	7,  // 38: quote.QuoteService.GetQuote:output_type -> quote.GetQuoteResponse
+	9,  // 39: quote.QuoteService.ListQuotes:output_type -> quote.ListQuotesResponse
+	11, // 40: quote.QuoteService.UpdateQuote:output_type -> quote.UpdateQuoteResponse
+	1,  // 41: quote.QuoteService.DeleteQuote:output_type -> quote.GenericResponse
+	1,  // 42: quote.QuoteService.ArchiveQuote:output_type -> quote.GenericResponse
+	1,  // 43: quote.QuoteService.RestoreQuote:output_type -> quote.GenericResponse
+	1,  // 44: quote.QuoteService.TrashQuotes:output_type -> quote.GenericResponse
+	1,  // 45: quote.QuoteService.DropQuote:output_type -> quote.GenericResponse
+	1,  // 46: quote.QuoteService.ContinueQuote:output_type -> quote.GenericResponse
+	19, // 47: quote.QuoteService.SendQuote:output_type -> quote.SendQuoteResponse
+	22, // 48: quote.QuoteService.CreateQuoteLine:output_type -> quote.CreateQuoteLineResponse
+	24, // 49: quote.QuoteService.GetQuoteLine:output_type -> quote.GetQuoteLineResponse
+	26, // 50: quote.QuoteService.ListQuoteLines:output_type -> quote.ListQuoteLinesResponse
+	28, // 51: quote.QuoteService.ListUserQuoteLines:output_type -> quote.ListUserQuoteLinesResponse
+	30, // 52: quote.QuoteService.UpdateQuoteLine:output_type -> quote.UpdateQuoteLineResponse
+	1,  // 53: quote.QuoteService.DeleteQuoteLine:output_type -> quote.GenericResponse
+	34, // 54: quote.QuoteService.CreateFee:output_type -> quote.CreateFeeResponse
+	36, // 55: quote.QuoteService.GetFee:output_type -> quote.GetFeeResponse
+	38, // 56: quote.QuoteService.ListFees:output_type -> quote.ListFeesResponse
+	40, // 57: quote.QuoteService.UpdateFee:output_type -> quote.UpdateFeeResponse
+	1,  // 58: quote.QuoteService.ArchiveFee:output_type -> quote.GenericResponse
+	37, // [37:59] is the sub-list for method output_type
+	15, // [15:37] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_quote_proto_init() }
@@ -2384,7 +3149,7 @@ func file_quote_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_quote_proto_rawDesc), len(file_quote_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   31,
+			NumMessages:   41,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

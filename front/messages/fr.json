@@ -31,6 +31,7 @@
     "schedule": "Échéanciers",
     "invoices": "Factures",
     "clients": "Clients",
+    "fees": "Frais",
     "users": "Utilisateurs",
     "countries": "Pays",
     "taxes": "Taxes",
@@ -243,12 +244,14 @@
         "addLineInGroupAria": "Ajouter une ligne dans le groupe",
         "addChildTypeAria": "Ajouter un autre type de ligne dans ce groupe",
         "addFromTemplateAria": "Ajouter depuis un template",
+        "addFeeAria": "Ajouter un frais depuis le catalogue",
         "lineKinds": {
           "line": "Ligne simple",
           "text": "Ligne texte",
           "group": "Groupe",
           "detailed": "Ligne détaillée",
-          "subline": "Sous-ligne"
+          "subline": "Sous-ligne",
+          "fee": "Frais"
         },
         "sublines": {
           "name": "Désignation",
@@ -258,6 +261,7 @@
           "option": "Option",
           "unitPlaceholder": "m², ml…",
           "addAria": "Ajouter une sous-ligne",
+          "addFeeAria": "Ajouter un frais en sous-ligne",
           "deleteAria": "Supprimer la sous-ligne"
         },
         "saveAsTemplate": "Enregistrer comme template",
@@ -689,6 +693,54 @@
     }
   },
   "errors": {},
+  "fees": {
+    "breadcrumb": {
+      "list": "Frais"
+    },
+    "categories": {
+      "fixed": "Frais fixe",
+      "service": "Prestation"
+    },
+    "list": {
+      "title": "Frais",
+      "newButton": "Nouveau frais",
+      "actionsLabel": "Actions",
+      "empty": "Aucun frais pour le moment.",
+      "priceValue": "{amount} €",
+      "columns": {
+        "name": "Nom",
+        "category": "Type",
+        "unit": "Unité",
+        "price": "PU HT"
+      },
+      "deleteDialog": {
+        "title": "Supprimer ce frais ?",
+        "description": "Le frais ne sera plus proposé dans les devis. Les devis existants conservent leur valeur."
+      },
+      "deleteSuccessToast": "Frais supprimé."
+    },
+    "dialog": {
+      "createTitle": "Nouveau frais",
+      "editTitle": "Modifier le frais",
+      "categoryLabel": "Type",
+      "nameLabel": "Nom",
+      "namePlaceholder": "Ex : Frais de livraison",
+      "priceLabel": "Prix unitaire HT (€)",
+      "pricePlaceholder": "0,00",
+      "unitLabel": "Unité",
+      "unitPlaceholder": "h, jour, forfait…",
+      "taxLabel": "Taxe par défaut",
+      "taxPlaceholder": "Sélectionner une taxe",
+      "taxEmpty": "Aucune taxe disponible.",
+      "createSuccessToast": "Frais créé.",
+      "updateSuccessToast": "Frais mis à jour. Les devis non validés ont été actualisés."
+    },
+    "selectPopover": {
+      "searchPlaceholder": "Rechercher un frais…",
+      "empty": "Aucun frais dans le catalogue.",
+      "noResults": "Aucun frais trouvé."
+    }
+  },
   "templates": {
     "breadcrumb": {
       "list": "Templates",

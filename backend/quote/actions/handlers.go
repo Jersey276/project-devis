@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 
+	"project-devis-quote/actions/fee"
 	"project-devis-quote/actions/line"
 	"project-devis-quote/actions/quote"
 	quoteGrpc "project-devis-quote/services/grpc"
@@ -78,4 +79,26 @@ func (s *Server) UpdateQuoteLine(ctx context.Context, req *quoteGrpc.UpdateQuote
 
 func (s *Server) DeleteQuoteLine(ctx context.Context, req *quoteGrpc.DeleteQuoteLineRequest) (*quoteGrpc.GenericResponse, error) {
 	return line.Delete(ctx, s.db, req)
+}
+
+// ─── Fee ─────────────────────────────────────────────────────────────────────
+
+func (s *Server) CreateFee(ctx context.Context, req *quoteGrpc.CreateFeeRequest) (*quoteGrpc.CreateFeeResponse, error) {
+	return fee.Create(ctx, s.db, req)
+}
+
+func (s *Server) GetFee(ctx context.Context, req *quoteGrpc.GetFeeRequest) (*quoteGrpc.GetFeeResponse, error) {
+	return fee.Get(ctx, s.db, req)
+}
+
+func (s *Server) ListFees(ctx context.Context, req *quoteGrpc.ListFeesRequest) (*quoteGrpc.ListFeesResponse, error) {
+	return fee.List(ctx, s.db, req)
+}
+
+func (s *Server) UpdateFee(ctx context.Context, req *quoteGrpc.UpdateFeeRequest) (*quoteGrpc.UpdateFeeResponse, error) {
+	return fee.Update(ctx, s.db, req)
+}
+
+func (s *Server) ArchiveFee(ctx context.Context, req *quoteGrpc.ArchiveFeeRequest) (*quoteGrpc.GenericResponse, error) {
+	return fee.Archive(ctx, s.db, req)
 }

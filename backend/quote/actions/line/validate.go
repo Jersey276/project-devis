@@ -17,6 +17,7 @@ type lineDataPayload struct {
 	Description  string    `json:"description,omitempty"`
 	Option       *bool     `json:"option,omitempty"`
 	ParentLineID string    `json:"parent_line_id,omitempty"`
+	FeeID        string    `json:"fee_id,omitempty"`
 	Sublines     []subline `json:"sublines,omitempty"`
 }
 
@@ -46,12 +47,17 @@ func validateSimple(data string) (string, error) {
 	if payload.Kind == "" {
 		payload.Kind = "line"
 	}
-	if payload.Kind != "line" && payload.Kind != "text" && payload.Kind != "group" && payload.Kind != "subline" {
+	if payload.Kind != "line" && payload.Kind != "text" && payload.Kind != "group" && payload.Kind != "subline" && payload.Kind != "fee" {
 		return "", fmt.Errorf("simple line data has invalid kind %q", payload.Kind)
 	}
 	// Description can be empty on creation; it is filled in by the user later.
 	if payload.Kind == "subline" && payload.ParentLineID == "" {
 		return "", fmt.Errorf("subline parent_line_id is required")
+	}
+	// A fee line is a live reference to a catalog entry: fee_id is mandatory so
+	// that updating the fee can propagate its snapshot back to this line.
+	if payload.Kind == "fee" && payload.FeeID == "" {
+		return "", fmt.Errorf("fee line fee_id is required")
 	}
 	clean, err := json.Marshal(payload)
 	if err != nil {
@@ -60,12 +66,31 @@ func validateSimple(data string) (string, error) {
 	return string(clean), nil
 }
 
+// FeeIDFromData returns the catalog fee_id carried by a top-level fee line
+// (kind="fee"), or "" for any other line. It is used to populate the
+// quote_lines.fee_id column, which the index/propagation query relies on.
+// Sublines reference fees inside the JSON only, so they are not returned here.
+func FeeIDFromData(data string) string {
+	if data == "" {
+		return ""
+	}
+	var payload lineDataPayload
+	if err := json.Unmarshal([]byte(data), &payload); err != nil {
+		return ""
+	}
+	if payload.Kind != "fee" {
+		return ""
+	}
+	return payload.FeeID
+}
+
 type subline struct {
 	Name      string  `json:"name"`
 	Quantity  string  `json:"quantity"`
 	Unit      *string `json:"unit,omitempty"`
 	UnitPrice int64   `json:"unit_price"`
 	Option    *bool   `json:"option,omitempty"`
+	FeeID     string  `json:"fee_id,omitempty"`
 }
 
 type multiplePayload struct {
