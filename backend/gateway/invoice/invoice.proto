@@ -97,6 +97,7 @@ message InvoiceParty {
     string additional_street = 10;
     string zip_code          = 11;
     string city              = 12;
+    string client_type       = 13;
 }
 
 message InvoiceLine {

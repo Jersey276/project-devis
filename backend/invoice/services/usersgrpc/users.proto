@@ -186,6 +186,14 @@ message TouchUserLastLoginRequest {
 
 // ─── Client ──────────────────────────────────────────────────────────────────
 
+// ClientType discriminates a billable client between an individual (B2C) and a
+// business (B2B). Wire string equivalents are "individual" / "business".
+enum ClientType {
+    CLIENT_TYPE_UNSPECIFIED = 0;
+    CLIENT_TYPE_INDIVIDUAL  = 1;
+    CLIENT_TYPE_BUSINESS    = 2;
+}
+
 message Client {
     string client_id = 1;
     string user_id = 2;
@@ -197,6 +205,7 @@ message Client {
     string siren = 8;
     string vat = 9;
     bool archived = 10;
+    ClientType client_type = 11;
 }
 
 message CreateClientRequest {

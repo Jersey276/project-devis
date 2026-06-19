@@ -39,11 +39,12 @@ func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateClientRequest)
 
 	res, err := db.ExecContext(ctx,
 		`UPDATE clients SET first_name=$1, last_name=$2, email=$3, phone=$4,
-		        company=$5, siren=$6, vat=$7, updated_at=NOW()
-		 WHERE client_id=$8 AND user_id=$9 AND archived_at IS NULL`,
+		        company=$5, siren=$6, vat=$7, client_type=$8, updated_at=NOW()
+		 WHERE client_id=$9 AND user_id=$10 AND archived_at IS NULL`,
 		req.FirstName, req.LastName,
 		sqlutil.NullableStr(req.Email), sqlutil.NullableStr(req.Phone),
 		sqlutil.NullableStr(req.Company), sqlutil.NullableStr(req.Siren), sqlutil.NullableStr(req.Vat),
+		sqlutil.ClientTypeToDBString(req.ClientType),
 		req.ClientId, req.UserId,
 	)
 	if err != nil {

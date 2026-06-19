@@ -30,6 +30,9 @@ function clientFromBackend(c: BackendClient): ClientFormValues {
     company: c.company ?? "",
     siren: c.siren ?? "",
     vat: c.vat ?? "",
+    // Fall back to "individual" so a legacy client with no type still loads with
+    // a valid selection.
+    client_type: c.client_type || "individual",
   };
 }
 

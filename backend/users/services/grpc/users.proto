@@ -186,6 +186,16 @@ message TouchUserLastLoginRequest {
 
 // ─── Client ──────────────────────────────────────────────────────────────────
 
+// ClientType discriminates a billable client between an individual (B2C) and a
+// business (B2B). Wire string equivalents are "individual" / "business" — see
+// sqlutil.ClientTypeToDBString. It drives legal mentions, e-reporting vs
+// e-invoicing, and (later) OSS distance-selling VAT.
+enum ClientType {
+    CLIENT_TYPE_UNSPECIFIED = 0;
+    CLIENT_TYPE_INDIVIDUAL  = 1;
+    CLIENT_TYPE_BUSINESS    = 2;
+}
+
 message Client {
     string client_id = 1;
     string user_id = 2;
@@ -197,6 +207,7 @@ message Client {
     string siren = 8;
     string vat = 9;
     bool archived = 10;
+    ClientType client_type = 11;
 }
 
 message CreateClientRequest {
@@ -208,6 +219,7 @@ message CreateClientRequest {
     string company = 6;
     string siren = 7;
     string vat = 8;
+    ClientType client_type = 9;
 }
 
 message CreateClientResponse {
@@ -249,6 +261,7 @@ message UpdateClientRequest {
     string company = 7;
     string siren = 8;
     string vat = 9;
+    ClientType client_type = 10;
 }
 
 message UpdateClientResponse {

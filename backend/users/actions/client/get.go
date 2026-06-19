@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"project-devis-users/actions/codes"
+	"project-devis-users/actions/sqlutil"
 	usersGrpc "project-devis-users/services/grpc"
 )
 
@@ -14,17 +15,17 @@ func Get(ctx context.Context, db *sql.DB, req *usersGrpc.GetClientRequest) (*use
 	}
 
 	var c usersGrpc.Client
-	var email, phone, company, siren, vat sql.NullString
+	var email, phone, company, siren, vat, clientType sql.NullString
 	// Exclude archived clients: archived rows are read-only via the
 	// list-with-include-archived path. Returning them from Get would let
 	// callers (e.g. the gateway's owner-resolver) treat archived clients as
 	// valid address owners.
 	err := db.QueryRowContext(ctx,
-		`SELECT client_id, user_id, first_name, last_name, email, phone, company, siren, vat,
+		`SELECT client_id, user_id, first_name, last_name, email, phone, company, siren, vat, client_type,
 		        (archived_at IS NOT NULL)
 		 FROM clients WHERE client_id=$1 AND user_id=$2 AND archived_at IS NULL`,
 		req.ClientId, req.UserId,
-	).Scan(&c.ClientId, &c.UserId, &c.FirstName, &c.LastName, &email, &phone, &company, &siren, &vat, &c.Archived)
+	).Scan(&c.ClientId, &c.UserId, &c.FirstName, &c.LastName, &email, &phone, &company, &siren, &vat, &clientType, &c.Archived)
 	if err == sql.ErrNoRows {
 		return &usersGrpc.GetClientResponse{Success: false, Code: codes.NotFound}, nil
 	}
@@ -37,6 +38,7 @@ func Get(ctx context.Context, db *sql.DB, req *usersGrpc.GetClientRequest) (*use
 	c.Company = company.String
 	c.Siren = siren.String
 	c.Vat = vat.String
+	c.ClientType = sqlutil.ClientTypeFromDBString(clientType.String)
 
 	return &usersGrpc.GetClientResponse{Success: true, Code: codes.Success, Client: &c}, nil
 }

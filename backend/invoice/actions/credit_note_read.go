@@ -78,14 +78,14 @@ func (s *Server) loadCreditNoteSnapshot(ctx context.Context, creditNoteID string
 		`SELECT issuer_company, issuer_siren, issuer_vat, issuer_email, issuer_phone, issuer_logo_url,
 		        issuer_street, issuer_additional, issuer_zip, issuer_city,
 		        client_first_name, client_last_name, client_company, client_email,
-		        client_street, client_additional, client_zip, client_city
+		        client_street, client_additional, client_zip, client_city, client_type
 		 FROM credit_note_party_snapshots WHERE credit_note_id=$1`,
 		creditNoteID,
 	).Scan(
 		&p.issuerCompany, &p.issuerSiren, &p.issuerVat, &p.issuerEmail, &p.issuerPhone, &p.issuerLogoURL,
 		&p.issuerStreet, &p.issuerAdditional, &p.issuerZip, &p.issuerCity,
 		&p.clientFirstName, &p.clientLastName, &p.clientCompany, &p.clientEmail,
-		&p.clientStreet, &p.clientAdditional, &p.clientZip, &p.clientCity,
+		&p.clientStreet, &p.clientAdditional, &p.clientZip, &p.clientCity, &p.clientType,
 	)
 	if err != nil {
 		return err

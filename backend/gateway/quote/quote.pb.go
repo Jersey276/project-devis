@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v7.34.0
-// source: quote.proto
+// source: quote/quote.proto
 
 package quote
 
@@ -63,11 +63,11 @@ func (x QuoteState) String() string {
 }
 
 func (QuoteState) Descriptor() protoreflect.EnumDescriptor {
-	return file_quote_proto_enumTypes[0].Descriptor()
+	return file_quote_quote_proto_enumTypes[0].Descriptor()
 }
 
 func (QuoteState) Type() protoreflect.EnumType {
-	return &file_quote_proto_enumTypes[0]
+	return &file_quote_quote_proto_enumTypes[0]
 }
 
 func (x QuoteState) Number() protoreflect.EnumNumber {
@@ -76,7 +76,7 @@ func (x QuoteState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use QuoteState.Descriptor instead.
 func (QuoteState) EnumDescriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{0}
+	return file_quote_quote_proto_rawDescGZIP(), []int{0}
 }
 
 type GenericResponse struct {
@@ -89,7 +89,7 @@ type GenericResponse struct {
 
 func (x *GenericResponse) Reset() {
 	*x = GenericResponse{}
-	mi := &file_quote_proto_msgTypes[0]
+	mi := &file_quote_quote_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -101,7 +101,7 @@ func (x *GenericResponse) String() string {
 func (*GenericResponse) ProtoMessage() {}
 
 func (x *GenericResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[0]
+	mi := &file_quote_quote_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -114,7 +114,7 @@ func (x *GenericResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenericResponse.ProtoReflect.Descriptor instead.
 func (*GenericResponse) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{0}
+	return file_quote_quote_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *GenericResponse) GetSuccess() bool {
@@ -141,7 +141,7 @@ type ValidationError struct {
 
 func (x *ValidationError) Reset() {
 	*x = ValidationError{}
-	mi := &file_quote_proto_msgTypes[1]
+	mi := &file_quote_quote_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -153,7 +153,7 @@ func (x *ValidationError) String() string {
 func (*ValidationError) ProtoMessage() {}
 
 func (x *ValidationError) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[1]
+	mi := &file_quote_quote_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -166,7 +166,7 @@ func (x *ValidationError) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidationError.ProtoReflect.Descriptor instead.
 func (*ValidationError) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{1}
+	return file_quote_quote_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ValidationError) GetField() string {
@@ -199,7 +199,7 @@ type Quote struct {
 
 func (x *Quote) Reset() {
 	*x = Quote{}
-	mi := &file_quote_proto_msgTypes[2]
+	mi := &file_quote_quote_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -211,7 +211,7 @@ func (x *Quote) String() string {
 func (*Quote) ProtoMessage() {}
 
 func (x *Quote) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[2]
+	mi := &file_quote_quote_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -224,7 +224,7 @@ func (x *Quote) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Quote.ProtoReflect.Descriptor instead.
 func (*Quote) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{2}
+	return file_quote_quote_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Quote) GetQuoteId() string {
@@ -296,7 +296,7 @@ type CreateQuoteRequest struct {
 
 func (x *CreateQuoteRequest) Reset() {
 	*x = CreateQuoteRequest{}
-	mi := &file_quote_proto_msgTypes[3]
+	mi := &file_quote_quote_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -308,7 +308,7 @@ func (x *CreateQuoteRequest) String() string {
 func (*CreateQuoteRequest) ProtoMessage() {}
 
 func (x *CreateQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[3]
+	mi := &file_quote_quote_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -321,7 +321,7 @@ func (x *CreateQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateQuoteRequest.ProtoReflect.Descriptor instead.
 func (*CreateQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{3}
+	return file_quote_quote_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *CreateQuoteRequest) GetUserId() string {
@@ -371,7 +371,7 @@ type CreateQuoteResponse struct {
 
 func (x *CreateQuoteResponse) Reset() {
 	*x = CreateQuoteResponse{}
-	mi := &file_quote_proto_msgTypes[4]
+	mi := &file_quote_quote_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -383,7 +383,7 @@ func (x *CreateQuoteResponse) String() string {
 func (*CreateQuoteResponse) ProtoMessage() {}
 
 func (x *CreateQuoteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[4]
+	mi := &file_quote_quote_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -396,7 +396,7 @@ func (x *CreateQuoteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateQuoteResponse.ProtoReflect.Descriptor instead.
 func (*CreateQuoteResponse) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{4}
+	return file_quote_quote_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CreateQuoteResponse) GetSuccess() bool {
@@ -437,7 +437,7 @@ type GetQuoteRequest struct {
 
 func (x *GetQuoteRequest) Reset() {
 	*x = GetQuoteRequest{}
-	mi := &file_quote_proto_msgTypes[5]
+	mi := &file_quote_quote_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -449,7 +449,7 @@ func (x *GetQuoteRequest) String() string {
 func (*GetQuoteRequest) ProtoMessage() {}
 
 func (x *GetQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[5]
+	mi := &file_quote_quote_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -462,7 +462,7 @@ func (x *GetQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetQuoteRequest.ProtoReflect.Descriptor instead.
 func (*GetQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{5}
+	return file_quote_quote_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetQuoteRequest) GetQuoteId() string {
@@ -491,7 +491,7 @@ type GetQuoteResponse struct {
 
 func (x *GetQuoteResponse) Reset() {
 	*x = GetQuoteResponse{}
-	mi := &file_quote_proto_msgTypes[6]
+	mi := &file_quote_quote_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -503,7 +503,7 @@ func (x *GetQuoteResponse) String() string {
 func (*GetQuoteResponse) ProtoMessage() {}
 
 func (x *GetQuoteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[6]
+	mi := &file_quote_quote_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -516,7 +516,7 @@ func (x *GetQuoteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetQuoteResponse.ProtoReflect.Descriptor instead.
 func (*GetQuoteResponse) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{6}
+	return file_quote_quote_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetQuoteResponse) GetSuccess() bool {
@@ -557,7 +557,7 @@ type ListQuotesRequest struct {
 
 func (x *ListQuotesRequest) Reset() {
 	*x = ListQuotesRequest{}
-	mi := &file_quote_proto_msgTypes[7]
+	mi := &file_quote_quote_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -569,7 +569,7 @@ func (x *ListQuotesRequest) String() string {
 func (*ListQuotesRequest) ProtoMessage() {}
 
 func (x *ListQuotesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[7]
+	mi := &file_quote_quote_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -582,7 +582,7 @@ func (x *ListQuotesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListQuotesRequest.ProtoReflect.Descriptor instead.
 func (*ListQuotesRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{7}
+	return file_quote_quote_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ListQuotesRequest) GetUserId() string {
@@ -610,7 +610,7 @@ type ListQuotesResponse struct {
 
 func (x *ListQuotesResponse) Reset() {
 	*x = ListQuotesResponse{}
-	mi := &file_quote_proto_msgTypes[8]
+	mi := &file_quote_quote_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -622,7 +622,7 @@ func (x *ListQuotesResponse) String() string {
 func (*ListQuotesResponse) ProtoMessage() {}
 
 func (x *ListQuotesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[8]
+	mi := &file_quote_quote_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -635,7 +635,7 @@ func (x *ListQuotesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListQuotesResponse.ProtoReflect.Descriptor instead.
 func (*ListQuotesResponse) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{8}
+	return file_quote_quote_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ListQuotesResponse) GetSuccess() bool {
@@ -673,7 +673,7 @@ type UpdateQuoteRequest struct {
 
 func (x *UpdateQuoteRequest) Reset() {
 	*x = UpdateQuoteRequest{}
-	mi := &file_quote_proto_msgTypes[9]
+	mi := &file_quote_quote_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -685,7 +685,7 @@ func (x *UpdateQuoteRequest) String() string {
 func (*UpdateQuoteRequest) ProtoMessage() {}
 
 func (x *UpdateQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[9]
+	mi := &file_quote_quote_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -698,7 +698,7 @@ func (x *UpdateQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateQuoteRequest.ProtoReflect.Descriptor instead.
 func (*UpdateQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{9}
+	return file_quote_quote_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *UpdateQuoteRequest) GetQuoteId() string {
@@ -754,7 +754,7 @@ type UpdateQuoteResponse struct {
 
 func (x *UpdateQuoteResponse) Reset() {
 	*x = UpdateQuoteResponse{}
-	mi := &file_quote_proto_msgTypes[10]
+	mi := &file_quote_quote_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -766,7 +766,7 @@ func (x *UpdateQuoteResponse) String() string {
 func (*UpdateQuoteResponse) ProtoMessage() {}
 
 func (x *UpdateQuoteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[10]
+	mi := &file_quote_quote_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -779,7 +779,7 @@ func (x *UpdateQuoteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateQuoteResponse.ProtoReflect.Descriptor instead.
 func (*UpdateQuoteResponse) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{10}
+	return file_quote_quote_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *UpdateQuoteResponse) GetSuccess() bool {
@@ -813,7 +813,7 @@ type DeleteQuoteRequest struct {
 
 func (x *DeleteQuoteRequest) Reset() {
 	*x = DeleteQuoteRequest{}
-	mi := &file_quote_proto_msgTypes[11]
+	mi := &file_quote_quote_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -825,7 +825,7 @@ func (x *DeleteQuoteRequest) String() string {
 func (*DeleteQuoteRequest) ProtoMessage() {}
 
 func (x *DeleteQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[11]
+	mi := &file_quote_quote_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -838,7 +838,7 @@ func (x *DeleteQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteQuoteRequest.ProtoReflect.Descriptor instead.
 func (*DeleteQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{11}
+	return file_quote_quote_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *DeleteQuoteRequest) GetQuoteId() string {
@@ -865,7 +865,7 @@ type ArchiveQuoteRequest struct {
 
 func (x *ArchiveQuoteRequest) Reset() {
 	*x = ArchiveQuoteRequest{}
-	mi := &file_quote_proto_msgTypes[12]
+	mi := &file_quote_quote_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -877,7 +877,7 @@ func (x *ArchiveQuoteRequest) String() string {
 func (*ArchiveQuoteRequest) ProtoMessage() {}
 
 func (x *ArchiveQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[12]
+	mi := &file_quote_quote_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -890,7 +890,7 @@ func (x *ArchiveQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveQuoteRequest.ProtoReflect.Descriptor instead.
 func (*ArchiveQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{12}
+	return file_quote_quote_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ArchiveQuoteRequest) GetQuoteId() string {
@@ -917,7 +917,7 @@ type RestoreQuoteRequest struct {
 
 func (x *RestoreQuoteRequest) Reset() {
 	*x = RestoreQuoteRequest{}
-	mi := &file_quote_proto_msgTypes[13]
+	mi := &file_quote_quote_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -929,7 +929,7 @@ func (x *RestoreQuoteRequest) String() string {
 func (*RestoreQuoteRequest) ProtoMessage() {}
 
 func (x *RestoreQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[13]
+	mi := &file_quote_quote_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -942,7 +942,7 @@ func (x *RestoreQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestoreQuoteRequest.ProtoReflect.Descriptor instead.
 func (*RestoreQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{13}
+	return file_quote_quote_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *RestoreQuoteRequest) GetQuoteId() string {
@@ -968,7 +968,7 @@ type TrashQuotesRequest struct {
 
 func (x *TrashQuotesRequest) Reset() {
 	*x = TrashQuotesRequest{}
-	mi := &file_quote_proto_msgTypes[14]
+	mi := &file_quote_quote_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -980,7 +980,7 @@ func (x *TrashQuotesRequest) String() string {
 func (*TrashQuotesRequest) ProtoMessage() {}
 
 func (x *TrashQuotesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[14]
+	mi := &file_quote_quote_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -993,7 +993,7 @@ func (x *TrashQuotesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrashQuotesRequest.ProtoReflect.Descriptor instead.
 func (*TrashQuotesRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{14}
+	return file_quote_quote_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *TrashQuotesRequest) GetUserId() string {
@@ -1013,7 +1013,7 @@ type DropQuoteRequest struct {
 
 func (x *DropQuoteRequest) Reset() {
 	*x = DropQuoteRequest{}
-	mi := &file_quote_proto_msgTypes[15]
+	mi := &file_quote_quote_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1025,7 +1025,7 @@ func (x *DropQuoteRequest) String() string {
 func (*DropQuoteRequest) ProtoMessage() {}
 
 func (x *DropQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[15]
+	mi := &file_quote_quote_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1038,7 +1038,7 @@ func (x *DropQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DropQuoteRequest.ProtoReflect.Descriptor instead.
 func (*DropQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{15}
+	return file_quote_quote_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *DropQuoteRequest) GetQuoteId() string {
@@ -1065,7 +1065,7 @@ type ContinueQuoteRequest struct {
 
 func (x *ContinueQuoteRequest) Reset() {
 	*x = ContinueQuoteRequest{}
-	mi := &file_quote_proto_msgTypes[16]
+	mi := &file_quote_quote_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1077,7 +1077,7 @@ func (x *ContinueQuoteRequest) String() string {
 func (*ContinueQuoteRequest) ProtoMessage() {}
 
 func (x *ContinueQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[16]
+	mi := &file_quote_quote_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1090,7 +1090,7 @@ func (x *ContinueQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContinueQuoteRequest.ProtoReflect.Descriptor instead.
 func (*ContinueQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{16}
+	return file_quote_quote_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ContinueQuoteRequest) GetQuoteId() string {
@@ -1117,7 +1117,7 @@ type ValidateQuoteRequest struct {
 
 func (x *ValidateQuoteRequest) Reset() {
 	*x = ValidateQuoteRequest{}
-	mi := &file_quote_proto_msgTypes[17]
+	mi := &file_quote_quote_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1129,7 +1129,7 @@ func (x *ValidateQuoteRequest) String() string {
 func (*ValidateQuoteRequest) ProtoMessage() {}
 
 func (x *ValidateQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[17]
+	mi := &file_quote_quote_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1142,7 +1142,7 @@ func (x *ValidateQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidateQuoteRequest.ProtoReflect.Descriptor instead.
 func (*ValidateQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{17}
+	return file_quote_quote_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ValidateQuoteRequest) GetQuoteId() string {
@@ -1169,7 +1169,7 @@ type NegociateQuoteRequest struct {
 
 func (x *NegociateQuoteRequest) Reset() {
 	*x = NegociateQuoteRequest{}
-	mi := &file_quote_proto_msgTypes[18]
+	mi := &file_quote_quote_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1181,7 +1181,7 @@ func (x *NegociateQuoteRequest) String() string {
 func (*NegociateQuoteRequest) ProtoMessage() {}
 
 func (x *NegociateQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[18]
+	mi := &file_quote_quote_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1194,7 +1194,7 @@ func (x *NegociateQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NegociateQuoteRequest.ProtoReflect.Descriptor instead.
 func (*NegociateQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{18}
+	return file_quote_quote_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *NegociateQuoteRequest) GetQuoteId() string {
@@ -1225,7 +1225,7 @@ type NegociateQuoteResponse struct {
 
 func (x *NegociateQuoteResponse) Reset() {
 	*x = NegociateQuoteResponse{}
-	mi := &file_quote_proto_msgTypes[19]
+	mi := &file_quote_quote_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1237,7 +1237,7 @@ func (x *NegociateQuoteResponse) String() string {
 func (*NegociateQuoteResponse) ProtoMessage() {}
 
 func (x *NegociateQuoteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[19]
+	mi := &file_quote_quote_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1250,7 +1250,7 @@ func (x *NegociateQuoteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NegociateQuoteResponse.ProtoReflect.Descriptor instead.
 func (*NegociateQuoteResponse) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{19}
+	return file_quote_quote_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *NegociateQuoteResponse) GetSuccess() bool {
@@ -1299,7 +1299,7 @@ type QuoteLine struct {
 
 func (x *QuoteLine) Reset() {
 	*x = QuoteLine{}
-	mi := &file_quote_proto_msgTypes[20]
+	mi := &file_quote_quote_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1311,7 +1311,7 @@ func (x *QuoteLine) String() string {
 func (*QuoteLine) ProtoMessage() {}
 
 func (x *QuoteLine) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[20]
+	mi := &file_quote_quote_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1324,7 +1324,7 @@ func (x *QuoteLine) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QuoteLine.ProtoReflect.Descriptor instead.
 func (*QuoteLine) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{20}
+	return file_quote_quote_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *QuoteLine) GetLineId() string {
@@ -1415,7 +1415,7 @@ type CreateQuoteLineRequest struct {
 
 func (x *CreateQuoteLineRequest) Reset() {
 	*x = CreateQuoteLineRequest{}
-	mi := &file_quote_proto_msgTypes[21]
+	mi := &file_quote_quote_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1427,7 +1427,7 @@ func (x *CreateQuoteLineRequest) String() string {
 func (*CreateQuoteLineRequest) ProtoMessage() {}
 
 func (x *CreateQuoteLineRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[21]
+	mi := &file_quote_quote_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1440,7 +1440,7 @@ func (x *CreateQuoteLineRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateQuoteLineRequest.ProtoReflect.Descriptor instead.
 func (*CreateQuoteLineRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{21}
+	return file_quote_quote_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *CreateQuoteLineRequest) GetQuoteId() string {
@@ -1525,7 +1525,7 @@ type CreateQuoteLineResponse struct {
 
 func (x *CreateQuoteLineResponse) Reset() {
 	*x = CreateQuoteLineResponse{}
-	mi := &file_quote_proto_msgTypes[22]
+	mi := &file_quote_quote_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1537,7 +1537,7 @@ func (x *CreateQuoteLineResponse) String() string {
 func (*CreateQuoteLineResponse) ProtoMessage() {}
 
 func (x *CreateQuoteLineResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[22]
+	mi := &file_quote_quote_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1550,7 +1550,7 @@ func (x *CreateQuoteLineResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateQuoteLineResponse.ProtoReflect.Descriptor instead.
 func (*CreateQuoteLineResponse) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{22}
+	return file_quote_quote_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *CreateQuoteLineResponse) GetSuccess() bool {
@@ -1591,7 +1591,7 @@ type GetQuoteLineRequest struct {
 
 func (x *GetQuoteLineRequest) Reset() {
 	*x = GetQuoteLineRequest{}
-	mi := &file_quote_proto_msgTypes[23]
+	mi := &file_quote_quote_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1603,7 +1603,7 @@ func (x *GetQuoteLineRequest) String() string {
 func (*GetQuoteLineRequest) ProtoMessage() {}
 
 func (x *GetQuoteLineRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[23]
+	mi := &file_quote_quote_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1616,7 +1616,7 @@ func (x *GetQuoteLineRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetQuoteLineRequest.ProtoReflect.Descriptor instead.
 func (*GetQuoteLineRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{23}
+	return file_quote_quote_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *GetQuoteLineRequest) GetLineId() string {
@@ -1644,7 +1644,7 @@ type GetQuoteLineResponse struct {
 
 func (x *GetQuoteLineResponse) Reset() {
 	*x = GetQuoteLineResponse{}
-	mi := &file_quote_proto_msgTypes[24]
+	mi := &file_quote_quote_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1656,7 +1656,7 @@ func (x *GetQuoteLineResponse) String() string {
 func (*GetQuoteLineResponse) ProtoMessage() {}
 
 func (x *GetQuoteLineResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[24]
+	mi := &file_quote_quote_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1669,7 +1669,7 @@ func (x *GetQuoteLineResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetQuoteLineResponse.ProtoReflect.Descriptor instead.
 func (*GetQuoteLineResponse) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{24}
+	return file_quote_quote_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *GetQuoteLineResponse) GetSuccess() bool {
@@ -1703,7 +1703,7 @@ type ListQuoteLinesRequest struct {
 
 func (x *ListQuoteLinesRequest) Reset() {
 	*x = ListQuoteLinesRequest{}
-	mi := &file_quote_proto_msgTypes[25]
+	mi := &file_quote_quote_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1715,7 +1715,7 @@ func (x *ListQuoteLinesRequest) String() string {
 func (*ListQuoteLinesRequest) ProtoMessage() {}
 
 func (x *ListQuoteLinesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[25]
+	mi := &file_quote_quote_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1728,7 +1728,7 @@ func (x *ListQuoteLinesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListQuoteLinesRequest.ProtoReflect.Descriptor instead.
 func (*ListQuoteLinesRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{25}
+	return file_quote_quote_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ListQuoteLinesRequest) GetQuoteId() string {
@@ -1756,7 +1756,7 @@ type ListQuoteLinesResponse struct {
 
 func (x *ListQuoteLinesResponse) Reset() {
 	*x = ListQuoteLinesResponse{}
-	mi := &file_quote_proto_msgTypes[26]
+	mi := &file_quote_quote_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1768,7 +1768,7 @@ func (x *ListQuoteLinesResponse) String() string {
 func (*ListQuoteLinesResponse) ProtoMessage() {}
 
 func (x *ListQuoteLinesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[26]
+	mi := &file_quote_quote_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1781,7 +1781,7 @@ func (x *ListQuoteLinesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListQuoteLinesResponse.ProtoReflect.Descriptor instead.
 func (*ListQuoteLinesResponse) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{26}
+	return file_quote_quote_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ListQuoteLinesResponse) GetSuccess() bool {
@@ -1815,7 +1815,7 @@ type ListUserQuoteLinesRequest struct {
 
 func (x *ListUserQuoteLinesRequest) Reset() {
 	*x = ListUserQuoteLinesRequest{}
-	mi := &file_quote_proto_msgTypes[27]
+	mi := &file_quote_quote_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1827,7 +1827,7 @@ func (x *ListUserQuoteLinesRequest) String() string {
 func (*ListUserQuoteLinesRequest) ProtoMessage() {}
 
 func (x *ListUserQuoteLinesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[27]
+	mi := &file_quote_quote_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1840,7 +1840,7 @@ func (x *ListUserQuoteLinesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUserQuoteLinesRequest.ProtoReflect.Descriptor instead.
 func (*ListUserQuoteLinesRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{27}
+	return file_quote_quote_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ListUserQuoteLinesRequest) GetUserId() string {
@@ -1868,7 +1868,7 @@ type ListUserQuoteLinesResponse struct {
 
 func (x *ListUserQuoteLinesResponse) Reset() {
 	*x = ListUserQuoteLinesResponse{}
-	mi := &file_quote_proto_msgTypes[28]
+	mi := &file_quote_quote_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1880,7 +1880,7 @@ func (x *ListUserQuoteLinesResponse) String() string {
 func (*ListUserQuoteLinesResponse) ProtoMessage() {}
 
 func (x *ListUserQuoteLinesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[28]
+	mi := &file_quote_quote_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1893,7 +1893,7 @@ func (x *ListUserQuoteLinesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUserQuoteLinesResponse.ProtoReflect.Descriptor instead.
 func (*ListUserQuoteLinesResponse) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{28}
+	return file_quote_quote_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ListUserQuoteLinesResponse) GetSuccess() bool {
@@ -1935,7 +1935,7 @@ type UpdateQuoteLineRequest struct {
 
 func (x *UpdateQuoteLineRequest) Reset() {
 	*x = UpdateQuoteLineRequest{}
-	mi := &file_quote_proto_msgTypes[29]
+	mi := &file_quote_quote_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1947,7 +1947,7 @@ func (x *UpdateQuoteLineRequest) String() string {
 func (*UpdateQuoteLineRequest) ProtoMessage() {}
 
 func (x *UpdateQuoteLineRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[29]
+	mi := &file_quote_quote_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1960,7 +1960,7 @@ func (x *UpdateQuoteLineRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateQuoteLineRequest.ProtoReflect.Descriptor instead.
 func (*UpdateQuoteLineRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{29}
+	return file_quote_quote_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *UpdateQuoteLineRequest) GetLineId() string {
@@ -2044,7 +2044,7 @@ type UpdateQuoteLineResponse struct {
 
 func (x *UpdateQuoteLineResponse) Reset() {
 	*x = UpdateQuoteLineResponse{}
-	mi := &file_quote_proto_msgTypes[30]
+	mi := &file_quote_quote_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2056,7 +2056,7 @@ func (x *UpdateQuoteLineResponse) String() string {
 func (*UpdateQuoteLineResponse) ProtoMessage() {}
 
 func (x *UpdateQuoteLineResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[30]
+	mi := &file_quote_quote_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2069,7 +2069,7 @@ func (x *UpdateQuoteLineResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateQuoteLineResponse.ProtoReflect.Descriptor instead.
 func (*UpdateQuoteLineResponse) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{30}
+	return file_quote_quote_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *UpdateQuoteLineResponse) GetSuccess() bool {
@@ -2103,7 +2103,7 @@ type DeleteQuoteLineRequest struct {
 
 func (x *DeleteQuoteLineRequest) Reset() {
 	*x = DeleteQuoteLineRequest{}
-	mi := &file_quote_proto_msgTypes[31]
+	mi := &file_quote_quote_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2115,7 +2115,7 @@ func (x *DeleteQuoteLineRequest) String() string {
 func (*DeleteQuoteLineRequest) ProtoMessage() {}
 
 func (x *DeleteQuoteLineRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[31]
+	mi := &file_quote_quote_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2128,7 +2128,7 @@ func (x *DeleteQuoteLineRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteQuoteLineRequest.ProtoReflect.Descriptor instead.
 func (*DeleteQuoteLineRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{31}
+	return file_quote_quote_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *DeleteQuoteLineRequest) GetLineId() string {
@@ -2161,7 +2161,7 @@ type Fee struct {
 
 func (x *Fee) Reset() {
 	*x = Fee{}
-	mi := &file_quote_proto_msgTypes[31]
+	mi := &file_quote_quote_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2173,7 +2173,7 @@ func (x *Fee) String() string {
 func (*Fee) ProtoMessage() {}
 
 func (x *Fee) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[31]
+	mi := &file_quote_quote_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2186,7 +2186,7 @@ func (x *Fee) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Fee.ProtoReflect.Descriptor instead.
 func (*Fee) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{31}
+	return file_quote_quote_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *Fee) GetFeeId() string {
@@ -2259,7 +2259,7 @@ type CreateFeeRequest struct {
 
 func (x *CreateFeeRequest) Reset() {
 	*x = CreateFeeRequest{}
-	mi := &file_quote_proto_msgTypes[32]
+	mi := &file_quote_quote_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2271,7 +2271,7 @@ func (x *CreateFeeRequest) String() string {
 func (*CreateFeeRequest) ProtoMessage() {}
 
 func (x *CreateFeeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[32]
+	mi := &file_quote_quote_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2284,7 +2284,7 @@ func (x *CreateFeeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateFeeRequest.ProtoReflect.Descriptor instead.
 func (*CreateFeeRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{32}
+	return file_quote_quote_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *CreateFeeRequest) GetUserId() string {
@@ -2341,7 +2341,7 @@ type CreateFeeResponse struct {
 
 func (x *CreateFeeResponse) Reset() {
 	*x = CreateFeeResponse{}
-	mi := &file_quote_proto_msgTypes[33]
+	mi := &file_quote_quote_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2353,7 +2353,7 @@ func (x *CreateFeeResponse) String() string {
 func (*CreateFeeResponse) ProtoMessage() {}
 
 func (x *CreateFeeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[33]
+	mi := &file_quote_quote_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2366,7 +2366,7 @@ func (x *CreateFeeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateFeeResponse.ProtoReflect.Descriptor instead.
 func (*CreateFeeResponse) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{33}
+	return file_quote_quote_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *CreateFeeResponse) GetSuccess() bool {
@@ -2407,7 +2407,7 @@ type GetFeeRequest struct {
 
 func (x *GetFeeRequest) Reset() {
 	*x = GetFeeRequest{}
-	mi := &file_quote_proto_msgTypes[34]
+	mi := &file_quote_quote_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2419,7 +2419,7 @@ func (x *GetFeeRequest) String() string {
 func (*GetFeeRequest) ProtoMessage() {}
 
 func (x *GetFeeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[34]
+	mi := &file_quote_quote_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2432,7 +2432,7 @@ func (x *GetFeeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFeeRequest.ProtoReflect.Descriptor instead.
 func (*GetFeeRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{34}
+	return file_quote_quote_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *GetFeeRequest) GetFeeId() string {
@@ -2460,7 +2460,7 @@ type GetFeeResponse struct {
 
 func (x *GetFeeResponse) Reset() {
 	*x = GetFeeResponse{}
-	mi := &file_quote_proto_msgTypes[35]
+	mi := &file_quote_quote_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2472,7 +2472,7 @@ func (x *GetFeeResponse) String() string {
 func (*GetFeeResponse) ProtoMessage() {}
 
 func (x *GetFeeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[35]
+	mi := &file_quote_quote_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2485,7 +2485,7 @@ func (x *GetFeeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFeeResponse.ProtoReflect.Descriptor instead.
 func (*GetFeeResponse) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{35}
+	return file_quote_quote_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *GetFeeResponse) GetSuccess() bool {
@@ -2519,7 +2519,7 @@ type ListFeesRequest struct {
 
 func (x *ListFeesRequest) Reset() {
 	*x = ListFeesRequest{}
-	mi := &file_quote_proto_msgTypes[36]
+	mi := &file_quote_quote_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2531,7 +2531,7 @@ func (x *ListFeesRequest) String() string {
 func (*ListFeesRequest) ProtoMessage() {}
 
 func (x *ListFeesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[36]
+	mi := &file_quote_quote_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2544,7 +2544,7 @@ func (x *ListFeesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFeesRequest.ProtoReflect.Descriptor instead.
 func (*ListFeesRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{36}
+	return file_quote_quote_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ListFeesRequest) GetUserId() string {
@@ -2572,7 +2572,7 @@ type ListFeesResponse struct {
 
 func (x *ListFeesResponse) Reset() {
 	*x = ListFeesResponse{}
-	mi := &file_quote_proto_msgTypes[37]
+	mi := &file_quote_quote_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2584,7 +2584,7 @@ func (x *ListFeesResponse) String() string {
 func (*ListFeesResponse) ProtoMessage() {}
 
 func (x *ListFeesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[37]
+	mi := &file_quote_quote_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2597,7 +2597,7 @@ func (x *ListFeesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFeesResponse.ProtoReflect.Descriptor instead.
 func (*ListFeesResponse) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{37}
+	return file_quote_quote_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ListFeesResponse) GetSuccess() bool {
@@ -2636,7 +2636,7 @@ type UpdateFeeRequest struct {
 
 func (x *UpdateFeeRequest) Reset() {
 	*x = UpdateFeeRequest{}
-	mi := &file_quote_proto_msgTypes[38]
+	mi := &file_quote_quote_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2648,7 +2648,7 @@ func (x *UpdateFeeRequest) String() string {
 func (*UpdateFeeRequest) ProtoMessage() {}
 
 func (x *UpdateFeeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[38]
+	mi := &file_quote_quote_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2661,7 +2661,7 @@ func (x *UpdateFeeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateFeeRequest.ProtoReflect.Descriptor instead.
 func (*UpdateFeeRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{38}
+	return file_quote_quote_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *UpdateFeeRequest) GetFeeId() string {
@@ -2724,7 +2724,7 @@ type UpdateFeeResponse struct {
 
 func (x *UpdateFeeResponse) Reset() {
 	*x = UpdateFeeResponse{}
-	mi := &file_quote_proto_msgTypes[39]
+	mi := &file_quote_quote_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2736,7 +2736,7 @@ func (x *UpdateFeeResponse) String() string {
 func (*UpdateFeeResponse) ProtoMessage() {}
 
 func (x *UpdateFeeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[39]
+	mi := &file_quote_quote_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2749,7 +2749,7 @@ func (x *UpdateFeeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateFeeResponse.ProtoReflect.Descriptor instead.
 func (*UpdateFeeResponse) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{39}
+	return file_quote_quote_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *UpdateFeeResponse) GetSuccess() bool {
@@ -2783,7 +2783,7 @@ type ArchiveFeeRequest struct {
 
 func (x *ArchiveFeeRequest) Reset() {
 	*x = ArchiveFeeRequest{}
-	mi := &file_quote_proto_msgTypes[40]
+	mi := &file_quote_quote_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2795,7 +2795,7 @@ func (x *ArchiveFeeRequest) String() string {
 func (*ArchiveFeeRequest) ProtoMessage() {}
 
 func (x *ArchiveFeeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quote_proto_msgTypes[40]
+	mi := &file_quote_quote_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2808,7 +2808,7 @@ func (x *ArchiveFeeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveFeeRequest.ProtoReflect.Descriptor instead.
 func (*ArchiveFeeRequest) Descriptor() ([]byte, []int) {
-	return file_quote_proto_rawDescGZIP(), []int{40}
+	return file_quote_quote_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *ArchiveFeeRequest) GetFeeId() string {
@@ -2825,11 +2825,11 @@ func (x *ArchiveFeeRequest) GetUserId() string {
 	return ""
 }
 
-var File_quote_proto protoreflect.FileDescriptor
+var File_quote_quote_proto protoreflect.FileDescriptor
 
-const file_quote_proto_rawDesc = "" +
+const file_quote_quote_proto_rawDesc = "" +
 	"\n" +
-	"\vquote.proto\x12\x05quote\"?\n" +
+	"\x11quote/quote.proto\x12\x05quote\"?\n" +
 	"\x0fGenericResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\"A\n" +
@@ -2984,7 +2984,6 @@ const file_quote_proto_rawDesc = "" +
 	"\x11validation_errors\x18\x03 \x03(\v2\x16.quote.ValidationErrorR\x10validationErrors\"J\n" +
 	"\x16DeleteQuoteLineRequest\x12\x17\n" +
 	"\aline_id\x18\x01 \x01(\tR\x06lineId\x12\x17\n" +
-<<<<<<< HEAD
 	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xcb\x01\n" +
 	"\x03Fee\x12\x15\n" +
 	"\x06fee_id\x18\x01 \x01(\tR\x05feeId\x12\x17\n" +
@@ -3040,23 +3039,15 @@ const file_quote_proto_rawDesc = "" +
 	"\x11validation_errors\x18\x03 \x03(\v2\x16.quote.ValidationErrorR\x10validationErrors\"C\n" +
 	"\x11ArchiveFeeRequest\x12\x15\n" +
 	"\x06fee_id\x18\x01 \x01(\tR\x05feeId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId*\x87\x01\n" +
-=======
 	"\auser_id\x18\x02 \x01(\tR\x06userId*\xa4\x01\n" +
->>>>>>> a83531a (feat(invoice): export quote transition with gateway)
 	"\n" +
 	"QuoteState\x12\x1b\n" +
 	"\x17QUOTE_STATE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11QUOTE_STATE_DRAFT\x10\x01\x12\x14\n" +
 	"\x10QUOTE_STATE_SENT\x10\x02\x12\x19\n" +
 	"\x15QUOTE_STATE_VALIDATED\x10\x03\x12\x14\n" +
-<<<<<<< HEAD
-	"\x10QUOTE_STATE_DROP\x10\x042\xff\v\n" +
-=======
 	"\x10QUOTE_STATE_DROP\x10\x04\x12\x1b\n" +
-	"\x17QUOTE_STATE_NEGOCIATION\x10\x052\xa0\n" +
-	"\n" +
->>>>>>> a83531a (feat(invoice): export quote transition with gateway)
+	"\x17QUOTE_STATE_NEGOCIATION\x10\x052\xd4\f\n" +
 	"\fQuoteService\x12D\n" +
 	"\vCreateQuote\x12\x19.quote.CreateQuoteRequest\x1a\x1a.quote.CreateQuoteResponse\x12;\n" +
 	"\bGetQuote\x12\x16.quote.GetQuoteRequest\x1a\x17.quote.GetQuoteResponse\x12A\n" +
@@ -3085,24 +3076,20 @@ const file_quote_proto_rawDesc = "" +
 	"ArchiveFee\x12\x18.quote.ArchiveFeeRequest\x1a\x16.quote.GenericResponseB\x0fZ\rgateway/quoteb\x06proto3"
 
 var (
-	file_quote_proto_rawDescOnce sync.Once
-	file_quote_proto_rawDescData []byte
+	file_quote_quote_proto_rawDescOnce sync.Once
+	file_quote_quote_proto_rawDescData []byte
 )
 
-func file_quote_proto_rawDescGZIP() []byte {
-	file_quote_proto_rawDescOnce.Do(func() {
-		file_quote_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_quote_proto_rawDesc), len(file_quote_proto_rawDesc)))
+func file_quote_quote_proto_rawDescGZIP() []byte {
+	file_quote_quote_proto_rawDescOnce.Do(func() {
+		file_quote_quote_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_quote_quote_proto_rawDesc), len(file_quote_quote_proto_rawDesc)))
 	})
-	return file_quote_proto_rawDescData
+	return file_quote_quote_proto_rawDescData
 }
 
-var file_quote_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-<<<<<<< HEAD
-var file_quote_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
-=======
-var file_quote_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
->>>>>>> a83531a (feat(invoice): export quote transition with gateway)
-var file_quote_proto_goTypes = []any{
+var file_quote_quote_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_quote_quote_proto_msgTypes = make([]protoimpl.MessageInfo, 42)
+var file_quote_quote_proto_goTypes = []any{
 	(QuoteState)(0),                    // 0: quote.QuoteState
 	(*GenericResponse)(nil),            // 1: quote.GenericResponse
 	(*ValidationError)(nil),            // 2: quote.ValidationError
@@ -3121,32 +3108,6 @@ var file_quote_proto_goTypes = []any{
 	(*TrashQuotesRequest)(nil),         // 15: quote.TrashQuotesRequest
 	(*DropQuoteRequest)(nil),           // 16: quote.DropQuoteRequest
 	(*ContinueQuoteRequest)(nil),       // 17: quote.ContinueQuoteRequest
-<<<<<<< HEAD
-	(*SendQuoteRequest)(nil),           // 18: quote.SendQuoteRequest
-	(*SendQuoteResponse)(nil),          // 19: quote.SendQuoteResponse
-	(*QuoteLine)(nil),                  // 20: quote.QuoteLine
-	(*CreateQuoteLineRequest)(nil),     // 21: quote.CreateQuoteLineRequest
-	(*CreateQuoteLineResponse)(nil),    // 22: quote.CreateQuoteLineResponse
-	(*GetQuoteLineRequest)(nil),        // 23: quote.GetQuoteLineRequest
-	(*GetQuoteLineResponse)(nil),       // 24: quote.GetQuoteLineResponse
-	(*ListQuoteLinesRequest)(nil),      // 25: quote.ListQuoteLinesRequest
-	(*ListQuoteLinesResponse)(nil),     // 26: quote.ListQuoteLinesResponse
-	(*ListUserQuoteLinesRequest)(nil),  // 27: quote.ListUserQuoteLinesRequest
-	(*ListUserQuoteLinesResponse)(nil), // 28: quote.ListUserQuoteLinesResponse
-	(*UpdateQuoteLineRequest)(nil),     // 29: quote.UpdateQuoteLineRequest
-	(*UpdateQuoteLineResponse)(nil),    // 30: quote.UpdateQuoteLineResponse
-	(*DeleteQuoteLineRequest)(nil),     // 31: quote.DeleteQuoteLineRequest
-	(*Fee)(nil),                        // 32: quote.Fee
-	(*CreateFeeRequest)(nil),           // 33: quote.CreateFeeRequest
-	(*CreateFeeResponse)(nil),          // 34: quote.CreateFeeResponse
-	(*GetFeeRequest)(nil),              // 35: quote.GetFeeRequest
-	(*GetFeeResponse)(nil),             // 36: quote.GetFeeResponse
-	(*ListFeesRequest)(nil),            // 37: quote.ListFeesRequest
-	(*ListFeesResponse)(nil),           // 38: quote.ListFeesResponse
-	(*UpdateFeeRequest)(nil),           // 39: quote.UpdateFeeRequest
-	(*UpdateFeeResponse)(nil),          // 40: quote.UpdateFeeResponse
-	(*ArchiveFeeRequest)(nil),          // 41: quote.ArchiveFeeRequest
-=======
 	(*ValidateQuoteRequest)(nil),       // 18: quote.ValidateQuoteRequest
 	(*NegociateQuoteRequest)(nil),      // 19: quote.NegociateQuoteRequest
 	(*NegociateQuoteResponse)(nil),     // 20: quote.NegociateQuoteResponse
@@ -3162,9 +3123,18 @@ var file_quote_proto_goTypes = []any{
 	(*UpdateQuoteLineRequest)(nil),     // 30: quote.UpdateQuoteLineRequest
 	(*UpdateQuoteLineResponse)(nil),    // 31: quote.UpdateQuoteLineResponse
 	(*DeleteQuoteLineRequest)(nil),     // 32: quote.DeleteQuoteLineRequest
->>>>>>> a83531a (feat(invoice): export quote transition with gateway)
+	(*Fee)(nil),                        // 33: quote.Fee
+	(*CreateFeeRequest)(nil),           // 34: quote.CreateFeeRequest
+	(*CreateFeeResponse)(nil),          // 35: quote.CreateFeeResponse
+	(*GetFeeRequest)(nil),              // 36: quote.GetFeeRequest
+	(*GetFeeResponse)(nil),             // 37: quote.GetFeeResponse
+	(*ListFeesRequest)(nil),            // 38: quote.ListFeesRequest
+	(*ListFeesResponse)(nil),           // 39: quote.ListFeesResponse
+	(*UpdateFeeRequest)(nil),           // 40: quote.UpdateFeeRequest
+	(*UpdateFeeResponse)(nil),          // 41: quote.UpdateFeeResponse
+	(*ArchiveFeeRequest)(nil),          // 42: quote.ArchiveFeeRequest
 }
-var file_quote_proto_depIdxs = []int32{
+var file_quote_quote_proto_depIdxs = []int32{
 	0,  // 0: quote.Quote.state:type_name -> quote.QuoteState
 	2,  // 1: quote.CreateQuoteResponse.validation_errors:type_name -> quote.ValidationError
 	3,  // 2: quote.GetQuoteResponse.quote:type_name -> quote.Quote
@@ -3176,10 +3146,9 @@ var file_quote_proto_depIdxs = []int32{
 	21, // 8: quote.ListQuoteLinesResponse.lines:type_name -> quote.QuoteLine
 	21, // 9: quote.ListUserQuoteLinesResponse.lines:type_name -> quote.QuoteLine
 	2,  // 10: quote.UpdateQuoteLineResponse.validation_errors:type_name -> quote.ValidationError
-<<<<<<< HEAD
 	2,  // 11: quote.CreateFeeResponse.validation_errors:type_name -> quote.ValidationError
-	32, // 12: quote.GetFeeResponse.fee:type_name -> quote.Fee
-	32, // 13: quote.ListFeesResponse.fees:type_name -> quote.Fee
+	33, // 12: quote.GetFeeResponse.fee:type_name -> quote.Fee
+	33, // 13: quote.ListFeesResponse.fees:type_name -> quote.Fee
 	2,  // 14: quote.UpdateFeeResponse.validation_errors:type_name -> quote.ValidationError
 	4,  // 15: quote.QuoteService.CreateQuote:input_type -> quote.CreateQuoteRequest
 	6,  // 16: quote.QuoteService.GetQuote:input_type -> quote.GetQuoteRequest
@@ -3191,115 +3160,70 @@ var file_quote_proto_depIdxs = []int32{
 	15, // 22: quote.QuoteService.TrashQuotes:input_type -> quote.TrashQuotesRequest
 	16, // 23: quote.QuoteService.DropQuote:input_type -> quote.DropQuoteRequest
 	17, // 24: quote.QuoteService.ContinueQuote:input_type -> quote.ContinueQuoteRequest
-	18, // 25: quote.QuoteService.SendQuote:input_type -> quote.SendQuoteRequest
-	21, // 26: quote.QuoteService.CreateQuoteLine:input_type -> quote.CreateQuoteLineRequest
-	23, // 27: quote.QuoteService.GetQuoteLine:input_type -> quote.GetQuoteLineRequest
-	25, // 28: quote.QuoteService.ListQuoteLines:input_type -> quote.ListQuoteLinesRequest
-	27, // 29: quote.QuoteService.ListUserQuoteLines:input_type -> quote.ListUserQuoteLinesRequest
-	29, // 30: quote.QuoteService.UpdateQuoteLine:input_type -> quote.UpdateQuoteLineRequest
-	31, // 31: quote.QuoteService.DeleteQuoteLine:input_type -> quote.DeleteQuoteLineRequest
-	33, // 32: quote.QuoteService.CreateFee:input_type -> quote.CreateFeeRequest
-	35, // 33: quote.QuoteService.GetFee:input_type -> quote.GetFeeRequest
-	37, // 34: quote.QuoteService.ListFees:input_type -> quote.ListFeesRequest
-	39, // 35: quote.QuoteService.UpdateFee:input_type -> quote.UpdateFeeRequest
-	41, // 36: quote.QuoteService.ArchiveFee:input_type -> quote.ArchiveFeeRequest
-	5,  // 37: quote.QuoteService.CreateQuote:output_type -> quote.CreateQuoteResponse
-	7,  // 38: quote.QuoteService.GetQuote:output_type -> quote.GetQuoteResponse
-	9,  // 39: quote.QuoteService.ListQuotes:output_type -> quote.ListQuotesResponse
-	11, // 40: quote.QuoteService.UpdateQuote:output_type -> quote.UpdateQuoteResponse
-	1,  // 41: quote.QuoteService.DeleteQuote:output_type -> quote.GenericResponse
-	1,  // 42: quote.QuoteService.ArchiveQuote:output_type -> quote.GenericResponse
-	1,  // 43: quote.QuoteService.RestoreQuote:output_type -> quote.GenericResponse
-	1,  // 44: quote.QuoteService.TrashQuotes:output_type -> quote.GenericResponse
-	1,  // 45: quote.QuoteService.DropQuote:output_type -> quote.GenericResponse
-	1,  // 46: quote.QuoteService.ContinueQuote:output_type -> quote.GenericResponse
-	19, // 47: quote.QuoteService.SendQuote:output_type -> quote.SendQuoteResponse
-	22, // 48: quote.QuoteService.CreateQuoteLine:output_type -> quote.CreateQuoteLineResponse
-	24, // 49: quote.QuoteService.GetQuoteLine:output_type -> quote.GetQuoteLineResponse
-	26, // 50: quote.QuoteService.ListQuoteLines:output_type -> quote.ListQuoteLinesResponse
-	28, // 51: quote.QuoteService.ListUserQuoteLines:output_type -> quote.ListUserQuoteLinesResponse
-	30, // 52: quote.QuoteService.UpdateQuoteLine:output_type -> quote.UpdateQuoteLineResponse
-	1,  // 53: quote.QuoteService.DeleteQuoteLine:output_type -> quote.GenericResponse
-	34, // 54: quote.QuoteService.CreateFee:output_type -> quote.CreateFeeResponse
-	36, // 55: quote.QuoteService.GetFee:output_type -> quote.GetFeeResponse
-	38, // 56: quote.QuoteService.ListFees:output_type -> quote.ListFeesResponse
-	40, // 57: quote.QuoteService.UpdateFee:output_type -> quote.UpdateFeeResponse
-	1,  // 58: quote.QuoteService.ArchiveFee:output_type -> quote.GenericResponse
-	37, // [37:59] is the sub-list for method output_type
-	15, // [15:37] is the sub-list for method input_type
+	18, // 25: quote.QuoteService.ValidateQuote:input_type -> quote.ValidateQuoteRequest
+	19, // 26: quote.QuoteService.NegociateQuote:input_type -> quote.NegociateQuoteRequest
+	22, // 27: quote.QuoteService.CreateQuoteLine:input_type -> quote.CreateQuoteLineRequest
+	24, // 28: quote.QuoteService.GetQuoteLine:input_type -> quote.GetQuoteLineRequest
+	26, // 29: quote.QuoteService.ListQuoteLines:input_type -> quote.ListQuoteLinesRequest
+	28, // 30: quote.QuoteService.ListUserQuoteLines:input_type -> quote.ListUserQuoteLinesRequest
+	30, // 31: quote.QuoteService.UpdateQuoteLine:input_type -> quote.UpdateQuoteLineRequest
+	32, // 32: quote.QuoteService.DeleteQuoteLine:input_type -> quote.DeleteQuoteLineRequest
+	34, // 33: quote.QuoteService.CreateFee:input_type -> quote.CreateFeeRequest
+	36, // 34: quote.QuoteService.GetFee:input_type -> quote.GetFeeRequest
+	38, // 35: quote.QuoteService.ListFees:input_type -> quote.ListFeesRequest
+	40, // 36: quote.QuoteService.UpdateFee:input_type -> quote.UpdateFeeRequest
+	42, // 37: quote.QuoteService.ArchiveFee:input_type -> quote.ArchiveFeeRequest
+	5,  // 38: quote.QuoteService.CreateQuote:output_type -> quote.CreateQuoteResponse
+	7,  // 39: quote.QuoteService.GetQuote:output_type -> quote.GetQuoteResponse
+	9,  // 40: quote.QuoteService.ListQuotes:output_type -> quote.ListQuotesResponse
+	11, // 41: quote.QuoteService.UpdateQuote:output_type -> quote.UpdateQuoteResponse
+	1,  // 42: quote.QuoteService.DeleteQuote:output_type -> quote.GenericResponse
+	1,  // 43: quote.QuoteService.ArchiveQuote:output_type -> quote.GenericResponse
+	1,  // 44: quote.QuoteService.RestoreQuote:output_type -> quote.GenericResponse
+	1,  // 45: quote.QuoteService.TrashQuotes:output_type -> quote.GenericResponse
+	1,  // 46: quote.QuoteService.DropQuote:output_type -> quote.GenericResponse
+	1,  // 47: quote.QuoteService.ContinueQuote:output_type -> quote.GenericResponse
+	1,  // 48: quote.QuoteService.ValidateQuote:output_type -> quote.GenericResponse
+	20, // 49: quote.QuoteService.NegociateQuote:output_type -> quote.NegociateQuoteResponse
+	23, // 50: quote.QuoteService.CreateQuoteLine:output_type -> quote.CreateQuoteLineResponse
+	25, // 51: quote.QuoteService.GetQuoteLine:output_type -> quote.GetQuoteLineResponse
+	27, // 52: quote.QuoteService.ListQuoteLines:output_type -> quote.ListQuoteLinesResponse
+	29, // 53: quote.QuoteService.ListUserQuoteLines:output_type -> quote.ListUserQuoteLinesResponse
+	31, // 54: quote.QuoteService.UpdateQuoteLine:output_type -> quote.UpdateQuoteLineResponse
+	1,  // 55: quote.QuoteService.DeleteQuoteLine:output_type -> quote.GenericResponse
+	35, // 56: quote.QuoteService.CreateFee:output_type -> quote.CreateFeeResponse
+	37, // 57: quote.QuoteService.GetFee:output_type -> quote.GetFeeResponse
+	39, // 58: quote.QuoteService.ListFees:output_type -> quote.ListFeesResponse
+	41, // 59: quote.QuoteService.UpdateFee:output_type -> quote.UpdateFeeResponse
+	1,  // 60: quote.QuoteService.ArchiveFee:output_type -> quote.GenericResponse
+	38, // [38:61] is the sub-list for method output_type
+	15, // [15:38] is the sub-list for method input_type
 	15, // [15:15] is the sub-list for extension type_name
 	15, // [15:15] is the sub-list for extension extendee
 	0,  // [0:15] is the sub-list for field type_name
-=======
-	4,  // 11: quote.QuoteService.CreateQuote:input_type -> quote.CreateQuoteRequest
-	6,  // 12: quote.QuoteService.GetQuote:input_type -> quote.GetQuoteRequest
-	8,  // 13: quote.QuoteService.ListQuotes:input_type -> quote.ListQuotesRequest
-	10, // 14: quote.QuoteService.UpdateQuote:input_type -> quote.UpdateQuoteRequest
-	12, // 15: quote.QuoteService.DeleteQuote:input_type -> quote.DeleteQuoteRequest
-	13, // 16: quote.QuoteService.ArchiveQuote:input_type -> quote.ArchiveQuoteRequest
-	14, // 17: quote.QuoteService.RestoreQuote:input_type -> quote.RestoreQuoteRequest
-	15, // 18: quote.QuoteService.TrashQuotes:input_type -> quote.TrashQuotesRequest
-	16, // 19: quote.QuoteService.DropQuote:input_type -> quote.DropQuoteRequest
-	17, // 20: quote.QuoteService.ContinueQuote:input_type -> quote.ContinueQuoteRequest
-	18, // 21: quote.QuoteService.ValidateQuote:input_type -> quote.ValidateQuoteRequest
-	19, // 22: quote.QuoteService.NegociateQuote:input_type -> quote.NegociateQuoteRequest
-	22, // 23: quote.QuoteService.CreateQuoteLine:input_type -> quote.CreateQuoteLineRequest
-	24, // 24: quote.QuoteService.GetQuoteLine:input_type -> quote.GetQuoteLineRequest
-	26, // 25: quote.QuoteService.ListQuoteLines:input_type -> quote.ListQuoteLinesRequest
-	28, // 26: quote.QuoteService.ListUserQuoteLines:input_type -> quote.ListUserQuoteLinesRequest
-	30, // 27: quote.QuoteService.UpdateQuoteLine:input_type -> quote.UpdateQuoteLineRequest
-	32, // 28: quote.QuoteService.DeleteQuoteLine:input_type -> quote.DeleteQuoteLineRequest
-	5,  // 29: quote.QuoteService.CreateQuote:output_type -> quote.CreateQuoteResponse
-	7,  // 30: quote.QuoteService.GetQuote:output_type -> quote.GetQuoteResponse
-	9,  // 31: quote.QuoteService.ListQuotes:output_type -> quote.ListQuotesResponse
-	11, // 32: quote.QuoteService.UpdateQuote:output_type -> quote.UpdateQuoteResponse
-	1,  // 33: quote.QuoteService.DeleteQuote:output_type -> quote.GenericResponse
-	1,  // 34: quote.QuoteService.ArchiveQuote:output_type -> quote.GenericResponse
-	1,  // 35: quote.QuoteService.RestoreQuote:output_type -> quote.GenericResponse
-	1,  // 36: quote.QuoteService.TrashQuotes:output_type -> quote.GenericResponse
-	1,  // 37: quote.QuoteService.DropQuote:output_type -> quote.GenericResponse
-	1,  // 38: quote.QuoteService.ContinueQuote:output_type -> quote.GenericResponse
-	1,  // 39: quote.QuoteService.ValidateQuote:output_type -> quote.GenericResponse
-	20, // 40: quote.QuoteService.NegociateQuote:output_type -> quote.NegociateQuoteResponse
-	23, // 41: quote.QuoteService.CreateQuoteLine:output_type -> quote.CreateQuoteLineResponse
-	25, // 42: quote.QuoteService.GetQuoteLine:output_type -> quote.GetQuoteLineResponse
-	27, // 43: quote.QuoteService.ListQuoteLines:output_type -> quote.ListQuoteLinesResponse
-	29, // 44: quote.QuoteService.ListUserQuoteLines:output_type -> quote.ListUserQuoteLinesResponse
-	31, // 45: quote.QuoteService.UpdateQuoteLine:output_type -> quote.UpdateQuoteLineResponse
-	1,  // 46: quote.QuoteService.DeleteQuoteLine:output_type -> quote.GenericResponse
-	29, // [29:47] is the sub-list for method output_type
-	11, // [11:29] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
->>>>>>> a83531a (feat(invoice): export quote transition with gateway)
 }
 
-func init() { file_quote_proto_init() }
-func file_quote_proto_init() {
-	if File_quote_proto != nil {
+func init() { file_quote_quote_proto_init() }
+func file_quote_quote_proto_init() {
+	if File_quote_quote_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_quote_proto_rawDesc), len(file_quote_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_quote_quote_proto_rawDesc), len(file_quote_quote_proto_rawDesc)),
 			NumEnums:      1,
-<<<<<<< HEAD
-			NumMessages:   41,
-=======
-			NumMessages:   32,
->>>>>>> a83531a (feat(invoice): export quote transition with gateway)
+			NumMessages:   42,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_quote_proto_goTypes,
-		DependencyIndexes: file_quote_proto_depIdxs,
-		EnumInfos:         file_quote_proto_enumTypes,
-		MessageInfos:      file_quote_proto_msgTypes,
+		GoTypes:           file_quote_quote_proto_goTypes,
+		DependencyIndexes: file_quote_quote_proto_depIdxs,
+		EnumInfos:         file_quote_quote_proto_enumTypes,
+		MessageInfos:      file_quote_quote_proto_msgTypes,
 	}.Build()
-	File_quote_proto = out.File
-	file_quote_proto_goTypes = nil
-	file_quote_proto_depIdxs = nil
+	File_quote_quote_proto = out.File
+	file_quote_quote_proto_goTypes = nil
+	file_quote_quote_proto_depIdxs = nil
 }

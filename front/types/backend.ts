@@ -127,6 +127,10 @@ export type BackendTemplateLine = {
   updated_at: string;
 };
 
+// "individual" = B2C, "business" = B2B. Empty string for legacy clients not yet
+// classified.
+export type ClientType = "individual" | "business" | "";
+
 export type BackendClient = {
   client_id: string;
   user_id: string;
@@ -138,6 +142,7 @@ export type BackendClient = {
   siren: string;
   vat: string;
   archived: boolean;
+  client_type: ClientType;
 };
 
 export type BackendAddressOwnerType = "user" | "client";

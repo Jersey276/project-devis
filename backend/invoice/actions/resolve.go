@@ -38,6 +38,7 @@ type partySnapshot struct {
 	clientAdditional string
 	clientZip        string
 	clientCity       string
+	clientType       string // frozen B2C/B2B nature: "individual" / "business"
 }
 
 // lineSnapshot is one frozen invoice line (mirrors the DB row / proto message).
@@ -259,6 +260,20 @@ func lineHTFromQuoteLine(l *quoteGrpc.QuoteLine) int64 {
 	return int64(float64(l.GetUnitPrice())*qty + 0.5)
 }
 
+// clientTypeToString maps the users-service ClientType enum to the DB string
+// frozen in the party snapshot. UNSPECIFIED maps to "" so a not-yet-classified
+// client doesn't fabricate a B2C/B2B nature on the invoice.
+func clientTypeToString(t usersGrpc.ClientType) string {
+	switch t {
+	case usersGrpc.ClientType_CLIENT_TYPE_INDIVIDUAL:
+		return "individual"
+	case usersGrpc.ClientType_CLIENT_TYPE_BUSINESS:
+		return "business"
+	default:
+		return ""
+	}
+}
+
 func buildPartySnapshot(user *usersGrpc.User, userAddr *usersGrpc.Address, client *usersGrpc.Client, clientAddr *usersGrpc.Address) partySnapshot {
 	p := partySnapshot{}
 	if user != nil {
@@ -282,6 +297,7 @@ func buildPartySnapshot(user *usersGrpc.User, userAddr *usersGrpc.Address, clien
 		p.clientSiren = client.GetSiren()
 		p.clientVat = client.GetVat()
 		p.clientEmail = client.GetEmail()
+		p.clientType = clientTypeToString(client.GetClientType())
 	}
 	if clientAddr != nil {
 		p.clientStreet = clientAddr.GetStreet()

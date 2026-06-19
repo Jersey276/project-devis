@@ -333,6 +333,11 @@
       "deleteFailedToast": "Impossible de supprimer le client."
     },
     "form": {
+      "clientTypeLabel": "Type de client",
+      "clientType": {
+        "individual": "Particulier",
+        "business": "Professionnel"
+      },
       "firstNameLabel": "Prénom",
       "lastNameLabel": "Nom",
       "emailLabel": "Adresse mail",

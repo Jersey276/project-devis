@@ -572,13 +572,70 @@ func marshalAddresses(in []*users.Address) []gin.H {
 // — omitting a field will silently null it. See client.Update action for the
 // SQL-side contract.
 type clientInput struct {
-	FirstName string `json:"first_name" binding:"required"`
-	LastName  string `json:"last_name" binding:"required"`
-	Email     string `json:"email"`
-	Phone     string `json:"phone"`
-	Company   string `json:"company"`
-	Siren     string `json:"siren"`
-	Vat       string `json:"vat"`
+	FirstName  string `json:"first_name" binding:"required"`
+	LastName   string `json:"last_name" binding:"required"`
+	Email      string `json:"email"`
+	Phone      string `json:"phone"`
+	Company    string `json:"company"`
+	Siren      string `json:"siren"`
+	Vat        string `json:"vat"`
+	ClientType string `json:"client_type"`
+}
+
+// clientTypeFromInput maps the JSON client_type string ("individual"/"business")
+// to the proto enum. An empty or unknown value maps to UNSPECIFIED, which the
+// users service defaults to "individual" (B2C).
+func clientTypeFromInput(s string) users.ClientType {
+	switch s {
+	case "individual":
+		return users.ClientType_CLIENT_TYPE_INDIVIDUAL
+	case "business":
+		return users.ClientType_CLIENT_TYPE_BUSINESS
+	default:
+		return users.ClientType_CLIENT_TYPE_UNSPECIFIED
+	}
+}
+
+// clientTypeToString is the inverse of clientTypeFromInput for response
+// marshalling.
+func clientTypeToString(t users.ClientType) string {
+	switch t {
+	case users.ClientType_CLIENT_TYPE_INDIVIDUAL:
+		return "individual"
+	case users.ClientType_CLIENT_TYPE_BUSINESS:
+		return "business"
+	default:
+		return ""
+	}
+}
+
+// marshalClient renders a proto Client as a JSON object with the client_type
+// enum projected to its string form, mirroring marshalAddress.
+func marshalClient(cl *users.Client) gin.H {
+	if cl == nil {
+		return nil
+	}
+	return gin.H{
+		"client_id":   cl.ClientId,
+		"user_id":     cl.UserId,
+		"first_name":  cl.FirstName,
+		"last_name":   cl.LastName,
+		"email":       cl.Email,
+		"phone":       cl.Phone,
+		"company":     cl.Company,
+		"siren":       cl.Siren,
+		"vat":         cl.Vat,
+		"archived":    cl.Archived,
+		"client_type": clientTypeToString(cl.ClientType),
+	}
+}
+
+func marshalClients(in []*users.Client) []gin.H {
+	out := make([]gin.H, 0, len(in))
+	for _, cl := range in {
+		out = append(out, marshalClient(cl))
+	}
+	return out
 }
 
 func ListClients(c *gin.Context, client users.UserServiceClient) {
@@ -595,7 +652,7 @@ func ListClients(c *gin.Context, client users.UserServiceClient) {
 		usersErrors.reply(c, resp.Code)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "clients": resp.Clients})
+	c.JSON(http.StatusOK, gin.H{"success": true, "clients": marshalClients(resp.Clients)})
 }
 
 func CreateClient(c *gin.Context, client users.UserServiceClient) {
@@ -605,14 +662,15 @@ func CreateClient(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	resp, err := client.CreateClient(c.Request.Context(), &users.CreateClientRequest{
-		UserId:    userIDFromCtx(c),
-		FirstName: input.FirstName,
-		LastName:  input.LastName,
-		Email:     input.Email,
-		Phone:     input.Phone,
-		Company:   input.Company,
-		Siren:     input.Siren,
-		Vat:       input.Vat,
+		UserId:     userIDFromCtx(c),
+		FirstName:  input.FirstName,
+		LastName:   input.LastName,
+		Email:      input.Email,
+		Phone:      input.Phone,
+		Company:    input.Company,
+		Siren:      input.Siren,
+		Vat:        input.Vat,
+		ClientType: clientTypeFromInput(input.ClientType),
 	})
 	if err != nil {
 		usersErrors.unavailable(c)
@@ -642,7 +700,7 @@ func GetClient(c *gin.Context, client users.UserServiceClient) {
 		usersErrors.reply(c, resp.Code)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "client": resp.Client})
+	c.JSON(http.StatusOK, gin.H{"success": true, "client": marshalClient(resp.Client)})
 }
 
 func UpdateClient(c *gin.Context, client users.UserServiceClient) {
@@ -652,15 +710,16 @@ func UpdateClient(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	resp, err := client.UpdateClient(c.Request.Context(), &users.UpdateClientRequest{
-		ClientId:  c.Param("clientId"),
-		UserId:    userIDFromCtx(c),
-		FirstName: input.FirstName,
-		LastName:  input.LastName,
-		Email:     input.Email,
-		Phone:     input.Phone,
-		Company:   input.Company,
-		Siren:     input.Siren,
-		Vat:       input.Vat,
+		ClientId:   c.Param("clientId"),
+		UserId:     userIDFromCtx(c),
+		FirstName:  input.FirstName,
+		LastName:   input.LastName,
+		Email:      input.Email,
+		Phone:      input.Phone,
+		Company:    input.Company,
+		Siren:      input.Siren,
+		Vat:        input.Vat,
+		ClientType: clientTypeFromInput(input.ClientType),
 	})
 	if err != nil {
 		usersErrors.unavailable(c)

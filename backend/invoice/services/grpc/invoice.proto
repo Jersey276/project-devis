@@ -97,6 +97,10 @@ message InvoiceParty {
     string additional_street = 10;
     string zip_code          = 11;
     string city              = 12;
+    // client_type is the frozen B2C/B2B nature of the client at issue time:
+    // "individual" or "business" (empty for legacy snapshots). Only meaningful
+    // on the client party, not the issuer.
+    string client_type       = 13;
 }
 
 message InvoiceLine {

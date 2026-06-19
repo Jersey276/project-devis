@@ -29,11 +29,12 @@ func Create(ctx context.Context, db *sql.DB, req *usersGrpc.CreateClientRequest)
 
 	clientID := uuid.New().String()
 	_, err := db.ExecContext(ctx,
-		`INSERT INTO clients (client_id, user_id, first_name, last_name, email, phone, company, siren, vat)
-		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+		`INSERT INTO clients (client_id, user_id, first_name, last_name, email, phone, company, siren, vat, client_type)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
 		clientID, req.UserId, req.FirstName, req.LastName,
 		sqlutil.NullableStr(req.Email), sqlutil.NullableStr(req.Phone),
 		sqlutil.NullableStr(req.Company), sqlutil.NullableStr(req.Siren), sqlutil.NullableStr(req.Vat),
+		sqlutil.ClientTypeToDBString(req.ClientType),
 	)
 	if err != nil {
 		return &usersGrpc.CreateClientResponse{Success: false, Code: codes.InternalError}, err
