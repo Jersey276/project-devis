@@ -303,6 +303,7 @@ func invoicePartyToJSON(p *invoice.InvoiceParty) gin.H {
 		"additional_street": p.AdditionalStreet,
 		"zip_code":          p.ZipCode,
 		"city":              p.City,
+		"country_code":      p.CountryCode,
 	}
 }
 

@@ -144,6 +144,49 @@ func TestBuild_ClientWithoutTaxIds(t *testing.T) {
 	}
 }
 
+// ossInvoice is an OSS distance-selling invoice: a B2C German buyer taxed at the
+// German destination rate (19%), category S. The seller stays FR.
+func ossInvoice() *invoicepb.InvoiceDetails {
+	return &invoicepb.InvoiceDetails{
+		InvoiceNumber: "2026-0002",
+		IssuedAt:      "2026-06-14T10:30:00Z",
+		SaleDate:      "2026-06-10",
+		DueDate:       "2026-07-14",
+		OssApplied:    true,
+		Issuer: &invoicepb.InvoiceParty{
+			Company: "Acme SARL", Siren: "123456782", Vat: "FR12345678901",
+			Street: "1 rue A", ZipCode: "75001", City: "Paris", CountryCode: "FR",
+		},
+		Client: &invoicepb.InvoiceParty{
+			FirstName: "Hans", LastName: "Müller",
+			Street: "Hauptstr. 3", ZipCode: "10115", City: "Berlin", CountryCode: "DE",
+		},
+		Lines: []*invoicepb.InvoiceLine{
+			{Name: "Presta A", Quantity: "1", UnitPriceCents: 10000, LineHtCents: 10000, TaxRate: "19"},
+		},
+		VatBreakdown: []*invoicepb.InvoiceVatLine{
+			{TaxRate: "19", BaseHtCents: 10000, VatCents: 1900},
+		},
+		TotalHtCents:  10000,
+		TotalVatCents: 1900,
+		TotalTtcCents: 11900,
+	}
+}
+
+// TestBuild_OSS verifies an OSS invoice emits the real buyer country (DE) and
+// the destination rate under the standard category S — never the FR default.
+func TestBuild_OSS(t *testing.T) {
+	s := mustBuild(t, ossInvoice())
+	mustContain(t, s, `<ram:CountryID>DE</ram:CountryID>`) // buyer in Germany
+	mustContain(t, s, `<ram:CountryID>FR</ram:CountryID>`) // seller stays FR
+	mustContain(t, s, `<ram:CategoryCode>S</ram:CategoryCode>`)
+	mustContain(t, s, `<ram:RateApplicablePercent>19.00</ram:RateApplicablePercent>`)
+	// No buyer in FR: the only FR country must be the seller's.
+	if n := count(s, `<ram:CountryID>FR</ram:CountryID>`); n != 1 {
+		t.Errorf("FR country count = %d; want 1 (seller only)", n)
+	}
+}
+
 func TestBuild_RejectsDraft(t *testing.T) {
 	in := sampleInvoice()
 	in.InvoiceNumber = ""

@@ -531,8 +531,12 @@ type InvoiceParty struct {
 	AdditionalStreet string                 `protobuf:"bytes,10,opt,name=additional_street,json=additionalStreet,proto3" json:"additional_street,omitempty"`
 	ZipCode          string                 `protobuf:"bytes,11,opt,name=zip_code,json=zipCode,proto3" json:"zip_code,omitempty"`
 	City             string                 `protobuf:"bytes,12,opt,name=city,proto3" json:"city,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// country_code is the party's frozen ISO 3166-1 alpha-2 country code at issue
+	// time (” for legacy). Issuer code on the issuer party, client code on the
+	// client party; drives the Factur-X buyer/seller country (BT-40 / BT-55).
+	CountryCode   string `protobuf:"bytes,13,opt,name=country_code,json=countryCode,proto3" json:"country_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *InvoiceParty) Reset() {
@@ -645,6 +649,13 @@ func (x *InvoiceParty) GetZipCode() string {
 func (x *InvoiceParty) GetCity() string {
 	if x != nil {
 		return x.City
+	}
+	return ""
+}
+
+func (x *InvoiceParty) GetCountryCode() string {
+	if x != nil {
+		return x.CountryCode
 	}
 	return ""
 }
@@ -2111,7 +2122,7 @@ const file_invoice_proto_rawDesc = "" +
 	"\x11GetInvoiceRequest\x12\x1d\n" +
 	"\n" +
 	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xc7\x02\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xea\x02\n" +
 	"\fInvoiceParty\x12\x18\n" +
 	"\acompany\x18\x01 \x01(\tR\acompany\x12\x1d\n" +
 	"\n" +
@@ -2126,7 +2137,8 @@ const file_invoice_proto_rawDesc = "" +
 	"\x11additional_street\x18\n" +
 	" \x01(\tR\x10additionalStreet\x12\x19\n" +
 	"\bzip_code\x18\v \x01(\tR\azipCode\x12\x12\n" +
-	"\x04city\x18\f \x01(\tR\x04city\"\x92\x02\n" +
+	"\x04city\x18\f \x01(\tR\x04city\x12!\n" +
+	"\fcountry_code\x18\r \x01(\tR\vcountryCode\"\x92\x02\n" +
 	"\vInvoiceLine\x12\"\n" +
 	"\rquote_line_id\x18\x01 \x01(\tR\vquoteLineId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +

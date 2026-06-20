@@ -41,6 +41,7 @@ func TestXSD_Conformance(t *testing.T) {
 			in.Client = &invoicepb.InvoiceParty{FirstName: "Jean", LastName: "Dupont", ZipCode: "75002", City: "Paris"}
 			return Build(in)
 		}},
+		{"invoice_oss", func() ([]byte, error) { return Build(ossInvoice()) }},
 		{"credit_note", func() ([]byte, error) { return BuildCreditNote(sampleCreditNote()) }},
 	}
 

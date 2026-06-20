@@ -222,8 +222,19 @@ func address(p *invoicepb.InvoiceParty) *postalAddress {
 		LineOne:      p.GetStreet(),
 		LineTwo:      p.GetAdditionalStreet(),
 		CityName:     p.GetCity(),
-		CountryID:    countryFR,
+		CountryID:    countryCode(p),
 	}
+}
+
+// countryCode returns the party's frozen ISO 3166-1 alpha-2 code, falling back
+// to FR for legacy snapshots that predate the frozen code (preserves the prior
+// hardcoded behaviour). The code is the buyer/seller country in the CII XML —
+// notably the destination country for an OSS distance-selling invoice.
+func countryCode(p *invoicepb.InvoiceParty) string {
+	if c := strings.ToUpper(strings.TrimSpace(p.GetCountryCode())); c != "" {
+		return c
+	}
+	return countryFR
 }
 
 func buildDelivery(d docInput) headerTradeDelivery {

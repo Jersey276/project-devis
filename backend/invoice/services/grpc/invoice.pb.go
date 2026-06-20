@@ -590,8 +590,12 @@ type InvoiceParty struct {
 	// client_country_id is the client's frozen country id at issue time (0 for
 	// legacy snapshots). Drives OSS destination-country VAT. Client side only.
 	ClientCountryId int32 `protobuf:"varint,14,opt,name=client_country_id,json=clientCountryId,proto3" json:"client_country_id,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// country_code is the party's frozen ISO 3166-1 alpha-2 country code at issue
+	// time (” for legacy). Carries the issuer code on the issuer party and the
+	// client code on the client party; drives the Factur-X buyer/seller country.
+	CountryCode   string `protobuf:"bytes,15,opt,name=country_code,json=countryCode,proto3" json:"country_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *InvoiceParty) Reset() {
@@ -720,6 +724,13 @@ func (x *InvoiceParty) GetClientCountryId() int32 {
 		return x.ClientCountryId
 	}
 	return 0
+}
+
+func (x *InvoiceParty) GetCountryCode() string {
+	if x != nil {
+		return x.CountryCode
+	}
+	return ""
 }
 
 type InvoiceLine struct {
@@ -2188,7 +2199,7 @@ const file_invoice_proto_rawDesc = "" +
 	"\x11GetInvoiceRequest\x12\x1d\n" +
 	"\n" +
 	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"\x94\x03\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xb7\x03\n" +
 	"\fInvoiceParty\x12\x18\n" +
 	"\acompany\x18\x01 \x01(\tR\acompany\x12\x1d\n" +
 	"\n" +
@@ -2206,7 +2217,8 @@ const file_invoice_proto_rawDesc = "" +
 	"\x04city\x18\f \x01(\tR\x04city\x12\x1f\n" +
 	"\vclient_type\x18\r \x01(\tR\n" +
 	"clientType\x12*\n" +
-	"\x11client_country_id\x18\x0e \x01(\x05R\x0fclientCountryId\"\x92\x02\n" +
+	"\x11client_country_id\x18\x0e \x01(\x05R\x0fclientCountryId\x12!\n" +
+	"\fcountry_code\x18\x0f \x01(\tR\vcountryCode\"\x92\x02\n" +
 	"\vInvoiceLine\x12\"\n" +
 	"\rquote_line_id\x18\x01 \x01(\tR\vquoteLineId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +

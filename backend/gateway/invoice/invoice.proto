@@ -99,6 +99,10 @@ message InvoiceParty {
     string city              = 12;
     string client_type       = 13;
     int32 client_country_id  = 14;
+    // country_code is the party's frozen ISO 3166-1 alpha-2 country code at issue
+    // time ('' for legacy). Issuer code on the issuer party, client code on the
+    // client party; drives the Factur-X buyer/seller country.
+    string country_code      = 15;
 }
 
 message InvoiceLine {

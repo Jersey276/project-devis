@@ -41,6 +41,8 @@ type partySnapshot struct {
 	clientType       string // frozen B2C/B2B nature: "individual" / "business"
 	clientCountryID  int32  // frozen client country id (0 = unknown); drives OSS
 	ossApplied       bool   // frozen: destination-country VAT (OSS) was applied at issue
+	issuerCountryCode string // frozen issuer ISO 3166-1 alpha-2 code (drives Factur-X seller country)
+	clientCountryCode string // frozen client ISO 3166-1 alpha-2 code (drives Factur-X buyer country)
 }
 
 // lineSnapshot is one frozen invoice line (mirrors the DB row / proto message).
@@ -192,11 +194,32 @@ func (s *Server) buildResolved(ctx context.Context, userID string, q *quoteGrpc.
 
 	parties = buildPartySnapshot(user, userAddr, client, clientAddr)
 
+	// Resolve the ISO country codes once, so they can be frozen into the snapshot
+	// (the export service has no access to the countries table). The client's
+	// resolved Country is reused by resolveOSSRate below to avoid a second
+	// GetCountry round-trip.
+	var clientCountry *usersGrpc.Country
+	if parties.clientCountryID != 0 {
+		c, code, err := s.resolveCountry(ctx, parties.clientCountryID)
+		if err != nil || code != codes.Success {
+			return nil, code, err
+		}
+		clientCountry = c
+		parties.clientCountryCode = clientCountry.GetCode()
+	}
+	if issuerCountryID := userAddr.GetCountryId(); issuerCountryID != 0 {
+		issuerCountry, code, err := s.resolveCountry(ctx, issuerCountryID)
+		if err != nil || code != codes.Success {
+			return nil, code, err
+		}
+		parties.issuerCountryCode = issuerCountry.GetCode()
+	}
+
 	// OSS distance-selling: when the seller opted in and the client is a B2C
 	// buyer in an EU country other than France, every line is taxed at the
 	// destination country's VAT rate instead of the rate carried by the quote
 	// line. oss is nil when OSS does not apply (normal domestic billing).
-	oss, code, err := s.resolveOSSRate(ctx, user, parties)
+	oss, code, err := s.resolveOSSRate(ctx, user, parties, clientCountry)
 	if err != nil || code != codes.Success {
 		return nil, code, err
 	}
@@ -267,26 +290,32 @@ type ossRate struct {
 	label string // tax label, e.g. "USt 19%"
 }
 
+// resolveCountry loads a country by id, mapping upstream failures to business
+// codes. The caller guarantees id != 0.
+func (s *Server) resolveCountry(ctx context.Context, countryID int32) (*usersGrpc.Country, int32, error) {
+	resp, err := s.usersClient.GetCountry(ctx, &usersGrpc.GetCountryRequest{CountryId: countryID})
+	if err != nil {
+		return nil, codes.InternalError, fmt.Errorf("get country: %w", err)
+	}
+	if !resp.GetSuccess() || resp.GetCountry() == nil {
+		return nil, codes.DependencyMissing, nil
+	}
+	return resp.GetCountry(), codes.Success, nil
+}
+
 // resolveOSSRate decides whether OSS applies and, if so, resolves the
 // destination country's VAT rate. It returns (nil, Success, nil) when OSS does
 // not apply (seller not opted in, B2B client, or client in FR / outside the EU).
 // When OSS applies but no tax is configured for the client's country, it returns
 // codes.OSSDestinationTaxMissing so emission is blocked rather than silently
-// falling back to a domestic rate.
-func (s *Server) resolveOSSRate(ctx context.Context, user *usersGrpc.User, parties partySnapshot) (*ossRate, int32, error) {
-	if !user.GetOssEnabled() || parties.clientType != "individual" || parties.clientCountryID == 0 {
+// falling back to a domestic rate. clientCountry is the already-resolved client
+// country (nil when the client has no country) — reused to avoid re-fetching.
+func (s *Server) resolveOSSRate(ctx context.Context, user *usersGrpc.User, parties partySnapshot, clientCountry *usersGrpc.Country) (*ossRate, int32, error) {
+	if !user.GetOssEnabled() || parties.clientType != "individual" || clientCountry == nil {
 		return nil, codes.Success, nil
 	}
 
-	countryResp, err := s.usersClient.GetCountry(ctx, &usersGrpc.GetCountryRequest{CountryId: parties.clientCountryID})
-	if err != nil {
-		return nil, codes.InternalError, fmt.Errorf("get country: %w", err)
-	}
-	if !countryResp.GetSuccess() || countryResp.GetCountry() == nil {
-		return nil, codes.DependencyMissing, nil
-	}
-	c := countryResp.GetCountry()
-	if !c.GetIsEu() || c.GetCode() == "FR" {
+	if !clientCountry.GetIsEu() || clientCountry.GetCode() == "FR" {
 		return nil, codes.Success, nil // domestic or non-EU: no OSS
 	}
 
