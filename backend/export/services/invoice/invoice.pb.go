@@ -840,8 +840,12 @@ type InvoiceDetails struct {
 	// Line positions already credited by an existing credit note (ISSUED/PAID
 	// invoices only). The UI greys these out in the credit-note dialog.
 	CreditedPositions []int32 `protobuf:"varint,19,rep,packed,name=credited_positions,json=creditedPositions,proto3" json:"credited_positions,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// oss_applied is the frozen OSS distance-selling flag: when true, every line
+	// was taxed at the client's destination-country VAT rate (declared via the
+	// EU One-Stop-Shop), which drives the OSS legal mention on the PDF.
+	OssApplied    bool `protobuf:"varint,20,opt,name=oss_applied,json=ossApplied,proto3" json:"oss_applied,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *InvoiceDetails) Reset() {
@@ -1005,6 +1009,13 @@ func (x *InvoiceDetails) GetCreditedPositions() []int32 {
 		return x.CreditedPositions
 	}
 	return nil
+}
+
+func (x *InvoiceDetails) GetOssApplied() bool {
+	if x != nil {
+		return x.OssApplied
+	}
+	return false
 }
 
 type GetInvoiceResponse struct {
@@ -1493,8 +1504,11 @@ type CreditNoteDetails struct {
 	TotalVatCents    int64                  `protobuf:"varint,14,opt,name=total_vat_cents,json=totalVatCents,proto3" json:"total_vat_cents,omitempty"`
 	TotalTtcCents    int64                  `protobuf:"varint,15,opt,name=total_ttc_cents,json=totalTtcCents,proto3" json:"total_ttc_cents,omitempty"`
 	VatExempt        bool                   `protobuf:"varint,16,opt,name=vat_exempt,json=vatExempt,proto3" json:"vat_exempt,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// oss_applied is inherited from the origin invoice: drives the OSS legal
+	// mention on the credit-note PDF.
+	OssApplied    bool `protobuf:"varint,17,opt,name=oss_applied,json=ossApplied,proto3" json:"oss_applied,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreditNoteDetails) Reset() {
@@ -1635,6 +1649,13 @@ func (x *CreditNoteDetails) GetTotalTtcCents() int64 {
 func (x *CreditNoteDetails) GetVatExempt() bool {
 	if x != nil {
 		return x.VatExempt
+	}
+	return false
+}
+
+func (x *CreditNoteDetails) GetOssApplied() bool {
+	if x != nil {
+		return x.OssApplied
 	}
 	return false
 }
@@ -2119,7 +2140,7 @@ const file_invoice_proto_rawDesc = "" +
 	"\x0eInvoiceVatLine\x12\x19\n" +
 	"\btax_rate\x18\x01 \x01(\tR\ataxRate\x12\"\n" +
 	"\rbase_ht_cents\x18\x02 \x01(\x03R\vbaseHtCents\x12\x1b\n" +
-	"\tvat_cents\x18\x03 \x01(\x03R\bvatCents\"\xd6\x05\n" +
+	"\tvat_cents\x18\x03 \x01(\x03R\bvatCents\"\xf7\x05\n" +
 	"\x0eInvoiceDetails\x12\x1d\n" +
 	"\n" +
 	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12\x17\n" +
@@ -2143,7 +2164,9 @@ const file_invoice_proto_rawDesc = "" +
 	"\x0ftotal_ttc_cents\x18\x11 \x01(\x03R\rtotalTtcCents\x12\x1d\n" +
 	"\n" +
 	"vat_exempt\x18\x12 \x01(\bR\tvatExempt\x12-\n" +
-	"\x12credited_positions\x18\x13 \x03(\x05R\x11creditedPositions\"u\n" +
+	"\x12credited_positions\x18\x13 \x03(\x05R\x11creditedPositions\x12\x1f\n" +
+	"\voss_applied\x18\x14 \x01(\bR\n" +
+	"ossApplied\"u\n" +
 	"\x12GetInvoiceResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x121\n" +
@@ -2180,7 +2203,7 @@ const file_invoice_proto_rawDesc = "" +
 	"\x11validation_errors\x18\x05 \x03(\v2\x18.invoice.ValidationErrorR\x10validationErrors\"U\n" +
 	"\x14GetCreditNoteRequest\x12$\n" +
 	"\x0ecredit_note_id\x18\x01 \x01(\tR\fcreditNoteId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xf3\x04\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\x94\x05\n" +
 	"\x11CreditNoteDetails\x12$\n" +
 	"\x0ecredit_note_id\x18\x01 \x01(\tR\fcreditNoteId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1d\n" +
@@ -2200,7 +2223,9 @@ const file_invoice_proto_rawDesc = "" +
 	"\x0ftotal_vat_cents\x18\x0e \x01(\x03R\rtotalVatCents\x12&\n" +
 	"\x0ftotal_ttc_cents\x18\x0f \x01(\x03R\rtotalTtcCents\x12\x1d\n" +
 	"\n" +
-	"vat_exempt\x18\x10 \x01(\bR\tvatExempt\"\x82\x01\n" +
+	"vat_exempt\x18\x10 \x01(\bR\tvatExempt\x12\x1f\n" +
+	"\voss_applied\x18\x11 \x01(\bR\n" +
+	"ossApplied\"\x82\x01\n" +
 	"\x15GetCreditNoteResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12;\n" +

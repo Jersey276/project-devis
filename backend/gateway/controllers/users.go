@@ -147,7 +147,7 @@ func GetMe(c *gin.Context, client users.UserServiceClient) {
 		usersErrors.reply(c, resp.Code)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "user": resp.User})
+	c.JSON(http.StatusOK, gin.H{"success": true, "user": marshalUser(resp.User)})
 }
 
 func ensureUserWritable(c *gin.Context, client users.UserServiceClient) bool {
@@ -172,11 +172,12 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	var input struct {
-		Phone   string `json:"phone"`
-		Company string `json:"company"`
-		Siren   string `json:"siren"`
-		Vat     string `json:"vat"`
-		LogoURL string `json:"logo_url"`
+		Phone      string `json:"phone"`
+		Company    string `json:"company"`
+		Siren      string `json:"siren"`
+		Vat        string `json:"vat"`
+		LogoURL    string `json:"logo_url"`
+		OssEnabled bool   `json:"oss_enabled"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
@@ -187,12 +188,13 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	resp, err := client.UpdateUser(c.Request.Context(), &users.UpdateUserRequest{
-		UserId:  userIDFromCtx(c),
-		Phone:   input.Phone,
-		Company: input.Company,
-		Siren:   input.Siren,
-		Vat:     input.Vat,
-		LogoUrl: input.LogoURL,
+		UserId:     userIDFromCtx(c),
+		Phone:      input.Phone,
+		Company:    input.Company,
+		Siren:      input.Siren,
+		Vat:        input.Vat,
+		LogoUrl:    input.LogoURL,
+		OssEnabled: input.OssEnabled,
 	})
 	if err != nil {
 		usersErrors.unavailable(c)
@@ -638,6 +640,46 @@ func marshalClients(in []*users.Client) []gin.H {
 	return out
 }
 
+// marshalUser renders a proto User as a JSON object. Explicit projection avoids
+// the protobuf-go `omitempty` tags dropping false booleans (oss_enabled), which
+// the front-end relies on reading explicitly.
+func marshalUser(u *users.User) gin.H {
+	if u == nil {
+		return nil
+	}
+	return gin.H{
+		"user_id":     u.UserId,
+		"email":       u.Email,
+		"phone":       u.Phone,
+		"company":     u.Company,
+		"siren":       u.Siren,
+		"vat":         u.Vat,
+		"logo_url":    u.LogoUrl,
+		"suspended":   u.Suspended,
+		"oss_enabled": u.OssEnabled,
+	}
+}
+
+func marshalCountry(co *users.Country) gin.H {
+	if co == nil {
+		return nil
+	}
+	return gin.H{
+		"id":    co.Id,
+		"code":  co.Code,
+		"name":  co.Name,
+		"is_eu": co.IsEu,
+	}
+}
+
+func marshalCountries(in []*users.Country) []gin.H {
+	out := make([]gin.H, 0, len(in))
+	for _, co := range in {
+		out = append(out, marshalCountry(co))
+	}
+	return out
+}
+
 func ListClients(c *gin.Context, client users.UserServiceClient) {
 	includeArchived := c.Query("archived") == "true"
 	resp, err := client.ListClients(c.Request.Context(), &users.ListClientsRequest{
@@ -762,7 +804,7 @@ func ListCountries(c *gin.Context, client users.UserServiceClient) {
 		usersErrors.reply(c, resp.Code)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "countries": resp.Countries})
+	c.JSON(http.StatusOK, gin.H{"success": true, "countries": marshalCountries(resp.Countries)})
 }
 
 func CreateCountry(c *gin.Context, client users.UserServiceClient) {

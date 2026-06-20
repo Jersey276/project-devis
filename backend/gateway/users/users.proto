@@ -52,6 +52,7 @@ service UserService {
     rpc GetTax(GetTaxRequest) returns (GetTaxResponse);
     rpc ListTaxes(ListTaxesRequest) returns (ListTaxesResponse);
     rpc ListTaxesForUser(ListTaxesForUserRequest) returns (ListTaxesResponse);
+    rpc ListTaxesForCountry(ListTaxesForCountryRequest) returns (ListTaxesResponse);
     rpc UpdateTax(UpdateTaxRequest) returns (UpdateTaxResponse);
     rpc DeleteTax(DeleteTaxRequest) returns (GenericResponse);
 }
@@ -77,6 +78,7 @@ message User {
     string vat = 6;
     string logo_url = 7;
     bool suspended = 8;
+    bool oss_enabled = 9;
 }
 
 message CreateUserRequest {
@@ -107,6 +109,7 @@ message UpdateUserRequest {
     string siren = 4;
     string vat = 5;
     string logo_url = 6;
+    bool oss_enabled = 7;
 }
 
 message UpdateUserResponse {
@@ -373,6 +376,7 @@ message Country {
     int32 id = 1;
     string code = 2;
     string name = 3;
+    bool is_eu = 4;
 }
 
 message CreateCountryRequest {
@@ -532,6 +536,10 @@ message ListTaxesForUserRequest {
     // When non-zero, resolves the country group from this user-owned address
     // instead of the user's first address (MIN(id)).
     int32 address_id = 3;
+}
+
+message ListTaxesForCountryRequest {
+    int32 country_id = 1;
 }
 
 message ListTaxesResponse {

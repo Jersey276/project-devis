@@ -168,6 +168,10 @@ func (s *Server) ListTaxesForUser(ctx context.Context, req *usersGrpc.ListTaxesF
 	return tax.ListForUser(ctx, s.db, req)
 }
 
+func (s *Server) ListTaxesForCountry(ctx context.Context, req *usersGrpc.ListTaxesForCountryRequest) (*usersGrpc.ListTaxesResponse, error) {
+	return tax.ListForCountry(ctx, s.db, req)
+}
+
 func (s *Server) UpdateTax(ctx context.Context, req *usersGrpc.UpdateTaxRequest) (*usersGrpc.UpdateTaxResponse, error) {
 	return tax.Update(ctx, s.db, req)
 }

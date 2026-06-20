@@ -25,6 +25,7 @@ const (
 	InvoiceCodeInvoiceNotIssued              int32 = 4007
 	InvoiceCodeCreditNoteNoLinesLeft         int32 = 4008
 	InvoiceCodeSealError                     int32 = 4009
+		InvoiceCodeOSSDestinationTaxMissing      int32 = 4010
 
 	InvoiceCodeInternalError int32 = 2001
 )
@@ -39,19 +40,20 @@ func invoiceValidationErrors(errs []*invoice.ValidationError) []FieldError {
 
 var invoiceErrors = &serviceErrors{
 	codes: map[int32]codeMapping{
-		InvoiceCodeNotFound:            {http.StatusNotFound, "Facture introuvable."},
-		InvoiceCodeAlreadyExists:       {http.StatusConflict, "Cette facture existe déjà."},
-		InvoiceCodeInvalidInput:        {http.StatusBadRequest, "Données invalides."},
-		InvoiceCodeSourceNotEligible:   {http.StatusUnprocessableEntity, "La source n'est pas éligible à la facturation."},
-		InvoiceCodeQuoteHasSchedule:    {http.StatusConflict, "Un échéancier existe pour ce devis : facturez depuis l'échéancier."},
-		InvoiceCodeInvoiceFinalized:    {http.StatusConflict, "Cette facture est émise et ne peut plus être modifiée."},
-		InvoiceCodeMonthsAlreadyBilled: {http.StatusConflict, "Certains mois sélectionnés sont déjà facturés."},
-		InvoiceCodeDependencyMissing:   {http.StatusUnprocessableEntity, "La facture fait référence à un client ou une adresse introuvable."},
+		InvoiceCodeNotFound:                      {http.StatusNotFound, "Facture introuvable."},
+		InvoiceCodeAlreadyExists:                 {http.StatusConflict, "Cette facture existe déjà."},
+		InvoiceCodeInvalidInput:                  {http.StatusBadRequest, "Données invalides."},
+		InvoiceCodeSourceNotEligible:             {http.StatusUnprocessableEntity, "La source n'est pas éligible à la facturation."},
+		InvoiceCodeQuoteHasSchedule:              {http.StatusConflict, "Un échéancier existe pour ce devis : facturez depuis l'échéancier."},
+		InvoiceCodeInvoiceFinalized:              {http.StatusConflict, "Cette facture est émise et ne peut plus être modifiée."},
+		InvoiceCodeMonthsAlreadyBilled:           {http.StatusConflict, "Certains mois sélectionnés sont déjà facturés."},
+		InvoiceCodeDependencyMissing:             {http.StatusUnprocessableEntity, "La facture fait référence à un client ou une adresse introuvable."},
 		InvoiceCodeCreditNoteLineAlreadyCredited: {http.StatusConflict, "Une ou plusieurs lignes sélectionnées ont déjà fait l'objet d'un avoir."},
 		InvoiceCodeInvoiceNotIssued:              {http.StatusConflict, "Seules les factures émises peuvent faire l'objet d'un avoir."},
 		InvoiceCodeCreditNoteNoLinesLeft:         {http.StatusConflict, "Toutes les lignes de cette facture ont déjà été avoirées."},
 		InvoiceCodeSealError:                     {http.StatusInternalServerError, "Une erreur interne est survenue."},
-		InvoiceCodeInternalError:       {http.StatusInternalServerError, "Une erreur interne est survenue."},
+		InvoiceCodeOSSDestinationTaxMissing:      {http.StatusUnprocessableEntity, "Aucune TVA n'est configurée pour le pays du client (régime OSS). Configurez le taux du pays de destination avant d'émettre."},
+		InvoiceCodeInternalError:                 {http.StatusInternalServerError, "Une erreur interne est survenue."},
 	},
 	unavailableMessage: "Service de facturation indisponible.",
 }
@@ -348,6 +350,7 @@ func invoiceDetailsToJSON(d *invoice.InvoiceDetails) gin.H {
 		"total_vat_cents":      d.TotalVatCents,
 		"total_ttc_cents":      d.TotalTtcCents,
 		"vat_exempt":           d.VatExempt,
+		"oss_applied":          d.OssApplied,
 		"credited_positions":   d.CreditedPositions,
 	}
 }

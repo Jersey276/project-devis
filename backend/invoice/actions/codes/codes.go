@@ -15,6 +15,7 @@ const (
 	InvoiceNotIssued              int32 = 4007 // the invoice is not ISSUED/PAID
 	CreditNoteNoLinesLeft         int32 = 4008 // total credit requested but nothing left
 	SealError                     int32 = 4009 // failed to seal the document at emission
+	OSSDestinationTaxMissing      int32 = 4010 // OSS applies but no tax configured for the client's country
 
 	InternalError int32 = 2001
 )

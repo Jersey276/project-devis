@@ -11,6 +11,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   apiFetch,
   fieldErrorsFromBody,
@@ -27,6 +28,7 @@ export type UserProfile = {
   siren: string;
   vat: string;
   suspended: boolean;
+  oss_enabled: boolean;
 };
 
 type UserInfoFormProps = {
@@ -46,6 +48,7 @@ export default function UserInfoForm({
   const [company, setCompany] = useState(user.company ?? "");
   const [siren, setSiren] = useState(user.siren ?? "");
   const [vat, setVat] = useState(user.vat ?? "");
+  const [ossEnabled, setOssEnabled] = useState(user.oss_enabled ?? false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -57,11 +60,17 @@ export default function UserInfoForm({
     try {
       const { ok, status, body } = await apiFetch("/api/users/me", {
         method: "PUT",
-        body: JSON.stringify({ phone, company, siren, vat }),
+        body: JSON.stringify({
+          phone,
+          company,
+          siren,
+          vat,
+          oss_enabled: ossEnabled,
+        }),
       });
       if (ok && body.success) {
         toast.success(t("successToast"));
-        onSaved?.({ ...user, phone, company, siren, vat });
+        onSaved?.({ ...user, phone, company, siren, vat, oss_enabled: ossEnabled });
         return;
       }
       if (status === 422 && Array.isArray(body.field_errors)) {
@@ -154,6 +163,19 @@ export default function UserInfoForm({
             <FieldError errors={toErrorProps(fieldErrors.vat)} />
           </Field>
         </div>
+
+        <Field orientation="horizontal">
+          <Checkbox
+            id="oss_enabled"
+            checked={ossEnabled}
+            onCheckedChange={(checked) => setOssEnabled(checked === true)}
+            disabled={readOnly}
+          />
+          <div className="grid gap-1">
+            <FieldLabel htmlFor="oss_enabled">{t("ossEnabledLabel")}</FieldLabel>
+            <FieldDescription>{t("ossEnabledHint")}</FieldDescription>
+          </div>
+        </Field>
       </FieldGroup>
 
       <div className="flex justify-end">

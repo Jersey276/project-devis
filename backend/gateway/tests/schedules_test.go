@@ -285,6 +285,9 @@ func (nopUsersClient) ListTaxes(context.Context, *users.ListTaxesRequest, ...grp
 func (nopUsersClient) ListTaxesForUser(context.Context, *users.ListTaxesForUserRequest, ...grpc.CallOption) (*users.ListTaxesResponse, error) {
 	return nil, nil
 }
+func (nopUsersClient) ListTaxesForCountry(context.Context, *users.ListTaxesForCountryRequest, ...grpc.CallOption) (*users.ListTaxesResponse, error) {
+	return nil, nil
+}
 func (nopUsersClient) UpdateTax(context.Context, *users.UpdateTaxRequest, ...grpc.CallOption) (*users.UpdateTaxResponse, error) {
 	return nil, nil
 }

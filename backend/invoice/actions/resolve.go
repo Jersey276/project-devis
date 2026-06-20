@@ -39,6 +39,8 @@ type partySnapshot struct {
 	clientZip        string
 	clientCity       string
 	clientType       string // frozen B2C/B2B nature: "individual" / "business"
+	clientCountryID  int32  // frozen client country id (0 = unknown); drives OSS
+	ossApplied       bool   // frozen: destination-country VAT (OSS) was applied at issue
 }
 
 // lineSnapshot is one frozen invoice line (mirrors the DB row / proto message).
@@ -190,6 +192,18 @@ func (s *Server) buildResolved(ctx context.Context, userID string, q *quoteGrpc.
 
 	parties = buildPartySnapshot(user, userAddr, client, clientAddr)
 
+	// OSS distance-selling: when the seller opted in and the client is a B2C
+	// buyer in an EU country other than France, every line is taxed at the
+	// destination country's VAT rate instead of the rate carried by the quote
+	// line. oss is nil when OSS does not apply (normal domestic billing).
+	oss, code, err := s.resolveOSSRate(ctx, user, parties)
+	if err != nil || code != codes.Success {
+		return nil, code, err
+	}
+	// Freeze whether OSS was applied, so the PDF can print the legal mention from
+	// the snapshot alone (the seller's oss_enabled flag is mutable).
+	parties.ossApplied = oss != nil
+
 	// Stable ordering by quote-line position for the printed invoice.
 	ordered := append([]*quoteGrpc.QuoteLine(nil), lines...)
 	sort.Slice(ordered, func(i, j int) bool { return ordered[i].GetPosition() < ordered[j].GetPosition() })
@@ -208,6 +222,13 @@ func (s *Server) buildResolved(ctx context.Context, userID string, q *quoteGrpc.
 		if err != nil {
 			return nil, code, err
 		}
+		taxID := l.GetTaxId()
+		if oss != nil {
+			// Override the line's domestic rate with the destination rate. The
+			// HT is unchanged; only the VAT rate/label differ. taxID is cleared
+			// so the snapshot doesn't point at a domestic tax that wasn't applied.
+			rate, label, taxID = oss.rate, oss.label, 0
+		}
 		numRate := parseRate(rate)
 		snapLines = append(snapLines, lineSnapshot{
 			position:       pos,
@@ -217,13 +238,13 @@ func (s *Server) buildResolved(ctx context.Context, userID string, q *quoteGrpc.
 			quantity:       l.GetQuantity(),
 			unitPriceCents: l.GetUnitPrice(),
 			lineHTCents:    ht,
-			taxID:          l.GetTaxId(),
+			taxID:          taxID,
 			taxRate:        rate,
 			taxLabel:       label,
 		})
 		compute = append(compute, computeLine{
 			ht:        ht,
-			taxID:     l.GetTaxId(),
+			taxID:     taxID,
 			taxRate:   numRate,
 			taxRateID: rate,
 			taxLabel:  label,
@@ -237,6 +258,66 @@ func (s *Server) buildResolved(ctx context.Context, userID string, q *quoteGrpc.
 		compute:   compute,
 		vatExempt: strings.TrimSpace(user.GetVat()) == "",
 	}, codes.Success, nil
+}
+
+// ossRate is the resolved destination-country VAT rate to apply to every line
+// of an OSS distance-selling invoice.
+type ossRate struct {
+	rate  string // canonical rate string, e.g. "19"
+	label string // tax label, e.g. "USt 19%"
+}
+
+// resolveOSSRate decides whether OSS applies and, if so, resolves the
+// destination country's VAT rate. It returns (nil, Success, nil) when OSS does
+// not apply (seller not opted in, B2B client, or client in FR / outside the EU).
+// When OSS applies but no tax is configured for the client's country, it returns
+// codes.OSSDestinationTaxMissing so emission is blocked rather than silently
+// falling back to a domestic rate.
+func (s *Server) resolveOSSRate(ctx context.Context, user *usersGrpc.User, parties partySnapshot) (*ossRate, int32, error) {
+	if !user.GetOssEnabled() || parties.clientType != "individual" || parties.clientCountryID == 0 {
+		return nil, codes.Success, nil
+	}
+
+	countryResp, err := s.usersClient.GetCountry(ctx, &usersGrpc.GetCountryRequest{CountryId: parties.clientCountryID})
+	if err != nil {
+		return nil, codes.InternalError, fmt.Errorf("get country: %w", err)
+	}
+	if !countryResp.GetSuccess() || countryResp.GetCountry() == nil {
+		return nil, codes.DependencyMissing, nil
+	}
+	c := countryResp.GetCountry()
+	if !c.GetIsEu() || c.GetCode() == "FR" {
+		return nil, codes.Success, nil // domestic or non-EU: no OSS
+	}
+
+	taxesResp, err := s.usersClient.ListTaxesForCountry(ctx, &usersGrpc.ListTaxesForCountryRequest{CountryId: parties.clientCountryID})
+	if err != nil {
+		return nil, codes.InternalError, fmt.Errorf("list taxes for country: %w", err)
+	}
+	if !taxesResp.GetSuccess() {
+		return nil, codes.InternalError, fmt.Errorf("list taxes for country: upstream %d", taxesResp.GetCode())
+	}
+	dest := pickDestinationTax(taxesResp.GetTaxes())
+	if dest == nil {
+		return nil, codes.OSSDestinationTaxMissing, nil
+	}
+	return &ossRate{rate: dest.GetRate(), label: dest.GetName()}, codes.Success, nil
+}
+
+// pickDestinationTax chooses the standard VAT rate for the destination country:
+// the group's default tax if one is flagged, otherwise the highest rate (the
+// standard rate is the highest among reduced rates). Returns nil when empty.
+func pickDestinationTax(taxes []*usersGrpc.Tax) *usersGrpc.Tax {
+	var best *usersGrpc.Tax
+	for _, t := range taxes {
+		if t.GetIsDefault() {
+			return t
+		}
+		if best == nil || parseRate(t.GetRate()) > parseRate(best.GetRate()) {
+			best = t
+		}
+	}
+	return best
 }
 
 // fetchQuoteAndLines loads the quote and its lines, returning a business code on
@@ -304,6 +385,7 @@ func buildPartySnapshot(user *usersGrpc.User, userAddr *usersGrpc.Address, clien
 		p.clientAdditional = clientAddr.GetAdditionalStreet()
 		p.clientZip = clientAddr.GetZipCode()
 		p.clientCity = clientAddr.GetCity()
+		p.clientCountryID = clientAddr.GetCountryId()
 	}
 	return p
 }

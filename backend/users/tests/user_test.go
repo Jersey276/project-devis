@@ -75,8 +75,8 @@ func TestGetUser_Success(t *testing.T) {
 
 	mock.ExpectQuery(`SELECT user_id, email`).
 		WithArgs("user-123").
-		WillReturnRows(sqlmock.NewRows([]string{"user_id", "email", "phone", "company", "siren", "vat", "logo_url", "suspended"}).
-			AddRow("user-123", "user@example.com", "", "", "", "", "", false))
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "email", "phone", "company", "siren", "vat", "logo_url", "suspended", "oss_enabled"}).
+			AddRow("user-123", "user@example.com", "", "", "", "", "", false, false))
 
 	resp, err := srv.GetUser(context.Background(), &usersGrpc.GetUserRequest{UserId: "user-123"})
 	if err != nil {
@@ -95,7 +95,7 @@ func TestGetUser_NotFound(t *testing.T) {
 
 	mock.ExpectQuery(`SELECT user_id, email`).
 		WithArgs("unknown").
-		WillReturnRows(sqlmock.NewRows([]string{"user_id", "email", "phone", "company", "siren", "vat", "logo_url", "suspended"}))
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "email", "phone", "company", "siren", "vat", "logo_url", "suspended", "oss_enabled"}))
 
 	resp, err := srv.GetUser(context.Background(), &usersGrpc.GetUserRequest{UserId: "unknown"})
 	if err != nil {
@@ -113,16 +113,17 @@ func TestUpdateUser_Success(t *testing.T) {
 	srv, mock := setupServer(t)
 
 	mock.ExpectExec(`UPDATE users SET phone`).
-		WithArgs("0600000000", "ACME", "123456789", "FR12345", "https://cdn.example.com/logo.png", "user-123").
+		WithArgs("0600000000", "ACME", "123456789", "FR12345", "https://cdn.example.com/logo.png", true, "user-123").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.UpdateUser(context.Background(), &usersGrpc.UpdateUserRequest{
-		UserId:  "user-123",
-		Phone:   "0600000000",
-		Company: "ACME",
-		Siren:   "123456789",
-		Vat:     "FR12345",
-		LogoUrl: "https://cdn.example.com/logo.png",
+		UserId:     "user-123",
+		Phone:      "0600000000",
+		Company:    "ACME",
+		Siren:      "123456789",
+		Vat:        "FR12345",
+		LogoUrl:    "https://cdn.example.com/logo.png",
+		OssEnabled: true,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

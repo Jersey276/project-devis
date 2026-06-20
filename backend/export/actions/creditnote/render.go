@@ -44,6 +44,7 @@ type viewModel struct {
 	Recipient        partyView
 	Lines            []lineView
 	VatExempt        bool
+	OssApplied       bool
 	VatBreakdown     []vatView
 	TotalHT          string
 	TotalVAT         string
@@ -109,6 +110,7 @@ func buildViewModel(cn *invoicepb.CreditNoteDetails) viewModel {
 		Recipient:        buildRecipient(cn.GetClient()),
 		Lines:            lines,
 		VatExempt:        cn.GetVatExempt(),
+		OssApplied:       cn.GetOssApplied(),
 		VatBreakdown:     vat,
 		TotalHT:          formatCents(-cn.GetTotalHtCents()),
 		TotalVAT:         formatCents(-cn.GetTotalVatCents()),

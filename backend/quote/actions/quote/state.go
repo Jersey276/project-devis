@@ -16,7 +16,7 @@ const (
 )
 
 func EditableStates() []string {
-	return []string{StateDraft, StateSent}
+	return []string{StateDraft, StateNegociation}
 }
 
 func StateFromString(s string) quoteGrpc.QuoteState {

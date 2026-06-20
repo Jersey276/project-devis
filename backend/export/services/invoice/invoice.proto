@@ -131,6 +131,10 @@ message InvoiceDetails {
     // Line positions already credited by an existing credit note (ISSUED/PAID
     // invoices only). The UI greys these out in the credit-note dialog.
     repeated int32 credited_positions = 19;
+    // oss_applied is the frozen OSS distance-selling flag: when true, every line
+    // was taxed at the client's destination-country VAT rate (declared via the
+    // EU One-Stop-Shop), which drives the OSS legal mention on the PDF.
+    bool   oss_applied           = 20;
 }
 
 message GetInvoiceResponse {
@@ -200,6 +204,9 @@ message CreditNoteDetails {
     int64  total_vat_cents    = 14;
     int64  total_ttc_cents    = 15;
     bool   vat_exempt         = 16;
+    // oss_applied is inherited from the origin invoice: drives the OSS legal
+    // mention on the credit-note PDF.
+    bool   oss_applied        = 17;
 }
 
 message GetCreditNoteResponse {

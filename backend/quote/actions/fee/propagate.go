@@ -11,7 +11,7 @@ import (
 
 // editableStates are the quote states whose lines may still be rewritten when a
 // referenced fee changes — the canonical set lives in quote.EditableStates
-// (draft/sent, non-archived). Validated and drop quotes are immutable.
+// (draft/negociation, non-archived). Validated and drop quotes are immutable.
 var editableStates = quote.EditableStates()
 
 // feeSnapshot is the set of catalog-driven fields copied from a fee onto every
@@ -23,8 +23,8 @@ type feeSnapshot struct {
 }
 
 // propagate rewrites the snapshot of every quote line referencing feeID, but
-// only for lines belonging to editable (draft/sent, non-archived) quotes owned
-// by userID. It covers both top-level fee lines (kind="fee", tracked via the
+// only for lines belonging to editable (draft/negociation, non-archived) quotes
+// owned by userID. It covers both top-level fee lines (kind="fee", tracked via the
 // fee_id column) and fee sublines nested inside detailed (multiple) lines.
 //
 // Propagation is best-effort relative to the fee update: the caller logs but
