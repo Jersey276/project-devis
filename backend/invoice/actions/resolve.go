@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 
@@ -41,6 +42,7 @@ type partySnapshot struct {
 	clientType       string // frozen B2C/B2B nature: "individual" / "business"
 	clientCountryID  int32  // frozen client country id (0 = unknown); drives OSS
 	ossApplied       bool   // frozen: destination-country VAT (OSS) was applied at issue
+	countsTowardThreshold bool // frozen: B2C intra-EU non-FR sale; part of the OSS 10k assiette
 	issuerCountryCode string // frozen issuer ISO 3166-1 alpha-2 code (drives Factur-X seller country)
 	clientCountryCode string // frozen client ISO 3166-1 alpha-2 code (drives Factur-X buyer country)
 }
@@ -71,7 +73,7 @@ type resolvedInvoice struct {
 // resolveScheduleInvoice gathers the data for a schedule-sourced invoice: the
 // quote lines (name/unit/tax), the selected months' per-line HT (from cells),
 // the resolved tax rates, and the frozen party block.
-func (s *Server) resolveScheduleInvoice(ctx context.Context, userID, quoteID, scheduleID string, monthIndexes []int32) (*resolvedInvoice, int32, error) {
+func (s *Server) resolveScheduleInvoice(ctx context.Context, invoiceID, userID, quoteID, scheduleID string, monthIndexes []int32, issuedAt time.Time) (*resolvedInvoice, int32, error) {
 	q, lines, code, err := s.fetchQuoteAndLines(ctx, userID, quoteID)
 	if err != nil || code != codes.Success {
 		return nil, code, err
@@ -99,12 +101,12 @@ func (s *Server) resolveScheduleInvoice(ctx context.Context, userID, quoteID, sc
 		}
 	}
 
-	return s.buildResolved(ctx, userID, q, lines, htByLine)
+	return s.buildResolved(ctx, invoiceID, userID, q, lines, htByLine, issuedAt)
 }
 
 // resolveQuoteInvoice gathers the data for a whole-quote invoice: each line's
 // full HT (unit_price × quantity).
-func (s *Server) resolveQuoteInvoice(ctx context.Context, userID, quoteID string) (*resolvedInvoice, int32, error) {
+func (s *Server) resolveQuoteInvoice(ctx context.Context, invoiceID, userID, quoteID string, issuedAt time.Time) (*resolvedInvoice, int32, error) {
 	q, lines, code, err := s.fetchQuoteAndLines(ctx, userID, quoteID)
 	if err != nil || code != codes.Success {
 		return nil, code, err
@@ -114,12 +116,12 @@ func (s *Server) resolveQuoteInvoice(ctx context.Context, userID, quoteID string
 	for _, l := range lines {
 		htByLine[l.GetLineId()] = lineHTFromQuoteLine(l)
 	}
-	return s.buildResolved(ctx, userID, q, lines, htByLine)
+	return s.buildResolved(ctx, invoiceID, userID, q, lines, htByLine, issuedAt)
 }
 
 // buildResolved resolves taxes, the issuer/client party block, and assembles
 // the compute and snapshot line slices. Lines with zero billed HT are skipped.
-func (s *Server) buildResolved(ctx context.Context, userID string, q *quoteGrpc.Quote, lines []*quoteGrpc.QuoteLine, htByLine map[string]int64) (*resolvedInvoice, int32, error) {
+func (s *Server) buildResolved(ctx context.Context, invoiceID, userID string, q *quoteGrpc.Quote, lines []*quoteGrpc.QuoteLine, htByLine map[string]int64, issuedAt time.Time) (*resolvedInvoice, int32, error) {
 	taxCache := newTaxCache(s.usersClient)
 
 	var parties partySnapshot
@@ -215,11 +217,15 @@ func (s *Server) buildResolved(ctx context.Context, userID string, q *quoteGrpc.
 		parties.issuerCountryCode = issuerCountry.GetCode()
 	}
 
-	// OSS distance-selling: when the seller opted in and the client is a B2C
-	// buyer in an EU country other than France, every line is taxed at the
-	// destination country's VAT rate instead of the rate carried by the quote
-	// line. oss is nil when OSS does not apply (normal domestic billing).
-	oss, code, err := s.resolveOSSRate(ctx, user, parties, clientCountry)
+	// OSS threshold assiette flag + running cumulative (excludes this draft).
+	// See docs/adr/0002-oss-seuil-bascule-automatique.md.
+	parties.countsTowardThreshold = isIntraEUB2C(parties.clientType, clientCountry)
+	cumulativeHTCents, err := s.ossCumulativeHTForYear(ctx, userID, invoiceID, issuedAt)
+	if err != nil {
+		return nil, codes.InternalError, err
+	}
+
+	oss, code, err := s.resolveOSSRate(ctx, user, cumulativeHTCents, parties, clientCountry)
 	if err != nil || code != codes.Success {
 		return nil, code, err
 	}
@@ -303,20 +309,14 @@ func (s *Server) resolveCountry(ctx context.Context, countryID int32) (*usersGrp
 	return resp.GetCountry(), codes.Success, nil
 }
 
-// resolveOSSRate decides whether OSS applies and, if so, resolves the
-// destination country's VAT rate. It returns (nil, Success, nil) when OSS does
-// not apply (seller not opted in, B2B client, or client in FR / outside the EU).
-// When OSS applies but no tax is configured for the client's country, it returns
-// codes.OSSDestinationTaxMissing so emission is blocked rather than silently
-// falling back to a domestic rate. clientCountry is the already-resolved client
-// country (nil when the client has no country) — reused to avoid re-fetching.
-func (s *Server) resolveOSSRate(ctx context.Context, user *usersGrpc.User, parties partySnapshot, clientCountry *usersGrpc.Country) (*ossRate, int32, error) {
-	if !user.GetOssEnabled() || parties.clientType != "individual" || clientCountry == nil {
-		return nil, codes.Success, nil
-	}
-
-	if !clientCountry.GetIsEu() || clientCountry.GetCode() == "FR" {
-		return nil, codes.Success, nil // domestic or non-EU: no OSS
+// resolveOSSRate resolves the destination-country VAT rate when OSS applies (see
+// ossApplies), else returns (nil, Success, nil). When OSS applies but the
+// client's country has no configured tax it returns OSSDestinationTaxMissing so
+// emission is blocked rather than falling back to a domestic rate. clientCountry
+// is reused from buildResolved to avoid re-fetching.
+func (s *Server) resolveOSSRate(ctx context.Context, user *usersGrpc.User, cumulativeHTCents int64, parties partySnapshot, clientCountry *usersGrpc.Country) (*ossRate, int32, error) {
+	if !ossApplies(user.GetOssEnabled(), cumulativeHTCents, parties.clientType, clientCountry) {
+		return nil, codes.Success, nil // domestic, non-EU, B2B, or below threshold without opt-in
 	}
 
 	taxesResp, err := s.usersClient.ListTaxesForCountry(ctx, &usersGrpc.ListTaxesForCountryRequest{CountryId: parties.clientCountryID})

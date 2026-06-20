@@ -61,6 +61,11 @@ func (s *Server) issue(ctx context.Context, invoiceID, userID, saleDate string, 
 		return &invoiceGrpc.CreateInvoiceResponse{Success: false, Code: codes.InvoiceFinalized}, nil
 	}
 
+	// Fix the legal issue date up front: it scopes the OSS threshold cumulative
+	// (Europe/Paris civil year) computed during resolution as well as the
+	// numbering year below.
+	issuedAt := time.Now().In(invoiceTZ)
+
 	// Resolve the billable data from the source (cells for schedule, full lines
 	// for quote).
 	var (
@@ -68,9 +73,9 @@ func (s *Server) issue(ctx context.Context, invoiceID, userID, saleDate string, 
 		code     int32
 	)
 	if scheduleID.Valid && scheduleID.String != "" {
-		resolved, code, err = s.resolveScheduleInvoice(ctx, userID, quoteID, scheduleID.String, months)
+		resolved, code, err = s.resolveScheduleInvoice(ctx, invoiceID, userID, quoteID, scheduleID.String, months, issuedAt)
 	} else {
-		resolved, code, err = s.resolveQuoteInvoice(ctx, userID, quoteID)
+		resolved, code, err = s.resolveQuoteInvoice(ctx, invoiceID, userID, quoteID, issuedAt)
 	}
 	if err != nil {
 		return &invoiceGrpc.CreateInvoiceResponse{Success: false, Code: code}, err
@@ -84,7 +89,6 @@ func (s *Server) issue(ctx context.Context, invoiceID, userID, saleDate string, 
 
 	totals := computeTotals(resolved.compute, resolved.vatExempt)
 
-	issuedAt := time.Now().In(invoiceTZ)
 	sale, due := resolveSaleAndDue(issuedAt, saleDate, dueInDays)
 	year := issuedAt.Year()
 

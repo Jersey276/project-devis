@@ -16,18 +16,20 @@ import (
 
 // seedPartySnapshot writes a party snapshot row directly, including the buyer
 // SIREN/VAT (migration 000004), client_type (000005), client_country_id
-// (000006), oss_applied (000007) and the issuer/client country codes (000008).
-func seedPartySnapshot(t *testing.T, db *sql.DB, invoiceID, clientSiren, clientVat, clientType string, clientCountryID int32, ossApplied bool, issuerCountryCode, clientCountryCode string) {
+// (000006), oss_applied (000007), the issuer/client country codes (000008) and
+// counts_toward_oss_threshold (000009).
+func seedPartySnapshot(t *testing.T, db *sql.DB, invoiceID, clientSiren, clientVat, clientType string, clientCountryID int32, ossApplied bool, issuerCountryCode, clientCountryCode string, countsTowardThreshold bool) {
 	t.Helper()
 	_, err := db.Exec(
 		`INSERT INTO invoice_party_snapshots (
 			invoice_id,
 			issuer_company, issuer_siren, issuer_vat,
 			client_first_name, client_last_name, client_company, client_siren, client_vat,
-			client_type, client_country_id, oss_applied, issuer_country_code, client_country_code
+			client_type, client_country_id, oss_applied, issuer_country_code, client_country_code,
+			counts_toward_oss_threshold
 		) VALUES ($1, 'Acme SARL', '123456782', 'FR12345678901',
-		          'Jean', 'Dupont', 'Dupont SAS', $2, $3, $4, $5, $6, $7, $8)`,
-		invoiceID, clientSiren, clientVat, clientType, clientCountryID, ossApplied, issuerCountryCode, clientCountryCode)
+		          'Jean', 'Dupont', 'Dupont SAS', $2, $3, $4, $5, $6, $7, $8, $9)`,
+		invoiceID, clientSiren, clientVat, clientType, clientCountryID, ossApplied, issuerCountryCode, clientCountryCode, countsTowardThreshold)
 	if err != nil {
 		t.Fatalf("seed party snapshot: %v", err)
 	}
@@ -42,7 +44,7 @@ func TestPartySnapshot_ExposesClientTaxIds(t *testing.T) {
 
 	seedIssuedInvoice(t, db, userID, "inv-party", "2099-0001",
 		time.Date(2099, 5, 1, 9, 0, 0, 0, time.UTC), 1)
-	seedPartySnapshot(t, db, "inv-party", "987654321", "FR99887766554", "business", 42, false, "FR", "FR")
+	seedPartySnapshot(t, db, "inv-party", "987654321", "FR99887766554", "business", 42, false, "FR", "FR", false)
 
 	srv := actions.NewServer(db, nil, nil, nil)
 	resp, err := srv.GetInvoice(context.Background(), &invoiceGrpc.GetInvoiceRequest{
@@ -92,7 +94,7 @@ func TestPartySnapshot_EmptyClientTaxIds(t *testing.T) {
 
 	seedIssuedInvoice(t, db, userID, "inv-empty", "2099-0002",
 		time.Date(2099, 5, 2, 9, 0, 0, 0, time.UTC), 2)
-	seedPartySnapshot(t, db, "inv-empty", "", "", "", 0, false, "", "")
+	seedPartySnapshot(t, db, "inv-empty", "", "", "", 0, false, "", "", false)
 
 	srv := actions.NewServer(db, nil, nil, nil)
 	resp, err := srv.GetInvoice(context.Background(), &invoiceGrpc.GetInvoiceRequest{
@@ -118,7 +120,7 @@ func TestPartySnapshot_OssApplied(t *testing.T) {
 
 	seedIssuedInvoice(t, db, userID, "inv-oss", "2099-0003",
 		time.Date(2099, 5, 3, 9, 0, 0, 0, time.UTC), 3)
-	seedPartySnapshot(t, db, "inv-oss", "", "", "individual", 276, true, "FR", "DE")
+	seedPartySnapshot(t, db, "inv-oss", "", "", "individual", 276, true, "FR", "DE", true)
 
 	srv := actions.NewServer(db, nil, nil, nil)
 	resp, err := srv.GetInvoice(context.Background(), &invoiceGrpc.GetInvoiceRequest{

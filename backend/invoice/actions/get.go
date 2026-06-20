@@ -105,10 +105,12 @@ func (s *Server) getDraftPreview(ctx context.Context, req *invoiceGrpc.GetInvoic
 		code     int32
 		err      error
 	)
+	// Not yet issued: preview the VAT it would carry if issued now.
+	previewAt := time.Now().In(invoiceTZ)
 	if scheduleID.Valid && scheduleID.String != "" {
-		resolved, code, err = s.resolveScheduleInvoice(ctx, req.UserId, quoteID, scheduleID.String, months)
+		resolved, code, err = s.resolveScheduleInvoice(ctx, req.InvoiceId, req.UserId, quoteID, scheduleID.String, months, previewAt)
 	} else {
-		resolved, code, err = s.resolveQuoteInvoice(ctx, req.UserId, quoteID)
+		resolved, code, err = s.resolveQuoteInvoice(ctx, req.InvoiceId, req.UserId, quoteID, previewAt)
 	}
 	if err != nil {
 		return &invoiceGrpc.GetInvoiceResponse{Success: false, Code: code}, err
