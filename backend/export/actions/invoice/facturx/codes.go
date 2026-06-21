@@ -15,8 +15,10 @@ import (
 
 // Fixed values for the targeted profile and the French, euro context.
 const (
-	// guidelineEN16931 is the profile identifier carried by the document context.
-	guidelineEN16931 = "urn:cen.eu:en16931:2017"
+	// guidelineEN16931 is the profile identifier (BT-24) carried by the document
+	// context. The Factur-X EN 16931 "compliant" URN both names the EN 16931 model
+	// and declares Factur-X conformance — what a French PDP expects.
+	guidelineEN16931 = "urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:en16931"
 	// typeCodeInvoice is UNTDID 1001 code 380 = commercial invoice.
 	typeCodeInvoice = "380"
 	// typeCodeCreditNote is UNTDID 1001 code 381 = credit note.
@@ -38,17 +40,20 @@ const (
 
 // VAT category codes (UNTDID 5305) used by ApplicableTradeTax.
 const (
-	categoryStandard = "S" // standard rate
-	categoryExempt   = "E" // exempt (art. 293 B franchise)
-	categoryZero     = "Z" // zero-rated
+	categoryStandard   = "S" // standard rate
+	categoryNotSubject = "O" // not subject to VAT (art. 293 B franchise)
+	categoryZero       = "Z" // zero-rated
 )
 
 // categoryForRate maps a snapshot tax rate to its EN 16931 VAT category code.
-// The whole invoice is exempt under the French franchise when vatExempt is set
-// (the issuer has no VAT number): every line is then category E with no rate.
+// Under the French franchise (vatExempt) the seller is NOT a taxable person — it
+// holds no VAT number — so the operation is category O "Not subject to VAT", not
+// E "Exempt". EN 16931 keeps these distinct: an E document requires a seller VAT
+// number and an explicit 0% rate (BR-E-02/05), whereas O forbids any VAT number
+// on any party and carries no rate (BR-O-02/05). The franchise is squarely O.
 func categoryForRate(rate string, vatExempt bool) string {
 	if vatExempt {
-		return categoryExempt
+		return categoryNotSubject
 	}
 	if isZeroRate(rate) {
 		return categoryZero

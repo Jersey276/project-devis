@@ -38,6 +38,21 @@ func sampleInvoice() *invoicepb.InvoiceDetails {
 	}
 }
 
+// exemptInvoice is a French franchise (art. 293 B) invoice: the seller is not a
+// taxable person, so it holds no VAT number and the operation is "not subject to
+// VAT" (category O). Used by both the build and the Schematron conformance tests.
+func exemptInvoice() *invoicepb.InvoiceDetails {
+	in := sampleInvoice()
+	in.VatExempt = true
+	in.VatBreakdown = nil
+	in.TotalVatCents = 0
+	in.TotalTtcCents = in.TotalHtCents
+	// A franchise seller (and typically its buyer) carries no VAT number.
+	in.Issuer.Vat = ""
+	in.Client.Vat = ""
+	return in
+}
+
 // Go's encoding/xml does not round-trip prefixed namespaces through XMLName, so
 // we assert on the generated wire text (which a real CII consumer resolves by
 // namespace URI). We do verify the document is at least well-formed XML.
@@ -74,7 +89,7 @@ func TestBuild_HeaderAndProfile(t *testing.T) {
 	}
 	s := string(out)
 	mustContain(t, s, `xmlns:rsm="`+nsRSM+`"`)
-	mustContain(t, s, `<ram:ID>urn:cen.eu:en16931:2017</ram:ID>`)
+	mustContain(t, s, `<ram:ID>`+guidelineEN16931+`</ram:ID>`)
 	mustContain(t, s, `<ram:ID>2026-0001</ram:ID>`)
 	mustContain(t, s, `<ram:TypeCode>380</ram:TypeCode>`)
 	mustContain(t, s, `<udt:DateTimeString format="102">20260614</udt:DateTimeString>`)
@@ -120,16 +135,17 @@ func TestBuild_Lines(t *testing.T) {
 }
 
 func TestBuild_VatExempt(t *testing.T) {
-	in := sampleInvoice()
-	in.VatExempt = true
-	in.VatBreakdown = nil
-	in.TotalVatCents = 0
-	in.TotalTtcCents = in.TotalHtCents
+	in := exemptInvoice()
 	s := mustBuild(t, in)
-	mustContain(t, s, `<ram:CategoryCode>E</ram:CategoryCode>`)
+	// Franchise art. 293 B = not subject to VAT = category O (not E "Exempt").
+	mustContain(t, s, `<ram:CategoryCode>O</ram:CategoryCode>`)
 	mustContain(t, s, `<ram:ExemptionReason>`+exemptReason293B+`</ram:ExemptionReason>`)
 	if strings.Contains(s, "<ram:RateApplicablePercent>") {
-		t.Error("exempt invoice must not carry a VAT rate")
+		t.Error("a not-subject-to-VAT invoice must not carry a VAT rate")
+	}
+	// BR-O-02/03/04: a not-subject-to-VAT document carries no VAT number anywhere.
+	if strings.Contains(s, `schemeID="VA"`) {
+		t.Error("franchise (category O) invoice must not emit any VAT registration")
 	}
 }
 

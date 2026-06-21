@@ -182,15 +182,20 @@ func lineTax(rate string, exempt bool) tradeTax {
 }
 
 func buildAgreement(d docInput) headerTradeAgreement {
+	// Under the franchise the whole document is category O "Not subject to VAT",
+	// which EN 16931 (BR-O-02/03/04) forbids from carrying ANY VAT number — on the
+	// seller, a tax representative, or the buyer. Drop VAT registrations entirely.
 	return headerTradeAgreement{
-		Seller: party(d.issuer),
-		Buyer:  party(d.client),
+		Seller: party(d.issuer, d.vatExempt),
+		Buyer:  party(d.client, d.vatExempt),
 	}
 }
 
 // party maps a snapshot InvoiceParty to a CII trade party. SIREN/VAT groups are
-// omitted when absent (legacy or B2C rows), which stays EN 16931-valid.
-func party(p *invoicepb.InvoiceParty) tradeParty {
+// omitted when absent (legacy or B2C rows), which stays EN 16931-valid. When the
+// document is not subject to VAT (franchise), the VAT group is omitted regardless
+// (see buildAgreement).
+func party(p *invoicepb.InvoiceParty, vatExempt bool) tradeParty {
 	if p == nil {
 		return tradeParty{Address: &postalAddress{CountryID: countryFR}}
 	}
@@ -201,7 +206,7 @@ func party(p *invoicepb.InvoiceParty) tradeParty {
 	if siren := strings.TrimSpace(p.GetSiren()); siren != "" {
 		tp.LegalOrg = &legalOrganization{ID: schemeID{SchemeID: schemeSIREN, Value: siren}}
 	}
-	if vat := strings.TrimSpace(p.GetVat()); vat != "" {
+	if vat := strings.TrimSpace(p.GetVat()); vat != "" && !vatExempt {
 		tp.TaxRegistration = &taxRegistration{ID: schemeID{SchemeID: schemeVAT, Value: vat}}
 	}
 	return tp
@@ -269,7 +274,8 @@ func buildSettlement(d docInput) headerTradeSettlement {
 }
 
 // buildTaxes emits one ApplicableTradeTax per VAT-breakdown bucket. Under the
-// franchise the whole document is a single exempt group.
+// franchise the whole document is a single "not subject to VAT" (O) group: zero
+// calculated amount, no rate, exemption reason carried (BR-O-09/10).
 func buildTaxes(d docInput) []tradeTax {
 	if d.vatExempt {
 		return []tradeTax{{
@@ -277,7 +283,7 @@ func buildTaxes(d docInput) []tradeTax {
 			TypeCode:         "VAT",
 			ExemptionReason:  exemptReason293B,
 			BasisAmount:      amountFromCents(d.totalHtCents),
-			CategoryCode:     categoryExempt,
+			CategoryCode:     categoryNotSubject,
 		}}
 	}
 	out := make([]tradeTax, 0, len(d.vat))

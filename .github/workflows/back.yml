@@ -64,6 +64,16 @@ jobs:
         if: matrix.service == 'export'
         run: sudo apt-get update && sudo apt-get install -y libxml2-utils
 
+      # The export service also runs the EN 16931 Schematron (business rules) via
+      # the vendored Saxon-HE jar, which needs a JRE 11+; without it that
+      # conformance test silently skips.
+      - name: Set up JRE (export only — Schematron via Saxon)
+        if: matrix.service == 'export'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
       - name: Run tests with coverage
         id: tests
         run: |

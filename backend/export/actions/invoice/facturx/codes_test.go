@@ -49,8 +49,8 @@ func TestDateCII(t *testing.T) {
 }
 
 func TestCategoryForRate(t *testing.T) {
-	if got := categoryForRate("20", true); got != categoryExempt {
-		t.Errorf("exempt invoice should be category E, got %q", got)
+	if got := categoryForRate("20", true); got != categoryNotSubject {
+		t.Errorf("franchise (293 B) invoice should be category O, got %q", got)
 	}
 	if got := categoryForRate("0", false); got != categoryZero {
 		t.Errorf("zero rate should be category Z, got %q", got)
