@@ -25,7 +25,9 @@ const (
 	InvoiceCodeInvoiceNotIssued              int32 = 4007
 	InvoiceCodeCreditNoteNoLinesLeft         int32 = 4008
 	InvoiceCodeSealError                     int32 = 4009
-		InvoiceCodeOSSDestinationTaxMissing      int32 = 4010
+	InvoiceCodeOSSDestinationTaxMissing      int32 = 4010
+	InvoiceCodeLifecycleTransitionInvalid    int32 = 4011
+	InvoiceCodeLifecycleRequiresIssued       int32 = 4012
 
 	InvoiceCodeInternalError int32 = 2001
 )
@@ -53,6 +55,8 @@ var invoiceErrors = &serviceErrors{
 		InvoiceCodeCreditNoteNoLinesLeft:         {http.StatusConflict, "Toutes les lignes de cette facture ont déjà été avoirées."},
 		InvoiceCodeSealError:                     {http.StatusInternalServerError, "Une erreur interne est survenue."},
 		InvoiceCodeOSSDestinationTaxMissing:      {http.StatusUnprocessableEntity, "Aucune TVA n'est configurée pour le pays du client (régime OSS). Configurez le taux du pays de destination avant d'émettre."},
+		InvoiceCodeLifecycleTransitionInvalid:    {http.StatusConflict, "Transition de statut e-invoicing non autorisée."},
+		InvoiceCodeLifecycleRequiresIssued:       {http.StatusConflict, "Le statut e-invoicing ne s'applique qu'aux factures émises."},
 		InvoiceCodeInternalError:                 {http.StatusInternalServerError, "Une erreur interne est survenue."},
 	},
 	unavailableMessage: "Service de facturation indisponible.",
@@ -82,6 +86,8 @@ func InvoicesRoutes(r *gin.RouterGroup) {
 	one.POST("/issue", func(c *gin.Context) { IssueInvoice(c, client) })
 	one.POST("/paid", func(c *gin.Context) { MarkInvoicePaid(c, client) })
 	one.POST("/credit-notes", func(c *gin.Context) { CreateCreditNote(c, client) })
+	one.POST("/lifecycle", func(c *gin.Context) { SetInvoiceLifecycleStatus(c, client) })
+	one.GET("/lifecycle-events", func(c *gin.Context) { ListInvoiceLifecycleEvents(c, client) })
 }
 
 func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient) {
@@ -100,14 +106,15 @@ func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient) {
 	out := make([]gin.H, 0, len(resp.Invoices))
 	for _, in := range resp.Invoices {
 		out = append(out, gin.H{
-			"invoice_id":      in.InvoiceId,
-			"invoice_number":  in.InvoiceNumber,
-			"status":          in.Status,
-			"quote_id":        in.QuoteId,
-			"schedule_id":     in.ScheduleId,
-			"issued_at":       in.IssuedAt,
-			"due_date":        in.DueDate,
-			"total_ttc_cents": in.TotalTtcCents,
+			"invoice_id":       in.InvoiceId,
+			"invoice_number":   in.InvoiceNumber,
+			"status":           in.Status,
+			"quote_id":         in.QuoteId,
+			"schedule_id":      in.ScheduleId,
+			"issued_at":        in.IssuedAt,
+			"due_date":         in.DueDate,
+			"total_ttc_cents":  in.TotalTtcCents,
+			"lifecycle_status": in.LifecycleStatus,
 		})
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "invoices": out})
@@ -275,6 +282,48 @@ func DeleteDraftInvoice(c *gin.Context, client invoice.InvoiceServiceClient) {
 	replyGeneric(c, resp, err)
 }
 
+func SetInvoiceLifecycleStatus(c *gin.Context, client invoice.InvoiceServiceClient) {
+	var input struct {
+		Status string `json:"status" binding:"required"`
+		Note   string `json:"note"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+	resp, err := client.SetInvoiceLifecycleStatus(c.Request.Context(), &invoice.SetInvoiceLifecycleStatusRequest{
+		InvoiceId: c.Param("id"),
+		UserId:    userIDFromCtx(c),
+		Status:    input.Status,
+		Note:      input.Note,
+	})
+	replyGeneric(c, resp, err)
+}
+
+func ListInvoiceLifecycleEvents(c *gin.Context, client invoice.InvoiceServiceClient) {
+	resp, err := client.ListInvoiceLifecycleEvents(c.Request.Context(), &invoice.ListInvoiceLifecycleEventsRequest{
+		InvoiceId: c.Param("id"),
+		UserId:    userIDFromCtx(c),
+	})
+	if err != nil {
+		invoiceErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		invoiceErrors.reply(c, resp.Code)
+		return
+	}
+	out := make([]gin.H, 0, len(resp.Events))
+	for _, e := range resp.Events {
+		out = append(out, gin.H{
+			"status":     e.Status,
+			"note":       e.Note,
+			"created_at": e.CreatedAt,
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "events": out})
+}
+
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 func replyCreate(c *gin.Context, resp *invoice.CreateInvoiceResponse, err error) {
@@ -378,5 +427,6 @@ func invoiceDetailsToJSON(d *invoice.InvoiceDetails) gin.H {
 		"vat_exempt":           d.VatExempt,
 		"oss_applied":          d.OssApplied,
 		"credited_positions":   d.CreditedPositions,
+		"lifecycle_status":     d.LifecycleStatus,
 	}
 }

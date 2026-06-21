@@ -39,14 +39,16 @@ func (s *Server) GetInvoice(ctx context.Context, req *invoiceGrpc.GetInvoiceRequ
 		totalVAT   int64
 		totalTTC   int64
 		vatExempt  bool
+		lifecycle  string
 	)
 	err = s.db.QueryRowContext(ctx,
 		`SELECT quote_id, schedule_id, billed_month_indexes, status, invoice_number,
-		        issued_at, sale_date, due_date, total_ht_cents, total_vat_cents, total_ttc_cents, vat_exempt
+		        issued_at, sale_date, due_date, total_ht_cents, total_vat_cents, total_ttc_cents, vat_exempt,
+		        lifecycle_status
 		 FROM invoices WHERE invoice_id=$1 AND user_id=$2`,
 		req.InvoiceId, req.UserId,
 	).Scan(&quoteID, &scheduleID, &months, &status, &invoiceNum,
-		&issuedAt, &saleDate, &dueDate, &totalHT, &totalVAT, &totalTTC, &vatExempt)
+		&issuedAt, &saleDate, &dueDate, &totalHT, &totalVAT, &totalTTC, &vatExempt, &lifecycle)
 	if err == sql.ErrNoRows {
 		return &invoiceGrpc.GetInvoiceResponse{Success: false, Code: codes.NotFound}, nil
 	}
@@ -69,6 +71,7 @@ func (s *Server) GetInvoice(ctx context.Context, req *invoiceGrpc.GetInvoiceRequ
 		TotalVatCents:      totalVAT,
 		TotalTtcCents:      totalTTC,
 		VatExempt:          vatExempt,
+		LifecycleStatus:    lifecycle,
 	}
 
 	if status == "DRAFT" {

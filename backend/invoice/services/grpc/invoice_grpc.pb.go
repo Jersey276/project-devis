@@ -19,18 +19,20 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	InvoiceService_CreateInvoiceFromSchedule_FullMethodName = "/invoice.InvoiceService/CreateInvoiceFromSchedule"
-	InvoiceService_CreateInvoiceFromQuote_FullMethodName    = "/invoice.InvoiceService/CreateInvoiceFromQuote"
-	InvoiceService_IssueInvoice_FullMethodName              = "/invoice.InvoiceService/IssueInvoice"
-	InvoiceService_MarkInvoicePaid_FullMethodName           = "/invoice.InvoiceService/MarkInvoicePaid"
-	InvoiceService_DeleteDraftInvoice_FullMethodName        = "/invoice.InvoiceService/DeleteDraftInvoice"
-	InvoiceService_GetInvoice_FullMethodName                = "/invoice.InvoiceService/GetInvoice"
-	InvoiceService_ListInvoices_FullMethodName              = "/invoice.InvoiceService/ListInvoices"
-	InvoiceService_CreateCreditNote_FullMethodName          = "/invoice.InvoiceService/CreateCreditNote"
-	InvoiceService_GetCreditNote_FullMethodName             = "/invoice.InvoiceService/GetCreditNote"
-	InvoiceService_ListCreditNotes_FullMethodName           = "/invoice.InvoiceService/ListCreditNotes"
-	InvoiceService_VerifyChain_FullMethodName               = "/invoice.InvoiceService/VerifyChain"
-	InvoiceService_GetOSSThresholdStatus_FullMethodName     = "/invoice.InvoiceService/GetOSSThresholdStatus"
+	InvoiceService_CreateInvoiceFromSchedule_FullMethodName  = "/invoice.InvoiceService/CreateInvoiceFromSchedule"
+	InvoiceService_CreateInvoiceFromQuote_FullMethodName     = "/invoice.InvoiceService/CreateInvoiceFromQuote"
+	InvoiceService_IssueInvoice_FullMethodName               = "/invoice.InvoiceService/IssueInvoice"
+	InvoiceService_MarkInvoicePaid_FullMethodName            = "/invoice.InvoiceService/MarkInvoicePaid"
+	InvoiceService_DeleteDraftInvoice_FullMethodName         = "/invoice.InvoiceService/DeleteDraftInvoice"
+	InvoiceService_GetInvoice_FullMethodName                 = "/invoice.InvoiceService/GetInvoice"
+	InvoiceService_ListInvoices_FullMethodName               = "/invoice.InvoiceService/ListInvoices"
+	InvoiceService_CreateCreditNote_FullMethodName           = "/invoice.InvoiceService/CreateCreditNote"
+	InvoiceService_GetCreditNote_FullMethodName              = "/invoice.InvoiceService/GetCreditNote"
+	InvoiceService_ListCreditNotes_FullMethodName            = "/invoice.InvoiceService/ListCreditNotes"
+	InvoiceService_VerifyChain_FullMethodName                = "/invoice.InvoiceService/VerifyChain"
+	InvoiceService_GetOSSThresholdStatus_FullMethodName      = "/invoice.InvoiceService/GetOSSThresholdStatus"
+	InvoiceService_SetInvoiceLifecycleStatus_FullMethodName  = "/invoice.InvoiceService/SetInvoiceLifecycleStatus"
+	InvoiceService_ListInvoiceLifecycleEvents_FullMethodName = "/invoice.InvoiceService/ListInvoiceLifecycleEvents"
 )
 
 // InvoiceServiceClient is the client API for InvoiceService service.
@@ -56,6 +58,11 @@ type InvoiceServiceClient interface {
 	// OSS distance-selling threshold status for the current civil year: where the
 	// issuer stands against the EUR 10 000 threshold (art. 259 D CGI).
 	GetOSSThresholdStatus(ctx context.Context, in *GetOSSThresholdStatusRequest, opts ...grpc.CallOption) (*GetOSSThresholdStatusResponse, error)
+	// E-invoicing lifecycle (réforme FR B2B). Orthogonal to the business status:
+	// tracks the invoice on the platform (déposée/reçue/approuvée/refusée/encaissée).
+	// Manual issuer-driven transitions for now; platform auto-feed comes in B6.
+	SetInvoiceLifecycleStatus(ctx context.Context, in *SetInvoiceLifecycleStatusRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	ListInvoiceLifecycleEvents(ctx context.Context, in *ListInvoiceLifecycleEventsRequest, opts ...grpc.CallOption) (*ListInvoiceLifecycleEventsResponse, error)
 }
 
 type invoiceServiceClient struct {
@@ -186,6 +193,26 @@ func (c *invoiceServiceClient) GetOSSThresholdStatus(ctx context.Context, in *Ge
 	return out, nil
 }
 
+func (c *invoiceServiceClient) SetInvoiceLifecycleStatus(ctx context.Context, in *SetInvoiceLifecycleStatusRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, InvoiceService_SetInvoiceLifecycleStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *invoiceServiceClient) ListInvoiceLifecycleEvents(ctx context.Context, in *ListInvoiceLifecycleEventsRequest, opts ...grpc.CallOption) (*ListInvoiceLifecycleEventsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListInvoiceLifecycleEventsResponse)
+	err := c.cc.Invoke(ctx, InvoiceService_ListInvoiceLifecycleEvents_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InvoiceServiceServer is the server API for InvoiceService service.
 // All implementations must embed UnimplementedInvoiceServiceServer
 // for forward compatibility.
@@ -209,6 +236,11 @@ type InvoiceServiceServer interface {
 	// OSS distance-selling threshold status for the current civil year: where the
 	// issuer stands against the EUR 10 000 threshold (art. 259 D CGI).
 	GetOSSThresholdStatus(context.Context, *GetOSSThresholdStatusRequest) (*GetOSSThresholdStatusResponse, error)
+	// E-invoicing lifecycle (réforme FR B2B). Orthogonal to the business status:
+	// tracks the invoice on the platform (déposée/reçue/approuvée/refusée/encaissée).
+	// Manual issuer-driven transitions for now; platform auto-feed comes in B6.
+	SetInvoiceLifecycleStatus(context.Context, *SetInvoiceLifecycleStatusRequest) (*GenericResponse, error)
+	ListInvoiceLifecycleEvents(context.Context, *ListInvoiceLifecycleEventsRequest) (*ListInvoiceLifecycleEventsResponse, error)
 	mustEmbedUnimplementedInvoiceServiceServer()
 }
 
@@ -254,6 +286,12 @@ func (UnimplementedInvoiceServiceServer) VerifyChain(context.Context, *VerifyCha
 }
 func (UnimplementedInvoiceServiceServer) GetOSSThresholdStatus(context.Context, *GetOSSThresholdStatusRequest) (*GetOSSThresholdStatusResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetOSSThresholdStatus not implemented")
+}
+func (UnimplementedInvoiceServiceServer) SetInvoiceLifecycleStatus(context.Context, *SetInvoiceLifecycleStatusRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetInvoiceLifecycleStatus not implemented")
+}
+func (UnimplementedInvoiceServiceServer) ListInvoiceLifecycleEvents(context.Context, *ListInvoiceLifecycleEventsRequest) (*ListInvoiceLifecycleEventsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListInvoiceLifecycleEvents not implemented")
 }
 func (UnimplementedInvoiceServiceServer) mustEmbedUnimplementedInvoiceServiceServer() {}
 func (UnimplementedInvoiceServiceServer) testEmbeddedByValue()                        {}
@@ -492,6 +530,42 @@ func _InvoiceService_GetOSSThresholdStatus_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InvoiceService_SetInvoiceLifecycleStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetInvoiceLifecycleStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InvoiceServiceServer).SetInvoiceLifecycleStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InvoiceService_SetInvoiceLifecycleStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InvoiceServiceServer).SetInvoiceLifecycleStatus(ctx, req.(*SetInvoiceLifecycleStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InvoiceService_ListInvoiceLifecycleEvents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListInvoiceLifecycleEventsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InvoiceServiceServer).ListInvoiceLifecycleEvents(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InvoiceService_ListInvoiceLifecycleEvents_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InvoiceServiceServer).ListInvoiceLifecycleEvents(ctx, req.(*ListInvoiceLifecycleEventsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InvoiceService_ServiceDesc is the grpc.ServiceDesc for InvoiceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -546,6 +620,14 @@ var InvoiceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOSSThresholdStatus",
 			Handler:    _InvoiceService_GetOSSThresholdStatus_Handler,
+		},
+		{
+			MethodName: "SetInvoiceLifecycleStatus",
+			Handler:    _InvoiceService_SetInvoiceLifecycleStatus_Handler,
+		},
+		{
+			MethodName: "ListInvoiceLifecycleEvents",
+			Handler:    _InvoiceService_ListInvoiceLifecycleEvents_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

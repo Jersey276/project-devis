@@ -594,9 +594,7 @@ type InvoiceParty struct {
 	// time (” for legacy). Carries the issuer code on the issuer party and the
 	// client code on the client party; drives the Factur-X buyer/seller country.
 	CountryCode string `protobuf:"bytes,15,opt,name=country_code,json=countryCode,proto3" json:"country_code,omitempty"`
-	// iban / bic are the issuer's payment instructions, frozen at issue time and
-	// emitted as BG-16 (BT-84 IBAN, BT-86 BIC) in the Factur-X CII. Issuer side
-	// only (” for the client party and legacy snapshots).
+	// Issuer payment instructions (BG-16), frozen at issue time. Issuer side only.
 	Iban          string `protobuf:"bytes,16,opt,name=iban,proto3" json:"iban,omitempty"`
 	Bic           string `protobuf:"bytes,17,opt,name=bic,proto3" json:"bic,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -946,9 +944,12 @@ type InvoiceDetails struct {
 	// oss_applied is the frozen OSS distance-selling flag: when true, every line
 	// was taxed at the client's destination-country VAT rate (declared via the
 	// EU One-Stop-Shop), which drives the OSS legal mention on the PDF.
-	OssApplied    bool `protobuf:"varint,20,opt,name=oss_applied,json=ossApplied,proto3" json:"oss_applied,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	OssApplied bool `protobuf:"varint,20,opt,name=oss_applied,json=ossApplied,proto3" json:"oss_applied,omitempty"`
+	// lifecycle_status is the e-invoicing platform status: "NONE" until a
+	// lifecycle event is recorded, then DEPOSITED/RECEIVED/APPROVED/REJECTED/COLLECTED.
+	LifecycleStatus string `protobuf:"bytes,21,opt,name=lifecycle_status,json=lifecycleStatus,proto3" json:"lifecycle_status,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *InvoiceDetails) Reset() {
@@ -1121,6 +1122,13 @@ func (x *InvoiceDetails) GetOssApplied() bool {
 	return false
 }
 
+func (x *InvoiceDetails) GetLifecycleStatus() string {
+	if x != nil {
+		return x.LifecycleStatus
+	}
+	return ""
+}
+
 type GetInvoiceResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -1234,17 +1242,18 @@ func (x *ListInvoicesRequest) GetQuoteId() string {
 }
 
 type InvoiceSummary struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	InvoiceId     string                 `protobuf:"bytes,1,opt,name=invoice_id,json=invoiceId,proto3" json:"invoice_id,omitempty"`
-	InvoiceNumber string                 `protobuf:"bytes,2,opt,name=invoice_number,json=invoiceNumber,proto3" json:"invoice_number,omitempty"`
-	Status        string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
-	QuoteId       string                 `protobuf:"bytes,4,opt,name=quote_id,json=quoteId,proto3" json:"quote_id,omitempty"`
-	ScheduleId    string                 `protobuf:"bytes,5,opt,name=schedule_id,json=scheduleId,proto3" json:"schedule_id,omitempty"`
-	IssuedAt      string                 `protobuf:"bytes,6,opt,name=issued_at,json=issuedAt,proto3" json:"issued_at,omitempty"`
-	DueDate       string                 `protobuf:"bytes,7,opt,name=due_date,json=dueDate,proto3" json:"due_date,omitempty"`
-	TotalTtcCents int64                  `protobuf:"varint,8,opt,name=total_ttc_cents,json=totalTtcCents,proto3" json:"total_ttc_cents,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	InvoiceId       string                 `protobuf:"bytes,1,opt,name=invoice_id,json=invoiceId,proto3" json:"invoice_id,omitempty"`
+	InvoiceNumber   string                 `protobuf:"bytes,2,opt,name=invoice_number,json=invoiceNumber,proto3" json:"invoice_number,omitempty"`
+	Status          string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
+	QuoteId         string                 `protobuf:"bytes,4,opt,name=quote_id,json=quoteId,proto3" json:"quote_id,omitempty"`
+	ScheduleId      string                 `protobuf:"bytes,5,opt,name=schedule_id,json=scheduleId,proto3" json:"schedule_id,omitempty"`
+	IssuedAt        string                 `protobuf:"bytes,6,opt,name=issued_at,json=issuedAt,proto3" json:"issued_at,omitempty"`
+	DueDate         string                 `protobuf:"bytes,7,opt,name=due_date,json=dueDate,proto3" json:"due_date,omitempty"`
+	TotalTtcCents   int64                  `protobuf:"varint,8,opt,name=total_ttc_cents,json=totalTtcCents,proto3" json:"total_ttc_cents,omitempty"`
+	LifecycleStatus string                 `protobuf:"bytes,9,opt,name=lifecycle_status,json=lifecycleStatus,proto3" json:"lifecycle_status,omitempty"` // "NONE" until a lifecycle event is recorded
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *InvoiceSummary) Reset() {
@@ -1331,6 +1340,13 @@ func (x *InvoiceSummary) GetTotalTtcCents() int64 {
 		return x.TotalTtcCents
 	}
 	return 0
+}
+
+func (x *InvoiceSummary) GetLifecycleStatus() string {
+	if x != nil {
+		return x.LifecycleStatus
+	}
+	return ""
 }
 
 type ListInvoicesResponse struct {
@@ -2307,6 +2323,246 @@ func (x *GetOSSThresholdStatusResponse) GetOssActive() bool {
 	return false
 }
 
+type SetInvoiceLifecycleStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	InvoiceId     string                 `protobuf:"bytes,1,opt,name=invoice_id,json=invoiceId,proto3" json:"invoice_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Status        string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"` // DEPOSITED | RECEIVED | APPROVED | REJECTED | COLLECTED
+	Note          string                 `protobuf:"bytes,4,opt,name=note,proto3" json:"note,omitempty"`     // optional
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetInvoiceLifecycleStatusRequest) Reset() {
+	*x = SetInvoiceLifecycleStatusRequest{}
+	mi := &file_services_grpc_invoice_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetInvoiceLifecycleStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetInvoiceLifecycleStatusRequest) ProtoMessage() {}
+
+func (x *SetInvoiceLifecycleStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_services_grpc_invoice_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetInvoiceLifecycleStatusRequest.ProtoReflect.Descriptor instead.
+func (*SetInvoiceLifecycleStatusRequest) Descriptor() ([]byte, []int) {
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *SetInvoiceLifecycleStatusRequest) GetInvoiceId() string {
+	if x != nil {
+		return x.InvoiceId
+	}
+	return ""
+}
+
+func (x *SetInvoiceLifecycleStatusRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *SetInvoiceLifecycleStatusRequest) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *SetInvoiceLifecycleStatusRequest) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+type InvoiceLifecycleEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
+	Note          string                 `protobuf:"bytes,2,opt,name=note,proto3" json:"note,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"` // RFC3339
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InvoiceLifecycleEvent) Reset() {
+	*x = InvoiceLifecycleEvent{}
+	mi := &file_services_grpc_invoice_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InvoiceLifecycleEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InvoiceLifecycleEvent) ProtoMessage() {}
+
+func (x *InvoiceLifecycleEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_services_grpc_invoice_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InvoiceLifecycleEvent.ProtoReflect.Descriptor instead.
+func (*InvoiceLifecycleEvent) Descriptor() ([]byte, []int) {
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *InvoiceLifecycleEvent) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *InvoiceLifecycleEvent) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+func (x *InvoiceLifecycleEvent) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+type ListInvoiceLifecycleEventsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	InvoiceId     string                 `protobuf:"bytes,1,opt,name=invoice_id,json=invoiceId,proto3" json:"invoice_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListInvoiceLifecycleEventsRequest) Reset() {
+	*x = ListInvoiceLifecycleEventsRequest{}
+	mi := &file_services_grpc_invoice_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListInvoiceLifecycleEventsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListInvoiceLifecycleEventsRequest) ProtoMessage() {}
+
+func (x *ListInvoiceLifecycleEventsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_services_grpc_invoice_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListInvoiceLifecycleEventsRequest.ProtoReflect.Descriptor instead.
+func (*ListInvoiceLifecycleEventsRequest) Descriptor() ([]byte, []int) {
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *ListInvoiceLifecycleEventsRequest) GetInvoiceId() string {
+	if x != nil {
+		return x.InvoiceId
+	}
+	return ""
+}
+
+func (x *ListInvoiceLifecycleEventsRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type ListInvoiceLifecycleEventsResponse struct {
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Success       bool                     `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code          int32                    `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	Events        []*InvoiceLifecycleEvent `protobuf:"bytes,3,rep,name=events,proto3" json:"events,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListInvoiceLifecycleEventsResponse) Reset() {
+	*x = ListInvoiceLifecycleEventsResponse{}
+	mi := &file_services_grpc_invoice_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListInvoiceLifecycleEventsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListInvoiceLifecycleEventsResponse) ProtoMessage() {}
+
+func (x *ListInvoiceLifecycleEventsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_services_grpc_invoice_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListInvoiceLifecycleEventsResponse.ProtoReflect.Descriptor instead.
+func (*ListInvoiceLifecycleEventsResponse) Descriptor() ([]byte, []int) {
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *ListInvoiceLifecycleEventsResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ListInvoiceLifecycleEventsResponse) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *ListInvoiceLifecycleEventsResponse) GetEvents() []*InvoiceLifecycleEvent {
+	if x != nil {
+		return x.Events
+	}
+	return nil
+}
+
 var File_services_grpc_invoice_proto protoreflect.FileDescriptor
 
 const file_services_grpc_invoice_proto_rawDesc = "" +
@@ -2389,7 +2645,7 @@ const file_services_grpc_invoice_proto_rawDesc = "" +
 	"\x0eInvoiceVatLine\x12\x19\n" +
 	"\btax_rate\x18\x01 \x01(\tR\ataxRate\x12\"\n" +
 	"\rbase_ht_cents\x18\x02 \x01(\x03R\vbaseHtCents\x12\x1b\n" +
-	"\tvat_cents\x18\x03 \x01(\x03R\bvatCents\"\xf7\x05\n" +
+	"\tvat_cents\x18\x03 \x01(\x03R\bvatCents\"\xa2\x06\n" +
 	"\x0eInvoiceDetails\x12\x1d\n" +
 	"\n" +
 	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12\x17\n" +
@@ -2415,14 +2671,15 @@ const file_services_grpc_invoice_proto_rawDesc = "" +
 	"vat_exempt\x18\x12 \x01(\bR\tvatExempt\x12-\n" +
 	"\x12credited_positions\x18\x13 \x03(\x05R\x11creditedPositions\x12\x1f\n" +
 	"\voss_applied\x18\x14 \x01(\bR\n" +
-	"ossApplied\"u\n" +
+	"ossApplied\x12)\n" +
+	"\x10lifecycle_status\x18\x15 \x01(\tR\x0flifecycleStatus\"u\n" +
 	"\x12GetInvoiceResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x121\n" +
 	"\ainvoice\x18\x03 \x01(\v2\x17.invoice.InvoiceDetailsR\ainvoice\"I\n" +
 	"\x13ListInvoicesRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x19\n" +
-	"\bquote_id\x18\x02 \x01(\tR\aquoteId\"\x8a\x02\n" +
+	"\bquote_id\x18\x02 \x01(\tR\aquoteId\"\xb5\x02\n" +
 	"\x0eInvoiceSummary\x12\x1d\n" +
 	"\n" +
 	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12%\n" +
@@ -2433,7 +2690,8 @@ const file_services_grpc_invoice_proto_rawDesc = "" +
 	"scheduleId\x12\x1b\n" +
 	"\tissued_at\x18\x06 \x01(\tR\bissuedAt\x12\x19\n" +
 	"\bdue_date\x18\a \x01(\tR\adueDate\x12&\n" +
-	"\x0ftotal_ttc_cents\x18\b \x01(\x03R\rtotalTtcCents\"y\n" +
+	"\x0ftotal_ttc_cents\x18\b \x01(\x03R\rtotalTtcCents\x12)\n" +
+	"\x10lifecycle_status\x18\t \x01(\tR\x0flifecycleStatus\"y\n" +
 	"\x14ListInvoicesResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x123\n" +
@@ -2519,7 +2777,26 @@ const file_services_grpc_invoice_proto_rawDesc = "" +
 	"\voss_enabled\x18\x06 \x01(\bR\n" +
 	"ossEnabled\x12\x1d\n" +
 	"\n" +
-	"oss_active\x18\a \x01(\bR\tossActive2\x8f\b\n" +
+	"oss_active\x18\a \x01(\bR\tossActive\"\x86\x01\n" +
+	" SetInvoiceLifecycleStatusRequest\x12\x1d\n" +
+	"\n" +
+	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x16\n" +
+	"\x06status\x18\x03 \x01(\tR\x06status\x12\x12\n" +
+	"\x04note\x18\x04 \x01(\tR\x04note\"b\n" +
+	"\x15InvoiceLifecycleEvent\x12\x16\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\x12\x12\n" +
+	"\x04note\x18\x02 \x01(\tR\x04note\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x03 \x01(\tR\tcreatedAt\"[\n" +
+	"!ListInvoiceLifecycleEventsRequest\x12\x1d\n" +
+	"\n" +
+	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\x8a\x01\n" +
+	"\"ListInvoiceLifecycleEventsResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x126\n" +
+	"\x06events\x18\x03 \x03(\v2\x1e.invoice.InvoiceLifecycleEventR\x06events2\xe8\t\n" +
 	"\x0eInvoiceService\x12f\n" +
 	"\x19CreateInvoiceFromSchedule\x12).invoice.CreateInvoiceFromScheduleRequest\x1a\x1e.invoice.CreateInvoiceResponse\x12`\n" +
 	"\x16CreateInvoiceFromQuote\x12&.invoice.CreateInvoiceFromQuoteRequest\x1a\x1e.invoice.CreateInvoiceResponse\x12L\n" +
@@ -2533,7 +2810,9 @@ const file_services_grpc_invoice_proto_rawDesc = "" +
 	"\rGetCreditNote\x12\x1d.invoice.GetCreditNoteRequest\x1a\x1e.invoice.GetCreditNoteResponse\x12T\n" +
 	"\x0fListCreditNotes\x12\x1f.invoice.ListCreditNotesRequest\x1a .invoice.ListCreditNotesResponse\x12H\n" +
 	"\vVerifyChain\x12\x1b.invoice.VerifyChainRequest\x1a\x1c.invoice.VerifyChainResponse\x12f\n" +
-	"\x15GetOSSThresholdStatus\x12%.invoice.GetOSSThresholdStatusRequest\x1a&.invoice.GetOSSThresholdStatusResponseB\x11Z\x0fgateway/invoiceb\x06proto3"
+	"\x15GetOSSThresholdStatus\x12%.invoice.GetOSSThresholdStatusRequest\x1a&.invoice.GetOSSThresholdStatusResponse\x12`\n" +
+	"\x19SetInvoiceLifecycleStatus\x12).invoice.SetInvoiceLifecycleStatusRequest\x1a\x18.invoice.GenericResponse\x12u\n" +
+	"\x1aListInvoiceLifecycleEvents\x12*.invoice.ListInvoiceLifecycleEventsRequest\x1a+.invoice.ListInvoiceLifecycleEventsResponseB\x11Z\x0fgateway/invoiceb\x06proto3"
 
 var (
 	file_services_grpc_invoice_proto_rawDescOnce sync.Once
@@ -2547,37 +2826,41 @@ func file_services_grpc_invoice_proto_rawDescGZIP() []byte {
 	return file_services_grpc_invoice_proto_rawDescData
 }
 
-var file_services_grpc_invoice_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
+var file_services_grpc_invoice_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_services_grpc_invoice_proto_goTypes = []any{
-	(*GenericResponse)(nil),                  // 0: invoice.GenericResponse
-	(*ValidationError)(nil),                  // 1: invoice.ValidationError
-	(*CreateInvoiceFromScheduleRequest)(nil), // 2: invoice.CreateInvoiceFromScheduleRequest
-	(*CreateInvoiceFromQuoteRequest)(nil),    // 3: invoice.CreateInvoiceFromQuoteRequest
-	(*CreateInvoiceResponse)(nil),            // 4: invoice.CreateInvoiceResponse
-	(*IssueInvoiceRequest)(nil),              // 5: invoice.IssueInvoiceRequest
-	(*MarkInvoicePaidRequest)(nil),           // 6: invoice.MarkInvoicePaidRequest
-	(*DeleteDraftInvoiceRequest)(nil),        // 7: invoice.DeleteDraftInvoiceRequest
-	(*GetInvoiceRequest)(nil),                // 8: invoice.GetInvoiceRequest
-	(*InvoiceParty)(nil),                     // 9: invoice.InvoiceParty
-	(*InvoiceLine)(nil),                      // 10: invoice.InvoiceLine
-	(*InvoiceVatLine)(nil),                   // 11: invoice.InvoiceVatLine
-	(*InvoiceDetails)(nil),                   // 12: invoice.InvoiceDetails
-	(*GetInvoiceResponse)(nil),               // 13: invoice.GetInvoiceResponse
-	(*ListInvoicesRequest)(nil),              // 14: invoice.ListInvoicesRequest
-	(*InvoiceSummary)(nil),                   // 15: invoice.InvoiceSummary
-	(*ListInvoicesResponse)(nil),             // 16: invoice.ListInvoicesResponse
-	(*CreateCreditNoteRequest)(nil),          // 17: invoice.CreateCreditNoteRequest
-	(*CreateCreditNoteResponse)(nil),         // 18: invoice.CreateCreditNoteResponse
-	(*GetCreditNoteRequest)(nil),             // 19: invoice.GetCreditNoteRequest
-	(*CreditNoteDetails)(nil),                // 20: invoice.CreditNoteDetails
-	(*GetCreditNoteResponse)(nil),            // 21: invoice.GetCreditNoteResponse
-	(*ListCreditNotesRequest)(nil),           // 22: invoice.ListCreditNotesRequest
-	(*CreditNoteSummary)(nil),                // 23: invoice.CreditNoteSummary
-	(*ListCreditNotesResponse)(nil),          // 24: invoice.ListCreditNotesResponse
-	(*VerifyChainRequest)(nil),               // 25: invoice.VerifyChainRequest
-	(*VerifyChainResponse)(nil),              // 26: invoice.VerifyChainResponse
-	(*GetOSSThresholdStatusRequest)(nil),     // 27: invoice.GetOSSThresholdStatusRequest
-	(*GetOSSThresholdStatusResponse)(nil),    // 28: invoice.GetOSSThresholdStatusResponse
+	(*GenericResponse)(nil),                    // 0: invoice.GenericResponse
+	(*ValidationError)(nil),                    // 1: invoice.ValidationError
+	(*CreateInvoiceFromScheduleRequest)(nil),   // 2: invoice.CreateInvoiceFromScheduleRequest
+	(*CreateInvoiceFromQuoteRequest)(nil),      // 3: invoice.CreateInvoiceFromQuoteRequest
+	(*CreateInvoiceResponse)(nil),              // 4: invoice.CreateInvoiceResponse
+	(*IssueInvoiceRequest)(nil),                // 5: invoice.IssueInvoiceRequest
+	(*MarkInvoicePaidRequest)(nil),             // 6: invoice.MarkInvoicePaidRequest
+	(*DeleteDraftInvoiceRequest)(nil),          // 7: invoice.DeleteDraftInvoiceRequest
+	(*GetInvoiceRequest)(nil),                  // 8: invoice.GetInvoiceRequest
+	(*InvoiceParty)(nil),                       // 9: invoice.InvoiceParty
+	(*InvoiceLine)(nil),                        // 10: invoice.InvoiceLine
+	(*InvoiceVatLine)(nil),                     // 11: invoice.InvoiceVatLine
+	(*InvoiceDetails)(nil),                     // 12: invoice.InvoiceDetails
+	(*GetInvoiceResponse)(nil),                 // 13: invoice.GetInvoiceResponse
+	(*ListInvoicesRequest)(nil),                // 14: invoice.ListInvoicesRequest
+	(*InvoiceSummary)(nil),                     // 15: invoice.InvoiceSummary
+	(*ListInvoicesResponse)(nil),               // 16: invoice.ListInvoicesResponse
+	(*CreateCreditNoteRequest)(nil),            // 17: invoice.CreateCreditNoteRequest
+	(*CreateCreditNoteResponse)(nil),           // 18: invoice.CreateCreditNoteResponse
+	(*GetCreditNoteRequest)(nil),               // 19: invoice.GetCreditNoteRequest
+	(*CreditNoteDetails)(nil),                  // 20: invoice.CreditNoteDetails
+	(*GetCreditNoteResponse)(nil),              // 21: invoice.GetCreditNoteResponse
+	(*ListCreditNotesRequest)(nil),             // 22: invoice.ListCreditNotesRequest
+	(*CreditNoteSummary)(nil),                  // 23: invoice.CreditNoteSummary
+	(*ListCreditNotesResponse)(nil),            // 24: invoice.ListCreditNotesResponse
+	(*VerifyChainRequest)(nil),                 // 25: invoice.VerifyChainRequest
+	(*VerifyChainResponse)(nil),                // 26: invoice.VerifyChainResponse
+	(*GetOSSThresholdStatusRequest)(nil),       // 27: invoice.GetOSSThresholdStatusRequest
+	(*GetOSSThresholdStatusResponse)(nil),      // 28: invoice.GetOSSThresholdStatusResponse
+	(*SetInvoiceLifecycleStatusRequest)(nil),   // 29: invoice.SetInvoiceLifecycleStatusRequest
+	(*InvoiceLifecycleEvent)(nil),              // 30: invoice.InvoiceLifecycleEvent
+	(*ListInvoiceLifecycleEventsRequest)(nil),  // 31: invoice.ListInvoiceLifecycleEventsRequest
+	(*ListInvoiceLifecycleEventsResponse)(nil), // 32: invoice.ListInvoiceLifecycleEventsResponse
 }
 var file_services_grpc_invoice_proto_depIdxs = []int32{
 	1,  // 0: invoice.CreateInvoiceResponse.validation_errors:type_name -> invoice.ValidationError
@@ -2594,35 +2877,40 @@ var file_services_grpc_invoice_proto_depIdxs = []int32{
 	11, // 11: invoice.CreditNoteDetails.vat_breakdown:type_name -> invoice.InvoiceVatLine
 	20, // 12: invoice.GetCreditNoteResponse.credit_note:type_name -> invoice.CreditNoteDetails
 	23, // 13: invoice.ListCreditNotesResponse.credit_notes:type_name -> invoice.CreditNoteSummary
-	2,  // 14: invoice.InvoiceService.CreateInvoiceFromSchedule:input_type -> invoice.CreateInvoiceFromScheduleRequest
-	3,  // 15: invoice.InvoiceService.CreateInvoiceFromQuote:input_type -> invoice.CreateInvoiceFromQuoteRequest
-	5,  // 16: invoice.InvoiceService.IssueInvoice:input_type -> invoice.IssueInvoiceRequest
-	6,  // 17: invoice.InvoiceService.MarkInvoicePaid:input_type -> invoice.MarkInvoicePaidRequest
-	7,  // 18: invoice.InvoiceService.DeleteDraftInvoice:input_type -> invoice.DeleteDraftInvoiceRequest
-	8,  // 19: invoice.InvoiceService.GetInvoice:input_type -> invoice.GetInvoiceRequest
-	14, // 20: invoice.InvoiceService.ListInvoices:input_type -> invoice.ListInvoicesRequest
-	17, // 21: invoice.InvoiceService.CreateCreditNote:input_type -> invoice.CreateCreditNoteRequest
-	19, // 22: invoice.InvoiceService.GetCreditNote:input_type -> invoice.GetCreditNoteRequest
-	22, // 23: invoice.InvoiceService.ListCreditNotes:input_type -> invoice.ListCreditNotesRequest
-	25, // 24: invoice.InvoiceService.VerifyChain:input_type -> invoice.VerifyChainRequest
-	27, // 25: invoice.InvoiceService.GetOSSThresholdStatus:input_type -> invoice.GetOSSThresholdStatusRequest
-	4,  // 26: invoice.InvoiceService.CreateInvoiceFromSchedule:output_type -> invoice.CreateInvoiceResponse
-	4,  // 27: invoice.InvoiceService.CreateInvoiceFromQuote:output_type -> invoice.CreateInvoiceResponse
-	4,  // 28: invoice.InvoiceService.IssueInvoice:output_type -> invoice.CreateInvoiceResponse
-	0,  // 29: invoice.InvoiceService.MarkInvoicePaid:output_type -> invoice.GenericResponse
-	0,  // 30: invoice.InvoiceService.DeleteDraftInvoice:output_type -> invoice.GenericResponse
-	13, // 31: invoice.InvoiceService.GetInvoice:output_type -> invoice.GetInvoiceResponse
-	16, // 32: invoice.InvoiceService.ListInvoices:output_type -> invoice.ListInvoicesResponse
-	18, // 33: invoice.InvoiceService.CreateCreditNote:output_type -> invoice.CreateCreditNoteResponse
-	21, // 34: invoice.InvoiceService.GetCreditNote:output_type -> invoice.GetCreditNoteResponse
-	24, // 35: invoice.InvoiceService.ListCreditNotes:output_type -> invoice.ListCreditNotesResponse
-	26, // 36: invoice.InvoiceService.VerifyChain:output_type -> invoice.VerifyChainResponse
-	28, // 37: invoice.InvoiceService.GetOSSThresholdStatus:output_type -> invoice.GetOSSThresholdStatusResponse
-	26, // [26:38] is the sub-list for method output_type
-	14, // [14:26] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	30, // 14: invoice.ListInvoiceLifecycleEventsResponse.events:type_name -> invoice.InvoiceLifecycleEvent
+	2,  // 15: invoice.InvoiceService.CreateInvoiceFromSchedule:input_type -> invoice.CreateInvoiceFromScheduleRequest
+	3,  // 16: invoice.InvoiceService.CreateInvoiceFromQuote:input_type -> invoice.CreateInvoiceFromQuoteRequest
+	5,  // 17: invoice.InvoiceService.IssueInvoice:input_type -> invoice.IssueInvoiceRequest
+	6,  // 18: invoice.InvoiceService.MarkInvoicePaid:input_type -> invoice.MarkInvoicePaidRequest
+	7,  // 19: invoice.InvoiceService.DeleteDraftInvoice:input_type -> invoice.DeleteDraftInvoiceRequest
+	8,  // 20: invoice.InvoiceService.GetInvoice:input_type -> invoice.GetInvoiceRequest
+	14, // 21: invoice.InvoiceService.ListInvoices:input_type -> invoice.ListInvoicesRequest
+	17, // 22: invoice.InvoiceService.CreateCreditNote:input_type -> invoice.CreateCreditNoteRequest
+	19, // 23: invoice.InvoiceService.GetCreditNote:input_type -> invoice.GetCreditNoteRequest
+	22, // 24: invoice.InvoiceService.ListCreditNotes:input_type -> invoice.ListCreditNotesRequest
+	25, // 25: invoice.InvoiceService.VerifyChain:input_type -> invoice.VerifyChainRequest
+	27, // 26: invoice.InvoiceService.GetOSSThresholdStatus:input_type -> invoice.GetOSSThresholdStatusRequest
+	29, // 27: invoice.InvoiceService.SetInvoiceLifecycleStatus:input_type -> invoice.SetInvoiceLifecycleStatusRequest
+	31, // 28: invoice.InvoiceService.ListInvoiceLifecycleEvents:input_type -> invoice.ListInvoiceLifecycleEventsRequest
+	4,  // 29: invoice.InvoiceService.CreateInvoiceFromSchedule:output_type -> invoice.CreateInvoiceResponse
+	4,  // 30: invoice.InvoiceService.CreateInvoiceFromQuote:output_type -> invoice.CreateInvoiceResponse
+	4,  // 31: invoice.InvoiceService.IssueInvoice:output_type -> invoice.CreateInvoiceResponse
+	0,  // 32: invoice.InvoiceService.MarkInvoicePaid:output_type -> invoice.GenericResponse
+	0,  // 33: invoice.InvoiceService.DeleteDraftInvoice:output_type -> invoice.GenericResponse
+	13, // 34: invoice.InvoiceService.GetInvoice:output_type -> invoice.GetInvoiceResponse
+	16, // 35: invoice.InvoiceService.ListInvoices:output_type -> invoice.ListInvoicesResponse
+	18, // 36: invoice.InvoiceService.CreateCreditNote:output_type -> invoice.CreateCreditNoteResponse
+	21, // 37: invoice.InvoiceService.GetCreditNote:output_type -> invoice.GetCreditNoteResponse
+	24, // 38: invoice.InvoiceService.ListCreditNotes:output_type -> invoice.ListCreditNotesResponse
+	26, // 39: invoice.InvoiceService.VerifyChain:output_type -> invoice.VerifyChainResponse
+	28, // 40: invoice.InvoiceService.GetOSSThresholdStatus:output_type -> invoice.GetOSSThresholdStatusResponse
+	0,  // 41: invoice.InvoiceService.SetInvoiceLifecycleStatus:output_type -> invoice.GenericResponse
+	32, // 42: invoice.InvoiceService.ListInvoiceLifecycleEvents:output_type -> invoice.ListInvoiceLifecycleEventsResponse
+	29, // [29:43] is the sub-list for method output_type
+	15, // [15:29] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_services_grpc_invoice_proto_init() }
@@ -2636,7 +2924,7 @@ func file_services_grpc_invoice_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_services_grpc_invoice_proto_rawDesc), len(file_services_grpc_invoice_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   29,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

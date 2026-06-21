@@ -3,6 +3,8 @@ import type {
   BackendCreditNoteDetails,
   BackendCreditNoteSummary,
   BackendInvoiceDetails,
+  BackendInvoiceLifecycleEvent,
+  BackendInvoiceLifecycleStatus,
   BackendInvoiceSummary,
 } from "@/types/backend";
 
@@ -88,6 +90,27 @@ export async function deleteDraftInvoice(invoiceId: string): Promise<ApiResult> 
   });
 }
 
+// Advance the e-invoicing lifecycle status (réforme FR B2B). The backend is
+// authoritative on the allowed transitions; only ISSUED/PAID invoices qualify.
+export async function setInvoiceLifecycleStatus(
+  invoiceId: string,
+  status: Exclude<BackendInvoiceLifecycleStatus, "NONE">,
+  note?: string,
+): Promise<ApiResult> {
+  return apiFetch(`/api/invoices/${encodeURIComponent(invoiceId)}/lifecycle`, {
+    method: "POST",
+    body: JSON.stringify({ status, note: note ?? "" }),
+  });
+}
+
+export async function listInvoiceLifecycleEvents(
+  invoiceId: string,
+): Promise<ApiResult> {
+  return apiFetch(
+    `/api/invoices/${encodeURIComponent(invoiceId)}/lifecycle-events`,
+  );
+}
+
 export type CreateCreditNotePayload = {
   positions?: number[]; // empty/undefined = total credit of the remainder
   reason?: string;
@@ -133,6 +156,13 @@ export function readInvoiceFromBody(
 ): BackendInvoiceDetails | null {
   if (!body.invoice || typeof body.invoice !== "object") return null;
   return body.invoice as BackendInvoiceDetails;
+}
+
+export function readLifecycleEventsFromBody(
+  body: Record<string, unknown>,
+): BackendInvoiceLifecycleEvent[] {
+  if (!Array.isArray(body.events)) return [];
+  return body.events as BackendInvoiceLifecycleEvent[];
 }
 
 export function readCreditNotesFromBody(

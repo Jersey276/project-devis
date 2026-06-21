@@ -21,8 +21,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import InvoiceStatusBadge from "@/components/invoice/invoice-status-badge";
+import InvoiceLifecycleBadge from "@/components/invoice/invoice-lifecycle-badge";
+import AdvanceLifecycleDialog from "@/components/invoice/advance-lifecycle-dialog";
+import LifecycleTimeline from "@/components/invoice/lifecycle-timeline";
 import CreateCreditNoteDialog from "@/components/invoice/create-credit-note-dialog";
 import LinkedCreditNotes from "@/components/invoice/linked-credit-notes";
+import { allowedNextLifecycleStatuses } from "@/lib/invoice-lifecycle";
 import {
   deleteDraftInvoice,
   getInvoice,
@@ -52,6 +56,7 @@ function partyLines(p: BackendInvoiceParty | undefined): string[] {
 
 export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
   const t = useTranslations("invoice.detail");
+  const tLifecycle = useTranslations("invoice.lifecycle");
   const router = useRouter();
   const [invoice, setInvoice] = useState<BackendInvoiceDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,6 +65,8 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
   const [creditDialogOpen, setCreditDialogOpen] = useState(false);
   const [creditRefresh, setCreditRefresh] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [lifecycleDialogOpen, setLifecycleDialogOpen] = useState(false);
+  const [lifecycleRefresh, setLifecycleRefresh] = useState(0);
 
   const load = useCallback(async () => {
     const { ok, body } = await getInvoice(invoiceId);
@@ -129,6 +136,11 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
   if (error && !invoice) return <p className="text-destructive">{error}</p>;
   if (!invoice) return <p className="text-destructive">{t("notFound")}</p>;
 
+  const isIssued = invoice.status === "ISSUED" || invoice.status === "PAID";
+  const canAdvanceLifecycle =
+    isIssued &&
+    allowedNextLifecycleStatuses(invoice.lifecycle_status).length > 0;
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-4">
@@ -137,6 +149,7 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
             ? t("titleNumbered", { number: invoice.invoice_number })
             : t("titleDraft")}
           <InvoiceStatusBadge status={invoice.status} />
+          <InvoiceLifecycleBadge status={invoice.lifecycle_status} />
         </CardTitle>
         <div className="flex items-center gap-2">
           <Button type="button" variant="outline" onClick={onDownload}>
@@ -162,7 +175,7 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
               {t("markPaid")}
             </Button>
           ) : null}
-          {invoice.status === "ISSUED" || invoice.status === "PAID" ? (
+          {isIssued ? (
             <Button
               type="button"
               variant="outline"
@@ -170,6 +183,16 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
               disabled={busy}
             >
               {t("createCreditNote")}
+            </Button>
+          ) : null}
+          {canAdvanceLifecycle ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setLifecycleDialogOpen(true)}
+              disabled={busy}
+            >
+              {tLifecycle("advance")}
             </Button>
           ) : null}
         </div>
@@ -258,8 +281,12 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
           <p className="text-xs text-muted-foreground">{t("vatExemptNotice")}</p>
         ) : null}
 
-        {invoice.status === "ISSUED" || invoice.status === "PAID" ? (
+        {isIssued ? (
           <LinkedCreditNotes invoiceId={invoiceId} refreshKey={creditRefresh} />
+        ) : null}
+
+        {isIssued ? (
+          <LifecycleTimeline invoiceId={invoiceId} refreshKey={lifecycleRefresh} />
         ) : null}
       </CardContent>
 
@@ -269,6 +296,17 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
         invoice={invoice}
         onCreated={() => {
           setCreditRefresh((n) => n + 1);
+          void load();
+        }}
+      />
+
+      <AdvanceLifecycleDialog
+        open={lifecycleDialogOpen}
+        onOpenChange={setLifecycleDialogOpen}
+        invoiceId={invoiceId}
+        current={invoice.lifecycle_status}
+        onApplied={() => {
+          setLifecycleRefresh((n) => n + 1);
           void load();
         }}
       />

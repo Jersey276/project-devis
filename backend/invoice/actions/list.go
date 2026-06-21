@@ -24,7 +24,7 @@ func (s *Server) ListInvoices(ctx context.Context, req *invoiceGrpc.ListInvoices
 	}
 
 	query := `SELECT invoice_id, invoice_number, status, quote_id, schedule_id,
-	                 issued_at, due_date, total_ttc_cents
+	                 issued_at, due_date, total_ttc_cents, lifecycle_status
 	          FROM invoices WHERE user_id=$1`
 	args := []any{req.UserId}
 	if q := strings.TrimSpace(req.QuoteId); q != "" {
@@ -47,19 +47,21 @@ func (s *Server) ListInvoices(ctx context.Context, req *invoiceGrpc.ListInvoices
 			scheduleID          sql.NullString
 			issuedAt, dueDate   sql.NullTime
 			totalTTC            int64
+			lifecycle           string
 		)
-		if err := rows.Scan(&id, &number, &status, &quoteID, &scheduleID, &issuedAt, &dueDate, &totalTTC); err != nil {
+		if err := rows.Scan(&id, &number, &status, &quoteID, &scheduleID, &issuedAt, &dueDate, &totalTTC, &lifecycle); err != nil {
 			return &invoiceGrpc.ListInvoicesResponse{Success: false, Code: codes.InternalError}, err
 		}
 		out = append(out, &invoiceGrpc.InvoiceSummary{
-			InvoiceId:     id,
-			InvoiceNumber: number.String,
-			Status:        status,
-			QuoteId:       quoteID,
-			ScheduleId:    scheduleID.String,
-			IssuedAt:      formatNullTime(issuedAt, time.RFC3339),
-			DueDate:       formatNullTime(dueDate, "2006-01-02"),
-			TotalTtcCents: totalTTC,
+			InvoiceId:       id,
+			InvoiceNumber:   number.String,
+			Status:          status,
+			QuoteId:         quoteID,
+			ScheduleId:      scheduleID.String,
+			IssuedAt:        formatNullTime(issuedAt, time.RFC3339),
+			DueDate:         formatNullTime(dueDate, "2006-01-02"),
+			TotalTtcCents:   totalTTC,
+			LifecycleStatus: lifecycle,
 		})
 	}
 	if err := rows.Err(); err != nil {

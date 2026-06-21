@@ -17,5 +17,8 @@ const (
 	SealError                     int32 = 4009
 	OSSDestinationTaxMissing      int32 = 4010
 
+	LifecycleTransitionInvalid int32 = 4011
+	LifecycleRequiresIssued    int32 = 4012
+
 	InternalError int32 = 2001
 )

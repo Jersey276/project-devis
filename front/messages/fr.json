@@ -445,6 +445,27 @@
       "PAID": "Payée",
       "CANCELLED": "Annulée"
     },
+    "lifecycle": {
+      "title": "Statut e-invoicing",
+      "advance": "Faire évoluer le statut",
+      "targetPlaceholder": "Nouveau statut",
+      "note": "Note (facultatif)",
+      "confirm": "Valider",
+      "cancel": "Annuler",
+      "actionError": "La mise à jour du statut e-invoicing a échoué.",
+      "status": {
+        "NONE": "—",
+        "DEPOSITED": "Déposée",
+        "RECEIVED": "Reçue",
+        "APPROVED": "Approuvée",
+        "REJECTED": "Refusée",
+        "COLLECTED": "Encaissée"
+      },
+      "history": {
+        "title": "Historique e-invoicing",
+        "empty": "Aucun événement."
+      }
+    },
     "oss": {
       "title": "Régime OSS — ventes à distance B2C ({year})",
       "cumulative": "Chiffre d'affaires intra-UE B2C : {cumulative} sur un seuil de {threshold} ({pct} %).",
@@ -461,6 +482,7 @@
       "columns": {
         "number": "Numéro",
         "status": "Statut",
+        "lifecycle": "Statut e-invoicing",
         "quote": "Devis",
         "dueDate": "Échéance",
         "totalTtc": "Total TTC",

@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import InvoiceStatusBadge from "@/components/invoice/invoice-status-badge";
+import InvoiceLifecycleBadge from "@/components/invoice/invoice-lifecycle-badge";
 import {
   deleteDraftInvoice,
   listInvoices,
@@ -33,6 +34,7 @@ import {
 import { exportInvoicePdf } from "@/lib/services/export";
 import { formatEurosFromCents } from "@/lib/utils";
 import type {
+  BackendInvoiceLifecycleStatus,
   BackendInvoiceStatus,
   BackendInvoiceSummary,
 } from "@/types/backend";
@@ -41,6 +43,7 @@ type InvoiceRow = {
   id: string;
   number: string;
   status: BackendInvoiceStatus;
+  lifecycle: BackendInvoiceLifecycleStatus;
   quoteId: string;
   dueDate: string;
   totalTtc: number;
@@ -51,6 +54,7 @@ function toRows(invoices: BackendInvoiceSummary[]): InvoiceRow[] {
     id: i.invoice_id,
     number: i.invoice_number,
     status: i.status,
+    lifecycle: i.lifecycle_status,
     quoteId: i.quote_id,
     dueDate: i.due_date,
     totalTtc: i.total_ttc_cents,
@@ -161,6 +165,9 @@ export default function InvoiceListTable() {
             <DataTableSortableHead name="status">
               {t("columns.status")}
             </DataTableSortableHead>
+            <DataTableSortableHead name="lifecycle">
+              {t("columns.lifecycle")}
+            </DataTableSortableHead>
             <DataTableSortableHead name="quoteId">
               {t("columns.quote")}
             </DataTableSortableHead>
@@ -184,6 +191,7 @@ export default function InvoiceListTable() {
               <DataTableCell> </DataTableCell>
               <DataTableCell> </DataTableCell>
               <DataTableCell> </DataTableCell>
+              <DataTableCell> </DataTableCell>
             </DataTableRow>
           ) : (
             items.map((item) => (
@@ -191,6 +199,9 @@ export default function InvoiceListTable() {
                 <DataTableCell>{item.number || "—"}</DataTableCell>
                 <DataTableCell>
                   <InvoiceStatusBadge status={item.status} />
+                </DataTableCell>
+                <DataTableCell>
+                  <InvoiceLifecycleBadge status={item.lifecycle} />
                 </DataTableCell>
                 <DataTableCell>{item.quoteId}</DataTableCell>
                 <DataTableCell>{item.dueDate || "—"}</DataTableCell>

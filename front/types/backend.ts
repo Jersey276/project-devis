@@ -208,6 +208,22 @@ export type BackendScheduleDetails = {
 
 export type BackendInvoiceStatus = "DRAFT" | "ISSUED" | "PAID" | "CANCELLED";
 
+// E-invoicing lifecycle status (réforme FR B2B), orthogonal to the business
+// status. "NONE" = no platform lifecycle yet.
+export type BackendInvoiceLifecycleStatus =
+  | "NONE"
+  | "DEPOSITED"
+  | "RECEIVED"
+  | "APPROVED"
+  | "REJECTED"
+  | "COLLECTED";
+
+export type BackendInvoiceLifecycleEvent = {
+  status: Exclude<BackendInvoiceLifecycleStatus, "NONE">;
+  note: string;
+  created_at: string;
+};
+
 export type BackendInvoiceSummary = {
   invoice_id: string;
   invoice_number: string;
@@ -217,6 +233,7 @@ export type BackendInvoiceSummary = {
   issued_at: string;
   due_date: string;
   total_ttc_cents: number;
+  lifecycle_status: BackendInvoiceLifecycleStatus;
 };
 
 export type BackendOSSThresholdStatus = {
@@ -281,6 +298,7 @@ export type BackendInvoiceDetails = {
   total_ttc_cents: number;
   vat_exempt: boolean;
   credited_positions: number[];
+  lifecycle_status: BackendInvoiceLifecycleStatus;
 };
 
 export type BackendCreditNoteSummary = {

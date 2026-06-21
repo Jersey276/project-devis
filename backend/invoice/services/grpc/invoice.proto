@@ -27,6 +27,12 @@ service InvoiceService {
     // OSS distance-selling threshold status for the current civil year: where the
     // issuer stands against the EUR 10 000 threshold (art. 259 D CGI).
     rpc GetOSSThresholdStatus(GetOSSThresholdStatusRequest) returns (GetOSSThresholdStatusResponse);
+
+    // E-invoicing lifecycle (réforme FR B2B). Orthogonal to the business status:
+    // tracks the invoice on the platform (déposée/reçue/approuvée/refusée/encaissée).
+    // Manual issuer-driven transitions for now; platform auto-feed comes in B6.
+    rpc SetInvoiceLifecycleStatus(SetInvoiceLifecycleStatusRequest) returns (GenericResponse);
+    rpc ListInvoiceLifecycleEvents(ListInvoiceLifecycleEventsRequest) returns (ListInvoiceLifecycleEventsResponse);
 }
 
 message GenericResponse {
@@ -161,6 +167,9 @@ message InvoiceDetails {
     // was taxed at the client's destination-country VAT rate (declared via the
     // EU One-Stop-Shop), which drives the OSS legal mention on the PDF.
     bool   oss_applied           = 20;
+    // lifecycle_status is the e-invoicing platform status: "NONE" until a
+    // lifecycle event is recorded, then DEPOSITED/RECEIVED/APPROVED/REJECTED/COLLECTED.
+    string lifecycle_status      = 21;
 }
 
 message GetInvoiceResponse {
@@ -183,6 +192,7 @@ message InvoiceSummary {
     string issued_at       = 6;
     string due_date        = 7;
     int64  total_ttc_cents = 8;
+    string lifecycle_status = 9;  // "NONE" until a lifecycle event is recorded
 }
 
 message ListInvoicesResponse {
@@ -293,4 +303,30 @@ message GetOSSThresholdStatusResponse {
     int64  threshold_cents   = 5;  // EUR 10 000 legal threshold, in cents
     bool   oss_enabled       = 6;  // issuer opted in (anticipation)
     bool   oss_active        = 7;  // OSS currently applies (opted in OR threshold reached)
+}
+
+// ─── E-invoicing lifecycle ───────────────────────────────────────────────────
+
+message SetInvoiceLifecycleStatusRequest {
+    string invoice_id = 1;
+    string user_id    = 2;
+    string status     = 3;  // DEPOSITED | RECEIVED | APPROVED | REJECTED | COLLECTED
+    string note       = 4;  // optional
+}
+
+message InvoiceLifecycleEvent {
+    string status     = 1;
+    string note       = 2;
+    string created_at = 3;  // RFC3339
+}
+
+message ListInvoiceLifecycleEventsRequest {
+    string invoice_id = 1;
+    string user_id    = 2;
+}
+
+message ListInvoiceLifecycleEventsResponse {
+    bool                           success = 1;
+    int32                          code    = 2;
+    repeated InvoiceLifecycleEvent events  = 3;
 }
