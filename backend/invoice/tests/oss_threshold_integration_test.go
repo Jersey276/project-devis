@@ -52,7 +52,7 @@ func seedCreditNoteHT(t *testing.T, db *sql.DB, userID, creditNoteID, invoiceID 
 func TestOSSCumulative_DeductsCreditNotes(t *testing.T) {
 	db := sealTestDB(t)
 	const userID = "oss-cn-deduct"
-	srv := actions.NewServer(db, nil, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil, nil)
 
 	at := time.Date(2099, 6, 15, 12, 0, 0, 0, time.UTC)
 	in2099 := func(month, day int) time.Time { return time.Date(2099, time.Month(month), day, 12, 0, 0, 0, time.UTC) }
@@ -78,7 +78,7 @@ func TestOSSCumulative_DeductsCreditNotes(t *testing.T) {
 func TestOSSCumulative_SumsAssietteForYear(t *testing.T) {
 	db := sealTestDB(t)
 	const userID = "oss-cumul"
-	srv := actions.NewServer(db, nil, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil, nil)
 
 	at := time.Date(2099, 6, 15, 12, 0, 0, 0, time.UTC)
 	in2099 := func(month, day int) time.Time { return time.Date(2099, time.Month(month), day, 12, 0, 0, 0, time.UTC) }
@@ -108,7 +108,7 @@ func TestOSSCumulative_SumsAssietteForYear(t *testing.T) {
 
 func TestOSSCumulative_Empty(t *testing.T) {
 	db := sealTestDB(t)
-	srv := actions.NewServer(db, nil, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil, nil)
 
 	got, err := srv.OSSCumulativeHTForYearForTest(context.Background(), "nobody", "none",
 		time.Date(2099, 6, 15, 12, 0, 0, 0, time.UTC))
@@ -123,7 +123,7 @@ func TestOSSCumulative_Empty(t *testing.T) {
 func TestOSSCumulative_ThresholdBoundary(t *testing.T) {
 	db := sealTestDB(t)
 	const userID = "oss-boundary"
-	srv := actions.NewServer(db, nil, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil, nil)
 	at := time.Date(2099, 6, 15, 12, 0, 0, 0, time.UTC)
 
 	seedInvoiceHT(t, db, userID, "inv-a", "ISSUED",
@@ -161,7 +161,7 @@ func TestOSSCumulative_ThresholdBoundary(t *testing.T) {
 func TestOSSPriorYear_OverThreshold(t *testing.T) {
 	db := sealTestDB(t)
 	const userID = "oss-prior-year"
-	srv := actions.NewServer(db, nil, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil, nil)
 	ctx := context.Background()
 	at := time.Date(2099, 2, 1, 12, 0, 0, 0, time.UTC) // current year N = 2099
 

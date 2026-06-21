@@ -14,3 +14,13 @@ func (NoopClient) Submit(context.Context, SubmitInput) (SubmitResult, error) {
 func (NoopClient) FetchStatus(context.Context, string) (PlatformStatus, error) {
 	return PlatformUnknown, nil
 }
+
+// NoopDirectory is the default directory adapter: every recipient resolves
+// successfully with an empty routing handle, so deposits work end-to-end before
+// a real annuaire is wired. It never reports a recipient as not found — that
+// guard only bites once a real directory is in place.
+type NoopDirectory struct{}
+
+func (NoopDirectory) Resolve(context.Context, string) (RecipientRouting, error) {
+	return RecipientRouting{}, nil
+}

@@ -37,7 +37,7 @@ func TestPartySnapshot_ExposesClientTaxIds(t *testing.T) {
 		time.Date(2099, 5, 1, 9, 0, 0, 0, time.UTC), 1)
 	seedPartySnapshot(t, db, "inv-party", "987654321", "FR99887766554", "business", 42, false, "FR", "FR", false)
 
-	srv := actions.NewServer(db, nil, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil, nil)
 	resp, err := srv.GetInvoice(context.Background(), &invoiceGrpc.GetInvoiceRequest{
 		InvoiceId: "inv-party", UserId: userID,
 	})
@@ -82,7 +82,7 @@ func TestPartySnapshot_EmptyClientTaxIds(t *testing.T) {
 		time.Date(2099, 5, 2, 9, 0, 0, 0, time.UTC), 2)
 	seedPartySnapshot(t, db, "inv-empty", "", "", "", 0, false, "", "", false)
 
-	srv := actions.NewServer(db, nil, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil, nil)
 	resp, err := srv.GetInvoice(context.Background(), &invoiceGrpc.GetInvoiceRequest{
 		InvoiceId: "inv-empty", UserId: userID,
 	})
@@ -105,7 +105,7 @@ func TestPartySnapshot_OssApplied(t *testing.T) {
 		time.Date(2099, 5, 3, 9, 0, 0, 0, time.UTC), 3)
 	seedPartySnapshot(t, db, "inv-oss", "", "", "individual", 276, true, "FR", "DE", true)
 
-	srv := actions.NewServer(db, nil, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil, nil)
 	resp, err := srv.GetInvoice(context.Background(), &invoiceGrpc.GetInvoiceRequest{
 		InvoiceId: "inv-oss", UserId: userID,
 	})

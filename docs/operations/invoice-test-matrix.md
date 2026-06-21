@@ -176,6 +176,10 @@ Aucun endpoint, regle metier, migration ou modification du format scelle ne doit
 | INV-BE-076 | Integration DB | Facture `DEPOSITED`, PA renvoie `REJECTED`     | Sweep                           | `lifecycle_status=REJECTED`                                               | P0       | `pdp_poll_integration_test.go:TestPoll_RejectedFromDeposited` |
 | INV-BE-077 | Integration DB | Facture `DEPOSITED`, PA renvoie `UNKNOWN`      | Sweep                           | Etat inchange (`DEPOSITED`), aucun evenement ajoute (defaut no-op inerte) | P0       | `pdp_poll_integration_test.go:TestPoll_UnknownLeavesUntouched` |
 | INV-BE-078 | Integration DB | Facture `DEPOSITED` sans `pdp_submission_id` (no-op) | Sweep                           | Exclue du balayage : etat inchange, PA jamais appelee                     | P1       | `pdp_poll_integration_test.go:TestPoll_SkipsInvoicesWithoutSubmissionID` |
+| INV-BE-079 | Unit           | Annuaire no-op (defaut)                        | Resoudre un SIRET               | Resout sans erreur, `RoutingID` vide (aucun appel externe)               | P1       | `pdp/pdp_test.go:TestNoopDirectory_ResolvesEveryone`        |
+| INV-BE-080 | Integration DB | Facture `ISSUED`, snapshot `client_siret`, annuaire mock renvoie `route-1` | Deposer | Annuaire interroge avec le SIRET gele, `recipient_routing_id=route-1` gele, `DEPOSITED` | P0 | `directory_deposit_integration_test.go:TestDeposit_ResolvesRecipientAndFreezesRouting` |
+| INV-BE-081 | Integration DB | Facture `ISSUED`, annuaire renvoie `ErrRecipientNotFound` | Deposer              | `RecipientNotInDirectory` (4014), **PA jamais appelee**, cycle reste `NONE`, routing vide | P0 | `directory_deposit_integration_test.go:TestDeposit_RecipientNotInDirectoryBlocks` |
+| INV-BE-082 | Integration DB | Facture `ISSUED`, annuaire no-op (nil)         | Deposer                         | Succes `DEPOSITED`, `recipient_routing_id` reste vide (annuaire inerte)   | P1       | `directory_deposit_integration_test.go:TestDeposit_NoopDirectoryDepositsWithoutRouting` |
 
 <!-- markdownlint-enable MD060 -->
 

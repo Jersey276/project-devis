@@ -20,7 +20,8 @@ const (
 	LifecycleTransitionInvalid int32 = 4011
 	LifecycleRequiresIssued    int32 = 4012
 
-	PDPSubmissionFailed int32 = 4013
+	PDPSubmissionFailed     int32 = 4013
+	RecipientNotInDirectory int32 = 4014
 
 	InternalError int32 = 2001
 )

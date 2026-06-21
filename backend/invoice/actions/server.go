@@ -17,6 +17,7 @@ type Server struct {
 	usersClient    usersGrpc.UserServiceClient
 	scheduleClient scheduleGrpc.ScheduleServiceClient
 	pdpClient      pdp.Client
+	pdpDirectory   pdp.Directory
 }
 
 func NewServer(
@@ -25,9 +26,13 @@ func NewServer(
 	usersClient usersGrpc.UserServiceClient,
 	scheduleClient scheduleGrpc.ScheduleServiceClient,
 	pdpClient pdp.Client,
+	pdpDirectory pdp.Directory,
 ) *Server {
 	if pdpClient == nil { // tolerate nil (e.g. tests that don't exercise deposit)
 		pdpClient = pdp.NoopClient{}
+	}
+	if pdpDirectory == nil {
+		pdpDirectory = pdp.NoopDirectory{}
 	}
 	return &Server{
 		db:             db,
@@ -35,5 +40,6 @@ func NewServer(
 		usersClient:    usersClient,
 		scheduleClient: scheduleClient,
 		pdpClient:      pdpClient,
+		pdpDirectory:   pdpDirectory,
 	}
 }

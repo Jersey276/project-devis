@@ -108,7 +108,23 @@ echeancier valide:
   actif ; un statut `UNKNOWN` (defaut de l'adaptateur no-op) ne touche a rien — le
   worker est **inerte en production** tant qu'aucune PA n'est branchee. Active par
   `PDP_POLL_INTERVAL` (duree Go, ex. `30s` ; vide = desactive), chaque balayage
-  borne par un timeout. Hors perimetre : lookup annuaire DGFiP, adaptateur PA reel.
+  borne par un timeout.
+- **Lookup annuaire (B6, 3e iteration)** : une seconde abstraction neutre
+  `Directory` (`backend/invoice/pdp/`) resout le destinataire (SIRET) vers sa
+  plateforme de reception via l'annuaire central e-invoicing (DGFiP/AIFE), avec un
+  adaptateur **no-op** (resout tout le monde, handle vide) et un mock. Avant tout
+  appel a la PA, `DepositInvoice` resout le `client_siret` **gele du snapshot
+  legal** (B4) : un destinataire introuvable (`ErrRecipientNotFound`) **bloque le
+  depot** (`RecipientNotInDirectory`, 4014) — on ne route jamais vers un
+  destinataire que l'annuaire ne place pas, et la PA n'est pas appelee. Le handle
+  de routage retourne est gele dans `recipient_routing_id` (migration `000014`,
+  nullable) dans la **meme transaction** que le `pdp_submission_id`. La migration
+  `000014` etend le trigger d'inalterabilite (`000013`) pour traiter
+  `recipient_routing_id` comme metadonnee e-invoicing operationnelle (mutable sur
+  facture scellee, colonnes legales/financieres toujours gelees). Le no-op resolvant
+  tout le monde, le depot (et son endpoint `POST /api/invoices/:id/deposit`) reste
+  inchange tant qu'aucun annuaire reel n'est branche.
+  Hors perimetre : adaptateur PA reel (annuaire + plateforme a contractualiser).
 - **Cadre e-invoicing FR** : le Factur-X B2C/OSS genere est coherent mais
   facultatif (l'obligation PPF/PDP vise le B2B domestique ; le transfrontalier
   releve de l'e-reporting).

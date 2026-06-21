@@ -29,6 +29,7 @@ const (
 	InvoiceCodeLifecycleTransitionInvalid    int32 = 4011
 	InvoiceCodeLifecycleRequiresIssued       int32 = 4012
 	InvoiceCodePDPSubmissionFailed           int32 = 4013
+	InvoiceCodeRecipientNotInDirectory       int32 = 4014
 
 	InvoiceCodeInternalError int32 = 2001
 )
@@ -59,6 +60,7 @@ var invoiceErrors = &serviceErrors{
 		InvoiceCodeLifecycleTransitionInvalid:    {http.StatusConflict, "Transition de statut e-invoicing non autorisée."},
 		InvoiceCodeLifecycleRequiresIssued:       {http.StatusConflict, "Le statut e-invoicing ne s'applique qu'aux factures émises."},
 		InvoiceCodePDPSubmissionFailed:           {http.StatusBadGateway, "Le dépôt sur la plateforme a échoué. Réessayez plus tard."},
+		InvoiceCodeRecipientNotInDirectory:       {http.StatusUnprocessableEntity, "Le destinataire est introuvable dans l'annuaire e-invoicing : vérifiez son SIRET."},
 		InvoiceCodeInternalError:                 {http.StatusInternalServerError, "Une erreur interne est survenue."},
 	},
 	unavailableMessage: "Service de facturation indisponible.",

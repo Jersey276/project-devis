@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"strings"
 	"time"
 
@@ -48,6 +49,27 @@ func (s *Server) DepositInvoice(ctx context.Context, req *invoiceGrpc.DepositInv
 		return &invoiceGrpc.GenericResponse{Success: false, Code: codes.LifecycleRequiresIssued}, nil
 	}
 
+	// Resolve the recipient against the e-invoicing directory before depositing:
+	// we never route to a recipient the directory cannot place. The recipient
+	// SIRET is the frozen client_siret of the legal snapshot (B4). The no-op
+	// directory resolves everyone with an empty handle, so this is inert until a
+	// real annuaire is wired.
+	var recipientSiret sql.NullString
+	err = s.db.QueryRowContext(ctx,
+		`SELECT client_siret FROM invoice_party_snapshots WHERE invoice_id=$1`,
+		req.InvoiceId,
+	).Scan(&recipientSiret)
+	if err != nil && err != sql.ErrNoRows { // no snapshot: resolve with an empty SIRET
+		return &invoiceGrpc.GenericResponse{Success: false, Code: codes.InternalError}, err
+	}
+	routing, err := s.pdpDirectory.Resolve(ctx, recipientSiret.String)
+	if err != nil {
+		if errors.Is(err, pdp.ErrRecipientNotFound) {
+			return &invoiceGrpc.GenericResponse{Success: false, Code: codes.RecipientNotInDirectory}, nil
+		}
+		return &invoiceGrpc.GenericResponse{Success: false, Code: codes.InternalError}, err
+	}
+
 	result, err := s.pdpClient.Submit(ctx, pdp.SubmitInput{
 		InvoiceID:     req.InvoiceId,
 		UserID:        req.UserId,
@@ -70,10 +92,19 @@ func (s *Server) DepositInvoice(ctx context.Context, req *invoiceGrpc.DepositInv
 	if code, err := applyLifecycleTransition(ctx, tx, req.InvoiceId, req.UserId, target, strings.TrimSpace(req.GetNote())); code != codes.Success {
 		return &invoiceGrpc.GenericResponse{Success: false, Code: code}, err
 	}
-	if sid := strings.TrimSpace(result.SubmissionID); sid != "" {
+	// Freeze both platform handles in the same tx: the submission id (if the
+	// platform assigned one) and the directory routing id (if the annuaire
+	// returned one). Either may be empty under the no-op adapters; we only persist
+	// non-empty values so frozen columns stay NULL rather than "".
+	sid := strings.TrimSpace(result.SubmissionID)
+	routingID := strings.TrimSpace(routing.RoutingID)
+	if sid != "" || routingID != "" {
 		if _, err := tx.ExecContext(ctx,
-			`UPDATE invoices SET pdp_submission_id=$1 WHERE invoice_id=$2 AND user_id=$3`,
-			sid, req.InvoiceId, req.UserId,
+			`UPDATE invoices
+			    SET pdp_submission_id    = COALESCE(NULLIF($1, ''), pdp_submission_id),
+			        recipient_routing_id = COALESCE(NULLIF($2, ''), recipient_routing_id)
+			  WHERE invoice_id=$3 AND user_id=$4`,
+			sid, routingID, req.InvoiceId, req.UserId,
 		); err != nil {
 			return &invoiceGrpc.GenericResponse{Success: false, Code: codes.InternalError}, err
 		}

@@ -25,3 +25,19 @@ func (m *MockClient) Submit(_ context.Context, in SubmitInput) (SubmitResult, er
 func (m *MockClient) FetchStatus(context.Context, string) (PlatformStatus, error) {
 	return m.StatusResult, m.StatusErr
 }
+
+// MockDirectory is a programmable directory adapter for tests: canned
+// result/error plus a log of the SIRETs it was asked to resolve.
+type MockDirectory struct {
+	ResolveResult RecipientRouting
+	ResolveErr    error
+	Resolved      []string
+}
+
+func (m *MockDirectory) Resolve(_ context.Context, siret string) (RecipientRouting, error) {
+	m.Resolved = append(m.Resolved, siret)
+	if m.ResolveErr != nil {
+		return RecipientRouting{}, m.ResolveErr
+	}
+	return m.ResolveResult, nil
+}

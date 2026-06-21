@@ -33,7 +33,7 @@ func TestDeposit_DrivesDEPOSITED(t *testing.T) {
 		time.Date(2099, 4, 1, 9, 0, 0, 0, time.UTC), 1)
 
 	mock := &pdp.MockClient{SubmitResult: pdp.SubmitResult{SubmissionID: "sub-1", Status: pdp.PlatformSubmitted}}
-	srv := actions.NewServer(db, nil, nil, nil, mock)
+	srv := actions.NewServer(db, nil, nil, nil, mock, nil)
 	resp, err := srv.DepositInvoice(context.Background(), &invoiceGrpc.DepositInvoiceRequest{
 		InvoiceId: "inv-dep", UserId: userID, Note: "dépôt initial",
 	})
@@ -63,7 +63,7 @@ func TestDeposit_DraftRefused(t *testing.T) {
 	seedDraftInvoice(t, db, userID, "inv-dep-draft")
 
 	mock := &pdp.MockClient{SubmitResult: pdp.SubmitResult{Status: pdp.PlatformSubmitted}}
-	srv := actions.NewServer(db, nil, nil, nil, mock)
+	srv := actions.NewServer(db, nil, nil, nil, mock, nil)
 	resp, err := srv.DepositInvoice(context.Background(), &invoiceGrpc.DepositInvoiceRequest{
 		InvoiceId: "inv-dep-draft", UserId: userID,
 	})
@@ -86,7 +86,7 @@ func TestDeposit_DoubleDepositRefused(t *testing.T) {
 		time.Date(2099, 4, 1, 9, 0, 0, 0, time.UTC), 1)
 
 	mock := &pdp.MockClient{SubmitResult: pdp.SubmitResult{SubmissionID: "sub-1", Status: pdp.PlatformSubmitted}}
-	srv := actions.NewServer(db, nil, nil, nil, mock)
+	srv := actions.NewServer(db, nil, nil, nil, mock, nil)
 	ctx := context.Background()
 	first, err := srv.DepositInvoice(ctx, &invoiceGrpc.DepositInvoiceRequest{InvoiceId: "inv-dep-2", UserId: userID})
 	if err != nil || !first.Success {
@@ -111,7 +111,7 @@ func TestDeposit_PlatformErrorLeavesStateUntouched(t *testing.T) {
 		time.Date(2099, 4, 1, 9, 0, 0, 0, time.UTC), 1)
 
 	mock := &pdp.MockClient{SubmitErr: errors.New("platform unreachable")}
-	srv := actions.NewServer(db, nil, nil, nil, mock)
+	srv := actions.NewServer(db, nil, nil, nil, mock, nil)
 	resp, err := srv.DepositInvoice(context.Background(), &invoiceGrpc.DepositInvoiceRequest{
 		InvoiceId: "inv-dep-err", UserId: userID,
 	})
@@ -135,7 +135,7 @@ func TestDeposit_WrongOwnerNotFound(t *testing.T) {
 		time.Date(2099, 4, 1, 9, 0, 0, 0, time.UTC), 1)
 
 	mock := &pdp.MockClient{SubmitResult: pdp.SubmitResult{Status: pdp.PlatformSubmitted}}
-	srv := actions.NewServer(db, nil, nil, nil, mock)
+	srv := actions.NewServer(db, nil, nil, nil, mock, nil)
 	resp, err := srv.DepositInvoice(context.Background(), &invoiceGrpc.DepositInvoiceRequest{
 		InvoiceId: "inv-dep-own", UserId: "owner-b",
 	})

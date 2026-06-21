@@ -61,12 +61,14 @@ func main() {
 	uClient := usersGrpc.NewUserServiceClient(uConn)
 	sClient := scheduleGrpc.NewScheduleServiceClient(sConn)
 
-	// No PA contracted yet (B6): default to the no-op adapter. The address is read
-	// as a forward seam; a real adapter is wired here once a provider is chosen.
+	// No PA contracted yet (B6): default to the no-op adapters. The address is read
+	// as a forward seam; real adapters (platform + directory) are wired here once a
+	// provider is chosen.
 	_ = envOrDefault("PDP_SERVICE_ADDRESS", "")
 	var pdpClient pdp.Client = pdp.NoopClient{}
+	var pdpDirectory pdp.Directory = pdp.NoopDirectory{}
 
-	server := actions.NewServer(db, qClient, uClient, sClient, pdpClient)
+	server := actions.NewServer(db, qClient, uClient, sClient, pdpClient, pdpDirectory)
 
 	// B6 status poller: reconciles deposited invoices' lifecycle with the PA.
 	// Disabled by default (interval 0) — inert with the no-op adapter; set
