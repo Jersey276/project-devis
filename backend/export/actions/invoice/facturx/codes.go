@@ -34,6 +34,10 @@ const (
 	// unitDefault is UN/ECE Rec 20 "C62" = one (dimensionless unit).
 	unitDefault = "C62"
 
+	// paymentMeansCreditTransfer is UNTDID 4461 code 30 = credit transfer (BT-81),
+	// the only payment means modelled.
+	paymentMeansCreditTransfer = "30"
+
 	// exemptReason293B is the statutory mention for the French VAT franchise.
 	exemptReason293B = "TVA non applicable, art. 293 B du CGI"
 )

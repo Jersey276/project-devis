@@ -93,6 +93,10 @@ message InvoiceParty {
     // time ('' for legacy). Issuer code on the issuer party, client code on the
     // client party; drives the Factur-X buyer/seller country (BT-40 / BT-55).
     string country_code      = 13;
+    // Issuer payment instructions (BG-16). Field numbers must match the invoice
+    // service proto (16/17) to map across the wire — 14/15 are unused here.
+    string iban              = 16;
+    string bic               = 17;
 }
 
 message InvoiceLine {

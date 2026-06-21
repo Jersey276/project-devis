@@ -193,6 +193,7 @@ Le service couvre deja la validation du XML Factur-X genere contre le XSD offici
 | INV-PDF-002 | Integration | Avoir                                  | Generer PDF/Factur-X  | XML CII valide contre le XSD officiel                      | P0       | Couvert (service `export`) |
 | INV-PDF-003 | Integration | Vente OSS B2C                          | Generer Factur-X      | Pays acheteur et mention OSS coherents dans le XML         | P1       | A couvrir                  |
 | INV-PDF-004 | Integration | Mentions legales / franchise TVA       | Generer PDF           | Mentions presentes (art. 293 B si exonere)                 | P1       | A couvrir                  |
+| INV-PDF-005 | Integration | Emetteur avec IBAN/BIC                  | Generer Factur-X      | Groupe BG-16 (BT-81=30, IBAN, BIC) valide XSD/Schematron   | P1       | Couvert (service `export`) |
 
 ## Ordre TDD recommande
 

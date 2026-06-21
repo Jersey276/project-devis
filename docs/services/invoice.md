@@ -55,6 +55,14 @@ echeancier valide:
   - Simplifications connues : la facture qui franchit le seuil peut rester en TVA
     origine (bascule effective sur la suivante) ; la regle annee N-1 n'est pas
     encore implementee.
+- **Coordonnees de paiement (BG-16)** : l'IBAN et le BIC de l'emetteur (saisis sur
+  son profil) sont geles dans le snapshot a l'emission (`issuer_iban` /
+  `issuer_bic` sur `invoice_party_snapshots` et `credit_note_party_snapshots`,
+  migration `000010`). Le service export les emet dans le XML CII comme groupe
+  BG-16 (moyen de paiement BT-81 = `30` virement, IBAN BT-84, BIC BT-86) ; un avoir
+  herite des coordonnees de la facture origine. Le groupe est omis si aucun IBAN
+  n'est renseigne (le document reste valide EN 16931, notamment pour les factures
+  en franchise / B2C).
 - **Cadre e-invoicing FR** : le Factur-X B2C/OSS genere est coherent mais
   facultatif (l'obligation PPF/PDP vise le B2B domestique ; le transfrontalier
   releve de l'e-reporting).

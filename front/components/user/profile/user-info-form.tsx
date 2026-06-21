@@ -29,6 +29,8 @@ export type UserProfile = {
   vat: string;
   suspended: boolean;
   oss_enabled: boolean;
+  iban: string;
+  bic: string;
 };
 
 type UserInfoFormProps = {
@@ -49,6 +51,8 @@ export default function UserInfoForm({
   const [siren, setSiren] = useState(user.siren ?? "");
   const [vat, setVat] = useState(user.vat ?? "");
   const [ossEnabled, setOssEnabled] = useState(user.oss_enabled ?? false);
+  const [iban, setIban] = useState(user.iban ?? "");
+  const [bic, setBic] = useState(user.bic ?? "");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -66,11 +70,13 @@ export default function UserInfoForm({
           siren,
           vat,
           oss_enabled: ossEnabled,
+          iban,
+          bic,
         }),
       });
       if (ok && body.success) {
         toast.success(t("successToast"));
-        onSaved?.({ ...user, phone, company, siren, vat, oss_enabled: ossEnabled });
+        onSaved?.({ ...user, phone, company, siren, vat, oss_enabled: ossEnabled, iban, bic });
         return;
       }
       if (status === 422 && Array.isArray(body.field_errors)) {
@@ -161,6 +167,35 @@ export default function UserInfoForm({
               disabled={readOnly}
             />
             <FieldError errors={toErrorProps(fieldErrors.vat)} />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Field data-invalid={!!fieldErrors.iban?.length}>
+            <FieldLabel htmlFor="iban">{t("ibanLabel")}</FieldLabel>
+            <Input
+              id="iban"
+              name="iban"
+              value={iban}
+              onChange={(e) => setIban(e.target.value)}
+              aria-invalid={!!fieldErrors.iban?.length}
+              disabled={readOnly}
+            />
+            <FieldDescription>{t("ibanHint")}</FieldDescription>
+            <FieldError errors={toErrorProps(fieldErrors.iban)} />
+          </Field>
+
+          <Field data-invalid={!!fieldErrors.bic?.length}>
+            <FieldLabel htmlFor="bic">{t("bicLabel")}</FieldLabel>
+            <Input
+              id="bic"
+              name="bic"
+              value={bic}
+              onChange={(e) => setBic(e.target.value)}
+              aria-invalid={!!fieldErrors.bic?.length}
+              disabled={readOnly}
+            />
+            <FieldError errors={toErrorProps(fieldErrors.bic)} />
           </Field>
         </div>
 

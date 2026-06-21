@@ -842,6 +842,9 @@
       "vatLabel": "N° de TVA",
       "ossEnabledLabel": "Régime OSS activé",
       "ossEnabledHint": "Pour la vente à distance à des particuliers d'autres pays de l'UE : applique la TVA du pays de destination. À activer une fois le seuil de 10 000 € franchi.",
+      "ibanLabel": "IBAN",
+      "ibanHint": "Affiché sur vos factures électroniques comme coordonnées de paiement.",
+      "bicLabel": "BIC",
       "successToast": "Informations mises à jour."
     },
     "connection": {

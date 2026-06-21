@@ -83,6 +83,18 @@ func TestBuildCreditNote_RejectsMissingNumber(t *testing.T) {
 	}
 }
 
+// A credit note inherits the seller's IBAN/BIC from the source invoice, so it
+// carries the same BG-16 payment instructions.
+func TestBuildCreditNote_PaymentMeansInherited(t *testing.T) {
+	cn := sampleCreditNote()
+	cn.Issuer.Iban = "FR7630006000011234567890189"
+	cn.Issuer.Bic = "BNPAFRPP"
+	s := mustBuildCreditNote(t, cn)
+	mustContain(t, s, `<ram:TypeCode>30</ram:TypeCode>`)
+	mustContain(t, s, `<ram:IBANID>FR7630006000011234567890189</ram:IBANID>`)
+	mustContain(t, s, `<ram:BICID>BNPAFRPP</ram:BICID>`)
+}
+
 // A credit note has no due date; the settlement must not emit payment terms.
 func TestBuildCreditNote_NoPaymentTerms(t *testing.T) {
 	s := mustBuildCreditNote(t, sampleCreditNote())

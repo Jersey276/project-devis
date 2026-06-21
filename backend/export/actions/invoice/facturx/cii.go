@@ -147,6 +147,9 @@ type supplyChainEvent struct {
 
 type headerTradeSettlement struct {
 	CurrencyCode string             `xml:"ram:InvoiceCurrencyCode"`
+	// BG-16: must precede ApplicableTradeTax per the CII XSD sequence (field order
+	// is the marshalled order).
+	PaymentMeans []paymentMeans     `xml:"ram:SpecifiedTradeSettlementPaymentMeans,omitempty"`
 	Taxes        []tradeTax         `xml:"ram:ApplicableTradeTax"`
 	PaymentTerms *paymentTerms      `xml:"ram:SpecifiedTradePaymentTerms,omitempty"`
 	Summation    monetarySummation  `xml:"ram:SpecifiedTradeSettlementHeaderMonetarySummation"`
@@ -177,6 +180,21 @@ type tradeTax struct {
 
 type paymentTerms struct {
 	DueDate dateTimeWrap `xml:"ram:DueDateDateTime"`
+}
+
+// paymentMeans is a CII payment-instructions entry (BG-16).
+type paymentMeans struct {
+	TypeCode     string                 `xml:"ram:TypeCode"` // BT-81
+	PayeeAccount *payeeFinancialAccount `xml:"ram:PayeePartyCreditorFinancialAccount,omitempty"`
+	PayeeInst    *financialInstitution  `xml:"ram:PayeeSpecifiedCreditorFinancialInstitution,omitempty"`
+}
+
+type payeeFinancialAccount struct {
+	IBANID string `xml:"ram:IBANID"` // BT-84
+}
+
+type financialInstitution struct {
+	BICID string `xml:"ram:BICID"` // BT-86
 }
 
 type monetarySummation struct {

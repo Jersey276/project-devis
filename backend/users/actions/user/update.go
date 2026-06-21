@@ -15,8 +15,8 @@ func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateUserRequest) (
 	}
 
 	res, err := db.ExecContext(ctx,
-		`UPDATE users SET phone=$1, company=$2, siren=$3, vat=$4, logo_url=$5, oss_enabled=$6, updated_at=NOW() WHERE user_id=$7`,
-		sqlutil.NullableStr(req.Phone), sqlutil.NullableStr(req.Company), sqlutil.NullableStr(req.Siren), sqlutil.NullableStr(req.Vat), sqlutil.NullableStr(req.LogoUrl), req.OssEnabled, req.UserId,
+		`UPDATE users SET phone=$1, company=$2, siren=$3, vat=$4, logo_url=$5, oss_enabled=$6, iban=$7, bic=$8, updated_at=NOW() WHERE user_id=$9`,
+		sqlutil.NullableStr(req.Phone), sqlutil.NullableStr(req.Company), sqlutil.NullableStr(req.Siren), sqlutil.NullableStr(req.Vat), sqlutil.NullableStr(req.LogoUrl), req.OssEnabled, sqlutil.NullableStr(req.Iban), sqlutil.NullableStr(req.Bic), req.UserId,
 	)
 	if err != nil {
 		return &usersGrpc.UpdateUserResponse{Success: false, Code: codes.InternalError}, err

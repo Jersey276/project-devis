@@ -79,6 +79,8 @@ message User {
     string logo_url = 7;
     bool suspended = 8;
     bool oss_enabled = 9;
+    string iban = 10;
+    string bic = 11;
 }
 
 message CreateUserRequest {
@@ -110,6 +112,8 @@ message UpdateUserRequest {
     string vat = 5;
     string logo_url = 6;
     bool oss_enabled = 7;
+    string iban = 8;
+    string bic = 9;
 }
 
 message UpdateUserResponse {

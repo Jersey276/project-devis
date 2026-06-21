@@ -238,6 +238,8 @@ type User struct {
 	LogoUrl       string                 `protobuf:"bytes,7,opt,name=logo_url,json=logoUrl,proto3" json:"logo_url,omitempty"`
 	Suspended     bool                   `protobuf:"varint,8,opt,name=suspended,proto3" json:"suspended,omitempty"`
 	OssEnabled    bool                   `protobuf:"varint,9,opt,name=oss_enabled,json=ossEnabled,proto3" json:"oss_enabled,omitempty"`
+	Iban          string                 `protobuf:"bytes,10,opt,name=iban,proto3" json:"iban,omitempty"`
+	Bic           string                 `protobuf:"bytes,11,opt,name=bic,proto3" json:"bic,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -333,6 +335,20 @@ func (x *User) GetOssEnabled() bool {
 		return x.OssEnabled
 	}
 	return false
+}
+
+func (x *User) GetIban() string {
+	if x != nil {
+		return x.Iban
+	}
+	return ""
+}
+
+func (x *User) GetBic() string {
+	if x != nil {
+		return x.Bic
+	}
+	return ""
 }
 
 type CreateUserRequest struct {
@@ -560,6 +576,8 @@ type UpdateUserRequest struct {
 	Vat           string                 `protobuf:"bytes,5,opt,name=vat,proto3" json:"vat,omitempty"`
 	LogoUrl       string                 `protobuf:"bytes,6,opt,name=logo_url,json=logoUrl,proto3" json:"logo_url,omitempty"`
 	OssEnabled    bool                   `protobuf:"varint,7,opt,name=oss_enabled,json=ossEnabled,proto3" json:"oss_enabled,omitempty"`
+	Iban          string                 `protobuf:"bytes,8,opt,name=iban,proto3" json:"iban,omitempty"`
+	Bic           string                 `protobuf:"bytes,9,opt,name=bic,proto3" json:"bic,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -641,6 +659,20 @@ func (x *UpdateUserRequest) GetOssEnabled() bool {
 		return x.OssEnabled
 	}
 	return false
+}
+
+func (x *UpdateUserRequest) GetIban() string {
+	if x != nil {
+		return x.Iban
+	}
+	return ""
+}
+
+func (x *UpdateUserRequest) GetBic() string {
+	if x != nil {
+		return x.Bic
+	}
+	return ""
 }
 
 type UpdateUserResponse struct {
@@ -4867,7 +4899,7 @@ const file_users_users_proto_rawDesc = "" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\"A\n" +
 	"\x0fValidationError\x12\x14\n" +
 	"\x05field\x18\x01 \x01(\tR\x05field\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\xe7\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\x8d\x02\n" +
 	"\x04User\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x14\n" +
@@ -4878,7 +4910,10 @@ const file_users_users_proto_rawDesc = "" +
 	"\blogo_url\x18\a \x01(\tR\alogoUrl\x12\x1c\n" +
 	"\tsuspended\x18\b \x01(\bR\tsuspended\x12\x1f\n" +
 	"\voss_enabled\x18\t \x01(\bR\n" +
-	"ossEnabled\")\n" +
+	"ossEnabled\x12\x12\n" +
+	"\x04iban\x18\n" +
+	" \x01(\tR\x04iban\x12\x10\n" +
+	"\x03bic\x18\v \x01(\tR\x03bic\")\n" +
 	"\x11CreateUserRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\"\xa0\x01\n" +
 	"\x12CreateUserResponse\x12\x18\n" +
@@ -4891,7 +4926,7 @@ const file_users_users_proto_rawDesc = "" +
 	"\x0fGetUserResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x1f\n" +
-	"\x04user\x18\x03 \x01(\v2\v.users.UserR\x04user\"\xc0\x01\n" +
+	"\x04user\x18\x03 \x01(\v2\v.users.UserR\x04user\"\xe6\x01\n" +
 	"\x11UpdateUserRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05phone\x18\x02 \x01(\tR\x05phone\x12\x18\n" +
@@ -4900,7 +4935,9 @@ const file_users_users_proto_rawDesc = "" +
 	"\x03vat\x18\x05 \x01(\tR\x03vat\x12\x19\n" +
 	"\blogo_url\x18\x06 \x01(\tR\alogoUrl\x12\x1f\n" +
 	"\voss_enabled\x18\a \x01(\bR\n" +
-	"ossEnabled\"B\n" +
+	"ossEnabled\x12\x12\n" +
+	"\x04iban\x18\b \x01(\tR\x04iban\x12\x10\n" +
+	"\x03bic\x18\t \x01(\tR\x03bic\"B\n" +
 	"\x12UpdateUserResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\",\n" +

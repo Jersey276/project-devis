@@ -48,6 +48,12 @@ func TestSchematron_EN16931(t *testing.T) {
 			return Build(in)
 		}},
 		{"invoice_oss", func() ([]byte, error) { return Build(ossInvoice()) }},
+		{"invoice_payment_means", func() ([]byte, error) {
+			in := sampleInvoice()
+			in.Issuer.Iban = "FR7630006000011234567890189"
+			in.Issuer.Bic = "BNPAFRPP"
+			return Build(in)
+		}},
 		{"credit_note", func() ([]byte, error) { return BuildCreditNote(sampleCreditNote()) }},
 	}
 

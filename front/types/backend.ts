@@ -240,6 +240,8 @@ export type BackendInvoiceParty = {
   additional_street: string;
   zip_code: string;
   city: string;
+  iban: string;
+  bic: string;
 };
 
 export type BackendInvoiceLine = {

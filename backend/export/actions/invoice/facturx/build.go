@@ -255,6 +255,7 @@ func buildDelivery(d docInput) headerTradeDelivery {
 func buildSettlement(d docInput) headerTradeSettlement {
 	s := headerTradeSettlement{
 		CurrencyCode: currencyEUR,
+		PaymentMeans: buildPaymentMeans(d.issuer),
 		Taxes:        buildTaxes(d),
 		Summation: monetarySummation{
 			LineTotalAmount:     amountFromCents(d.totalHtCents),
@@ -271,6 +272,26 @@ func buildSettlement(d docInput) headerTradeSettlement {
 		s.InvoiceReferenced = &referencedDocument{IssuerAssignedID: d.referencedInvoice}
 	}
 	return s
+}
+
+// buildPaymentMeans emits the BG-16 group from the issuer IBAN. No IBAN means the
+// group is omitted — it is conditional, so the document stays EN 16931-valid.
+func buildPaymentMeans(issuer *invoicepb.InvoiceParty) []paymentMeans {
+	if issuer == nil {
+		return nil
+	}
+	iban := strings.TrimSpace(issuer.GetIban())
+	if iban == "" {
+		return nil
+	}
+	pm := paymentMeans{
+		TypeCode:     paymentMeansCreditTransfer,
+		PayeeAccount: &payeeFinancialAccount{IBANID: iban},
+	}
+	if bic := strings.TrimSpace(issuer.GetBic()); bic != "" {
+		pm.PayeeInst = &financialInstitution{BICID: bic}
+	}
+	return []paymentMeans{pm}
 }
 
 // buildTaxes emits one ApplicableTradeTax per VAT-breakdown bucket. Under the

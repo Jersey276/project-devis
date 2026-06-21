@@ -588,7 +588,11 @@ type InvoiceParty struct {
 	// country_code is the party's frozen ISO 3166-1 alpha-2 country code at issue
 	// time (” for legacy). Issuer code on the issuer party, client code on the
 	// client party; drives the Factur-X buyer/seller country.
-	CountryCode   string `protobuf:"bytes,15,opt,name=country_code,json=countryCode,proto3" json:"country_code,omitempty"`
+	CountryCode string `protobuf:"bytes,15,opt,name=country_code,json=countryCode,proto3" json:"country_code,omitempty"`
+	// iban / bic are the issuer's payment instructions, frozen at issue time and
+	// emitted as BG-16 in the Factur-X CII. Issuer side only.
+	Iban          string `protobuf:"bytes,16,opt,name=iban,proto3" json:"iban,omitempty"`
+	Bic           string `protobuf:"bytes,17,opt,name=bic,proto3" json:"bic,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -724,6 +728,20 @@ func (x *InvoiceParty) GetClientCountryId() int32 {
 func (x *InvoiceParty) GetCountryCode() string {
 	if x != nil {
 		return x.CountryCode
+	}
+	return ""
+}
+
+func (x *InvoiceParty) GetIban() string {
+	if x != nil {
+		return x.Iban
+	}
+	return ""
+}
+
+func (x *InvoiceParty) GetBic() string {
+	if x != nil {
+		return x.Bic
 	}
 	return ""
 }
@@ -2330,7 +2348,7 @@ const file_invoice_invoice_proto_rawDesc = "" +
 	"\x11GetInvoiceRequest\x12\x1d\n" +
 	"\n" +
 	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xb7\x03\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xdd\x03\n" +
 	"\fInvoiceParty\x12\x18\n" +
 	"\acompany\x18\x01 \x01(\tR\acompany\x12\x1d\n" +
 	"\n" +
@@ -2349,7 +2367,9 @@ const file_invoice_invoice_proto_rawDesc = "" +
 	"\vclient_type\x18\r \x01(\tR\n" +
 	"clientType\x12*\n" +
 	"\x11client_country_id\x18\x0e \x01(\x05R\x0fclientCountryId\x12!\n" +
-	"\fcountry_code\x18\x0f \x01(\tR\vcountryCode\"\x92\x02\n" +
+	"\fcountry_code\x18\x0f \x01(\tR\vcountryCode\x12\x12\n" +
+	"\x04iban\x18\x10 \x01(\tR\x04iban\x12\x10\n" +
+	"\x03bic\x18\x11 \x01(\tR\x03bic\"\x92\x02\n" +
 	"\vInvoiceLine\x12\"\n" +
 	"\rquote_line_id\x18\x01 \x01(\tR\vquoteLineId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +

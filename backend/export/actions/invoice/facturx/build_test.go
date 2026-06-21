@@ -203,6 +203,47 @@ func TestBuild_OSS(t *testing.T) {
 	}
 }
 
+func TestBuild_PaymentMeans(t *testing.T) {
+	in := sampleInvoice()
+	in.Issuer.Iban = "FR7630006000011234567890189"
+	in.Issuer.Bic = "BNPAFRPP"
+	s := mustBuild(t, in)
+
+	mustContain(t, s, `<ram:SpecifiedTradeSettlementPaymentMeans>`)
+	mustContain(t, s, `<ram:TypeCode>30</ram:TypeCode>`) // BT-81 credit transfer
+	mustContain(t, s, `<ram:IBANID>FR7630006000011234567890189</ram:IBANID>`) // BT-84
+	mustContain(t, s, `<ram:BICID>BNPAFRPP</ram:BICID>`)                      // BT-86
+
+	// PaymentMeans must sit after InvoiceCurrencyCode and before the header tax;
+	// anchor on the currency code to skip the earlier line-level taxes.
+	cur := strings.Index(s, "InvoiceCurrencyCode")
+	pm := strings.Index(s, "SpecifiedTradeSettlementPaymentMeans")
+	headerTax := strings.Index(s[cur:], "ApplicableTradeTax") + cur
+	if pm == -1 || pm < cur || pm > headerTax {
+		t.Errorf("PaymentMeans (%d) must sit between InvoiceCurrencyCode (%d) and the header ApplicableTradeTax (%d)", pm, cur, headerTax)
+	}
+}
+
+func TestBuild_PaymentMeans_NoBic(t *testing.T) {
+	in := sampleInvoice()
+	in.Issuer.Iban = "FR7630006000011234567890189"
+	s := mustBuild(t, in)
+	mustContain(t, s, `<ram:IBANID>FR7630006000011234567890189</ram:IBANID>`)
+	// BIC is optional: no empty institution element when absent.
+	if strings.Contains(s, "PayeeSpecifiedCreditorFinancialInstitution") {
+		t.Error("missing BIC must not emit a PayeeSpecifiedCreditorFinancialInstitution element")
+	}
+}
+
+// Without an issuer IBAN the conditional BG-16 group is omitted entirely, keeping
+// franchise / B2C invoices EN 16931-valid.
+func TestBuild_NoPaymentMeansWithoutIban(t *testing.T) {
+	s := mustBuild(t, sampleInvoice())
+	if strings.Contains(s, "SpecifiedTradeSettlementPaymentMeans") {
+		t.Error("no IBAN should omit the whole PaymentMeans group")
+	}
+}
+
 func TestBuild_RejectsDraft(t *testing.T) {
 	in := sampleInvoice()
 	in.InvoiceNumber = ""

@@ -178,6 +178,8 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 		Vat        string `json:"vat"`
 		LogoURL    string `json:"logo_url"`
 		OssEnabled bool   `json:"oss_enabled"`
+		Iban       string `json:"iban"`
+		Bic        string `json:"bic"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
@@ -195,6 +197,8 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 		Vat:        input.Vat,
 		LogoUrl:    input.LogoURL,
 		OssEnabled: input.OssEnabled,
+		Iban:       input.Iban,
+		Bic:        input.Bic,
 	})
 	if err != nil {
 		usersErrors.unavailable(c)
@@ -657,6 +661,8 @@ func marshalUser(u *users.User) gin.H {
 		"logo_url":    u.LogoUrl,
 		"suspended":   u.Suspended,
 		"oss_enabled": u.OssEnabled,
+		"iban":        u.Iban,
+		"bic":         u.Bic,
 	}
 }
 

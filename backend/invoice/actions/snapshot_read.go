@@ -13,7 +13,7 @@ func (s *Server) loadSnapshot(ctx context.Context, invoiceID string, details *in
 		        issuer_street, issuer_additional, issuer_zip, issuer_city,
 		        client_first_name, client_last_name, client_company, client_siren, client_vat, client_email,
 		        client_street, client_additional, client_zip, client_city, client_type, client_country_id, oss_applied,
-		        issuer_country_code, client_country_code
+		        issuer_country_code, client_country_code, issuer_iban, issuer_bic
 		 FROM invoice_party_snapshots WHERE invoice_id=$1`,
 		invoiceID,
 	).Scan(
@@ -21,7 +21,7 @@ func (s *Server) loadSnapshot(ctx context.Context, invoiceID string, details *in
 		&p.issuerStreet, &p.issuerAdditional, &p.issuerZip, &p.issuerCity,
 		&p.clientFirstName, &p.clientLastName, &p.clientCompany, &p.clientSiren, &p.clientVat, &p.clientEmail,
 		&p.clientStreet, &p.clientAdditional, &p.clientZip, &p.clientCity, &p.clientType, &p.clientCountryID, &p.ossApplied,
-		&p.issuerCountryCode, &p.clientCountryCode,
+		&p.issuerCountryCode, &p.clientCountryCode, &p.issuerIban, &p.issuerBic,
 	)
 	if err != nil {
 		return err
@@ -84,6 +84,8 @@ func partyToProto(p partySnapshot, issuer bool) *invoiceGrpc.InvoiceParty {
 			ZipCode:          p.issuerZip,
 			City:             p.issuerCity,
 			CountryCode:      p.issuerCountryCode,
+			Iban:             p.issuerIban,
+			Bic:              p.issuerBic,
 		}
 	}
 	return &invoiceGrpc.InvoiceParty{
