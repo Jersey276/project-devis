@@ -76,6 +76,23 @@ echeancier valide:
   Le groupe est omis si ni SIRET ni SIREN ne sont renseignes (valide EN 16931, B2C).
   Le lookup annuaire lui-meme (resolution SIRET -> plateforme destinataire) releve
   de l'integration PDP/PA (B6).
+- **Depot plateforme (B6, 1ere iteration)** : abstraction neutre `PDPClient`
+  (package `backend/invoice/pdp/`) vers une Plateforme Agreee (PA, ex-PDP), avec
+  un adaptateur **no-op** par defaut (aucune PA contractee : voir la decision de
+  cadrage) et un mock pour les tests. Le RPC `DepositInvoice` depose une facture
+  emise puis fait avancer le cycle de vie e-invoicing a `DEPOSITED` **via les memes
+  gardes** que la transition manuelle (`applyLifecycleTransition` : verrou de ligne,
+  garde `ISSUED|PAID`, table de transitions, journal append-only). Le handle
+  plateforme est gele dans `pdp_submission_id` (migration `000013`, nullable). La
+  meme migration **corrige un bug latent** : le trigger d'inalterabilite (`000003`)
+  n'autorisait sur facture scellee que la transition `ISSUED -> PAID` ; il accepte
+  desormais aussi une MAJ ne touchant que `lifecycle_status` / `pdp_submission_id`
+  / `updated_at`, toutes les colonnes legales/financieres restant gelees (le
+  document legal et son scellement chaine restent inalterables). Hors perimetre de
+  cette iteration : worker de polling des statuts, lookup annuaire DGFiP, adaptateur
+  PA reel. Gateway : `POST /api/invoices/:id/deposit`. Front : bouton « Deposer sur
+  la plateforme » (statut e-invoicing `NONE`), le reste des transitions restant
+  manuel.
 - **Cadre e-invoicing FR** : le Factur-X B2C/OSS genere est coherent mais
   facultatif (l'obligation PPF/PDP vise le B2B domestique ; le transfrontalier
   releve de l'e-reporting).
@@ -85,6 +102,9 @@ echeancier valide:
 Voir `backend/invoice/actions/codes/codes.go` et `docs/ERROR_CODES.md`. Notamment
 `OSSDestinationTaxMissing` (4010) : l'OSS s'applique mais aucun taux n'est
 configure pour le pays du client, l'emission est bloquee.
+`PDPSubmissionFailed` (4013, B6) : le depot sur la plateforme a echoue (l'appel
+PA renvoie une erreur ou un statut inattendu) ; le cycle de vie reste inchange.
+La gateway le mappe en `502 Bad Gateway`.
 
 ## Ports
 

@@ -33,6 +33,11 @@ service InvoiceService {
     // Manual issuer-driven transitions for now; platform auto-feed comes in B6.
     rpc SetInvoiceLifecycleStatus(SetInvoiceLifecycleStatusRequest) returns (GenericResponse);
     rpc ListInvoiceLifecycleEvents(ListInvoiceLifecycleEventsRequest) returns (ListInvoiceLifecycleEventsResponse);
+
+    // Deposit an issued invoice on the e-invoicing platform (B6). Drives the
+    // DEPOSITED transition through the same lifecycle guards as the manual RPC.
+    // No-op platform by default until a PA (Plateforme Agréée) is contracted.
+    rpc DepositInvoice(DepositInvoiceRequest) returns (GenericResponse);
 }
 
 message GenericResponse {
@@ -327,6 +332,12 @@ message InvoiceLifecycleEvent {
 message ListInvoiceLifecycleEventsRequest {
     string invoice_id = 1;
     string user_id    = 2;
+}
+
+message DepositInvoiceRequest {
+    string invoice_id = 1;
+    string user_id    = 2;
+    string note       = 3;  // optional, appended to the DEPOSITED lifecycle event
 }
 
 message ListInvoiceLifecycleEventsResponse {

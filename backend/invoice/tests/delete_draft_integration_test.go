@@ -40,7 +40,7 @@ func TestDeleteDraft_RemovesDraft(t *testing.T) {
 	const userID = "del-test-draft"
 	seedDraftInvoice(t, db, userID, "inv-draft")
 
-	srv := actions.NewServer(db, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil)
 	resp, err := srv.DeleteDraftInvoice(context.Background(), &invoiceGrpc.DeleteDraftInvoiceRequest{
 		InvoiceId: "inv-draft", UserId: userID,
 	})
@@ -65,7 +65,7 @@ func TestDeleteDraft_RefusesIssued(t *testing.T) {
 		t.Fatalf("backfill: %v", err)
 	}
 
-	srv := actions.NewServer(db, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil)
 	resp, err := srv.DeleteDraftInvoice(context.Background(), &invoiceGrpc.DeleteDraftInvoiceRequest{
 		InvoiceId: "inv-issued", UserId: userID,
 	})
@@ -85,7 +85,7 @@ func TestDeleteDraft_RefusesIssued(t *testing.T) {
 
 func TestDeleteDraft_NotFound(t *testing.T) {
 	db := sealTestDB(t)
-	srv := actions.NewServer(db, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil)
 	resp, err := srv.DeleteDraftInvoice(context.Background(), &invoiceGrpc.DeleteDraftInvoiceRequest{
 		InvoiceId: "does-not-exist", UserId: "del-test-missing",
 	})

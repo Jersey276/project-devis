@@ -53,44 +53,58 @@ func (s *Server) SetInvoiceLifecycleStatus(ctx context.Context, req *invoiceGrpc
 	}
 	defer tx.Rollback()
 
-	var status, lifecycle string
-	err = tx.QueryRowContext(ctx,
-		`SELECT status, lifecycle_status FROM invoices
-		 WHERE invoice_id=$1 AND user_id=$2 FOR UPDATE`,
-		req.InvoiceId, req.UserId,
-	).Scan(&status, &lifecycle)
-	if err == sql.ErrNoRows {
-		return &invoiceGrpc.GenericResponse{Success: false, Code: codes.NotFound}, nil
-	}
-	if err != nil {
-		return &invoiceGrpc.GenericResponse{Success: false, Code: codes.InternalError}, err
-	}
-
-	if status != "ISSUED" && status != "PAID" {
-		return &invoiceGrpc.GenericResponse{Success: false, Code: codes.LifecycleRequiresIssued}, nil
-	}
-	if !nextLifecycleAllowed(lifecycle, target) {
-		return &invoiceGrpc.GenericResponse{Success: false, Code: codes.LifecycleTransitionInvalid}, nil
-	}
-
-	if _, err := tx.ExecContext(ctx,
-		`UPDATE invoices SET lifecycle_status=$1, updated_at=NOW() WHERE invoice_id=$2 AND user_id=$3`,
-		target, req.InvoiceId, req.UserId,
-	); err != nil {
-		return &invoiceGrpc.GenericResponse{Success: false, Code: codes.InternalError}, err
-	}
-	if _, err := tx.ExecContext(ctx,
-		`INSERT INTO invoice_lifecycle_events (invoice_id, user_id, status, note)
-		 VALUES ($1, $2, $3, $4)`,
-		req.InvoiceId, req.UserId, target, strings.TrimSpace(req.GetNote()),
-	); err != nil {
-		return &invoiceGrpc.GenericResponse{Success: false, Code: codes.InternalError}, err
+	if code, err := applyLifecycleTransition(ctx, tx, req.InvoiceId, req.UserId, target, strings.TrimSpace(req.GetNote())); code != codes.Success {
+		return &invoiceGrpc.GenericResponse{Success: false, Code: code}, err
 	}
 
 	if err := tx.Commit(); err != nil {
 		return &invoiceGrpc.GenericResponse{Success: false, Code: codes.InternalError}, err
 	}
 	return &invoiceGrpc.GenericResponse{Success: true, Code: codes.Success}, nil
+}
+
+// applyLifecycleTransition is the single source of truth for advancing an
+// invoice's e-invoicing lifecycle inside a caller-owned tx: lock the row, guard
+// status∈ISSUED|PAID, validate the move against lifecycleTransitions, then update
+// the status and append the event. The caller commits. Returns codes.Success on
+// success, otherwise the business code (and any DB error). Both the manual RPC
+// and the PDP deposit flow go through here so guards and the append-only log
+// cannot be bypassed.
+func applyLifecycleTransition(ctx context.Context, tx *sql.Tx, invoiceID, userID, target, note string) (int32, error) {
+	var status, lifecycle string
+	err := tx.QueryRowContext(ctx,
+		`SELECT status, lifecycle_status FROM invoices
+		 WHERE invoice_id=$1 AND user_id=$2 FOR UPDATE`,
+		invoiceID, userID,
+	).Scan(&status, &lifecycle)
+	if err == sql.ErrNoRows {
+		return codes.NotFound, nil
+	}
+	if err != nil {
+		return codes.InternalError, err
+	}
+
+	if status != "ISSUED" && status != "PAID" {
+		return codes.LifecycleRequiresIssued, nil
+	}
+	if !nextLifecycleAllowed(lifecycle, target) {
+		return codes.LifecycleTransitionInvalid, nil
+	}
+
+	if _, err := tx.ExecContext(ctx,
+		`UPDATE invoices SET lifecycle_status=$1, updated_at=NOW() WHERE invoice_id=$2 AND user_id=$3`,
+		target, invoiceID, userID,
+	); err != nil {
+		return codes.InternalError, err
+	}
+	if _, err := tx.ExecContext(ctx,
+		`INSERT INTO invoice_lifecycle_events (invoice_id, user_id, status, note)
+		 VALUES ($1, $2, $3, $4)`,
+		invoiceID, userID, target, note,
+	); err != nil {
+		return codes.InternalError, err
+	}
+	return codes.Success, nil
 }
 
 func (s *Server) ListInvoiceLifecycleEvents(ctx context.Context, req *invoiceGrpc.ListInvoiceLifecycleEventsRequest) (resp *invoiceGrpc.ListInvoiceLifecycleEventsResponse, err error) {

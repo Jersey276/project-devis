@@ -103,6 +103,15 @@ export async function setInvoiceLifecycleStatus(
   });
 }
 
+// Deposit an issued invoice on the e-invoicing platform (B6). The backend
+// drives the DEPOSITED lifecycle transition; a no-op platform is used until a
+// PA (Plateforme Agréée) is contracted.
+export async function depositInvoice(invoiceId: string): Promise<ApiResult> {
+  return apiFetch(`/api/invoices/${encodeURIComponent(invoiceId)}/deposit`, {
+    method: "POST",
+  });
+}
+
 export async function listInvoiceLifecycleEvents(
   invoiceId: string,
 ): Promise<ApiResult> {

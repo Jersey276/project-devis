@@ -33,6 +33,7 @@ const (
 	InvoiceService_GetOSSThresholdStatus_FullMethodName      = "/invoice.InvoiceService/GetOSSThresholdStatus"
 	InvoiceService_SetInvoiceLifecycleStatus_FullMethodName  = "/invoice.InvoiceService/SetInvoiceLifecycleStatus"
 	InvoiceService_ListInvoiceLifecycleEvents_FullMethodName = "/invoice.InvoiceService/ListInvoiceLifecycleEvents"
+	InvoiceService_DepositInvoice_FullMethodName             = "/invoice.InvoiceService/DepositInvoice"
 )
 
 // InvoiceServiceClient is the client API for InvoiceService service.
@@ -63,6 +64,10 @@ type InvoiceServiceClient interface {
 	// Manual issuer-driven transitions for now; platform auto-feed comes in B6.
 	SetInvoiceLifecycleStatus(ctx context.Context, in *SetInvoiceLifecycleStatusRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	ListInvoiceLifecycleEvents(ctx context.Context, in *ListInvoiceLifecycleEventsRequest, opts ...grpc.CallOption) (*ListInvoiceLifecycleEventsResponse, error)
+	// Deposit an issued invoice on the e-invoicing platform (B6). Drives the
+	// DEPOSITED transition through the same lifecycle guards as the manual RPC.
+	// No-op platform by default until a PA (Plateforme Agréée) is contracted.
+	DepositInvoice(ctx context.Context, in *DepositInvoiceRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 }
 
 type invoiceServiceClient struct {
@@ -213,6 +218,16 @@ func (c *invoiceServiceClient) ListInvoiceLifecycleEvents(ctx context.Context, i
 	return out, nil
 }
 
+func (c *invoiceServiceClient) DepositInvoice(ctx context.Context, in *DepositInvoiceRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, InvoiceService_DepositInvoice_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InvoiceServiceServer is the server API for InvoiceService service.
 // All implementations must embed UnimplementedInvoiceServiceServer
 // for forward compatibility.
@@ -241,6 +256,10 @@ type InvoiceServiceServer interface {
 	// Manual issuer-driven transitions for now; platform auto-feed comes in B6.
 	SetInvoiceLifecycleStatus(context.Context, *SetInvoiceLifecycleStatusRequest) (*GenericResponse, error)
 	ListInvoiceLifecycleEvents(context.Context, *ListInvoiceLifecycleEventsRequest) (*ListInvoiceLifecycleEventsResponse, error)
+	// Deposit an issued invoice on the e-invoicing platform (B6). Drives the
+	// DEPOSITED transition through the same lifecycle guards as the manual RPC.
+	// No-op platform by default until a PA (Plateforme Agréée) is contracted.
+	DepositInvoice(context.Context, *DepositInvoiceRequest) (*GenericResponse, error)
 	mustEmbedUnimplementedInvoiceServiceServer()
 }
 
@@ -292,6 +311,9 @@ func (UnimplementedInvoiceServiceServer) SetInvoiceLifecycleStatus(context.Conte
 }
 func (UnimplementedInvoiceServiceServer) ListInvoiceLifecycleEvents(context.Context, *ListInvoiceLifecycleEventsRequest) (*ListInvoiceLifecycleEventsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListInvoiceLifecycleEvents not implemented")
+}
+func (UnimplementedInvoiceServiceServer) DepositInvoice(context.Context, *DepositInvoiceRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DepositInvoice not implemented")
 }
 func (UnimplementedInvoiceServiceServer) mustEmbedUnimplementedInvoiceServiceServer() {}
 func (UnimplementedInvoiceServiceServer) testEmbeddedByValue()                        {}
@@ -566,6 +588,24 @@ func _InvoiceService_ListInvoiceLifecycleEvents_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InvoiceService_DepositInvoice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DepositInvoiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InvoiceServiceServer).DepositInvoice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InvoiceService_DepositInvoice_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InvoiceServiceServer).DepositInvoice(ctx, req.(*DepositInvoiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InvoiceService_ServiceDesc is the grpc.ServiceDesc for InvoiceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -628,6 +668,10 @@ var InvoiceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListInvoiceLifecycleEvents",
 			Handler:    _InvoiceService_ListInvoiceLifecycleEvents_Handler,
+		},
+		{
+			MethodName: "DepositInvoice",
+			Handler:    _InvoiceService_DepositInvoice_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

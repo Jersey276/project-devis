@@ -28,6 +28,7 @@ const (
 	InvoiceCodeOSSDestinationTaxMissing      int32 = 4010
 	InvoiceCodeLifecycleTransitionInvalid    int32 = 4011
 	InvoiceCodeLifecycleRequiresIssued       int32 = 4012
+	InvoiceCodePDPSubmissionFailed           int32 = 4013
 
 	InvoiceCodeInternalError int32 = 2001
 )
@@ -57,6 +58,7 @@ var invoiceErrors = &serviceErrors{
 		InvoiceCodeOSSDestinationTaxMissing:      {http.StatusUnprocessableEntity, "Aucune TVA n'est configurée pour le pays du client (régime OSS). Configurez le taux du pays de destination avant d'émettre."},
 		InvoiceCodeLifecycleTransitionInvalid:    {http.StatusConflict, "Transition de statut e-invoicing non autorisée."},
 		InvoiceCodeLifecycleRequiresIssued:       {http.StatusConflict, "Le statut e-invoicing ne s'applique qu'aux factures émises."},
+		InvoiceCodePDPSubmissionFailed:           {http.StatusBadGateway, "Le dépôt sur la plateforme a échoué. Réessayez plus tard."},
 		InvoiceCodeInternalError:                 {http.StatusInternalServerError, "Une erreur interne est survenue."},
 	},
 	unavailableMessage: "Service de facturation indisponible.",
@@ -88,6 +90,7 @@ func InvoicesRoutes(r *gin.RouterGroup) {
 	one.POST("/credit-notes", func(c *gin.Context) { CreateCreditNote(c, client) })
 	one.POST("/lifecycle", func(c *gin.Context) { SetInvoiceLifecycleStatus(c, client) })
 	one.GET("/lifecycle-events", func(c *gin.Context) { ListInvoiceLifecycleEvents(c, client) })
+	one.POST("/deposit", func(c *gin.Context) { DepositInvoice(c, client) })
 }
 
 func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient) {
@@ -295,6 +298,19 @@ func SetInvoiceLifecycleStatus(c *gin.Context, client invoice.InvoiceServiceClie
 		InvoiceId: c.Param("id"),
 		UserId:    userIDFromCtx(c),
 		Status:    input.Status,
+		Note:      input.Note,
+	})
+	replyGeneric(c, resp, err)
+}
+
+func DepositInvoice(c *gin.Context, client invoice.InvoiceServiceClient) {
+	var input struct {
+		Note string `json:"note"`
+	}
+	_ = c.ShouldBindJSON(&input) // body optional (note only)
+	resp, err := client.DepositInvoice(c.Request.Context(), &invoice.DepositInvoiceRequest{
+		InvoiceId: c.Param("id"),
+		UserId:    userIDFromCtx(c),
 		Note:      input.Note,
 	})
 	replyGeneric(c, resp, err)

@@ -3,6 +3,7 @@ package actions
 import (
 	"database/sql"
 
+	"project-devis-invoice/pdp"
 	invoiceGrpc "project-devis-invoice/services/grpc"
 	quoteGrpc "project-devis-invoice/services/quotegrpc"
 	scheduleGrpc "project-devis-invoice/services/schedulegrpc"
@@ -15,6 +16,7 @@ type Server struct {
 	quoteClient    quoteGrpc.QuoteServiceClient
 	usersClient    usersGrpc.UserServiceClient
 	scheduleClient scheduleGrpc.ScheduleServiceClient
+	pdpClient      pdp.Client
 }
 
 func NewServer(
@@ -22,11 +24,16 @@ func NewServer(
 	quoteClient quoteGrpc.QuoteServiceClient,
 	usersClient usersGrpc.UserServiceClient,
 	scheduleClient scheduleGrpc.ScheduleServiceClient,
+	pdpClient pdp.Client,
 ) *Server {
+	if pdpClient == nil { // tolerate nil (e.g. tests that don't exercise deposit)
+		pdpClient = pdp.NoopClient{}
+	}
 	return &Server{
 		db:             db,
 		quoteClient:    quoteClient,
 		usersClient:    usersClient,
 		scheduleClient: scheduleClient,
+		pdpClient:      pdpClient,
 	}
 }

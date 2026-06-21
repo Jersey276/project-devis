@@ -12,6 +12,7 @@ import (
 	_ "time/tzdata"
 
 	"project-devis-invoice/actions"
+	"project-devis-invoice/pdp"
 	quoteGrpc "project-devis-invoice/services/quotegrpc"
 	scheduleGrpc "project-devis-invoice/services/schedulegrpc"
 	usersGrpc "project-devis-invoice/services/usersgrpc"
@@ -59,13 +60,18 @@ func main() {
 	uClient := usersGrpc.NewUserServiceClient(uConn)
 	sClient := scheduleGrpc.NewScheduleServiceClient(sConn)
 
+	// No PA contracted yet (B6): default to the no-op adapter. The address is read
+	// as a forward seam; a real adapter is wired here once a provider is chosen.
+	_ = envOrDefault("PDP_SERVICE_ADDRESS", "")
+	var pdpClient pdp.Client = pdp.NoopClient{}
+
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
 	grpcServer := grpc.NewServer()
-	invoiceGrpc.RegisterInvoiceServiceServer(grpcServer, actions.NewServer(db, qClient, uClient, sClient))
+	invoiceGrpc.RegisterInvoiceServiceServer(grpcServer, actions.NewServer(db, qClient, uClient, sClient, pdpClient))
 
 	log.Printf("invoice gRPC server listening on %s", lis.Addr().String())
 	if err := grpcServer.Serve(lis); err != nil {

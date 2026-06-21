@@ -156,6 +156,23 @@ Aucun endpoint, regle metier, migration ou modification du format scelle ne doit
 
 <!-- markdownlint-enable MD060 -->
 
+### Backend metier - Depot plateforme e-invoicing (B6)
+
+<!-- markdownlint-disable MD060 -->
+
+| ID         | Niveau         | Preconditions                                  | Action                          | Resultat attendu                                                          | Priorite | Source                                                       |
+| ---------- | -------------- | ---------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------- | -------- | ------------------------------------------------------------ |
+| INV-BE-066 | Unit           | Chaque statut plateforme (dont UNKNOWN)        | Mapper vers le cycle de vie     | `SUBMITTED->DEPOSITED` etc. ; UNKNOWN/inconnu -> (vide, faux)             | P0       | `pdp/pdp_test.go:TestToLifecycleStatus`                      |
+| INV-BE-067 | Unit           | Adaptateur no-op (defaut)                      | Deposer                         | Statut `SUBMITTED`, `SubmissionID` vide (aucun appel externe)             | P1       | `pdp/pdp_test.go:TestNoopClient_SubmitAcceptsLocally`       |
+| INV-BE-068 | Integration DB | Facture `ISSUED`, mock PA renvoie `sub-1`      | Deposer (`DepositInvoice`)      | Succes, `lifecycle_status=DEPOSITED`, 1 evenement, `pdp_submission_id=sub-1`, PA appelee | P0 | `deposit_integration_test.go:TestDeposit_DrivesDEPOSITED`   |
+| INV-BE-069 | Integration DB | Facture `DRAFT`                                | Deposer                         | `LifecycleRequiresIssued`, **aucun appel PA**, etat inchange              | P0       | `deposit_integration_test.go:TestDeposit_DraftRefused`      |
+| INV-BE-070 | Integration DB | Facture deja deposee                           | Deposer une 2e fois             | `LifecycleTransitionInvalid` (DEPOSITED->DEPOSITED), toujours 1 evenement | P0       | `deposit_integration_test.go:TestDeposit_DoubleDepositRefused` |
+| INV-BE-071 | Integration DB | Facture `ISSUED`, mock PA en erreur            | Deposer                         | `PDPSubmissionFailed`, cycle de vie reste `NONE`, 0 evenement             | P0       | `deposit_integration_test.go:TestDeposit_PlatformErrorLeavesStateUntouched` |
+| INV-BE-072 | Integration DB | Facture d'un autre proprietaire                | Deposer                         | `NotFound`, aucun appel PA                                                | P1       | `deposit_integration_test.go:TestDeposit_WrongOwnerNotFound` |
+| INV-BE-073 | Integration DB | Facture scellee `ISSUED`                       | Avancer `lifecycle_status`      | Trigger `000013` autorise la MAJ des metadonnees e-invoicing (regression B3) | P0   | `lifecycle_integration_test.go:TestSetLifecycle_TransitionAppendsEvent` |
+
+<!-- markdownlint-enable MD060 -->
+
 ### Gateway - Contrat API HTTP (a couvrir)
 
 Ces lignes ne sont pas encore couvertes par des tests automatises dans le service invoice; elles cadrent le contrat attendu cote gateway (`/api/invoices/*`, gate `authz.ResourceSubscriptionInvoices`).

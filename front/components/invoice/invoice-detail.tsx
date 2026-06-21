@@ -29,6 +29,7 @@ import LinkedCreditNotes from "@/components/invoice/linked-credit-notes";
 import { allowedNextLifecycleStatuses } from "@/lib/invoice-lifecycle";
 import {
   deleteDraftInvoice,
+  depositInvoice,
   getInvoice,
   markInvoicePaid,
   readInvoiceFromBody,
@@ -121,6 +122,18 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
     else void load();
   }
 
+  async function onDeposit() {
+    setBusy(true);
+    const { ok, body } = await depositInvoice(invoiceId);
+    setBusy(false);
+    if (!ok || !body.success) {
+      setError((body.message as string) ?? tLifecycle("deposit.error"));
+      return;
+    }
+    setLifecycleRefresh((n) => n + 1);
+    void load();
+  }
+
   async function onConfirmDelete() {
     setBusy(true);
     const { ok, body } = await deleteDraftInvoice(invoiceId);
@@ -138,8 +151,12 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
   if (!invoice) return <p className="text-destructive">{t("notFound")}</p>;
 
   const isIssued = invoice.status === "ISSUED" || invoice.status === "PAID";
+  // Depositing on the platform is the NONE→DEPOSITED step (B6); the manual dialog
+  // handles the later transitions, so the two controls never overlap.
+  const canDeposit = isIssued && invoice.lifecycle_status === "NONE";
   const canAdvanceLifecycle =
     isIssued &&
+    !canDeposit &&
     allowedNextLifecycleStatuses(invoice.lifecycle_status).length > 0;
 
   return (
@@ -184,6 +201,11 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
               disabled={busy}
             >
               {t("createCreditNote")}
+            </Button>
+          ) : null}
+          {canDeposit ? (
+            <Button type="button" variant="outline" onClick={onDeposit} disabled={busy}>
+              {tLifecycle("deposit.action")}
             </Button>
           ) : null}
           {canAdvanceLifecycle ? (

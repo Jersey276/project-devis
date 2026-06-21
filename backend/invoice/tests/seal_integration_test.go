@@ -150,7 +150,7 @@ func TestSeal_BackfillAndVerify(t *testing.T) {
 		t.Fatalf("seals = %d; want 2", count)
 	}
 
-	srv := actions.NewServer(db, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil)
 	resp, err := srv.VerifyChain(context.Background(), &invoiceGrpc.VerifyChainRequest{UserId: userID})
 	if err != nil {
 		t.Fatalf("verify: %v", err)
@@ -204,7 +204,7 @@ func TestSeal_MarkInvoicePaidStillAllowed(t *testing.T) {
 		t.Fatalf("backfill: %v", err)
 	}
 
-	srv := actions.NewServer(db, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil)
 	resp, err := srv.MarkInvoicePaid(context.Background(), &invoiceGrpc.MarkInvoicePaidRequest{
 		InvoiceId: "inv-p", UserId: userID,
 	})

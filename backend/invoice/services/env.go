@@ -20,6 +20,7 @@ const (
 	QuoteServiceAddress     EnvKey = "QUOTE_SERVICE_ADDRESS"
 	UserServiceAddress      EnvKey = "USER_SERVICE_ADDRESS"
 	ScheduleServiceAddress  EnvKey = "SCHEDULE_SERVICE_ADDRESS"
+	PDPServiceAddress       EnvKey = "PDP_SERVICE_ADDRESS"
 )
 
 func (key EnvKey) GetValue() string {

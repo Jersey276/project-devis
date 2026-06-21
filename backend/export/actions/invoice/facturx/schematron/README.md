@@ -47,8 +47,12 @@ the xmllint XSD harness: native `java` (JRE 11+) on PATH, else — on a Windows 
 **skips**. CI installs a JRE (Temurin 17) for the `export` service so the gate actually
 runs there. A dev box with only an old/absent JRE stays green via skip.
 
-## Follow-up (not in scope here)
+## On the absence of a separate "CII-FR" Schematron
 
-French-profile rules (CII-FR / Factur-X FNFE-MPE) are a *separate* Schematron and will
-land under a future `cii-fr/` directory; they layer additional FR constraints (SIRET,
-payment means BG-16/IBAN, statutory mentions) that need builder data we do not emit yet.
+There is no standalone FNFE-MPE / Factur-X Schematron to vendor here on top of the one
+above. The Factur-X **EN 16931 profile is EN 16931** — the constraints this gate already
+enforces. The data once imagined for a `cii-fr/` layer (SIRET, payment means BG-16/IBAN,
+statutory mentions) is in fact already emitted by the builder (B2/B4). The genuinely
+French layer is not a document Schematron but the **CTC / e-invoicing flow**: directory
+routing and the PDP exchange, tracked under B6 (see the invoice compliance roadmap). The
+once-anticipated `cii-fr/` directory is therefore intentionally not created.

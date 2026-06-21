@@ -456,6 +456,10 @@
       "confirm": "Valider",
       "cancel": "Annuler",
       "actionError": "La mise à jour du statut e-invoicing a échoué.",
+      "deposit": {
+        "action": "Déposer sur la plateforme",
+        "error": "Le dépôt sur la plateforme a échoué."
+      },
       "status": {
         "NONE": "—",
         "DEPOSITED": "Déposée",
