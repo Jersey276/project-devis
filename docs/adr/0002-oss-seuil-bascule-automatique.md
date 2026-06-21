@@ -29,7 +29,11 @@ au snapshot a l'emission).
    aux services amont sur le chemin d'emission.
 4. **Bascule a la facture suivante** : le cumul exclut le brouillon courant. La
    facture qui franchit le seuil reste en TVA origine ; les suivantes basculent.
-5. **Avoirs exclus de l'assiette** pour le MVP.
+5. **Avoirs deduits de l'assiette** : un avoir qui neutralise une vente dans le
+   perimetre OSS (drapeau gele herite de la facture origine) reduit le cumul
+   annuel. L'assiette est donc le chiffre d'affaires *net* des ventes a distance
+   B2C intra-UE. Le drapeau `counts_toward_oss_threshold` est mirroir sur
+   `credit_note_party_snapshots`.
 
 ## Consequences positives
 
@@ -42,7 +46,6 @@ au snapshot a l'emission).
 
 - Ecart connu avec la regle stricte annee N-1 (voir Alternatives ecartees).
 - La facture pivot peut rester en TVA origine (simplification assumee).
-- Avoirs non deduits : le cumul peut etre legerement surestime.
 
 ## Alternatives ecartees
 
@@ -57,10 +60,9 @@ au snapshot a l'emission).
 
 ## Garde-fous
 
-- Sens conservateur retenu (avoirs exclus -> bascule plus tot, jamais trop tard).
-- Colonne `counts_toward_oss_threshold` ajoutee aussi sur
-  `credit_note_party_snapshots` pour permettre la deduction des avoirs sans
-  nouvelle migration.
+- Colonne `counts_toward_oss_threshold` portee a l'identique sur
+  `invoice_party_snapshots` et `credit_note_party_snapshots` ; les deux legs du
+  cumul (factures - avoirs) sont donc figes au moment de la vente.
 - Tests : decision pure (`oss_threshold_test.go`) et cumul DB
   (`oss_threshold_integration_test.go`, garde par `INVOICE_TEST_DATABASE_URL`).
 

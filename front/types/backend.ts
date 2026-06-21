@@ -219,6 +219,14 @@ export type BackendInvoiceSummary = {
   total_ttc_cents: number;
 };
 
+export type BackendOSSThresholdStatus = {
+  year: number;
+  cumulative_ht_cents: number;
+  threshold_cents: number;
+  oss_enabled: boolean;
+  oss_active: boolean;
+};
+
 export type BackendInvoiceParty = {
   company: string;
   first_name: string;

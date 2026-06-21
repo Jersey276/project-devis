@@ -30,7 +30,12 @@ func (s *Server) ossCumulativeHTForYear(ctx context.Context, userID, excludeInvo
 	start := time.Date(y, 1, 1, 0, 0, 0, 0, invoiceTZ)
 	end := start.AddDate(1, 0, 0)
 
-	var sum sql.NullInt64
+	// Net assiette = issued invoices in the OSS scope, minus credit notes that
+	// neutralise part of them (also in scope). Crediting reduces the distance-sale
+	// turnover that counts toward the EUR 10 000 threshold (art. 259 D CGI), so the
+	// switch is driven by the actual net sales, not the gross. Both legs are frozen
+	// at issue time via counts_toward_oss_threshold (see ADR 0002).
+	var invoicesHT sql.NullInt64
 	err := s.db.QueryRowContext(ctx,
 		`SELECT COALESCE(SUM(i.total_ht_cents), 0)
 		   FROM invoices i
@@ -41,9 +46,24 @@ func (s *Server) ossCumulativeHTForYear(ctx context.Context, userID, excludeInvo
 		    AND p.counts_toward_oss_threshold
 		    AND i.issued_at >= $3 AND i.issued_at < $4`,
 		userID, excludeInvoiceID, start, end,
-	).Scan(&sum)
+	).Scan(&invoicesHT)
 	if err != nil {
-		return 0, fmt.Errorf("oss cumulative: %w", err)
+		return 0, fmt.Errorf("oss cumulative invoices: %w", err)
 	}
-	return sum.Int64, nil
+
+	var creditNotesHT sql.NullInt64
+	err = s.db.QueryRowContext(ctx,
+		`SELECT COALESCE(SUM(cn.total_ht_cents), 0)
+		   FROM credit_notes cn
+		   JOIN credit_note_party_snapshots p ON p.credit_note_id = cn.credit_note_id
+		  WHERE cn.user_id = $1
+		    AND p.counts_toward_oss_threshold
+		    AND cn.issued_at >= $2 AND cn.issued_at < $3`,
+		userID, start, end,
+	).Scan(&creditNotesHT)
+	if err != nil {
+		return 0, fmt.Errorf("oss cumulative credit notes: %w", err)
+	}
+
+	return invoicesHT.Int64 - creditNotesHT.Int64, nil
 }

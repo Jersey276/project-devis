@@ -72,6 +72,7 @@ func InvoicesRoutes(r *gin.RouterGroup) {
 
 	r.GET("", func(c *gin.Context) { ListInvoices(c, client) })
 	r.GET("/verify-chain", func(c *gin.Context) { VerifyChain(c, client) })
+	r.GET("/oss-status", func(c *gin.Context) { GetOSSThresholdStatus(c, client) })
 	r.POST("/from-schedule", func(c *gin.Context) { CreateInvoiceFromSchedule(c, client) })
 	r.POST("/from-quote", func(c *gin.Context) { CreateInvoiceFromQuote(c, client) })
 
@@ -233,6 +234,28 @@ func VerifyChain(c *gin.Context, client invoice.InvoiceServiceClient) {
 		"broken_doc_type": resp.BrokenDocType,
 		"broken_index":    resp.BrokenIndex,
 		"reason":          resp.Reason,
+	})
+}
+
+func GetOSSThresholdStatus(c *gin.Context, client invoice.InvoiceServiceClient) {
+	resp, err := client.GetOSSThresholdStatus(c.Request.Context(), &invoice.GetOSSThresholdStatusRequest{
+		UserId: userIDFromCtx(c),
+	})
+	if err != nil {
+		invoiceErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		invoiceErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success":             true,
+		"year":                resp.Year,
+		"cumulative_ht_cents": resp.CumulativeHtCents,
+		"threshold_cents":     resp.ThresholdCents,
+		"oss_enabled":         resp.OssEnabled,
+		"oss_active":          resp.OssActive,
 	})
 }
 

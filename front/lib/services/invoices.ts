@@ -33,6 +33,12 @@ export async function getInvoice(invoiceId: string): Promise<ApiResult> {
   return apiFetch(`/api/invoices/${encodeURIComponent(invoiceId)}`);
 }
 
+// OSS distance-selling threshold status for the current civil year (art. 259 D
+// CGI): net B2C intra-EU turnover vs the EUR 10 000 threshold.
+export async function getOSSThresholdStatus(): Promise<ApiResult> {
+  return apiFetch("/api/invoices/oss-status");
+}
+
 export async function createInvoiceFromSchedule(
   payload: CreateInvoiceFromSchedulePayload,
 ): Promise<ApiResult> {

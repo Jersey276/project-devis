@@ -261,7 +261,7 @@ func (s *Server) loadInvoicePartySnapshot(ctx context.Context, invoiceID string)
 		        issuer_street, issuer_additional, issuer_zip, issuer_city,
 		        client_first_name, client_last_name, client_company, client_email,
 		        client_street, client_additional, client_zip, client_city, client_type, client_country_id, oss_applied,
-		        issuer_country_code, client_country_code
+		        issuer_country_code, client_country_code, counts_toward_oss_threshold
 		 FROM invoice_party_snapshots WHERE invoice_id=$1`,
 		invoiceID,
 	).Scan(
@@ -269,7 +269,7 @@ func (s *Server) loadInvoicePartySnapshot(ctx context.Context, invoiceID string)
 		&p.issuerStreet, &p.issuerAdditional, &p.issuerZip, &p.issuerCity,
 		&p.clientFirstName, &p.clientLastName, &p.clientCompany, &p.clientEmail,
 		&p.clientStreet, &p.clientAdditional, &p.clientZip, &p.clientCity, &p.clientType, &p.clientCountryID, &p.ossApplied,
-		&p.issuerCountryCode, &p.clientCountryCode,
+		&p.issuerCountryCode, &p.clientCountryCode, &p.countsTowardThreshold,
 	)
 	return p, err
 }

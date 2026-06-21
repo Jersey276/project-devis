@@ -50,9 +50,11 @@ echeancier valide:
   pour l'OSS **ou** que le cumul annuel de ces ventes atteint le seuil legal de
   10 000 EUR (art. 259 D du CGI). La bascule origine -> destination est automatique
   une fois le seuil atteint ; voir `docs/adr/0002-oss-seuil-bascule-automatique.md`.
+  - Les avoirs sont deduits de l'assiette : le cumul reflete le chiffre
+    d'affaires net des ventes a distance B2C intra-UE.
   - Simplifications connues : la facture qui franchit le seuil peut rester en TVA
     origine (bascule effective sur la suivante) ; la regle annee N-1 n'est pas
-    encore implementee ; les avoirs ne sont pas deduits de l'assiette.
+    encore implementee.
 - **Cadre e-invoicing FR** : le Factur-X B2C/OSS genere est coherent mais
   facultatif (l'obligation PPF/PDP vise le B2B domestique ; le transfrontalier
   releve de l'e-reporting).

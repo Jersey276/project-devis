@@ -23,6 +23,10 @@ service InvoiceService {
 
     // Inalterability: recompute and verify the issuer's seal chain.
     rpc VerifyChain(VerifyChainRequest) returns (VerifyChainResponse);
+
+    // OSS distance-selling threshold status for the current civil year: where the
+    // issuer stands against the EUR 10 000 threshold (art. 259 D CGI).
+    rpc GetOSSThresholdStatus(GetOSSThresholdStatusRequest) returns (GetOSSThresholdStatusResponse);
 }
 
 message GenericResponse {
@@ -265,4 +269,20 @@ message VerifyChainResponse {
     string broken_doc_type = 6;
     int64  broken_index    = 7;
     string reason          = 8;
+}
+
+// ─── OSS threshold status ────────────────────────────────────────────────────
+
+message GetOSSThresholdStatusRequest {
+    string user_id = 1;
+}
+
+message GetOSSThresholdStatusResponse {
+    bool   success           = 1;
+    int32  code              = 2;
+    int32  year              = 3;  // civil year (Europe/Paris) the figures cover
+    int64  cumulative_ht_cents = 4; // net distance-sale B2C intra-EU turnover YTD
+    int64  threshold_cents   = 5;  // EUR 10 000 legal threshold, in cents
+    bool   oss_enabled       = 6;  // issuer opted in (anticipation)
+    bool   oss_active        = 7;  // OSS currently applies (opted in OR threshold reached)
 }

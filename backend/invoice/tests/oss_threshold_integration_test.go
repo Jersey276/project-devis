@@ -24,6 +24,57 @@ func seedInvoiceHT(t *testing.T, db *sql.DB, userID, invoiceID, status string, h
 	seedPartySnapshot(t, db, invoiceID, "", "", "individual", 276, counts, "FR", "DE", counts)
 }
 
+// seedCreditNoteHT inserts a credit note (with its frozen party snapshot) that
+// neutralises htCents of an existing in-scope invoice. counts toggles the
+// frozen assiette flag inherited from the origin invoice.
+func seedCreditNoteHT(t *testing.T, db *sql.DB, userID, creditNoteID, invoiceID string, htCents int64, issuedAt time.Time, counts bool) {
+	t.Helper()
+	_, err := db.Exec(
+		`INSERT INTO credit_notes (credit_note_id, user_id, invoice_id, credit_note_number,
+		                           number_year, number_seq, issued_at,
+		                           total_ht_cents, total_vat_cents, total_ttc_cents, vat_exempt)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,0,$8,false)`,
+		creditNoteID, userID, invoiceID, "AV-"+creditNoteID, issuedAt.Year(), 1, issuedAt, htCents)
+	if err != nil {
+		t.Fatalf("seed credit note %s: %v", creditNoteID, err)
+	}
+	_, err = db.Exec(
+		`INSERT INTO credit_note_party_snapshots (credit_note_id, client_type, client_country_id,
+		                                          oss_applied, issuer_country_code, client_country_code,
+		                                          counts_toward_oss_threshold)
+		 VALUES ($1,'individual',276,$2,'FR','DE',$2)`,
+		creditNoteID, counts)
+	if err != nil {
+		t.Fatalf("seed credit note party snapshot %s: %v", creditNoteID, err)
+	}
+}
+
+func TestOSSCumulative_DeductsCreditNotes(t *testing.T) {
+	db := sealTestDB(t)
+	const userID = "oss-cn-deduct"
+	srv := actions.NewServer(db, nil, nil, nil)
+
+	at := time.Date(2099, 6, 15, 12, 0, 0, 0, time.UTC)
+	in2099 := func(month, day int) time.Time { return time.Date(2099, time.Month(month), day, 12, 0, 0, 0, time.UTC) }
+
+	seedInvoiceHT(t, db, userID, "inv-1", "ISSUED", 800_000, in2099(1, 10), true)
+	seedInvoiceHT(t, db, userID, "inv-2", "PAID", 500_000, in2099(2, 5), true)
+
+	// In-scope credit note: deducted.
+	seedCreditNoteHT(t, db, userID, "cn-1", "inv-1", 300_000, in2099(3, 1), true)
+	// Out-of-scope credit note (flag false): ignored.
+	seedCreditNoteHT(t, db, userID, "cn-2", "inv-2", 100_000, in2099(3, 2), false)
+
+	got, err := srv.OSSCumulativeHTForYearForTest(context.Background(), userID, "none", at)
+	if err != nil {
+		t.Fatalf("cumulative: %v", err)
+	}
+	const want = 800_000 + 500_000 - 300_000
+	if got != want {
+		t.Errorf("cumulative = %d; want %d (credit notes should be deducted)", got, want)
+	}
+}
+
 func TestOSSCumulative_SumsAssietteForYear(t *testing.T) {
 	db := sealTestDB(t)
 	const userID = "oss-cumul"

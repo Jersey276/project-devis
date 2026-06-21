@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v7.34.0
-// source: invoice.proto
+// source: invoice/invoice.proto
 
 package invoice
 
@@ -30,6 +30,7 @@ const (
 	InvoiceService_GetCreditNote_FullMethodName             = "/invoice.InvoiceService/GetCreditNote"
 	InvoiceService_ListCreditNotes_FullMethodName           = "/invoice.InvoiceService/ListCreditNotes"
 	InvoiceService_VerifyChain_FullMethodName               = "/invoice.InvoiceService/VerifyChain"
+	InvoiceService_GetOSSThresholdStatus_FullMethodName     = "/invoice.InvoiceService/GetOSSThresholdStatus"
 )
 
 // InvoiceServiceClient is the client API for InvoiceService service.
@@ -52,6 +53,9 @@ type InvoiceServiceClient interface {
 	ListCreditNotes(ctx context.Context, in *ListCreditNotesRequest, opts ...grpc.CallOption) (*ListCreditNotesResponse, error)
 	// Inalterability: recompute and verify the issuer's seal chain.
 	VerifyChain(ctx context.Context, in *VerifyChainRequest, opts ...grpc.CallOption) (*VerifyChainResponse, error)
+	// OSS distance-selling threshold status for the current civil year: where the
+	// issuer stands against the EUR 10 000 threshold (art. 259 D CGI).
+	GetOSSThresholdStatus(ctx context.Context, in *GetOSSThresholdStatusRequest, opts ...grpc.CallOption) (*GetOSSThresholdStatusResponse, error)
 }
 
 type invoiceServiceClient struct {
@@ -172,6 +176,16 @@ func (c *invoiceServiceClient) VerifyChain(ctx context.Context, in *VerifyChainR
 	return out, nil
 }
 
+func (c *invoiceServiceClient) GetOSSThresholdStatus(ctx context.Context, in *GetOSSThresholdStatusRequest, opts ...grpc.CallOption) (*GetOSSThresholdStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetOSSThresholdStatusResponse)
+	err := c.cc.Invoke(ctx, InvoiceService_GetOSSThresholdStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InvoiceServiceServer is the server API for InvoiceService service.
 // All implementations must embed UnimplementedInvoiceServiceServer
 // for forward compatibility.
@@ -192,6 +206,9 @@ type InvoiceServiceServer interface {
 	ListCreditNotes(context.Context, *ListCreditNotesRequest) (*ListCreditNotesResponse, error)
 	// Inalterability: recompute and verify the issuer's seal chain.
 	VerifyChain(context.Context, *VerifyChainRequest) (*VerifyChainResponse, error)
+	// OSS distance-selling threshold status for the current civil year: where the
+	// issuer stands against the EUR 10 000 threshold (art. 259 D CGI).
+	GetOSSThresholdStatus(context.Context, *GetOSSThresholdStatusRequest) (*GetOSSThresholdStatusResponse, error)
 	mustEmbedUnimplementedInvoiceServiceServer()
 }
 
@@ -234,6 +251,9 @@ func (UnimplementedInvoiceServiceServer) ListCreditNotes(context.Context, *ListC
 }
 func (UnimplementedInvoiceServiceServer) VerifyChain(context.Context, *VerifyChainRequest) (*VerifyChainResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method VerifyChain not implemented")
+}
+func (UnimplementedInvoiceServiceServer) GetOSSThresholdStatus(context.Context, *GetOSSThresholdStatusRequest) (*GetOSSThresholdStatusResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetOSSThresholdStatus not implemented")
 }
 func (UnimplementedInvoiceServiceServer) mustEmbedUnimplementedInvoiceServiceServer() {}
 func (UnimplementedInvoiceServiceServer) testEmbeddedByValue()                        {}
@@ -454,6 +474,24 @@ func _InvoiceService_VerifyChain_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InvoiceService_GetOSSThresholdStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOSSThresholdStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InvoiceServiceServer).GetOSSThresholdStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InvoiceService_GetOSSThresholdStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InvoiceServiceServer).GetOSSThresholdStatus(ctx, req.(*GetOSSThresholdStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InvoiceService_ServiceDesc is the grpc.ServiceDesc for InvoiceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -505,7 +543,11 @@ var InvoiceService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "VerifyChain",
 			Handler:    _InvoiceService_VerifyChain_Handler,
 		},
+		{
+			MethodName: "GetOSSThresholdStatus",
+			Handler:    _InvoiceService_GetOSSThresholdStatus_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "invoice.proto",
+	Metadata: "invoice/invoice.proto",
 }
