@@ -478,7 +478,8 @@
       "cumulative": "Chiffre d'affaires intra-UE B2C : {cumulative} sur un seuil de {threshold} ({pct} %).",
       "remaining": "Il reste {remaining} avant la bascule automatique vers la TVA du pays de destination.",
       "activeThreshold": "Seuil atteint : la TVA du pays de destination s'applique désormais (guichet unique OSS, art. 259 D du CGI).",
-      "activeOptIn": "Option OSS activée : la TVA du pays de destination s'applique aux ventes à distance B2C intra-UE (art. 259 D du CGI)."
+      "activeOptIn": "Option OSS activée : la TVA du pays de destination s'applique aux ventes à distance B2C intra-UE (art. 259 D du CGI).",
+      "activePriorYear": "Seuil franchi l'an dernier : la TVA du pays de destination s'applique dès le 1er euro cette année (guichet unique OSS, art. 259 D du CGI)."
     },
     "list": {
       "title": "Factures",

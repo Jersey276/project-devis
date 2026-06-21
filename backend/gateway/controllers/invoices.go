@@ -266,6 +266,8 @@ func GetOSSThresholdStatus(c *gin.Context, client invoice.InvoiceServiceClient) 
 		"threshold_cents":     resp.ThresholdCents,
 		"oss_enabled":         resp.OssEnabled,
 		"oss_active":          resp.OssActive,
+		"prior_year_over_threshold":      resp.PriorYearOverThreshold,
+		"prior_year_cumulative_ht_cents": resp.PriorYearCumulativeHtCents,
 	})
 }
 

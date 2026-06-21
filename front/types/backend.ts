@@ -243,6 +243,10 @@ export type BackendOSSThresholdStatus = {
   threshold_cents: number;
   oss_enabled: boolean;
   oss_active: boolean;
+  // N-1 rule (art. 259 D CGI): prior year crossed the threshold → destination
+  // VAT from the first euro this year.
+  prior_year_over_threshold: boolean;
+  prior_year_cumulative_ht_cents: number;
 };
 
 export type BackendInvoiceParty = {

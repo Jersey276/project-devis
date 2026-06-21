@@ -310,7 +310,11 @@ message GetOSSThresholdStatusResponse {
     int64  cumulative_ht_cents = 4; // net distance-sale B2C intra-EU turnover YTD
     int64  threshold_cents   = 5;  // EUR 10 000 legal threshold, in cents
     bool   oss_enabled       = 6;  // issuer opted in (anticipation)
-    bool   oss_active        = 7;  // OSS currently applies (opted in OR threshold reached)
+    bool   oss_active        = 7;  // OSS currently applies (opted in OR threshold reached OR N-1 rule)
+    // N-1 rule (art. 259 D CGI): prior civil year crossed the threshold, so
+    // destination VAT applies from the first euro this year.
+    bool   prior_year_over_threshold      = 8;
+    int64  prior_year_cumulative_ht_cents = 9;
 }
 
 // ─── E-invoicing lifecycle ───────────────────────────────────────────────────

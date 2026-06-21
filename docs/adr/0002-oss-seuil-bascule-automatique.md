@@ -34,6 +34,14 @@ au snapshot a l'emission).
    annuel. L'assiette est donc le chiffre d'affaires *net* des ventes a distance
    B2C intra-UE. Le drapeau `counts_toward_oss_threshold` est mirroir sur
    `credit_note_party_snapshots`.
+6. **Regle annee N-1 (C3)** : si le cumul net de l'annee civile precedente a
+   atteint le seuil, la TVA de destination s'applique des le 1er euro de l'annee N,
+   independamment du cumul courant et de l'opt-in. Implementee par une **seconde
+   requete** sur l'annee precedente (`ossPriorYearOverThreshold`, meme assiette
+   gelee, avoirs deduits), threadee dans `ossApplies`. Cout : 1 requete SQL locale
+   supplementaire par emission en perimetre OSS (aucun appel amont). Le statut
+   (`GetOSSThresholdStatus`) expose `prior_year_over_threshold` ; la banniere front
+   l'explicite.
 
 ## Consequences positives
 
@@ -44,8 +52,7 @@ au snapshot a l'emission).
 
 ## Consequences negatives
 
-- Ecart connu avec la regle stricte annee N-1 (voir Alternatives ecartees).
-- La facture pivot peut rester en TVA origine (simplification assumee).
+- La facture pivot peut rester en TVA origine (simplification assumee, C4 reporte).
 
 ## Alternatives ecartees
 
@@ -56,7 +63,7 @@ au snapshot a l'emission).
    - plus exacte juridiquement mais alourdit la logique d'emission pour un gain
      marginal au regard de la cible produit.
 3. Regle annee N-1 (TVA destination sur toute l'annee N si seuil franchi en N-1) :
-   - reportee ; extensible via une seconde requete sur l'annee precedente.
+   - **retenue et implementee (C3)** : voir point 6 de la Decision.
 
 ## Garde-fous
 

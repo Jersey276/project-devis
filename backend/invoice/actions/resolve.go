@@ -211,8 +211,12 @@ func (s *Server) buildResolved(ctx context.Context, invoiceID, userID string, q 
 	if err != nil {
 		return nil, codes.InternalError, err
 	}
+	priorYearOver, _, err := s.ossPriorYearOverThreshold(ctx, userID, issuedAt)
+	if err != nil {
+		return nil, codes.InternalError, err
+	}
 
-	oss, code, err := s.resolveOSSRate(ctx, user, cumulativeHTCents, parties, clientCountry)
+	oss, code, err := s.resolveOSSRate(ctx, user, cumulativeHTCents, priorYearOver, parties, clientCountry)
 	if err != nil || code != codes.Success {
 		return nil, code, err
 	}
@@ -288,8 +292,8 @@ func (s *Server) resolveCountry(ctx context.Context, countryID int32) (*usersGrp
 	return resp.GetCountry(), codes.Success, nil
 }
 
-func (s *Server) resolveOSSRate(ctx context.Context, user *usersGrpc.User, cumulativeHTCents int64, parties partySnapshot, clientCountry *usersGrpc.Country) (*ossRate, int32, error) {
-	if !ossApplies(user.GetOssEnabled(), cumulativeHTCents, parties.clientType, clientCountry) {
+func (s *Server) resolveOSSRate(ctx context.Context, user *usersGrpc.User, cumulativeHTCents int64, priorYearOverThreshold bool, parties partySnapshot, clientCountry *usersGrpc.Country) (*ossRate, int32, error) {
+	if !ossApplies(user.GetOssEnabled(), cumulativeHTCents, priorYearOverThreshold, parties.clientType, clientCountry) {
 		return nil, codes.Success, nil
 	}
 

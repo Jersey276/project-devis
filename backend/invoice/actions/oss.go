@@ -18,16 +18,35 @@ func isIntraEUB2C(clientType string, c *usersGrpc.Country) bool {
 	return c.GetIsEu() && c.GetCode() != "FR"
 }
 
-func ossApplies(ossEnabled bool, cumulativeHTCents int64, clientType string, c *usersGrpc.Country) bool {
+// ossApplies decides whether destination-country VAT applies. Beyond the opt-in
+// and the current-year threshold, the N-1 rule (art. 259 D CGI): once the prior
+// civil year crossed the threshold, destination VAT applies from the first euro
+// of year N regardless of the current cumulative.
+func ossApplies(ossEnabled bool, cumulativeHTCents int64, priorYearOverThreshold bool, clientType string, c *usersGrpc.Country) bool {
 	if !isIntraEUB2C(clientType, c) {
 		return false
 	}
-	return ossEnabled || cumulativeHTCents >= ossThresholdCents
+	return ossEnabled || cumulativeHTCents >= ossThresholdCents || priorYearOverThreshold
 }
 
 func (s *Server) ossCumulativeHTForYear(ctx context.Context, userID, excludeInvoiceID string, at time.Time) (int64, error) {
 	y := at.In(invoiceTZ).Year()
-	start := time.Date(y, 1, 1, 0, 0, 0, 0, invoiceTZ)
+	return s.ossCumulativeHTFromYearStart(ctx, userID, excludeInvoiceID, time.Date(y, 1, 1, 0, 0, 0, 0, invoiceTZ))
+}
+
+// ossPriorYearOverThreshold reports whether the previous civil year's net OSS
+// assiette reached the threshold, plus that cumulative (for status display). The
+// prior year is closed, so nothing is excluded.
+func (s *Server) ossPriorYearOverThreshold(ctx context.Context, userID string, at time.Time) (bool, int64, error) {
+	y := at.In(invoiceTZ).Year()
+	cumul, err := s.ossCumulativeHTFromYearStart(ctx, userID, "", time.Date(y-1, 1, 1, 0, 0, 0, 0, invoiceTZ))
+	if err != nil {
+		return false, 0, err
+	}
+	return cumul >= ossThresholdCents, cumul, nil
+}
+
+func (s *Server) ossCumulativeHTFromYearStart(ctx context.Context, userID, excludeInvoiceID string, start time.Time) (int64, error) {
 	end := start.AddDate(1, 0, 0)
 
 	// Net assiette = issued invoices in the OSS scope, minus credit notes that

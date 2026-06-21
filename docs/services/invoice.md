@@ -47,14 +47,17 @@ echeancier valide:
   Europe/Paris, attribuee uniquement a l'emission.
 - **Conformite B2C / OSS** : pour une vente a distance B2C intra-UE (hors FR), la
   TVA appliquee est celle du pays de destination des lors que le vendeur a opte
-  pour l'OSS **ou** que le cumul annuel de ces ventes atteint le seuil legal de
-  10 000 EUR (art. 259 D du CGI). La bascule origine -> destination est automatique
-  une fois le seuil atteint ; voir `docs/adr/0002-oss-seuil-bascule-automatique.md`.
-  - Les avoirs sont deduits de l'assiette : le cumul reflete le chiffre
-    d'affaires net des ventes a distance B2C intra-UE.
-  - Simplifications connues : la facture qui franchit le seuil peut rester en TVA
-    origine (bascule effective sur la suivante) ; la regle annee N-1 n'est pas
-    encore implementee.
+  pour l'OSS, **ou** que le cumul annuel de ces ventes atteint le seuil legal de
+  10 000 EUR, **ou** que ce seuil a ete franchi l'annee precedente (regle annee
+  N-1, art. 259 D du CGI : TVA destination des le 1er euro). La bascule
+  origine -> destination est automatique ; voir
+  `docs/adr/0002-oss-seuil-bascule-automatique.md`.
+  - Les avoirs sont deduits de l'assiette (annee courante ET N-1) : le cumul
+    reflete le chiffre d'affaires net des ventes a distance B2C intra-UE.
+  - `GetOSSThresholdStatus` expose `prior_year_over_threshold` (+ cumul N-1) ; la
+    banniere front affiche une mention dediee quand l'OSS est actif via la regle N-1.
+  - Simplification connue restante (C4) : la facture qui franchit le seuil en cours
+    d'annee peut rester en TVA origine (bascule effective sur la suivante).
 - **Coordonnees de paiement (BG-16)** : l'IBAN et le BIC de l'emetteur (saisis sur
   son profil) sont geles dans le snapshot a l'emission (`issuer_iban` /
   `issuer_bic` sur `invoice_party_snapshots` et `credit_note_party_snapshots`,

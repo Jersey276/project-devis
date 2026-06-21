@@ -2250,9 +2250,13 @@ type GetOSSThresholdStatusResponse struct {
 	CumulativeHtCents int64                  `protobuf:"varint,4,opt,name=cumulative_ht_cents,json=cumulativeHtCents,proto3" json:"cumulative_ht_cents,omitempty"` // net distance-sale B2C intra-EU turnover YTD
 	ThresholdCents    int64                  `protobuf:"varint,5,opt,name=threshold_cents,json=thresholdCents,proto3" json:"threshold_cents,omitempty"`            // EUR 10 000 legal threshold, in cents
 	OssEnabled        bool                   `protobuf:"varint,6,opt,name=oss_enabled,json=ossEnabled,proto3" json:"oss_enabled,omitempty"`                        // issuer opted in (anticipation)
-	OssActive         bool                   `protobuf:"varint,7,opt,name=oss_active,json=ossActive,proto3" json:"oss_active,omitempty"`                           // OSS currently applies (opted in OR threshold reached)
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	OssActive         bool                   `protobuf:"varint,7,opt,name=oss_active,json=ossActive,proto3" json:"oss_active,omitempty"`                           // OSS currently applies (opted in OR threshold reached OR N-1 rule)
+	// N-1 rule (art. 259 D CGI): prior civil year crossed the threshold, so
+	// destination VAT applies from the first euro this year.
+	PriorYearOverThreshold     bool  `protobuf:"varint,8,opt,name=prior_year_over_threshold,json=priorYearOverThreshold,proto3" json:"prior_year_over_threshold,omitempty"`
+	PriorYearCumulativeHtCents int64 `protobuf:"varint,9,opt,name=prior_year_cumulative_ht_cents,json=priorYearCumulativeHtCents,proto3" json:"prior_year_cumulative_ht_cents,omitempty"`
+	unknownFields              protoimpl.UnknownFields
+	sizeCache                  protoimpl.SizeCache
 }
 
 func (x *GetOSSThresholdStatusResponse) Reset() {
@@ -2332,6 +2336,20 @@ func (x *GetOSSThresholdStatusResponse) GetOssActive() bool {
 		return x.OssActive
 	}
 	return false
+}
+
+func (x *GetOSSThresholdStatusResponse) GetPriorYearOverThreshold() bool {
+	if x != nil {
+		return x.PriorYearOverThreshold
+	}
+	return false
+}
+
+func (x *GetOSSThresholdStatusResponse) GetPriorYearCumulativeHtCents() int64 {
+	if x != nil {
+		return x.PriorYearCumulativeHtCents
+	}
+	return 0
 }
 
 type SetInvoiceLifecycleStatusRequest struct {
@@ -2839,7 +2857,7 @@ const file_invoice_proto_rawDesc = "" +
 	"\fbroken_index\x18\a \x01(\x03R\vbrokenIndex\x12\x16\n" +
 	"\x06reason\x18\b \x01(\tR\x06reason\"7\n" +
 	"\x1cGetOSSThresholdStatusRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"\xfa\x01\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"\xf9\x02\n" +
 	"\x1dGetOSSThresholdStatusResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x12\n" +
@@ -2849,7 +2867,9 @@ const file_invoice_proto_rawDesc = "" +
 	"\voss_enabled\x18\x06 \x01(\bR\n" +
 	"ossEnabled\x12\x1d\n" +
 	"\n" +
-	"oss_active\x18\a \x01(\bR\tossActive\"\x86\x01\n" +
+	"oss_active\x18\a \x01(\bR\tossActive\x129\n" +
+	"\x19prior_year_over_threshold\x18\b \x01(\bR\x16priorYearOverThreshold\x12B\n" +
+	"\x1eprior_year_cumulative_ht_cents\x18\t \x01(\x03R\x1apriorYearCumulativeHtCents\"\x86\x01\n" +
 	" SetInvoiceLifecycleStatusRequest\x12\x1d\n" +
 	"\n" +
 	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12\x17\n" +

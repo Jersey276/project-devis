@@ -136,7 +136,7 @@ func TestOSSCumulative_ThresholdBoundary(t *testing.T) {
 	if got != actions.OSSThresholdCentsForTest-1 {
 		t.Fatalf("cumulative = %d; want %d", got, actions.OSSThresholdCentsForTest-1)
 	}
-	if actions.OSSAppliesForTest(false, got, "individual", country("DE", true)) {
+	if actions.OSSAppliesForTest(false, got, false, "individual", country("DE", true)) {
 		t.Error("OSS should not apply just below the threshold without opt-in")
 	}
 
@@ -149,7 +149,53 @@ func TestOSSCumulative_ThresholdBoundary(t *testing.T) {
 	if got < actions.OSSThresholdCentsForTest {
 		t.Fatalf("cumulative = %d; want >= %d", got, actions.OSSThresholdCentsForTest)
 	}
-	if !actions.OSSAppliesForTest(false, got, "individual", country("DE", true)) {
+	if !actions.OSSAppliesForTest(false, got, false, "individual", country("DE", true)) {
 		t.Error("OSS should apply once the threshold is reached")
+	}
+}
+
+// TestOSSPriorYear_OverThreshold proves the N-1 rule (art. 259 D CGI): a year
+// whose prior civil year crossed the threshold triggers destination VAT from the
+// first euro, even with zero current-year turnover. It also checks the two legs
+// (current vs prior) are disjoint and that prior-year credit notes are deducted.
+func TestOSSPriorYear_OverThreshold(t *testing.T) {
+	db := sealTestDB(t)
+	const userID = "oss-prior-year"
+	srv := actions.NewServer(db, nil, nil, nil, nil)
+	ctx := context.Background()
+	at := time.Date(2099, 2, 1, 12, 0, 0, 0, time.UTC) // current year N = 2099
+
+	// N-1 (2098) sales crossing the threshold, no N (2099) sale at all.
+	seedInvoiceHT(t, db, userID, "inv-prior", "ISSUED",
+		actions.OSSThresholdCentsForTest, time.Date(2098, 6, 30, 12, 0, 0, 0, time.UTC), true)
+
+	over, priorCumul, err := srv.OSSPriorYearOverThresholdForTest(ctx, userID, at)
+	if err != nil {
+		t.Fatalf("prior year: %v", err)
+	}
+	if !over || priorCumul != actions.OSSThresholdCentsForTest {
+		t.Fatalf("prior year over=%v cumul=%d; want true / %d", over, priorCumul, actions.OSSThresholdCentsForTest)
+	}
+	// Current-year leg is disjoint: zero N sales.
+	curr, err := srv.OSSCumulativeHTForYearForTest(ctx, userID, "none", at)
+	if err != nil {
+		t.Fatalf("current year: %v", err)
+	}
+	if curr != 0 {
+		t.Fatalf("current-year cumulative = %d; want 0 (legs must be disjoint)", curr)
+	}
+	// Decision: OSS applies despite zero current cumulative.
+	if !actions.OSSAppliesForTest(false, curr, over, "individual", country("DE", true)) {
+		t.Error("OSS should apply in year N when N-1 crossed the threshold (first-euro rule)")
+	}
+
+	// A prior-year credit note that drops N-1 net below the threshold lifts the rule.
+	seedCreditNoteHT(t, db, userID, "cn-prior", "inv-prior", 1, time.Date(2098, 7, 1, 12, 0, 0, 0, time.UTC), true)
+	over, priorCumul, err = srv.OSSPriorYearOverThresholdForTest(ctx, userID, at)
+	if err != nil {
+		t.Fatalf("prior year after credit note: %v", err)
+	}
+	if over || priorCumul != actions.OSSThresholdCentsForTest-1 {
+		t.Fatalf("after CN: over=%v cumul=%d; want false / %d", over, priorCumul, actions.OSSThresholdCentsForTest-1)
 	}
 }

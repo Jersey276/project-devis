@@ -34,6 +34,10 @@ func (s *Server) GetOSSThresholdStatus(ctx context.Context, req *invoiceGrpc.Get
 	if err != nil {
 		return &invoiceGrpc.GetOSSThresholdStatusResponse{Success: false, Code: codes.InternalError}, err
 	}
+	priorOver, priorCumulative, err := s.ossPriorYearOverThreshold(ctx, req.UserId, now)
+	if err != nil {
+		return &invoiceGrpc.GetOSSThresholdStatusResponse{Success: false, Code: codes.InternalError}, err
+	}
 
 	userResp, err := s.usersClient.GetUser(ctx, &usersGrpc.GetUserRequest{UserId: req.UserId})
 	if err != nil {
@@ -44,15 +48,17 @@ func (s *Server) GetOSSThresholdStatus(ctx context.Context, req *invoiceGrpc.Get
 	}
 
 	ossEnabled := userResp.GetUser().GetOssEnabled()
-	ossActive := ossEnabled || cumulative >= ossThresholdCents
+	ossActive := ossEnabled || cumulative >= ossThresholdCents || priorOver
 
 	return &invoiceGrpc.GetOSSThresholdStatusResponse{
-		Success:           true,
-		Code:              codes.Success,
-		Year:              int32(now.In(invoiceTZ).Year()),
-		CumulativeHtCents: cumulative,
-		ThresholdCents:    ossThresholdCents,
-		OssEnabled:        ossEnabled,
-		OssActive:         ossActive,
+		Success:                    true,
+		Code:                       codes.Success,
+		Year:                       int32(now.In(invoiceTZ).Year()),
+		CumulativeHtCents:          cumulative,
+		ThresholdCents:             ossThresholdCents,
+		OssEnabled:                 ossEnabled,
+		OssActive:                  ossActive,
+		PriorYearOverThreshold:     priorOver,
+		PriorYearCumulativeHtCents: priorCumulative,
 	}, nil
 }

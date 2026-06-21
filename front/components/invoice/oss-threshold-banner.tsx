@@ -49,9 +49,11 @@ export default function OSSThresholdBanner() {
         </p>
         <p>
           {status.oss_active
-            ? status.oss_enabled
-              ? t("activeOptIn")
-              : t("activeThreshold")
+            ? status.prior_year_over_threshold
+              ? t("activePriorYear")
+              : status.oss_enabled
+                ? t("activeOptIn")
+                : t("activeThreshold")
             : t("remaining", { remaining: formatEurosFromCents(remaining) })}
         </p>
       </AlertDescription>
