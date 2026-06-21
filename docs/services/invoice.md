@@ -91,11 +91,24 @@ echeancier valide:
   n'autorisait sur facture scellee que la transition `ISSUED -> PAID` ; il accepte
   desormais aussi une MAJ ne touchant que `lifecycle_status` / `pdp_submission_id`
   / `updated_at`, toutes les colonnes legales/financieres restant gelees (le
-  document legal et son scellement chaine restent inalterables). Hors perimetre de
-  cette iteration : worker de polling des statuts, lookup annuaire DGFiP, adaptateur
-  PA reel. Gateway : `POST /api/invoices/:id/deposit`. Front : bouton « Deposer sur
-  la plateforme » (statut e-invoicing `NONE`), le reste des transitions restant
-  manuel.
+  document legal et son scellement chaine restent inalterables). Gateway :
+  `POST /api/invoices/:id/deposit`. Front : bouton « Deposer sur la plateforme »
+  (statut e-invoicing `NONE`), le reste des transitions restant manuel.
+- **Reconciliation des statuts (B6, 2e iteration)** : un worker de fond
+  (`PollPDPStatuses` / `StartPDPPoller`, `backend/invoice/actions/pdp_poll.go`)
+  reconcilie le cycle de vie local avec la PA. A chaque balayage il selectionne
+  les factures portant un `pdp_submission_id` et un statut non terminal
+  (`DEPOSITED|RECEIVED|APPROVED`), interroge `FetchStatus`, et — si le statut
+  plateforme est plus avance — fait progresser le cycle **un cran a la fois**
+  (le flux B3 interdit les sauts : un saut PA `DEPOSITED -> APPROVED` est
+  decompose en `RECEIVED` puis `APPROVED`). Chaque cran passe par
+  `applyLifecycleTransition` dans sa propre transaction (gardes + journal
+  append-only), donc l'avancement est idempotent et un echec tardif ne defait pas
+  les crans deja commit. `REJECTED` est applique directement depuis tout etat
+  actif ; un statut `UNKNOWN` (defaut de l'adaptateur no-op) ne touche a rien — le
+  worker est **inerte en production** tant qu'aucune PA n'est branchee. Active par
+  `PDP_POLL_INTERVAL` (duree Go, ex. `30s` ; vide = desactive), chaque balayage
+  borne par un timeout. Hors perimetre : lookup annuaire DGFiP, adaptateur PA reel.
 - **Cadre e-invoicing FR** : le Factur-X B2C/OSS genere est coherent mais
   facultatif (l'obligation PPF/PDP vise le B2B domestique ; le transfrontalier
   releve de l'e-reporting).

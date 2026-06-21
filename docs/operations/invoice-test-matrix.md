@@ -171,6 +171,11 @@ Aucun endpoint, regle metier, migration ou modification du format scelle ne doit
 | INV-BE-071 | Integration DB | Facture `ISSUED`, mock PA en erreur            | Deposer                         | `PDPSubmissionFailed`, cycle de vie reste `NONE`, 0 evenement             | P0       | `deposit_integration_test.go:TestDeposit_PlatformErrorLeavesStateUntouched` |
 | INV-BE-072 | Integration DB | Facture d'un autre proprietaire                | Deposer                         | `NotFound`, aucun appel PA                                                | P1       | `deposit_integration_test.go:TestDeposit_WrongOwnerNotFound` |
 | INV-BE-073 | Integration DB | Facture scellee `ISSUED`                       | Avancer `lifecycle_status`      | Trigger `000013` autorise la MAJ des metadonnees e-invoicing (regression B3) | P0   | `lifecycle_integration_test.go:TestSetLifecycle_TransitionAppendsEvent` |
+| INV-BE-074 | Unit           | Couples (courant, cible) du flux               | Planifier les crans (poller)    | Avance pas a pas (saut PA decompose), REJECTED direct, recul/terminal/UNKNOWN -> aucun cran | P0 | `pdp_poll_test.go:TestReconcileSteps`                       |
+| INV-BE-075 | Integration DB | Facture `DEPOSITED` + `pdp_submission_id`, PA renvoie `APPROVED` | Sweep (`PollPDPStatuses`)       | Cycle avance `DEPOSITED->RECEIVED->APPROVED` (2 crans), re-sweep idempotent, puis `COLLECTED` | P0 | `pdp_poll_integration_test.go:TestPoll_AdvancesThroughPlatformStatus` |
+| INV-BE-076 | Integration DB | Facture `DEPOSITED`, PA renvoie `REJECTED`     | Sweep                           | `lifecycle_status=REJECTED`                                               | P0       | `pdp_poll_integration_test.go:TestPoll_RejectedFromDeposited` |
+| INV-BE-077 | Integration DB | Facture `DEPOSITED`, PA renvoie `UNKNOWN`      | Sweep                           | Etat inchange (`DEPOSITED`), aucun evenement ajoute (defaut no-op inerte) | P0       | `pdp_poll_integration_test.go:TestPoll_UnknownLeavesUntouched` |
+| INV-BE-078 | Integration DB | Facture `DEPOSITED` sans `pdp_submission_id` (no-op) | Sweep                           | Exclue du balayage : etat inchange, PA jamais appelee                     | P1       | `pdp_poll_integration_test.go:TestPoll_SkipsInvoicesWithoutSubmissionID` |
 
 <!-- markdownlint-enable MD060 -->
 
