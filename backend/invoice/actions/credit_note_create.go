@@ -15,10 +15,6 @@ import (
 	invoiceGrpc "project-devis-invoice/services/grpc"
 )
 
-// CreateCreditNote issues an avoir against an ISSUED/PAID invoice. With an empty
-// positions list it credits every not-yet-credited line (total credit of the
-// remainder); otherwise it credits the selected lines. The over-crediting
-// invariant is enforced by the credit_note_lines unique constraint.
 func (s *Server) CreateCreditNote(ctx context.Context, req *invoiceGrpc.CreateCreditNoteRequest) (resp *invoiceGrpc.CreateCreditNoteResponse, err error) {
 	startedAt := time.Now()
 	defer deferObserve("create_credit_note", startedAt, func() (int32, bool) {
@@ -42,7 +38,6 @@ func (s *Server) CreateCreditNote(ctx context.Context, req *invoiceGrpc.CreateCr
 		return &invoiceGrpc.CreateCreditNoteResponse{Success: false, Code: codes.InvalidInput, ValidationErrors: fieldErrors}, nil
 	}
 
-	// Load the origin invoice: must exist and be ISSUED/PAID.
 	var status string
 	var vatExempt bool
 	var originInvoiceNumber sql.NullString
@@ -60,25 +55,21 @@ func (s *Server) CreateCreditNote(ctx context.Context, req *invoiceGrpc.CreateCr
 		return &invoiceGrpc.CreateCreditNoteResponse{Success: false, Code: codes.InvoiceNotIssued}, nil
 	}
 
-	// Load the frozen invoice lines (position -> snapshot).
 	lineByPos, orderedPos, err := s.loadInvoiceLinesByPosition(ctx, req.InvoiceId)
 	if err != nil {
 		return &invoiceGrpc.CreateCreditNoteResponse{Success: false, Code: codes.InternalError}, err
 	}
 
-	// Positions already credited by earlier credit notes.
 	alreadyCredited, err := s.creditedPositions(ctx, req.InvoiceId)
 	if err != nil {
 		return &invoiceGrpc.CreateCreditNoteResponse{Success: false, Code: codes.InternalError}, err
 	}
 
-	// Resolve the selection.
 	selected, isTotal, code := resolveCreditedPositions(req.Positions, orderedPos, alreadyCredited)
 	if code != codes.Success {
 		return &invoiceGrpc.CreateCreditNoteResponse{Success: false, Code: code}, nil
 	}
 
-	// Build compute lines and credit-note lines from the selection.
 	computeLines := make([]computeLine, 0, len(selected))
 	cnLines := make([]creditNoteLine, 0, len(selected))
 	for i, pos := range selected {
@@ -122,8 +113,6 @@ func (s *Server) CreateCreditNote(ctx context.Context, req *invoiceGrpc.CreateCr
 	}
 	defer tx.Rollback()
 
-	// Re-check the invoice status under a row lock (defends against a concurrent
-	// transition, though invoices are effectively immutable once issued).
 	var lockedStatus string
 	if err := tx.QueryRowContext(ctx,
 		`SELECT status FROM invoices WHERE invoice_id=$1 FOR UPDATE`, req.InvoiceId,
@@ -155,13 +144,12 @@ func (s *Server) CreateCreditNote(ctx context.Context, req *invoiceGrpc.CreateCr
 
 	if err := writeCreditNoteSnapshots(ctx, tx, creditNoteID, party, cnLines, totals.breakdown); err != nil {
 		if isUniqueViolation(err, "credit_note_lines_origin_unique") {
-			// A concurrent credit note took one of these lines first.
+
 			return &invoiceGrpc.CreateCreditNoteResponse{Success: false, Code: codes.CreditNoteLineAlreadyCredited}, nil
 		}
 		return &invoiceGrpc.CreateCreditNoteResponse{Success: false, Code: codes.InternalError}, err
 	}
 
-	// Seal the credit note into the issuer's cryptographic chain.
 	contentHash := computeContentHash(sealableDoc{
 		userID:              req.UserId,
 		docType:             "CREDIT_NOTE",
@@ -185,8 +173,6 @@ func (s *Server) CreateCreditNote(ctx context.Context, req *invoiceGrpc.CreateCr
 	return &invoiceGrpc.CreateCreditNoteResponse{Success: true, Code: codes.Success, CreditNoteId: creditNoteID, CreditNoteNumber: number}, nil
 }
 
-// resolveCreditedPositions validates/normalises the requested positions against
-// the invoice's lines and the already-credited set. Pure (testable).
 func resolveCreditedPositions(requested []int32, allPositions []int32, alreadyCredited map[int32]struct{}) (selected []int32, isTotal bool, code int32) {
 	allSet := make(map[int32]struct{}, len(allPositions))
 	for _, p := range allPositions {
@@ -194,7 +180,7 @@ func resolveCreditedPositions(requested []int32, allPositions []int32, alreadyCr
 	}
 
 	if len(requested) == 0 {
-		// Total credit of the remainder: every line not yet credited.
+
 		for _, p := range allPositions {
 			if _, done := alreadyCredited[p]; !done {
 				selected = append(selected, p)
@@ -221,12 +207,10 @@ func resolveCreditedPositions(requested []int32, allPositions []int32, alreadyCr
 		selected = append(selected, p)
 	}
 	sort.Slice(selected, func(i, j int) bool { return selected[i] < selected[j] })
-	// is_total when the selection covers every line of the invoice.
+
 	return selected, len(selected) == len(allPositions), codes.Success
 }
 
-// loadInvoiceLinesByPosition reads the frozen invoice lines into a map and the
-// ordered position list.
 func (s *Server) loadInvoiceLinesByPosition(ctx context.Context, invoiceID string) (map[int32]lineSnapshot, []int32, error) {
 	rows, err := s.db.QueryContext(ctx,
 		`SELECT position, quote_line_id, name, unit, quantity, unit_price_cents, line_ht_cents, tax_id, tax_rate, tax_label
@@ -252,8 +236,6 @@ func (s *Server) loadInvoiceLinesByPosition(ctx context.Context, invoiceID strin
 	return byPos, ordered, rows.Err()
 }
 
-// creditedPositions returns the set of invoice-line positions already covered by
-// an existing credit note.
 func (s *Server) creditedPositions(ctx context.Context, invoiceID string) (map[int32]struct{}, error) {
 	rows, err := s.db.QueryContext(ctx,
 		`SELECT origin_position FROM credit_note_lines WHERE origin_invoice_id=$1`, invoiceID)
@@ -272,8 +254,6 @@ func (s *Server) creditedPositions(ctx context.Context, invoiceID string) (map[i
 	return set, rows.Err()
 }
 
-// loadInvoicePartySnapshot reads the frozen party block of an invoice to re-freeze
-// it on the credit note.
 func (s *Server) loadInvoicePartySnapshot(ctx context.Context, invoiceID string) (partySnapshot, error) {
 	var p partySnapshot
 	err := s.db.QueryRowContext(ctx,
@@ -294,8 +274,6 @@ func (s *Server) loadInvoicePartySnapshot(ctx context.Context, invoiceID string)
 	return p, err
 }
 
-// isUniqueViolation reports whether err is a Postgres unique-violation (23505)
-// on the named constraint.
 func isUniqueViolation(err error, constraint string) bool {
 	var pqErr *pq.Error
 	if errors.As(err, &pqErr) {

@@ -37,7 +37,6 @@ func (s *Server) CreateInvoiceFromQuote(ctx context.Context, req *invoiceGrpc.Cr
 		return &invoiceGrpc.CreateInvoiceResponse{Success: false, Code: codes.InvalidInput, ValidationErrors: fieldErrors}, nil
 	}
 
-	// The quote must be validated.
 	quoteResp, err := s.quoteClient.GetQuote(ctx, &quoteGrpc.GetQuoteRequest{QuoteId: req.QuoteId, UserId: req.UserId})
 	if err != nil {
 		return &invoiceGrpc.CreateInvoiceResponse{Success: false, Code: codes.InternalError}, err
@@ -49,8 +48,6 @@ func (s *Server) CreateInvoiceFromQuote(ctx context.Context, req *invoiceGrpc.Cr
 		return &invoiceGrpc.CreateInvoiceResponse{Success: false, Code: codes.SourceNotEligible}, nil
 	}
 
-	// A whole-quote invoice is only allowed when no schedule exists; otherwise
-	// the caller must bill from the schedule.
 	listResp, err := s.scheduleClient.ListSchedules(ctx, &scheduleGrpc.ListSchedulesRequest{
 		UserId:  req.UserId,
 		QuoteId: req.QuoteId,

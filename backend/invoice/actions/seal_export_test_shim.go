@@ -6,9 +6,6 @@ import (
 	"time"
 )
 
-// Test-facing shims for the canonical hashing, mirroring the other
-// *_export_test_shim.go files. No logic of their own.
-
 type SealLineForTest struct {
 	Name           string
 	Quantity       string
@@ -63,10 +60,8 @@ func ComputeChainHashForTest(prevHash, contentHash string, index int64) string {
 	return computeChainHash(prevHash, contentHash, index)
 }
 
-// GenesisHashForTest exposes the genesis constant.
 func GenesisHashForTest() string { return genesisHash }
 
-// SealDocumentForTest exposes sealDocument to integration tests.
 func SealDocumentForTest(ctx context.Context, tx *sql.Tx, userID, docType, docID, contentHash string) (int64, string, error) {
 	return sealDocument(ctx, tx, userID, docType, docID, contentHash)
 }

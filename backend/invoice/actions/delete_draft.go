@@ -9,10 +9,6 @@ import (
 	invoiceGrpc "project-devis-invoice/services/grpc"
 )
 
-// DeleteDraftInvoice removes an invoice that is still a DRAFT. A draft carries no
-// legal number, no frozen snapshot and no seal, so deleting it is safe and leaves
-// the inalterability chain untouched. The DELETE is guarded by status='DRAFT', so
-// an already-issued (sealed) invoice is never affected — it stays immutable.
 func (s *Server) DeleteDraftInvoice(ctx context.Context, req *invoiceGrpc.DeleteDraftInvoiceRequest) (resp *invoiceGrpc.GenericResponse, err error) {
 	startedAt := time.Now()
 	defer deferObserve("delete_draft_invoice", startedAt, func() (int32, bool) {
@@ -33,7 +29,6 @@ func (s *Server) DeleteDraftInvoice(ctx context.Context, req *invoiceGrpc.Delete
 	if err != nil {
 		return &invoiceGrpc.GenericResponse{Success: false, Code: codes.InternalError}, err
 	}
-	// 0 rows: either the invoice does not exist (NotFound) or it exists but is no
-	// longer DRAFT (InvoiceFinalized — issued, cannot be deleted).
+
 	return s.replyOnAffected(ctx, req.InvoiceId, req.UserId, res)
 }

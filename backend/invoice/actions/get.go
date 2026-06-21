@@ -27,18 +27,18 @@ func (s *Server) GetInvoice(ctx context.Context, req *invoiceGrpc.GetInvoiceRequ
 	}
 
 	var (
-		quoteID      string
-		scheduleID   sql.NullString
-		months       pq.Int32Array
-		status       string
-		invoiceNum   sql.NullString
-		issuedAt     sql.NullTime
-		saleDate     sql.NullTime
-		dueDate      sql.NullTime
-		totalHT      int64
-		totalVAT     int64
-		totalTTC     int64
-		vatExempt    bool
+		quoteID    string
+		scheduleID sql.NullString
+		months     pq.Int32Array
+		status     string
+		invoiceNum sql.NullString
+		issuedAt   sql.NullTime
+		saleDate   sql.NullTime
+		dueDate    sql.NullTime
+		totalHT    int64
+		totalVAT   int64
+		totalTTC   int64
+		vatExempt  bool
 	)
 	err = s.db.QueryRowContext(ctx,
 		`SELECT quote_id, schedule_id, billed_month_indexes, status, invoice_number,
@@ -71,17 +71,14 @@ func (s *Server) GetInvoice(ctx context.Context, req *invoiceGrpc.GetInvoiceRequ
 		VatExempt:          vatExempt,
 	}
 
-	// DRAFT invoices have no frozen snapshot yet: return a live preview.
 	if status == "DRAFT" {
 		return s.getDraftPreview(ctx, req, details, quoteID, scheduleID, months)
 	}
 
-	// ISSUED/PAID/CANCELLED: read the frozen snapshot.
 	if err := s.loadSnapshot(ctx, req.InvoiceId, details); err != nil {
 		return &invoiceGrpc.GetInvoiceResponse{Success: false, Code: codes.InternalError}, err
 	}
 
-	// Expose which lines are already credited so the UI can grey them out.
 	if status == "ISSUED" || status == "PAID" {
 		credited, err := s.creditedPositions(ctx, req.InvoiceId)
 		if err != nil {
@@ -97,15 +94,13 @@ func (s *Server) GetInvoice(ctx context.Context, req *invoiceGrpc.GetInvoiceRequ
 	return &invoiceGrpc.GetInvoiceResponse{Success: true, Code: codes.Success, Invoice: details}, nil
 }
 
-// getDraftPreview resolves the source live (the quote/schedule is frozen by its
-// own validation) so the user can review a draft before issuing.
 func (s *Server) getDraftPreview(ctx context.Context, req *invoiceGrpc.GetInvoiceRequest, details *invoiceGrpc.InvoiceDetails, quoteID string, scheduleID sql.NullString, months pq.Int32Array) (*invoiceGrpc.GetInvoiceResponse, error) {
 	var (
 		resolved *resolvedInvoice
 		code     int32
 		err      error
 	)
-	// Not yet issued: preview the VAT it would carry if issued now.
+
 	previewAt := time.Now().In(invoiceTZ)
 	if scheduleID.Valid && scheduleID.String != "" {
 		resolved, code, err = s.resolveScheduleInvoice(ctx, req.InvoiceId, req.UserId, quoteID, scheduleID.String, months, previewAt)

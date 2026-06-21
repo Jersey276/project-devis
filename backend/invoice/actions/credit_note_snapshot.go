@@ -5,9 +5,6 @@ import (
 	"database/sql"
 )
 
-// creditNoteLine is one frozen credited line: the snapshot of an invoice line
-// plus the (origin_invoice_id, origin_position) it credits — the latter feeds
-// the over-crediting UNIQUE constraint.
 type creditNoteLine struct {
 	position        int32
 	originInvoiceID string
@@ -23,10 +20,6 @@ type creditNoteLine struct {
 	taxLabel        string
 }
 
-// writeCreditNoteSnapshots persists the frozen party block, credited lines and
-// VAT breakdown inside the creation transaction. Inserting a line whose
-// (origin_invoice_id, origin_position) is already credited raises a unique
-// violation (23505) — the caller maps it to CreditNoteLineAlreadyCredited.
 func writeCreditNoteSnapshots(ctx context.Context, tx *sql.Tx, creditNoteID string, p partySnapshot, lines []creditNoteLine, breakdown []vatBucket) error {
 	if _, err := tx.ExecContext(ctx,
 		`INSERT INTO credit_note_party_snapshots (

@@ -17,37 +17,35 @@ import (
 	usersGrpc "project-devis-invoice/services/usersgrpc"
 )
 
-// partySnapshot is the frozen legal-mentions block copied at issue time.
 type partySnapshot struct {
-	issuerCompany    string
-	issuerSiren      string
-	issuerVat        string
-	issuerEmail      string
-	issuerPhone      string
-	issuerLogoURL    string
-	issuerStreet     string
-	issuerAdditional string
-	issuerZip        string
-	issuerCity       string
-	clientFirstName  string
-	clientLastName   string
-	clientCompany    string
-	clientSiren      string
-	clientVat        string
-	clientEmail      string
-	clientStreet     string
-	clientAdditional string
-	clientZip        string
-	clientCity       string
-	clientType       string // frozen B2C/B2B nature: "individual" / "business"
-	clientCountryID  int32  // frozen client country id (0 = unknown); drives OSS
-	ossApplied       bool   // frozen: destination-country VAT (OSS) was applied at issue
-	countsTowardThreshold bool // frozen: B2C intra-EU non-FR sale; part of the OSS 10k assiette
-	issuerCountryCode string // frozen issuer ISO 3166-1 alpha-2 code (drives Factur-X seller country)
-	clientCountryCode string // frozen client ISO 3166-1 alpha-2 code (drives Factur-X buyer country)
+	issuerCompany         string
+	issuerSiren           string
+	issuerVat             string
+	issuerEmail           string
+	issuerPhone           string
+	issuerLogoURL         string
+	issuerStreet          string
+	issuerAdditional      string
+	issuerZip             string
+	issuerCity            string
+	clientFirstName       string
+	clientLastName        string
+	clientCompany         string
+	clientSiren           string
+	clientVat             string
+	clientEmail           string
+	clientStreet          string
+	clientAdditional      string
+	clientZip             string
+	clientCity            string
+	clientType            string
+	clientCountryID       int32
+	ossApplied            bool
+	countsTowardThreshold bool
+	issuerCountryCode     string
+	clientCountryCode     string
 }
 
-// lineSnapshot is one frozen invoice line (mirrors the DB row / proto message).
 type lineSnapshot struct {
 	position       int32
 	quoteLineID    string
@@ -61,8 +59,6 @@ type lineSnapshot struct {
 	taxLabel       string
 }
 
-// resolvedInvoice carries everything needed to compute totals and write the
-// snapshot, fully resolved from the downstream services.
 type resolvedInvoice struct {
 	parties   partySnapshot
 	lines     []lineSnapshot
@@ -70,9 +66,6 @@ type resolvedInvoice struct {
 	vatExempt bool
 }
 
-// resolveScheduleInvoice gathers the data for a schedule-sourced invoice: the
-// quote lines (name/unit/tax), the selected months' per-line HT (from cells),
-// the resolved tax rates, and the frozen party block.
 func (s *Server) resolveScheduleInvoice(ctx context.Context, invoiceID, userID, quoteID, scheduleID string, monthIndexes []int32, issuedAt time.Time) (*resolvedInvoice, int32, error) {
 	q, lines, code, err := s.fetchQuoteAndLines(ctx, userID, quoteID)
 	if err != nil || code != codes.Success {
@@ -104,8 +97,6 @@ func (s *Server) resolveScheduleInvoice(ctx context.Context, invoiceID, userID, 
 	return s.buildResolved(ctx, invoiceID, userID, q, lines, htByLine, issuedAt)
 }
 
-// resolveQuoteInvoice gathers the data for a whole-quote invoice: each line's
-// full HT (unit_price × quantity).
 func (s *Server) resolveQuoteInvoice(ctx context.Context, invoiceID, userID, quoteID string, issuedAt time.Time) (*resolvedInvoice, int32, error) {
 	q, lines, code, err := s.fetchQuoteAndLines(ctx, userID, quoteID)
 	if err != nil || code != codes.Success {
@@ -119,8 +110,6 @@ func (s *Server) resolveQuoteInvoice(ctx context.Context, invoiceID, userID, quo
 	return s.buildResolved(ctx, invoiceID, userID, q, lines, htByLine, issuedAt)
 }
 
-// buildResolved resolves taxes, the issuer/client party block, and assembles
-// the compute and snapshot line slices. Lines with zero billed HT are skipped.
 func (s *Server) buildResolved(ctx context.Context, invoiceID, userID string, q *quoteGrpc.Quote, lines []*quoteGrpc.QuoteLine, htByLine map[string]int64, issuedAt time.Time) (*resolvedInvoice, int32, error) {
 	taxCache := newTaxCache(s.usersClient)
 
@@ -196,10 +185,6 @@ func (s *Server) buildResolved(ctx context.Context, invoiceID, userID string, q 
 
 	parties = buildPartySnapshot(user, userAddr, client, clientAddr)
 
-	// Resolve the ISO country codes once, so they can be frozen into the snapshot
-	// (the export service has no access to the countries table). The client's
-	// resolved Country is reused by resolveOSSRate below to avoid a second
-	// GetCountry round-trip.
 	var clientCountry *usersGrpc.Country
 	if parties.clientCountryID != 0 {
 		c, code, err := s.resolveCountry(ctx, parties.clientCountryID)
@@ -217,8 +202,6 @@ func (s *Server) buildResolved(ctx context.Context, invoiceID, userID string, q 
 		parties.issuerCountryCode = issuerCountry.GetCode()
 	}
 
-	// OSS threshold assiette flag + running cumulative (excludes this draft).
-	// See docs/adr/0002-oss-seuil-bascule-automatique.md.
 	parties.countsTowardThreshold = isIntraEUB2C(parties.clientType, clientCountry)
 	cumulativeHTCents, err := s.ossCumulativeHTForYear(ctx, userID, invoiceID, issuedAt)
 	if err != nil {
@@ -229,11 +212,9 @@ func (s *Server) buildResolved(ctx context.Context, invoiceID, userID string, q 
 	if err != nil || code != codes.Success {
 		return nil, code, err
 	}
-	// Freeze whether OSS was applied, so the PDF can print the legal mention from
-	// the snapshot alone (the seller's oss_enabled flag is mutable).
+
 	parties.ossApplied = oss != nil
 
-	// Stable ordering by quote-line position for the printed invoice.
 	ordered := append([]*quoteGrpc.QuoteLine(nil), lines...)
 	sort.Slice(ordered, func(i, j int) bool { return ordered[i].GetPosition() < ordered[j].GetPosition() })
 
@@ -245,7 +226,7 @@ func (s *Server) buildResolved(ctx context.Context, invoiceID, userID string, q 
 	for _, l := range ordered {
 		ht, ok := htByLine[l.GetLineId()]
 		if !ok || ht == 0 {
-			continue // line not billed in this invoice (e.g. months not selected)
+			continue
 		}
 		rate, label, code, err := taxCache.resolve(ctx, userID, l.GetTaxId())
 		if err != nil {
@@ -253,9 +234,7 @@ func (s *Server) buildResolved(ctx context.Context, invoiceID, userID string, q 
 		}
 		taxID := l.GetTaxId()
 		if oss != nil {
-			// Override the line's domestic rate with the destination rate. The
-			// HT is unchanged; only the VAT rate/label differ. taxID is cleared
-			// so the snapshot doesn't point at a domestic tax that wasn't applied.
+
 			rate, label, taxID = oss.rate, oss.label, 0
 		}
 		numRate := parseRate(rate)
@@ -289,15 +268,11 @@ func (s *Server) buildResolved(ctx context.Context, invoiceID, userID string, q 
 	}, codes.Success, nil
 }
 
-// ossRate is the resolved destination-country VAT rate to apply to every line
-// of an OSS distance-selling invoice.
 type ossRate struct {
-	rate  string // canonical rate string, e.g. "19"
-	label string // tax label, e.g. "USt 19%"
+	rate  string
+	label string
 }
 
-// resolveCountry loads a country by id, mapping upstream failures to business
-// codes. The caller guarantees id != 0.
 func (s *Server) resolveCountry(ctx context.Context, countryID int32) (*usersGrpc.Country, int32, error) {
 	resp, err := s.usersClient.GetCountry(ctx, &usersGrpc.GetCountryRequest{CountryId: countryID})
 	if err != nil {
@@ -309,14 +284,9 @@ func (s *Server) resolveCountry(ctx context.Context, countryID int32) (*usersGrp
 	return resp.GetCountry(), codes.Success, nil
 }
 
-// resolveOSSRate resolves the destination-country VAT rate when OSS applies (see
-// ossApplies), else returns (nil, Success, nil). When OSS applies but the
-// client's country has no configured tax it returns OSSDestinationTaxMissing so
-// emission is blocked rather than falling back to a domestic rate. clientCountry
-// is reused from buildResolved to avoid re-fetching.
 func (s *Server) resolveOSSRate(ctx context.Context, user *usersGrpc.User, cumulativeHTCents int64, parties partySnapshot, clientCountry *usersGrpc.Country) (*ossRate, int32, error) {
 	if !ossApplies(user.GetOssEnabled(), cumulativeHTCents, parties.clientType, clientCountry) {
-		return nil, codes.Success, nil // domestic, non-EU, B2B, or below threshold without opt-in
+		return nil, codes.Success, nil
 	}
 
 	taxesResp, err := s.usersClient.ListTaxesForCountry(ctx, &usersGrpc.ListTaxesForCountryRequest{CountryId: parties.clientCountryID})
@@ -333,9 +303,6 @@ func (s *Server) resolveOSSRate(ctx context.Context, user *usersGrpc.User, cumul
 	return &ossRate{rate: dest.GetRate(), label: dest.GetName()}, codes.Success, nil
 }
 
-// pickDestinationTax chooses the standard VAT rate for the destination country:
-// the group's default tax if one is flagged, otherwise the highest rate (the
-// standard rate is the highest among reduced rates). Returns nil when empty.
 func pickDestinationTax(taxes []*usersGrpc.Tax) *usersGrpc.Tax {
 	var best *usersGrpc.Tax
 	for _, t := range taxes {
@@ -349,8 +316,6 @@ func pickDestinationTax(taxes []*usersGrpc.Tax) *usersGrpc.Tax {
 	return best
 }
 
-// fetchQuoteAndLines loads the quote and its lines, returning a business code on
-// any upstream failure.
 func (s *Server) fetchQuoteAndLines(ctx context.Context, userID, quoteID string) (*quoteGrpc.Quote, []*quoteGrpc.QuoteLine, int32, error) {
 	resp, err := s.quoteClient.GetQuote(ctx, &quoteGrpc.GetQuoteRequest{QuoteId: quoteID, UserId: userID})
 	if err != nil {
@@ -370,9 +335,6 @@ func lineHTFromQuoteLine(l *quoteGrpc.QuoteLine) int64 {
 	return int64(float64(l.GetUnitPrice())*qty + 0.5)
 }
 
-// clientTypeToString maps the users-service ClientType enum to the DB string
-// frozen in the party snapshot. UNSPECIFIED maps to "" so a not-yet-classified
-// client doesn't fabricate a B2C/B2B nature on the invoice.
 func clientTypeToString(t usersGrpc.ClientType) string {
 	switch t {
 	case usersGrpc.ClientType_CLIENT_TYPE_INDIVIDUAL:
@@ -419,7 +381,6 @@ func buildPartySnapshot(user *usersGrpc.User, userAddr *usersGrpc.Address, clien
 	return p
 }
 
-// taxCache resolves tax_id → (rate, label) once per id within a request.
 type taxCache struct {
 	client usersGrpc.UserServiceClient
 	mu     sync.Mutex

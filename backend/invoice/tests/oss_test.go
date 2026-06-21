@@ -11,9 +11,6 @@ func tax(rate, name string, isDefault bool) *usersGrpc.Tax {
 	return &usersGrpc.Tax{Rate: rate, Name: name, IsDefault: isDefault}
 }
 
-// TestPickDestinationTax covers the destination-country VAT selection for OSS:
-// the group's flagged default wins; otherwise the highest rate (the standard
-// rate among reduced rates); empty input yields no tax.
 func TestPickDestinationTax(t *testing.T) {
 	cases := []struct {
 		name     string

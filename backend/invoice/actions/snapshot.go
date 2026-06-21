@@ -5,9 +5,6 @@ import (
 	"database/sql"
 )
 
-// writeSnapshots persists the frozen party block, line snapshots and VAT
-// breakdown for an invoice. It runs inside the issue transaction so the whole
-// snapshot is atomic with the status/number update.
 func writeSnapshots(ctx context.Context, tx *sql.Tx, invoiceID string, r *resolvedInvoice, breakdown []vatBucket) error {
 	p := r.parties
 	if _, err := tx.ExecContext(ctx,

@@ -7,11 +7,6 @@ import (
 	"log"
 )
 
-// BackfillSeals seals every already-issued document that has no seal yet, per
-// issuer, in canonical legacy order. Idempotent: documents already sealed are
-// skipped (LEFT JOIN), so it is safe to run on every startup. Hashing is done
-// only in Go (computeContentHash) — never in SQL — to stay byte-identical with
-// the live seal path and the verifier.
 func BackfillSeals(ctx context.Context, db *sql.DB) error {
 	users, err := usersWithUnsealedDocs(ctx, db)
 	if err != nil {
@@ -31,8 +26,6 @@ func BackfillSeals(ctx context.Context, db *sql.DB) error {
 	return nil
 }
 
-// usersWithUnsealedDocs returns the issuers that have at least one issued
-// document without a seal.
 func usersWithUnsealedDocs(ctx context.Context, db *sql.DB) ([]string, error) {
 	rows, err := db.QueryContext(ctx, `
 		SELECT DISTINCT user_id FROM (
@@ -62,8 +55,6 @@ func usersWithUnsealedDocs(ctx context.Context, db *sql.DB) ([]string, error) {
 	return users, rows.Err()
 }
 
-// legacyDoc is an unsealed document to seal, with the parent figures needed to
-// build its content hash.
 type legacyDoc struct {
 	docType             string
 	docID               string
@@ -83,8 +74,6 @@ func backfillUser(ctx context.Context, db *sql.DB, userID string) (int, error) {
 	}
 	defer tx.Rollback()
 
-	// Canonical legacy order: issued_at, then doc_type (INVOICE before
-	// CREDIT_NOTE), then number_seq. Reproducible on a restored DB.
 	rows, err := tx.QueryContext(ctx, `
 		SELECT doc_type, doc_id, number, issued_at, total_ht_cents, total_vat_cents,
 		       total_ttc_cents, vat_exempt, origin_invoice_number, number_seq
@@ -154,8 +143,6 @@ func backfillUser(ctx context.Context, db *sql.DB, userID string) (int, error) {
 	return len(docs), nil
 }
 
-// loadSealLinesForDoc reads the frozen lines of an invoice or credit note in
-// position order, as sealLine.
 func loadSealLinesForDoc(ctx context.Context, tx *sql.Tx, docType, docID string) ([]sealLine, error) {
 	var query string
 	switch docType {

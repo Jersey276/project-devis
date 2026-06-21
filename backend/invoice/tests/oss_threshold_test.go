@@ -11,20 +11,17 @@ func country(code string, isEu bool) *usersGrpc.Country {
 	return &usersGrpc.Country{Code: code, IsEu: isEu}
 }
 
-// TestOSSApplies covers the pure OSS decision: it requires a B2C individual in
-// an EU country other than FR, then applies when the seller opted in early OR
-// the yearly cumulative reached the 10 000 € threshold.
 func TestOSSApplies(t *testing.T) {
-	const threshold = actions.OSSThresholdCentsForTest // 1_000_000
+	const threshold = actions.OSSThresholdCentsForTest
 	de := country("DE", true)
 
 	cases := []struct {
-		name        string
-		ossEnabled  bool
-		cumulative  int64
-		clientType  string
-		clientCty   *usersGrpc.Country
-		want        bool
+		name       string
+		ossEnabled bool
+		cumulative int64
+		clientType string
+		clientCty  *usersGrpc.Country
+		want       bool
 	}{
 		{"below threshold, not opted in -> false", false, threshold - 1, "individual", de, false},
 		{"below threshold, opted in -> true (anticipation)", true, 0, "individual", de, true},

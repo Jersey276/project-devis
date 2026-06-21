@@ -6,8 +6,6 @@ import (
 	invoiceGrpc "project-devis-invoice/services/grpc"
 )
 
-// loadSnapshot fills the party block, lines and VAT breakdown of details from
-// the frozen snapshot tables.
 func (s *Server) loadSnapshot(ctx context.Context, invoiceID string, details *invoiceGrpc.InvoiceDetails) error {
 	var p partySnapshot
 	err := s.db.QueryRowContext(ctx,
@@ -72,7 +70,6 @@ func (s *Server) loadSnapshot(ctx context.Context, invoiceID string, details *in
 	return vatRows.Err()
 }
 
-// partyToProto extracts either the issuer or the client side of a snapshot.
 func partyToProto(p partySnapshot, issuer bool) *invoiceGrpc.InvoiceParty {
 	if issuer {
 		return &invoiceGrpc.InvoiceParty{

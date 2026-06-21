@@ -40,7 +40,6 @@ func (s *Server) CreateInvoiceFromSchedule(ctx context.Context, req *invoiceGrpc
 		return &invoiceGrpc.CreateInvoiceResponse{Success: false, Code: codes.InvalidInput, ValidationErrors: fieldErrors}, nil
 	}
 
-	// Load the schedule to confirm eligibility and resolve its quote/duration.
 	schedResp, err := s.scheduleClient.GetSchedule(ctx, &scheduleGrpc.GetScheduleRequest{
 		ScheduleId: req.ScheduleId,
 		UserId:     req.UserId,
@@ -80,8 +79,6 @@ func (s *Server) CreateInvoiceFromSchedule(ctx context.Context, req *invoiceGrpc
 	return &invoiceGrpc.CreateInvoiceResponse{Success: true, Code: codes.Success, InvoiceId: invoiceID}, nil
 }
 
-// billedMonthsForSchedule returns the union of month indexes already covered by
-// ISSUED/PAID invoices of this schedule (CANCELLED frees the months again).
 func (s *Server) billedMonthsForSchedule(ctx context.Context, userID, scheduleID string) ([]int32, error) {
 	rows, err := s.db.QueryContext(ctx,
 		`SELECT billed_month_indexes FROM invoices

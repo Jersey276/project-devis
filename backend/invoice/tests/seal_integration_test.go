@@ -17,20 +17,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// These tests exercise the real chaining, triggers, backfill and verification
-// against a disposable Postgres. Skipped unless INVOICE_TEST_DATABASE_URL is set
-// to a database owned by role devis-invoice (needs schema-create privilege).
-//
-//	INVOICE_TEST_DATABASE_URL="postgres://devis-invoice:pass@localhost:5432/invoice?sslmode=disable" go test ./tests/ -run Seal
-//
-// Each test runs in its own disposable schema: the helper creates a fresh schema,
-// applies every migration into it, and drops it (CASCADE) on cleanup. This needs
-// no superuser, leaves the database untouched, and is fully re-runnable — DROP
-// SCHEMA CASCADE removes the tables outright, so the append-only triggers (which
-// only fire on row UPDATE/DELETE) never get in the way.
-
-// sealTestDB returns a *sql.DB whose every pooled connection is pinned to a fresh,
-// migrated, disposable schema. The schema is dropped on test cleanup.
 func sealTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 	dsn := os.Getenv("INVOICE_TEST_DATABASE_URL")
@@ -38,10 +24,8 @@ func sealTestDB(t *testing.T) *sql.DB {
 		t.Skip("set INVOICE_TEST_DATABASE_URL to run the seal integration tests")
 	}
 
-	// Unique schema name for this test run (lowercase, valid identifier).
 	schema := fmt.Sprintf("sealtest_%d", time.Now().UnixNano())
 
-	// 1. Create the schema on a short-lived admin connection.
 	admin, err := sql.Open("postgres", dsn)
 	if err != nil {
 		t.Fatalf("open admin db: %v", err)
@@ -56,8 +40,6 @@ func sealTestDB(t *testing.T) *sql.DB {
 	}
 	admin.Close()
 
-	// 2. Open the test pool with search_path pinned to the schema, so every
-	//    connection — and thus the prod code under test — resolves tables there.
 	db, err := sql.Open("postgres", withSearchPath(dsn, schema))
 	if err != nil {
 		dropSchema(t, dsn, schema)
@@ -69,7 +51,6 @@ func sealTestDB(t *testing.T) *sql.DB {
 		t.Fatalf("ping test db: %v", err)
 	}
 
-	// 3. Apply every migration into the schema.
 	if err := applyMigrations(db); err != nil {
 		db.Close()
 		dropSchema(t, dsn, schema)
@@ -83,8 +64,6 @@ func sealTestDB(t *testing.T) *sql.DB {
 	return db
 }
 
-// withSearchPath appends a libpq `options=-c search_path=<schema>` parameter to
-// the DSN so the pinned schema applies to every connection in the pool.
 func withSearchPath(dsn, schema string) string {
 	opt := "options=-c search_path=" + schema
 	if strings.Contains(dsn, "?") {
@@ -93,7 +72,6 @@ func withSearchPath(dsn, schema string) string {
 	return dsn + "?" + opt
 }
 
-// dropSchema tears down the disposable schema on its own admin connection.
 func dropSchema(t *testing.T, dsn, schema string) {
 	t.Helper()
 	admin, err := sql.Open("postgres", dsn)
@@ -107,8 +85,6 @@ func dropSchema(t *testing.T, dsn, schema string) {
 	}
 }
 
-// applyMigrations runs every *.up.sql migration, in filename order, on db. db's
-// search_path already points at the disposable schema, so all objects land there.
 func applyMigrations(db *sql.DB) error {
 	dir := filepath.Join("..", "migrations")
 	entries, err := os.ReadDir(dir)
@@ -134,8 +110,6 @@ func applyMigrations(db *sql.DB) error {
 	return nil
 }
 
-// seedIssuedInvoice inserts an ISSUED invoice + one line snapshot directly,
-// bypassing the gRPC issue path. Returns the invoice id.
 func seedIssuedInvoice(t *testing.T, db *sql.DB, userID, invoiceID, number string, issuedAt time.Time, seq int) {
 	t.Helper()
 	_, err := db.Exec(
@@ -168,7 +142,6 @@ func TestSeal_BackfillAndVerify(t *testing.T) {
 		t.Fatalf("backfill: %v", err)
 	}
 
-	// Two contiguous seals, indexes 0 and 1.
 	var count int
 	if err := db.QueryRow(`SELECT count(*) FROM document_seals WHERE user_id=$1`, userID).Scan(&count); err != nil {
 		t.Fatalf("count seals: %v", err)
@@ -186,7 +159,6 @@ func TestSeal_BackfillAndVerify(t *testing.T) {
 		t.Fatalf("verify ok=%v checked=%d reason=%q; want ok/2", resp.Ok, resp.Checked, resp.Reason)
 	}
 
-	// Idempotent re-run.
 	if err := actions.BackfillSeals(context.Background(), db); err != nil {
 		t.Fatalf("backfill re-run: %v", err)
 	}
@@ -207,15 +179,14 @@ func TestSeal_TriggerBlocksTamper(t *testing.T) {
 		t.Fatalf("backfill: %v", err)
 	}
 
-	// Direct tamper on a sealed invoice must be blocked by the trigger.
 	if _, err := db.Exec(`UPDATE invoices SET total_ttc_cents = total_ttc_cents + 1 WHERE invoice_id='inv-t'`); err == nil {
 		t.Fatal("UPDATE on sealed invoice succeeded; trigger did not block it")
 	}
-	// Tampering a line snapshot must be blocked.
+
 	if _, err := db.Exec(`UPDATE invoice_line_snapshots SET line_ht_cents = 1 WHERE invoice_id='inv-t'`); err == nil {
 		t.Fatal("UPDATE on line snapshot succeeded; trigger did not block it")
 	}
-	// document_seals is append-only.
+
 	if _, err := db.Exec(`UPDATE document_seals SET chain_hash='x' WHERE doc_id='inv-t'`); err == nil {
 		t.Fatal("UPDATE on document_seals succeeded; trigger did not block it")
 	}
@@ -233,7 +204,6 @@ func TestSeal_MarkInvoicePaidStillAllowed(t *testing.T) {
 		t.Fatalf("backfill: %v", err)
 	}
 
-	// The ISSUED -> PAID transition is whitelisted by the trigger.
 	srv := actions.NewServer(db, nil, nil, nil)
 	resp, err := srv.MarkInvoicePaid(context.Background(), &invoiceGrpc.MarkInvoicePaidRequest{
 		InvoiceId: "inv-p", UserId: userID,

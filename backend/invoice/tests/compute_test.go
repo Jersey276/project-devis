@@ -6,12 +6,8 @@ import (
 	"project-devis-invoice/actions"
 )
 
-// These tests pin the fiscal contract of the VAT computation. They go through
-// the test-only export shim actions.ComputeTotalsForTest so they can live in
-// the tests package while compute itself stays unexported.
-
 func TestComputeTotals_SingleRate20(t *testing.T) {
-	// 100.00 € HT at 20% → 20.00 € VAT → 120.00 € TTC
+
 	lines := []actions.ComputeLineInput{
 		{HT: 10000, TaxRate: 20, TaxRateID: "20"},
 	}
@@ -30,13 +26,12 @@ func TestComputeTotals_SingleRate20(t *testing.T) {
 }
 
 func TestComputeTotals_MultiRateOrderedAscending(t *testing.T) {
-	// Mix of 20%, 10%, 5.5% and 0% — breakdown must be ordered by ascending
-	// numeric rate and each VAT rounded once per rate group.
+
 	lines := []actions.ComputeLineInput{
-		{HT: 10000, TaxRate: 20, TaxRateID: "20"},    // 2000 VAT
-		{HT: 5000, TaxRate: 10, TaxRateID: "10"},     // 500 VAT
-		{HT: 3333, TaxRate: 5.5, TaxRateID: "5.5"},   // 183.315 → 183 VAT
-		{HT: 4000, TaxRate: 0, TaxRateID: "0"},       // 0 VAT
+		{HT: 10000, TaxRate: 20, TaxRateID: "20"},
+		{HT: 5000, TaxRate: 10, TaxRateID: "10"},
+		{HT: 3333, TaxRate: 5.5, TaxRateID: "5.5"},
+		{HT: 4000, TaxRate: 0, TaxRateID: "0"},
 	}
 	got := actions.ComputeTotalsForTest(lines, false)
 
@@ -60,14 +55,7 @@ func TestComputeTotals_MultiRateOrderedAscending(t *testing.T) {
 }
 
 func TestComputeTotals_RoundsPerRateGroupNotPerLine(t *testing.T) {
-	// Two lines at the same 5.5% rate. Per-line rounding would give
-	// round(50.005)+round(50.005) = ... whereas per-group rounding sums the HT
-	// first: (1001 + 1001) * 5.5% = 2002 * 0.055 = 110.11 → 110.
-	// Per-line: round(1001*0.055)=round(55.055)=55 twice = 110 as well here, so
-	// pick figures where the two differ: HT 909 + 909 = 1818.
-	// 909 * 0.055 = 49.995 → round 50 each → 100 per line.
-	// group: 1818 * 0.055 = 99.99 → 100. Use HT that splits: 901 and 901.
-	// 901*0.055=49.555→50 each→100; group 1802*0.055=99.11→99. They differ.
+
 	lines := []actions.ComputeLineInput{
 		{HT: 901, TaxRate: 5.5, TaxRateID: "5.5"},
 		{HT: 901, TaxRate: 5.5, TaxRateID: "5.5"},
@@ -80,7 +68,7 @@ func TestComputeTotals_RoundsPerRateGroupNotPerLine(t *testing.T) {
 	if got.Breakdown[0].BaseHT != 1802 {
 		t.Fatalf("base HT = %d; want 1802 (HT must aggregate before rounding)", got.Breakdown[0].BaseHT)
 	}
-	// round(1802 * 0.055) = round(99.11) = 99
+
 	if got.TotalVAT != 99 {
 		t.Fatalf("total VAT = %d; want 99 (per-group rounding)", got.TotalVAT)
 	}

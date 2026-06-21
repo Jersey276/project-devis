@@ -8,9 +8,6 @@ import (
 	invoiceGrpc "project-devis-invoice/services/grpc"
 )
 
-// replyOnAffected builds the response for a conditional status UPDATE: if a row
-// changed it succeeded; otherwise we disambiguate between a missing invoice
-// (NotFound) and one in a state the transition does not allow (InvoiceFinalized).
 func (s *Server) replyOnAffected(ctx context.Context, invoiceID, userID string, res sql.Result) (*invoiceGrpc.GenericResponse, error) {
 	affected, err := res.RowsAffected()
 	if err != nil {

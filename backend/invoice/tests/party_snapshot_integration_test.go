@@ -12,12 +12,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Same disposable-schema harness as the seal tests (sealTestDB / seedIssuedInvoice).
-
-// seedPartySnapshot writes a party snapshot row directly, including the buyer
-// SIREN/VAT (migration 000004), client_type (000005), client_country_id
-// (000006), oss_applied (000007), the issuer/client country codes (000008) and
-// counts_toward_oss_threshold (000009).
 func seedPartySnapshot(t *testing.T, db *sql.DB, invoiceID, clientSiren, clientVat, clientType string, clientCountryID int32, ossApplied bool, issuerCountryCode, clientCountryCode string, countsTowardThreshold bool) {
 	t.Helper()
 	_, err := db.Exec(
@@ -35,9 +29,6 @@ func seedPartySnapshot(t *testing.T, db *sql.DB, invoiceID, clientSiren, clientV
 	}
 }
 
-// TestPartySnapshot_ExposesClientTaxIds verifies the round-trip added in step 1:
-// client_siren/client_vat are stored, read back and surfaced on InvoiceParty so
-// the Factur-X generator can map the buyer's tax identifiers.
 func TestPartySnapshot_ExposesClientTaxIds(t *testing.T) {
 	db := sealTestDB(t)
 	const userID = "party-test"
@@ -71,13 +62,10 @@ func TestPartySnapshot_ExposesClientTaxIds(t *testing.T) {
 		t.Errorf("client country id = %d; want 42", got)
 	}
 
-	// Issuer side must still carry its own tax ids (regression guard).
 	if got := resp.Invoice.GetIssuer().GetSiren(); got != "123456782" {
 		t.Errorf("issuer SIREN = %q; want 123456782", got)
 	}
 
-	// Country codes are frozen per side: issuer on the issuer party, client on
-	// the client party.
 	if got := resp.Invoice.GetIssuer().GetCountryCode(); got != "FR" {
 		t.Errorf("issuer country code = %q; want FR", got)
 	}
@@ -86,8 +74,6 @@ func TestPartySnapshot_ExposesClientTaxIds(t *testing.T) {
 	}
 }
 
-// TestPartySnapshot_EmptyClientTaxIds covers a legacy/B2C row: missing buyer tax
-// ids come back as empty strings (default ''), never a scan error.
 func TestPartySnapshot_EmptyClientTaxIds(t *testing.T) {
 	db := sealTestDB(t)
 	const userID = "party-test-empty"
@@ -111,9 +97,6 @@ func TestPartySnapshot_EmptyClientTaxIds(t *testing.T) {
 	}
 }
 
-// TestPartySnapshot_OssApplied verifies the OSS flag (migration 000007) is
-// stored and surfaced on InvoiceDetails, so the export PDF can print the
-// guichet-unique mention from the snapshot alone.
 func TestPartySnapshot_OssApplied(t *testing.T) {
 	db := sealTestDB(t)
 	const userID = "party-test-oss"
@@ -135,7 +118,7 @@ func TestPartySnapshot_OssApplied(t *testing.T) {
 	if !resp.Invoice.GetOssApplied() {
 		t.Errorf("oss_applied = false; want true")
 	}
-	// The OSS buyer's destination country must round-trip for the Factur-X XML.
+
 	if got := resp.Invoice.GetClient().GetCountryCode(); got != "DE" {
 		t.Errorf("client country code = %q; want DE", got)
 	}

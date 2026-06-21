@@ -9,13 +9,8 @@ import (
 	usersGrpc "project-devis-invoice/services/usersgrpc"
 )
 
-// OSS distance-selling threshold logic. Regime and design rationale:
-// docs/adr/0002-oss-seuil-bascule-automatique.md.
-
 const ossThresholdCents int64 = 1_000_000
 
-// isIntraEUB2C is the precondition shared by the threshold flag and the OSS
-// decision, so the two cannot drift. A nil country is not intra-EU.
 func isIntraEUB2C(clientType string, c *usersGrpc.Country) bool {
 	if c == nil || clientType != "individual" {
 		return false
@@ -23,7 +18,6 @@ func isIntraEUB2C(clientType string, c *usersGrpc.Country) bool {
 	return c.GetIsEu() && c.GetCode() != "FR"
 }
 
-// ossApplies is the pure OSS decision (no DB/upstream access, unit-testable).
 func ossApplies(ossEnabled bool, cumulativeHTCents int64, clientType string, c *usersGrpc.Country) bool {
 	if !isIntraEUB2C(clientType, c) {
 		return false
@@ -31,9 +25,6 @@ func ossApplies(ossEnabled bool, cumulativeHTCents int64, clientType string, c *
 	return ossEnabled || cumulativeHTCents >= ossThresholdCents
 }
 
-// ossCumulativeHTForYear sums the assiette (issued/paid invoices flagged
-// counts_toward_oss_threshold) for the user over the Europe/Paris civil year of
-// `at`, excluding excludeInvoiceID. Credit notes are not subtracted (MVP).
 func (s *Server) ossCumulativeHTForYear(ctx context.Context, userID, excludeInvoiceID string, at time.Time) (int64, error) {
 	y := at.In(invoiceTZ).Year()
 	start := time.Date(y, 1, 1, 0, 0, 0, 0, invoiceTZ)

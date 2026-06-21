@@ -1,11 +1,5 @@
 package actions
 
-// This file exposes the otherwise-unexported VAT computation to the external
-// `tests` package, mirroring the test-facing shims used elsewhere (e.g.
-// schedule's SetQuoteLineExpectedCentsFetcherForTests). It contains no business
-// logic — only a thin adapter over computeTotals.
-
-// ComputeLineInput is the test-facing shape of a billable line.
 type ComputeLineInput struct {
 	HT        int64
 	TaxID     int32
@@ -14,14 +8,12 @@ type ComputeLineInput struct {
 	TaxLabel  string
 }
 
-// ComputeVATLineOutput is the test-facing per-rate VAT figure.
 type ComputeVATLineOutput struct {
 	Rate   string
 	BaseHT int64
 	VAT    int64
 }
 
-// ComputeResultOutput is the test-facing computation result.
 type ComputeResultOutput struct {
 	TotalHT   int64
 	TotalVAT  int64
@@ -29,8 +21,6 @@ type ComputeResultOutput struct {
 	Breakdown []ComputeVATLineOutput
 }
 
-// ComputeTotalsForTest adapts ComputeLineInput → computeLine, runs the real
-// computeTotals, and adapts the result back to exported types.
 func ComputeTotalsForTest(lines []ComputeLineInput, vatExempt bool) ComputeResultOutput {
 	in := make([]computeLine, len(lines))
 	for i, l := range lines {

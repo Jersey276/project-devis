@@ -13,10 +13,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Same harness as the seal tests: a disposable, migrated schema (see
-// sealTestDB / seedIssuedInvoice in seal_integration_test.go).
-
-// seedDraftInvoice inserts a DRAFT invoice with no number, snapshot or seal.
 func seedDraftInvoice(t *testing.T, db *sql.DB, userID, invoiceID string) {
 	t.Helper()
 	if _, err := db.Exec(
@@ -62,7 +58,7 @@ func TestDeleteDraft_RemovesDraft(t *testing.T) {
 func TestDeleteDraft_RefusesIssued(t *testing.T) {
 	db := sealTestDB(t)
 	const userID = "del-test-issued"
-	// An ISSUED, sealed invoice must never be deletable.
+
 	seedIssuedInvoice(t, db, userID, "inv-issued", "2099-0001",
 		time.Date(2099, 4, 1, 9, 0, 0, 0, time.UTC), 1)
 	if err := actions.BackfillSeals(context.Background(), db); err != nil {

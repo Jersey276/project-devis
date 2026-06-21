@@ -11,10 +11,6 @@ import (
 	invoiceGrpc "project-devis-invoice/services/grpc"
 )
 
-// VerifyChain recomputes an issuer's seal chain from genesis and compares it to
-// what is stored: contiguous indexes, prev-hash links, the chain hash, and — the
-// strongest check — the content hash recomputed from each document's frozen data.
-// Any tampering surfaces as the first broken link.
 func (s *Server) VerifyChain(ctx context.Context, req *invoiceGrpc.VerifyChainRequest) (resp *invoiceGrpc.VerifyChainResponse, err error) {
 	startedAt := time.Now()
 	defer deferObserve("verify_chain", startedAt, func() (int32, bool) {
@@ -49,19 +45,18 @@ func (s *Server) VerifyChain(ctx context.Context, req *invoiceGrpc.VerifyChainRe
 			return &invoiceGrpc.VerifyChainResponse{Success: false, Code: codes.InternalError}, err
 		}
 
-		// 1. contiguous index from 0
 		if index != expectedIndex {
 			return broken(docType, docID, index, fmt.Sprintf("index non contigu : attendu %d, obtenu %d", expectedIndex, index)), nil
 		}
-		// 2. prev hash links to the previous chain hash (genesis at index 0)
+
 		if storedPrev != prevHash {
 			return broken(docType, docID, index, "prev_hash ne correspond pas au maillon précédent"), nil
 		}
-		// 3. stored chain hash matches recomputation
+
 		if computeChainHash(storedPrev, contentHash, index) != chainHash {
 			return broken(docType, docID, index, "chain_hash altéré"), nil
 		}
-		// 4. content hash matches the document's frozen data (detects body tampering)
+
 		recomputed, code, err := s.recomputeContentHash(ctx, req.UserId, docType, docID)
 		if err != nil {
 			return &invoiceGrpc.VerifyChainResponse{Success: false, Code: code}, err
@@ -93,8 +88,6 @@ func broken(docType, docID string, index int64, reason string) *invoiceGrpc.Veri
 	}
 }
 
-// recomputeContentHash rebuilds a document's sealableDoc from its frozen rows and
-// returns its content hash, using the same canonical function as the seal path.
 func (s *Server) recomputeContentHash(ctx context.Context, userID, docType, docID string) (string, int32, error) {
 	var (
 		number              string
@@ -131,7 +124,6 @@ func (s *Server) recomputeContentHash(ctx context.Context, userID, docType, docI
 		return "", codes.InternalError, fmt.Errorf("unknown doc type %q", docType)
 	}
 
-	// loadSealLinesForDoc takes a *sql.Tx; use a lightweight read tx for the join.
 	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
 		return "", codes.InternalError, err

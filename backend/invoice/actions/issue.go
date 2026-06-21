@@ -12,8 +12,6 @@ import (
 	invoiceGrpc "project-devis-invoice/services/grpc"
 )
 
-// IssueInvoice promotes a DRAFT invoice to ISSUED: it assigns the legal number,
-// freezes the snapshot and locks the figures. Idempotent if already issued.
 func (s *Server) IssueInvoice(ctx context.Context, req *invoiceGrpc.IssueInvoiceRequest) (resp *invoiceGrpc.CreateInvoiceResponse, err error) {
 	startedAt := time.Now()
 	defer deferObserve("issue_invoice", startedAt, func() (int32, bool) {
@@ -29,17 +27,14 @@ func (s *Server) IssueInvoice(ctx context.Context, req *invoiceGrpc.IssueInvoice
 	return s.issue(ctx, req.InvoiceId, req.UserId, "", 0)
 }
 
-// issue performs the DRAFT → ISSUED transition. saleDate/dueInDays are taken
-// from the create request when issuing in one step; on a standalone issue they
-// are empty/zero and defaults apply.
 func (s *Server) issue(ctx context.Context, invoiceID, userID, saleDate string, dueInDays int32) (*invoiceGrpc.CreateInvoiceResponse, error) {
-	// Load the current row to learn the source and guard the state.
+
 	var (
-		quoteID      string
-		scheduleID   sql.NullString
-		status       string
-		months       pq.Int32Array
-		existingNum  sql.NullString
+		quoteID     string
+		scheduleID  sql.NullString
+		status      string
+		months      pq.Int32Array
+		existingNum sql.NullString
 	)
 	err := s.db.QueryRowContext(ctx,
 		`SELECT quote_id, schedule_id, status, billed_month_indexes, invoice_number
@@ -55,19 +50,14 @@ func (s *Server) issue(ctx context.Context, invoiceID, userID, saleDate string, 
 
 	switch status {
 	case "ISSUED", "PAID":
-		// Idempotent: already issued, return the existing number.
+
 		return &invoiceGrpc.CreateInvoiceResponse{Success: true, Code: codes.Success, InvoiceId: invoiceID, InvoiceNumber: existingNum.String}, nil
 	case "CANCELLED":
 		return &invoiceGrpc.CreateInvoiceResponse{Success: false, Code: codes.InvoiceFinalized}, nil
 	}
 
-	// Fix the legal issue date up front: it scopes the OSS threshold cumulative
-	// (Europe/Paris civil year) computed during resolution as well as the
-	// numbering year below.
 	issuedAt := time.Now().In(invoiceTZ)
 
-	// Resolve the billable data from the source (cells for schedule, full lines
-	// for quote).
 	var (
 		resolved *resolvedInvoice
 		code     int32
@@ -98,7 +88,6 @@ func (s *Server) issue(ctx context.Context, invoiceID, userID, saleDate string, 
 	}
 	defer tx.Rollback()
 
-	// Re-read the status under a row lock to defend against a concurrent issue.
 	var lockedStatus string
 	if err := tx.QueryRowContext(ctx,
 		`SELECT status FROM invoices WHERE invoice_id=$1 FOR UPDATE`, invoiceID,
@@ -106,7 +95,7 @@ func (s *Server) issue(ctx context.Context, invoiceID, userID, saleDate string, 
 		return &invoiceGrpc.CreateInvoiceResponse{Success: false, Code: codes.InternalError}, err
 	}
 	if lockedStatus != "DRAFT" {
-		// Someone issued it between our read and the lock — treat as idempotent.
+
 		return &invoiceGrpc.CreateInvoiceResponse{Success: false, Code: codes.InvoiceFinalized}, nil
 	}
 
@@ -133,7 +122,6 @@ func (s *Server) issue(ctx context.Context, invoiceID, userID, saleDate string, 
 		return &invoiceGrpc.CreateInvoiceResponse{Success: false, Code: codes.InternalError}, err
 	}
 
-	// Seal the invoice into the issuer's cryptographic chain (inalterability).
 	contentHash := computeContentHash(sealableDoc{
 		userID:    userID,
 		docType:   "INVOICE",

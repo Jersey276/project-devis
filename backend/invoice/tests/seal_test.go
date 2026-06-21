@@ -23,9 +23,6 @@ func goldenDoc() actions.SealableDocForTest {
 	}
 }
 
-// TestComputeContentHash_Golden pins the canonical serialization. If this breaks,
-// the wire format changed and every existing seal is invalidated — do not "fix"
-// the expected value without a re-seal migration.
 func TestComputeContentHash_Golden(t *testing.T) {
 	const want = "d7c7a2ebe647b52a005bf31ab009bd3e2db12dc873fef154c289f694bae20ff6"
 	if got := actions.ComputeContentHashForTest(goldenDoc()); got != want {
@@ -86,7 +83,7 @@ func TestComputeChainHash_Sensitivity(t *testing.T) {
 }
 
 func TestComputeContentHash_TimezoneIndependent(t *testing.T) {
-	// The same instant in different zones must hash identically (UTC normalisation).
+
 	paris, err := time.LoadLocation("Europe/Paris")
 	if err != nil {
 		t.Skip("tzdata unavailable")

@@ -12,12 +12,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// TestAllocateInvoiceNumber_Concurrent proves the gap-free, no-duplicate
-// numbering invariant against a real Postgres (the row-lock semantics of the
-// upsert cannot be exercised with sqlmock). It is skipped unless
-// INVOICE_TEST_DATABASE_URL points at a disposable database.
-//
-//	INVOICE_TEST_DATABASE_URL="postgres://user:pass@localhost:5432/invoice?sslmode=disable" go test ./tests/ -run Concurrent
 func TestAllocateInvoiceNumber_Concurrent(t *testing.T) {
 	dsn := os.Getenv("INVOICE_TEST_DATABASE_URL")
 	if dsn == "" {
@@ -35,9 +29,8 @@ func TestAllocateInvoiceNumber_Concurrent(t *testing.T) {
 
 	ctx := context.Background()
 	const userID = "concurrent-test-user"
-	const year = 2099 // unlikely to collide with real data
+	const year = 2099
 
-	// Clean slate for this user/year.
 	if _, err := db.ExecContext(ctx,
 		`DELETE FROM invoice_number_sequences WHERE user_id=$1 AND year=$2`, userID, year); err != nil {
 		t.Fatalf("cleanup: %v", err)
@@ -84,7 +77,7 @@ func TestAllocateInvoiceNumber_Concurrent(t *testing.T) {
 		}
 		seen[seq] = true
 	}
-	// Contiguous 1..n with no gaps.
+
 	for i := 1; i <= n; i++ {
 		if !seen[i] {
 			t.Fatalf("gap in sequence: %d missing", i)

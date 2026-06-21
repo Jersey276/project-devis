@@ -9,7 +9,6 @@ import (
 	invoiceGrpc "project-devis-invoice/services/grpc"
 )
 
-// MarkInvoicePaid marks an ISSUED invoice as PAID.
 func (s *Server) MarkInvoicePaid(ctx context.Context, req *invoiceGrpc.MarkInvoicePaidRequest) (resp *invoiceGrpc.GenericResponse, err error) {
 	startedAt := time.Now()
 	defer deferObserve("mark_invoice_paid", startedAt, func() (int32, bool) {

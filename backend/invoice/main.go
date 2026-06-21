@@ -9,9 +9,6 @@ import (
 	"net"
 	"os"
 
-	// Embed the IANA tz database so time.LoadLocation("Europe/Paris") works on
-	// the scratch runtime image (no system tzdata). The invoice numbering year
-	// is fixed in Paris time, so this must be correct around midnight on Dec 31.
 	_ "time/tzdata"
 
 	"project-devis-invoice/actions"
@@ -37,8 +34,6 @@ func main() {
 	db := services.ConnectDB()
 	services.RunMigrations(db, migrationsFS)
 
-	// Seal any legacy issued documents that predate the chaining feature, so the
-	// whole base becomes verifiable. Idempotent.
 	if err := actions.BackfillSeals(context.Background(), db); err != nil {
 		log.Fatalf("seal backfill: %v", err)
 	}

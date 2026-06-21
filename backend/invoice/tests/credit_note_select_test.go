@@ -8,8 +8,7 @@ import (
 )
 
 func TestResolveCreditedPositions_TotalOfRemainder(t *testing.T) {
-	// Invoice has lines 0,1,2 ; line 1 already credited. Empty request = total
-	// of the remainder → {0,2}, is_total true.
+
 	sel, isTotal, code := actions.ResolveCreditedPositionsForTest(nil, []int32{0, 1, 2}, []int32{1})
 	if code != codes.Success {
 		t.Fatalf("code = %d; want Success", code)
@@ -23,7 +22,7 @@ func TestResolveCreditedPositions_TotalOfRemainder(t *testing.T) {
 }
 
 func TestResolveCreditedPositions_NothingLeft(t *testing.T) {
-	// All lines already credited, empty request → CreditNoteNoLinesLeft.
+
 	_, _, code := actions.ResolveCreditedPositionsForTest(nil, []int32{0, 1}, []int32{0, 1})
 	if code != codes.CreditNoteNoLinesLeft {
 		t.Fatalf("code = %d; want CreditNoteNoLinesLeft (%d)", code, codes.CreditNoteNoLinesLeft)
