@@ -20,6 +20,7 @@ import (
 type partySnapshot struct {
 	issuerCompany         string
 	issuerSiren           string
+	issuerSiret           string
 	issuerVat             string
 	issuerEmail           string
 	issuerPhone           string
@@ -34,6 +35,7 @@ type partySnapshot struct {
 	clientLastName        string
 	clientCompany         string
 	clientSiren           string
+	clientSiret           string
 	clientVat             string
 	clientEmail           string
 	clientStreet          string
@@ -353,6 +355,7 @@ func buildPartySnapshot(user *usersGrpc.User, userAddr *usersGrpc.Address, clien
 	if user != nil {
 		p.issuerCompany = user.GetCompany()
 		p.issuerSiren = user.GetSiren()
+		p.issuerSiret = user.GetSiret()
 		p.issuerVat = user.GetVat()
 		p.issuerEmail = user.GetEmail()
 		p.issuerPhone = user.GetPhone()
@@ -371,6 +374,7 @@ func buildPartySnapshot(user *usersGrpc.User, userAddr *usersGrpc.Address, clien
 		p.clientLastName = client.GetLastName()
 		p.clientCompany = client.GetCompany()
 		p.clientSiren = client.GetSiren()
+		p.clientSiret = client.GetSiret()
 		p.clientVat = client.GetVat()
 		p.clientEmail = client.GetEmail()
 		p.clientType = clientTypeToString(client.GetClientType())

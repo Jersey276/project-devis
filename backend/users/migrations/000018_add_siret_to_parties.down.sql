@@ -1,0 +1,2 @@
+ALTER TABLE clients DROP COLUMN siret;
+ALTER TABLE users   DROP COLUMN siret;

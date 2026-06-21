@@ -13,10 +13,15 @@ func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateUserRequest) (
 	if req.UserId == "" {
 		return &usersGrpc.UpdateUserResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
+	// UpdateUserResponse carries no per-field errors; a bad SIRET is rejected as
+	// InvalidInput (the front validates the SIRET/SIREN coherence too).
+	if sqlutil.ValidateSIRET(req.Siret, req.Siren) != "" {
+		return &usersGrpc.UpdateUserResponse{Success: false, Code: codes.InvalidInput}, nil
+	}
 
 	res, err := db.ExecContext(ctx,
-		`UPDATE users SET phone=$1, company=$2, siren=$3, vat=$4, logo_url=$5, oss_enabled=$6, iban=$7, bic=$8, updated_at=NOW() WHERE user_id=$9`,
-		sqlutil.NullableStr(req.Phone), sqlutil.NullableStr(req.Company), sqlutil.NullableStr(req.Siren), sqlutil.NullableStr(req.Vat), sqlutil.NullableStr(req.LogoUrl), req.OssEnabled, sqlutil.NullableStr(req.Iban), sqlutil.NullableStr(req.Bic), req.UserId,
+		`UPDATE users SET phone=$1, company=$2, siren=$3, vat=$4, logo_url=$5, oss_enabled=$6, iban=$7, bic=$8, siret=$9, updated_at=NOW() WHERE user_id=$10`,
+		sqlutil.NullableStr(req.Phone), sqlutil.NullableStr(req.Company), sqlutil.NullableStr(req.Siren), sqlutil.NullableStr(req.Vat), sqlutil.NullableStr(req.LogoUrl), req.OssEnabled, sqlutil.NullableStr(req.Iban), sqlutil.NullableStr(req.Bic), sqlutil.NullableStr(sqlutil.NormalizeSIRET(req.Siret)), req.UserId,
 	)
 	if err != nil {
 		return &usersGrpc.UpdateUserResponse{Success: false, Code: codes.InternalError}, err

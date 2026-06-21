@@ -63,6 +63,19 @@ echeancier valide:
   herite des coordonnees de la facture origine. Le groupe est omis si aucun IBAN
   n'est renseigne (le document reste valide EN 16931, notamment pour les factures
   en franchise / B2C).
+- **SIRET de routage (B4)** : le SIRET (14 chiffres = SIREN + NIC etablissement)
+  de l'emetteur et du destinataire est la cle de routage du destinataire dans
+  l'annuaire DGFiP. Saisi sur le profil emetteur et la fiche client (validation :
+  14 chiffres, doit commencer par le SIREN s'il est renseigne), il est gele dans le
+  snapshot a l'emission (`issuer_siret` / `client_siret` sur
+  `invoice_party_snapshots` et `credit_note_party_snapshots`, migration `000012`) ;
+  un avoir herite du SIRET de la facture origine. Le service export l'emet comme
+  identifiant d'immatriculation legale (BT-30 / BT-47) dans
+  `SpecifiedLegalOrganization/ID` avec le schema ISO 6523 `0009` (registre SIRET),
+  **de preference au SIREN** (schema `0002`) : un seul des deux est emis par partie.
+  Le groupe est omis si ni SIRET ni SIREN ne sont renseignes (valide EN 16931, B2C).
+  Le lookup annuaire lui-meme (resolution SIRET -> plateforme destinataire) releve
+  de l'integration PDP/PA (B6).
 - **Cadre e-invoicing FR** : le Factur-X B2C/OSS genere est coherent mais
   facultatif (l'obligation PPF/PDP vise le B2B domestique ; le transfrontalier
   releve de l'e-reporting).

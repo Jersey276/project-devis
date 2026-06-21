@@ -29,6 +29,10 @@ const (
 	countryFR = "FR"
 	// schemeSIREN is ISO 6523 code 0002 (French SIRENE registry).
 	schemeSIREN = "0002"
+	// schemeSIRET is ISO 6523 code 0009 (French SIRET establishment registry).
+	// A SIRET is a SIREN plus a 5-digit establishment NIC and is the recipient
+	// routing key for FR e-invoicing — preferred over SIREN when present.
+	schemeSIRET = "0009"
 	// schemeVAT is the UNTDID 1153 "VA" qualifier for a VAT registration number.
 	schemeVAT = "VA"
 	// unitDefault is UN/ECE Rec 20 "C62" = one (dimensionless unit).

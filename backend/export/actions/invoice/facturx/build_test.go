@@ -105,6 +105,31 @@ func TestBuild_Parties(t *testing.T) {
 	mustContain(t, s, `<ram:CountryID>FR</ram:CountryID>`)
 }
 
+func TestBuild_PartySIRET(t *testing.T) {
+	in := sampleInvoice()
+	// SIRET present on both parties: emitted as legal-org id scheme 0009, and the
+	// SIREN (0002) is omitted — a party carries a single SpecifiedLegalOrganization.
+	in.Issuer.Siret = "12345678200019"
+	in.Client.Siret = "98765432100025"
+	s := mustBuild(t, in)
+	mustContain(t, s, `<ram:ID schemeID="0009">12345678200019</ram:ID>`) // seller SIRET
+	mustContain(t, s, `<ram:ID schemeID="0009">98765432100025</ram:ID>`) // buyer SIRET
+	if strings.Contains(s, `schemeID="0002"`) {
+		t.Error("SIRET present: the SIREN (scheme 0002) must not be emitted")
+	}
+}
+
+func TestBuild_PartySIRENFallback(t *testing.T) {
+	// No SIRET anywhere (the sampleInvoice default): parties fall back to SIREN 0002.
+	s := mustBuild(t, sampleInvoice())
+	if n := count(s, `schemeID="0009"`); n != 0 {
+		t.Errorf("no SIRET should emit no 0009 ids, got %d", n)
+	}
+	if n := count(s, `schemeID="0002"`); n != 2 {
+		t.Errorf("seller+buyer SIREN expected (2x 0002), got %d", n)
+	}
+}
+
 func TestBuild_TaxesAndTotals(t *testing.T) {
 	s := mustBuild(t, sampleInvoice())
 	// One header ApplicableTradeTax per rate. Header taxes carry BasisAmount;

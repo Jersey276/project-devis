@@ -140,6 +140,7 @@ export type BackendClient = {
   phone: string;
   company: string;
   siren: string;
+  siret: string;
   vat: string;
   archived: boolean;
   client_type: ClientType;
@@ -249,6 +250,7 @@ export type BackendInvoiceParty = {
   first_name: string;
   last_name: string;
   siren: string;
+  siret: string;
   vat: string;
   email: string;
   phone: string;

@@ -176,6 +176,7 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 		Company    string `json:"company"`
 		Siren      string `json:"siren"`
 		Vat        string `json:"vat"`
+		Siret      string `json:"siret"`
 		LogoURL    string `json:"logo_url"`
 		OssEnabled bool   `json:"oss_enabled"`
 		Iban       string `json:"iban"`
@@ -195,6 +196,7 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 		Company:    input.Company,
 		Siren:      input.Siren,
 		Vat:        input.Vat,
+		Siret:      input.Siret,
 		LogoUrl:    input.LogoURL,
 		OssEnabled: input.OssEnabled,
 		Iban:       input.Iban,
@@ -585,6 +587,7 @@ type clientInput struct {
 	Company    string `json:"company"`
 	Siren      string `json:"siren"`
 	Vat        string `json:"vat"`
+	Siret      string `json:"siret"`
 	ClientType string `json:"client_type"`
 }
 
@@ -631,6 +634,7 @@ func marshalClient(cl *users.Client) gin.H {
 		"company":     cl.Company,
 		"siren":       cl.Siren,
 		"vat":         cl.Vat,
+		"siret":       cl.Siret,
 		"archived":    cl.Archived,
 		"client_type": clientTypeToString(cl.ClientType),
 	}
@@ -658,6 +662,7 @@ func marshalUser(u *users.User) gin.H {
 		"company":     u.Company,
 		"siren":       u.Siren,
 		"vat":         u.Vat,
+		"siret":       u.Siret,
 		"logo_url":    u.LogoUrl,
 		"suspended":   u.Suspended,
 		"oss_enabled": u.OssEnabled,
@@ -718,6 +723,7 @@ func CreateClient(c *gin.Context, client users.UserServiceClient) {
 		Company:    input.Company,
 		Siren:      input.Siren,
 		Vat:        input.Vat,
+		Siret:      input.Siret,
 		ClientType: clientTypeFromInput(input.ClientType),
 	})
 	if err != nil {
@@ -767,6 +773,7 @@ func UpdateClient(c *gin.Context, client users.UserServiceClient) {
 		Company:    input.Company,
 		Siren:      input.Siren,
 		Vat:        input.Vat,
+		Siret:      input.Siret,
 		ClientType: clientTypeFromInput(input.ClientType),
 	})
 	if err != nil {

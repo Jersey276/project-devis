@@ -81,6 +81,7 @@ message User {
     bool oss_enabled = 9;
     string iban = 10;
     string bic = 11;
+    string siret = 12;
 }
 
 message CreateUserRequest {
@@ -114,6 +115,7 @@ message UpdateUserRequest {
     bool oss_enabled = 7;
     string iban = 8;
     string bic = 9;
+    string siret = 10;
 }
 
 message UpdateUserResponse {
@@ -208,6 +210,7 @@ message Client {
     string vat = 9;
     bool archived = 10;
     ClientType client_type = 11;
+    string siret = 12;
 }
 
 message CreateClientRequest {
@@ -220,6 +223,7 @@ message CreateClientRequest {
     string siren = 7;
     string vat = 8;
     ClientType client_type = 9;
+    string siret = 10;
 }
 
 message CreateClientResponse {
@@ -262,6 +266,7 @@ message UpdateClientRequest {
     string siren = 8;
     string vat = 9;
     ClientType client_type = 10;
+    string siret = 11;
 }
 
 message UpdateClientResponse {

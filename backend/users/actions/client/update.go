@@ -32,6 +32,9 @@ func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateClientRequest)
 	if req.LastName == "" {
 		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "last_name", Message: "Champ requis."})
 	}
+	if msg := sqlutil.ValidateSIRET(req.Siret, req.Siren); msg != "" {
+		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "siret", Message: msg})
+	}
 
 	if len(fieldErrors) > 0 {
 		return &usersGrpc.UpdateClientResponse{Success: false, Code: codes.InvalidInput, ValidationErrors: fieldErrors}, nil
@@ -39,11 +42,12 @@ func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateClientRequest)
 
 	res, err := db.ExecContext(ctx,
 		`UPDATE clients SET first_name=$1, last_name=$2, email=$3, phone=$4,
-		        company=$5, siren=$6, vat=$7, client_type=$8, updated_at=NOW()
-		 WHERE client_id=$9 AND user_id=$10 AND archived_at IS NULL`,
+		        company=$5, siren=$6, vat=$7, siret=$8, client_type=$9, updated_at=NOW()
+		 WHERE client_id=$10 AND user_id=$11 AND archived_at IS NULL`,
 		req.FirstName, req.LastName,
 		sqlutil.NullableStr(req.Email), sqlutil.NullableStr(req.Phone),
 		sqlutil.NullableStr(req.Company), sqlutil.NullableStr(req.Siren), sqlutil.NullableStr(req.Vat),
+		sqlutil.NullableStr(sqlutil.NormalizeSIRET(req.Siret)),
 		sqlutil.ClientTypeToDBString(req.ClientType),
 		req.ClientId, req.UserId,
 	)

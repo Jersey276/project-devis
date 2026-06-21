@@ -10,6 +10,7 @@ export type ClientPayload = {
   phone: string;
   company: string;
   siren: string;
+  siret: string;
   vat: string;
   client_type: ClientType;
 };

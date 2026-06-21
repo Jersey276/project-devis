@@ -34,7 +34,8 @@ function partyLines(p: BackendInvoiceParty | undefined): string[] {
   if (city) lines.push(city);
   if (p.email) lines.push(p.email);
   if (p.phone) lines.push(p.phone);
-  if (p.siren) lines.push(`SIREN : ${p.siren}`);
+  if (p.siret) lines.push(`SIRET : ${p.siret}`);
+  else if (p.siren) lines.push(`SIREN : ${p.siren}`);
   if (p.vat) lines.push(`TVA : ${p.vat}`);
   return lines;
 }

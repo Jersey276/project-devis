@@ -48,6 +48,12 @@ func TestXSD_Conformance(t *testing.T) {
 			in.Issuer.Bic = "BNPAFRPP"
 			return Build(in)
 		}},
+		{"invoice_siret", func() ([]byte, error) {
+			in := sampleInvoice()
+			in.Issuer.Siret = "12345678200019"
+			in.Client.Siret = "98765432100025"
+			return Build(in)
+		}},
 		{"credit_note", func() ([]byte, error) { return BuildCreditNote(sampleCreditNote()) }},
 	}
 

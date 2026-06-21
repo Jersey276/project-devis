@@ -26,6 +26,7 @@ export type UserProfile = {
   phone: string;
   company: string;
   siren: string;
+  siret: string;
   vat: string;
   suspended: boolean;
   oss_enabled: boolean;
@@ -49,6 +50,7 @@ export default function UserInfoForm({
   const [phone, setPhone] = useState(user.phone ?? "");
   const [company, setCompany] = useState(user.company ?? "");
   const [siren, setSiren] = useState(user.siren ?? "");
+  const [siret, setSiret] = useState(user.siret ?? "");
   const [vat, setVat] = useState(user.vat ?? "");
   const [ossEnabled, setOssEnabled] = useState(user.oss_enabled ?? false);
   const [iban, setIban] = useState(user.iban ?? "");
@@ -68,6 +70,7 @@ export default function UserInfoForm({
           phone,
           company,
           siren,
+          siret,
           vat,
           oss_enabled: ossEnabled,
           iban,
@@ -76,7 +79,7 @@ export default function UserInfoForm({
       });
       if (ok && body.success) {
         toast.success(t("successToast"));
-        onSaved?.({ ...user, phone, company, siren, vat, oss_enabled: ossEnabled, iban, bic });
+        onSaved?.({ ...user, phone, company, siren, siret, vat, oss_enabled: ossEnabled, iban, bic });
         return;
       }
       if (status === 422 && Array.isArray(body.field_errors)) {
@@ -167,6 +170,19 @@ export default function UserInfoForm({
               disabled={readOnly}
             />
             <FieldError errors={toErrorProps(fieldErrors.vat)} />
+          </Field>
+
+          <Field data-invalid={!!fieldErrors.siret?.length}>
+            <FieldLabel htmlFor="siret">{t("siretLabel")}</FieldLabel>
+            <Input
+              id="siret"
+              name="siret"
+              value={siret}
+              onChange={(e) => setSiret(e.target.value)}
+              aria-invalid={!!fieldErrors.siret?.length}
+              disabled={readOnly}
+            />
+            <FieldError errors={toErrorProps(fieldErrors.siret)} />
           </Field>
         </div>
 

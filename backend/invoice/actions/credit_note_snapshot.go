@@ -29,7 +29,8 @@ func writeCreditNoteSnapshots(ctx context.Context, tx *sql.Tx, creditNoteID stri
 			client_first_name, client_last_name, client_company, client_email,
 			client_street, client_additional, client_zip, client_city, client_type, client_country_id, oss_applied,
 			issuer_country_code, client_country_code, counts_toward_oss_threshold,
-			issuer_iban, issuer_bic
+			issuer_iban, issuer_bic,
+			issuer_siret, client_siret
 		) VALUES (
 			$1,
 			$2, $3, $4, $5, $6, $7,
@@ -37,7 +38,8 @@ func writeCreditNoteSnapshots(ctx context.Context, tx *sql.Tx, creditNoteID stri
 			$12, $13, $14, $15,
 			$16, $17, $18, $19, $20, $21, $22,
 			$23, $24, $25,
-			$26, $27
+			$26, $27,
+			$28, $29
 		)`,
 		creditNoteID,
 		p.issuerCompany, p.issuerSiren, p.issuerVat, p.issuerEmail, p.issuerPhone, p.issuerLogoURL,
@@ -46,6 +48,7 @@ func writeCreditNoteSnapshots(ctx context.Context, tx *sql.Tx, creditNoteID stri
 		p.clientStreet, p.clientAdditional, p.clientZip, p.clientCity, p.clientType, p.clientCountryID, p.ossApplied,
 		p.issuerCountryCode, p.clientCountryCode, p.countsTowardThreshold,
 		p.issuerIban, p.issuerBic,
+		p.issuerSiret, p.clientSiret,
 	); err != nil {
 		return err
 	}

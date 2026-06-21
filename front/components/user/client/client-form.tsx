@@ -30,6 +30,7 @@ export const EMPTY_CLIENT_VALUES: ClientFormValues = {
   phone: "",
   company: "",
   siren: "",
+  siret: "",
   vat: "",
   // New clients default to individual (B2C).
   client_type: "individual",
@@ -175,6 +176,19 @@ export default function ClientForm({
                 aria-invalid={!!fieldErrors?.siren?.length}
               />
               <FieldError errors={toErrorProps(fieldErrors?.siren)} />
+            </Field>
+
+            <Field data-invalid={!!fieldErrors?.siret?.length}>
+              <FieldLabel htmlFor="client_siret">{t("siretLabel")}</FieldLabel>
+              <Input
+                id="client_siret"
+                name="siret"
+                placeholder={t("placeholders.siret")}
+                value={client.siret}
+                onChange={(e) => update("siret", e.target.value)}
+                aria-invalid={!!fieldErrors?.siret?.length}
+              />
+              <FieldError errors={toErrorProps(fieldErrors?.siret)} />
             </Field>
 
             <Field data-invalid={!!fieldErrors?.vat?.length}>

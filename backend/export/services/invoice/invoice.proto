@@ -97,6 +97,10 @@ message InvoiceParty {
     // service proto (16/17) to map across the wire — 14/15 are unused here.
     string iban              = 16;
     string bic               = 17;
+    // siret: 14-digit establishment id (SIREN + NIC), frozen at issue time. Field
+    // number must match the invoice service proto (18). Emitted as the legal
+    // registration id (BT-30/BT-47, scheme 0009) in preference to SIREN.
+    string siret             = 18;
 }
 
 message InvoiceLine {

@@ -344,6 +344,7 @@
       "phoneLabel": "Téléphone",
       "companyLabel": "Société",
       "sirenLabel": "SIREN",
+      "siretLabel": "SIRET",
       "vatLabel": "TVA",
       "mainAddressLabel": "Adresse principale",
       "placeholders": {
@@ -353,6 +354,7 @@
         "phone": "06 12 34 56 78",
         "company": "Acme SARL",
         "siren": "123 456 789",
+        "siret": "123 456 789 00012",
         "vat": "FR12345678901"
       }
     },
@@ -396,6 +398,7 @@
         "phone": "Téléphone:",
         "company": "Société:",
         "siren": "SIREN:",
+        "siret": "SIRET:",
         "vat": "TVA:"
       },
       "addressesTitle": "Adresses"
@@ -861,6 +864,7 @@
       "phoneLabel": "Téléphone",
       "companyLabel": "Société",
       "sirenLabel": "SIREN",
+      "siretLabel": "SIRET",
       "vatLabel": "N° de TVA",
       "ossEnabledLabel": "Régime OSS activé",
       "ossEnabledHint": "Pour la vente à distance à des particuliers d'autres pays de l'UE : applique la TVA du pays de destination. À activer une fois le seuil de 10 000 € franchi.",

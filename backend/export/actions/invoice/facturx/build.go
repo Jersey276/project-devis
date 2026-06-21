@@ -191,10 +191,12 @@ func buildAgreement(d docInput) headerTradeAgreement {
 	}
 }
 
-// party maps a snapshot InvoiceParty to a CII trade party. SIREN/VAT groups are
-// omitted when absent (legacy or B2C rows), which stays EN 16931-valid. When the
-// document is not subject to VAT (franchise), the VAT group is omitted regardless
-// (see buildAgreement).
+// party maps a snapshot InvoiceParty to a CII trade party. The legal-org id
+// (BT-30/BT-47) prefers the SIRET (scheme 0009, the recipient routing key) and
+// falls back to the SIREN (scheme 0002); the group is omitted when both are
+// absent (legacy or B2C rows), which stays EN 16931-valid. When the document is
+// not subject to VAT (franchise), the VAT group is omitted regardless (see
+// buildAgreement).
 func party(p *invoicepb.InvoiceParty, vatExempt bool) tradeParty {
 	if p == nil {
 		return tradeParty{Address: &postalAddress{CountryID: countryFR}}
@@ -203,7 +205,9 @@ func party(p *invoicepb.InvoiceParty, vatExempt bool) tradeParty {
 		Name:    partyName(p),
 		Address: address(p),
 	}
-	if siren := strings.TrimSpace(p.GetSiren()); siren != "" {
+	if siret := strings.TrimSpace(p.GetSiret()); siret != "" {
+		tp.LegalOrg = &legalOrganization{ID: schemeID{SchemeID: schemeSIRET, Value: siret}}
+	} else if siren := strings.TrimSpace(p.GetSiren()); siren != "" {
 		tp.LegalOrg = &legalOrganization{ID: schemeID{SchemeID: schemeSIREN, Value: siren}}
 	}
 	if vat := strings.TrimSpace(p.GetVat()); vat != "" && !vatExempt {

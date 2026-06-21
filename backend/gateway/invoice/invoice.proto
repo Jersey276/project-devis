@@ -121,6 +121,9 @@ message InvoiceParty {
     // Issuer payment instructions (BG-16), frozen at issue time. Issuer side only.
     string iban              = 16;
     string bic               = 17;
+    // siret is the party's frozen 14-digit establishment id (recipient routing
+    // key). Field number must match the invoice service proto (18).
+    string siret             = 18;
 }
 
 message InvoiceLine {
