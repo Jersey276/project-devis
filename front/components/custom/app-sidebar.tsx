@@ -47,6 +47,7 @@ type NavKey =
   | "templates"
   | "subscriptions"
   | "analytics"
+  | "logs"
   | "test";
 
 type SidebarItem = {
@@ -139,6 +140,13 @@ const items: SidebarItem[] = [
     key: "analytics",
     url: "/analytics",
     icon: BarChart2Icon,
+    modes: ["provider"],
+    adminOnly: true,
+  },
+  {
+    key: "logs",
+    url: "/logs",
+    icon: ShieldIcon,
     modes: ["provider"],
     adminOnly: true,
   },

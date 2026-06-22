@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package email;
 
-option go_package = "gateway/email";
+option go_package = "project-devis-audit/services/grpc";
 
 service EmailService {
     rpc SendQuoteEmail(SendQuoteEmailRequest) returns (SendEmailResponse);
@@ -31,13 +31,13 @@ message SendScheduleEmailRequest {
 }
 
 message SendGenericEmailRequest {
-    string to_email         = 1;
-    string to_name          = 2;
-    string subject          = 3;
-    string text_body        = 4;
-    string attachment_name  = 5;
-    bytes  attachment_bytes = 6;
-    string attachment_type  = 7;
+    string to_email          = 1;
+    string to_name           = 2;
+    string subject           = 3;
+    string text_body         = 4;
+    string attachment_name   = 5;
+    bytes  attachment_bytes  = 6;
+    string attachment_type   = 7; // MIME type, e.g. "text/csv"
 }
 
 message SendEmailResponse {

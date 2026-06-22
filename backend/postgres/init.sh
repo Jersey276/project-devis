@@ -32,3 +32,15 @@ create_user_and_db "devis-invoice" "invoice"
 create_user_and_db "devis-template" "template"
 create_user_and_db "devis-subscription" "subscription"
 create_user_and_db "devis-email" "email"
+create_user_and_db "devis-audit" "audit"
+
+# Purge role for audit service: DELETE-only on activity_logs (no own database)
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "postgres" <<-EOSQL
+    DO \$\$
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'devis-audit-purge') THEN
+            CREATE ROLE "devis-audit-purge" LOGIN PASSWORD '$DB_PASSWORD';
+        END IF;
+    END
+    \$\$;
+EOSQL

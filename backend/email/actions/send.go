@@ -60,6 +60,27 @@ func (s *Server) SendScheduleEmail(ctx context.Context, req *emailGrpc.SendSched
 	return &emailGrpc.SendEmailResponse{Success: true, Code: CodeSuccess}, nil
 }
 
+func (s *Server) SendGenericEmail(ctx context.Context, req *emailGrpc.SendGenericEmailRequest) (*emailGrpc.SendEmailResponse, error) {
+	if req.ToEmail == "" || req.Subject == "" {
+		return &emailGrpc.SendEmailResponse{Success: false, Code: CodeInvalidInput}, nil
+	}
+
+	resendID, sendErr := s.sender.SendGenericEmail(
+		req.ToEmail, req.ToName, req.Subject, req.TextBody,
+		req.AttachmentName, req.AttachmentType, req.AttachmentBytes,
+	)
+	if sendErr != nil {
+		log.Printf("send generic email failed to=%s subject=%q: %v", req.ToEmail, req.Subject, sendErr)
+	}
+
+	s.insertEmailLog(ctx, "", req.ToEmail, "generic", req.Subject, req.Subject, resendID, sendErr)
+
+	if sendErr != nil {
+		return &emailGrpc.SendEmailResponse{Success: false, Code: CodeInternalError}, nil
+	}
+	return &emailGrpc.SendEmailResponse{Success: true, Code: CodeSuccess}, nil
+}
+
 func nullableString(s string) interface{} {
 	if s == "" {
 		return nil

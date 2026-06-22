@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v7.34.0
-// source: email.proto
+// source: services/grpc/email.proto
 
 package grpc
 
@@ -35,7 +35,7 @@ type SendQuoteEmailRequest struct {
 
 func (x *SendQuoteEmailRequest) Reset() {
 	*x = SendQuoteEmailRequest{}
-	mi := &file_email_proto_msgTypes[0]
+	mi := &file_services_grpc_email_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -47,7 +47,7 @@ func (x *SendQuoteEmailRequest) String() string {
 func (*SendQuoteEmailRequest) ProtoMessage() {}
 
 func (x *SendQuoteEmailRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_email_proto_msgTypes[0]
+	mi := &file_services_grpc_email_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +60,7 @@ func (x *SendQuoteEmailRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendQuoteEmailRequest.ProtoReflect.Descriptor instead.
 func (*SendQuoteEmailRequest) Descriptor() ([]byte, []int) {
-	return file_email_proto_rawDescGZIP(), []int{0}
+	return file_services_grpc_email_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *SendQuoteEmailRequest) GetToEmail() string {
@@ -119,7 +119,7 @@ type SendScheduleEmailRequest struct {
 
 func (x *SendScheduleEmailRequest) Reset() {
 	*x = SendScheduleEmailRequest{}
-	mi := &file_email_proto_msgTypes[1]
+	mi := &file_services_grpc_email_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -131,7 +131,7 @@ func (x *SendScheduleEmailRequest) String() string {
 func (*SendScheduleEmailRequest) ProtoMessage() {}
 
 func (x *SendScheduleEmailRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_email_proto_msgTypes[1]
+	mi := &file_services_grpc_email_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -144,7 +144,7 @@ func (x *SendScheduleEmailRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendScheduleEmailRequest.ProtoReflect.Descriptor instead.
 func (*SendScheduleEmailRequest) Descriptor() ([]byte, []int) {
-	return file_email_proto_rawDescGZIP(), []int{1}
+	return file_services_grpc_email_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *SendScheduleEmailRequest) GetToEmail() string {
@@ -189,6 +189,98 @@ func (x *SendScheduleEmailRequest) GetQuoteId() string {
 	return ""
 }
 
+type SendGenericEmailRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ToEmail         string                 `protobuf:"bytes,1,opt,name=to_email,json=toEmail,proto3" json:"to_email,omitempty"`
+	ToName          string                 `protobuf:"bytes,2,opt,name=to_name,json=toName,proto3" json:"to_name,omitempty"`
+	Subject         string                 `protobuf:"bytes,3,opt,name=subject,proto3" json:"subject,omitempty"`
+	TextBody        string                 `protobuf:"bytes,4,opt,name=text_body,json=textBody,proto3" json:"text_body,omitempty"`
+	AttachmentName  string                 `protobuf:"bytes,5,opt,name=attachment_name,json=attachmentName,proto3" json:"attachment_name,omitempty"`
+	AttachmentBytes []byte                 `protobuf:"bytes,6,opt,name=attachment_bytes,json=attachmentBytes,proto3" json:"attachment_bytes,omitempty"`
+	AttachmentType  string                 `protobuf:"bytes,7,opt,name=attachment_type,json=attachmentType,proto3" json:"attachment_type,omitempty"` // MIME type, e.g. "text/csv"
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *SendGenericEmailRequest) Reset() {
+	*x = SendGenericEmailRequest{}
+	mi := &file_services_grpc_email_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendGenericEmailRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendGenericEmailRequest) ProtoMessage() {}
+
+func (x *SendGenericEmailRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_services_grpc_email_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendGenericEmailRequest.ProtoReflect.Descriptor instead.
+func (*SendGenericEmailRequest) Descriptor() ([]byte, []int) {
+	return file_services_grpc_email_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SendGenericEmailRequest) GetToEmail() string {
+	if x != nil {
+		return x.ToEmail
+	}
+	return ""
+}
+
+func (x *SendGenericEmailRequest) GetToName() string {
+	if x != nil {
+		return x.ToName
+	}
+	return ""
+}
+
+func (x *SendGenericEmailRequest) GetSubject() string {
+	if x != nil {
+		return x.Subject
+	}
+	return ""
+}
+
+func (x *SendGenericEmailRequest) GetTextBody() string {
+	if x != nil {
+		return x.TextBody
+	}
+	return ""
+}
+
+func (x *SendGenericEmailRequest) GetAttachmentName() string {
+	if x != nil {
+		return x.AttachmentName
+	}
+	return ""
+}
+
+func (x *SendGenericEmailRequest) GetAttachmentBytes() []byte {
+	if x != nil {
+		return x.AttachmentBytes
+	}
+	return nil
+}
+
+func (x *SendGenericEmailRequest) GetAttachmentType() string {
+	if x != nil {
+		return x.AttachmentType
+	}
+	return ""
+}
+
 type SendEmailResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -199,7 +291,7 @@ type SendEmailResponse struct {
 
 func (x *SendEmailResponse) Reset() {
 	*x = SendEmailResponse{}
-	mi := &file_email_proto_msgTypes[2]
+	mi := &file_services_grpc_email_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -211,7 +303,7 @@ func (x *SendEmailResponse) String() string {
 func (*SendEmailResponse) ProtoMessage() {}
 
 func (x *SendEmailResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_email_proto_msgTypes[2]
+	mi := &file_services_grpc_email_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -224,7 +316,7 @@ func (x *SendEmailResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendEmailResponse.ProtoReflect.Descriptor instead.
 func (*SendEmailResponse) Descriptor() ([]byte, []int) {
-	return file_email_proto_rawDescGZIP(), []int{2}
+	return file_services_grpc_email_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *SendEmailResponse) GetSuccess() bool {
@@ -252,7 +344,7 @@ type GetEmailLogsRequest struct {
 
 func (x *GetEmailLogsRequest) Reset() {
 	*x = GetEmailLogsRequest{}
-	mi := &file_email_proto_msgTypes[3]
+	mi := &file_services_grpc_email_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -264,7 +356,7 @@ func (x *GetEmailLogsRequest) String() string {
 func (*GetEmailLogsRequest) ProtoMessage() {}
 
 func (x *GetEmailLogsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_email_proto_msgTypes[3]
+	mi := &file_services_grpc_email_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -277,7 +369,7 @@ func (x *GetEmailLogsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEmailLogsRequest.ProtoReflect.Descriptor instead.
 func (*GetEmailLogsRequest) Descriptor() ([]byte, []int) {
-	return file_email_proto_rawDescGZIP(), []int{3}
+	return file_services_grpc_email_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetEmailLogsRequest) GetUserId() string {
@@ -317,7 +409,7 @@ type EmailLog struct {
 
 func (x *EmailLog) Reset() {
 	*x = EmailLog{}
-	mi := &file_email_proto_msgTypes[4]
+	mi := &file_services_grpc_email_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -329,7 +421,7 @@ func (x *EmailLog) String() string {
 func (*EmailLog) ProtoMessage() {}
 
 func (x *EmailLog) ProtoReflect() protoreflect.Message {
-	mi := &file_email_proto_msgTypes[4]
+	mi := &file_services_grpc_email_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -342,7 +434,7 @@ func (x *EmailLog) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EmailLog.ProtoReflect.Descriptor instead.
 func (*EmailLog) Descriptor() ([]byte, []int) {
-	return file_email_proto_rawDescGZIP(), []int{4}
+	return file_services_grpc_email_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *EmailLog) GetId() int32 {
@@ -411,7 +503,7 @@ type GetEmailLogsResponse struct {
 
 func (x *GetEmailLogsResponse) Reset() {
 	*x = GetEmailLogsResponse{}
-	mi := &file_email_proto_msgTypes[5]
+	mi := &file_services_grpc_email_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -423,7 +515,7 @@ func (x *GetEmailLogsResponse) String() string {
 func (*GetEmailLogsResponse) ProtoMessage() {}
 
 func (x *GetEmailLogsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_email_proto_msgTypes[5]
+	mi := &file_services_grpc_email_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -436,7 +528,7 @@ func (x *GetEmailLogsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEmailLogsResponse.ProtoReflect.Descriptor instead.
 func (*GetEmailLogsResponse) Descriptor() ([]byte, []int) {
-	return file_email_proto_rawDescGZIP(), []int{5}
+	return file_services_grpc_email_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetEmailLogsResponse) GetLogs() []*EmailLog {
@@ -464,7 +556,7 @@ type TrackEmailEventRequest struct {
 
 func (x *TrackEmailEventRequest) Reset() {
 	*x = TrackEmailEventRequest{}
-	mi := &file_email_proto_msgTypes[6]
+	mi := &file_services_grpc_email_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -476,7 +568,7 @@ func (x *TrackEmailEventRequest) String() string {
 func (*TrackEmailEventRequest) ProtoMessage() {}
 
 func (x *TrackEmailEventRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_email_proto_msgTypes[6]
+	mi := &file_services_grpc_email_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -489,7 +581,7 @@ func (x *TrackEmailEventRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrackEmailEventRequest.ProtoReflect.Descriptor instead.
 func (*TrackEmailEventRequest) Descriptor() ([]byte, []int) {
-	return file_email_proto_rawDescGZIP(), []int{6}
+	return file_services_grpc_email_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *TrackEmailEventRequest) GetResendId() string {
@@ -523,7 +615,7 @@ type GenericResponse struct {
 
 func (x *GenericResponse) Reset() {
 	*x = GenericResponse{}
-	mi := &file_email_proto_msgTypes[7]
+	mi := &file_services_grpc_email_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -535,7 +627,7 @@ func (x *GenericResponse) String() string {
 func (*GenericResponse) ProtoMessage() {}
 
 func (x *GenericResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_email_proto_msgTypes[7]
+	mi := &file_services_grpc_email_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -548,7 +640,7 @@ func (x *GenericResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenericResponse.ProtoReflect.Descriptor instead.
 func (*GenericResponse) Descriptor() ([]byte, []int) {
-	return file_email_proto_rawDescGZIP(), []int{7}
+	return file_services_grpc_email_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GenericResponse) GetSuccess() bool {
@@ -565,11 +657,11 @@ func (x *GenericResponse) GetCode() int32 {
 	return 0
 }
 
-var File_email_proto protoreflect.FileDescriptor
+var File_services_grpc_email_proto protoreflect.FileDescriptor
 
-const file_email_proto_rawDesc = "" +
+const file_services_grpc_email_proto_rawDesc = "" +
 	"\n" +
-	"\vemail.proto\x12\x05email\"\xbb\x01\n" +
+	"\x19services/grpc/email.proto\x12\x05email\"\xbb\x01\n" +
 	"\x15SendQuoteEmailRequest\x12\x19\n" +
 	"\bto_email\x18\x01 \x01(\tR\atoEmail\x12\x17\n" +
 	"\ato_name\x18\x02 \x01(\tR\x06toName\x12\x1d\n" +
@@ -585,7 +677,15 @@ const file_email_proto_rawDesc = "" +
 	"quote_name\x18\x03 \x01(\tR\tquoteName\x12\x16\n" +
 	"\x06status\x18\x04 \x01(\tR\x06status\x12\x17\n" +
 	"\auser_id\x18\x05 \x01(\tR\x06userId\x12\x19\n" +
-	"\bquote_id\x18\x06 \x01(\tR\aquoteId\"A\n" +
+	"\bquote_id\x18\x06 \x01(\tR\aquoteId\"\x81\x02\n" +
+	"\x17SendGenericEmailRequest\x12\x19\n" +
+	"\bto_email\x18\x01 \x01(\tR\atoEmail\x12\x17\n" +
+	"\ato_name\x18\x02 \x01(\tR\x06toName\x12\x18\n" +
+	"\asubject\x18\x03 \x01(\tR\asubject\x12\x1b\n" +
+	"\ttext_body\x18\x04 \x01(\tR\btextBody\x12'\n" +
+	"\x0fattachment_name\x18\x05 \x01(\tR\x0eattachmentName\x12)\n" +
+	"\x10attachment_bytes\x18\x06 \x01(\fR\x0fattachmentBytes\x12'\n" +
+	"\x0fattachment_type\x18\a \x01(\tR\x0eattachmentType\"A\n" +
 	"\x11SendEmailResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\"\\\n" +
@@ -614,73 +714,77 @@ const file_email_proto_rawDesc = "" +
 	"occurredAt\"?\n" +
 	"\x0fGenericResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\x05R\x04code2\xbb\x02\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code2\x89\x03\n" +
 	"\fEmailService\x12H\n" +
 	"\x0eSendQuoteEmail\x12\x1c.email.SendQuoteEmailRequest\x1a\x18.email.SendEmailResponse\x12N\n" +
-	"\x11SendScheduleEmail\x12\x1f.email.SendScheduleEmailRequest\x1a\x18.email.SendEmailResponse\x12G\n" +
+	"\x11SendScheduleEmail\x12\x1f.email.SendScheduleEmailRequest\x1a\x18.email.SendEmailResponse\x12L\n" +
+	"\x10SendGenericEmail\x12\x1e.email.SendGenericEmailRequest\x1a\x18.email.SendEmailResponse\x12G\n" +
 	"\fGetEmailLogs\x12\x1a.email.GetEmailLogsRequest\x1a\x1b.email.GetEmailLogsResponse\x12H\n" +
 	"\x0fTrackEmailEvent\x12\x1d.email.TrackEmailEventRequest\x1a\x16.email.GenericResponseB#Z!project-devis-email/services/grpcb\x06proto3"
 
 var (
-	file_email_proto_rawDescOnce sync.Once
-	file_email_proto_rawDescData []byte
+	file_services_grpc_email_proto_rawDescOnce sync.Once
+	file_services_grpc_email_proto_rawDescData []byte
 )
 
-func file_email_proto_rawDescGZIP() []byte {
-	file_email_proto_rawDescOnce.Do(func() {
-		file_email_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_email_proto_rawDesc), len(file_email_proto_rawDesc)))
+func file_services_grpc_email_proto_rawDescGZIP() []byte {
+	file_services_grpc_email_proto_rawDescOnce.Do(func() {
+		file_services_grpc_email_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_services_grpc_email_proto_rawDesc), len(file_services_grpc_email_proto_rawDesc)))
 	})
-	return file_email_proto_rawDescData
+	return file_services_grpc_email_proto_rawDescData
 }
 
-var file_email_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
-var file_email_proto_goTypes = []any{
+var file_services_grpc_email_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_services_grpc_email_proto_goTypes = []any{
 	(*SendQuoteEmailRequest)(nil),    // 0: email.SendQuoteEmailRequest
 	(*SendScheduleEmailRequest)(nil), // 1: email.SendScheduleEmailRequest
-	(*SendEmailResponse)(nil),        // 2: email.SendEmailResponse
-	(*GetEmailLogsRequest)(nil),      // 3: email.GetEmailLogsRequest
-	(*EmailLog)(nil),                 // 4: email.EmailLog
-	(*GetEmailLogsResponse)(nil),     // 5: email.GetEmailLogsResponse
-	(*TrackEmailEventRequest)(nil),   // 6: email.TrackEmailEventRequest
-	(*GenericResponse)(nil),          // 7: email.GenericResponse
+	(*SendGenericEmailRequest)(nil),  // 2: email.SendGenericEmailRequest
+	(*SendEmailResponse)(nil),        // 3: email.SendEmailResponse
+	(*GetEmailLogsRequest)(nil),      // 4: email.GetEmailLogsRequest
+	(*EmailLog)(nil),                 // 5: email.EmailLog
+	(*GetEmailLogsResponse)(nil),     // 6: email.GetEmailLogsResponse
+	(*TrackEmailEventRequest)(nil),   // 7: email.TrackEmailEventRequest
+	(*GenericResponse)(nil),          // 8: email.GenericResponse
 }
-var file_email_proto_depIdxs = []int32{
-	4, // 0: email.GetEmailLogsResponse.logs:type_name -> email.EmailLog
+var file_services_grpc_email_proto_depIdxs = []int32{
+	5, // 0: email.GetEmailLogsResponse.logs:type_name -> email.EmailLog
 	0, // 1: email.EmailService.SendQuoteEmail:input_type -> email.SendQuoteEmailRequest
 	1, // 2: email.EmailService.SendScheduleEmail:input_type -> email.SendScheduleEmailRequest
-	3, // 3: email.EmailService.GetEmailLogs:input_type -> email.GetEmailLogsRequest
-	6, // 4: email.EmailService.TrackEmailEvent:input_type -> email.TrackEmailEventRequest
-	2, // 5: email.EmailService.SendQuoteEmail:output_type -> email.SendEmailResponse
-	2, // 6: email.EmailService.SendScheduleEmail:output_type -> email.SendEmailResponse
-	5, // 7: email.EmailService.GetEmailLogs:output_type -> email.GetEmailLogsResponse
-	7, // 8: email.EmailService.TrackEmailEvent:output_type -> email.GenericResponse
-	5, // [5:9] is the sub-list for method output_type
-	1, // [1:5] is the sub-list for method input_type
+	2, // 3: email.EmailService.SendGenericEmail:input_type -> email.SendGenericEmailRequest
+	4, // 4: email.EmailService.GetEmailLogs:input_type -> email.GetEmailLogsRequest
+	7, // 5: email.EmailService.TrackEmailEvent:input_type -> email.TrackEmailEventRequest
+	3, // 6: email.EmailService.SendQuoteEmail:output_type -> email.SendEmailResponse
+	3, // 7: email.EmailService.SendScheduleEmail:output_type -> email.SendEmailResponse
+	3, // 8: email.EmailService.SendGenericEmail:output_type -> email.SendEmailResponse
+	6, // 9: email.EmailService.GetEmailLogs:output_type -> email.GetEmailLogsResponse
+	8, // 10: email.EmailService.TrackEmailEvent:output_type -> email.GenericResponse
+	6, // [6:11] is the sub-list for method output_type
+	1, // [1:6] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_email_proto_init() }
-func file_email_proto_init() {
-	if File_email_proto != nil {
+func init() { file_services_grpc_email_proto_init() }
+func file_services_grpc_email_proto_init() {
+	if File_services_grpc_email_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_email_proto_rawDesc), len(file_email_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_services_grpc_email_proto_rawDesc), len(file_services_grpc_email_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_email_proto_goTypes,
-		DependencyIndexes: file_email_proto_depIdxs,
-		MessageInfos:      file_email_proto_msgTypes,
+		GoTypes:           file_services_grpc_email_proto_goTypes,
+		DependencyIndexes: file_services_grpc_email_proto_depIdxs,
+		MessageInfos:      file_services_grpc_email_proto_msgTypes,
 	}.Build()
-	File_email_proto = out.File
-	file_email_proto_goTypes = nil
-	file_email_proto_depIdxs = nil
+	File_services_grpc_email_proto = out.File
+	file_services_grpc_email_proto_goTypes = nil
+	file_services_grpc_email_proto_depIdxs = nil
 }

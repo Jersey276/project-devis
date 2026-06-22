@@ -21,6 +21,7 @@ Facade HTTP publique du backend.
 - schedules: `controllers.SchedulesRoutes`
 - export: `controllers.ExportRoutes`
 - templates: `controllers.TemplateRoutes`
+- logs (audit): `controllers.AuditRoutes` — super-admin uniquement, non audité (voir ci-dessous)
 
 ## Dependances
 
@@ -60,6 +61,13 @@ Variables inter-services:
 | Variable | Definie local | Definie prod | Note             |
 | -------- | ------------- | ------------ | ---------------- |
 | `TZ`     | oui           | oui          | timezone runtime |
+
+## Middleware audit
+
+- source: `backend/gateway/middleware/audit.go`
+- enregistre chaque requête HTTP (méthode, URL, durée, statuts, corps tronqué à 64 KB) dans le service audit via gRPC
+- monté sur le groupe `/api` (tous les groupes métier), **sauf** le groupe `/api/logs` qui est enregistré directement sur `r` pour éviter que les consultations de logs se loggent elles-mêmes
+- non-bloquant : envoi asynchrone via channel (taille 512) ; les entrées sont silencieusement abandonnées si le channel est plein
 
 ## Middleware auth
 

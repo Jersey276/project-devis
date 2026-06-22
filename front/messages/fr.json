@@ -14,6 +14,11 @@
     },
     "datePicker": {
       "placeholder": "Choisir une date"
+    },
+    "filterSidebar": {
+      "trigger": "Filtres",
+      "title": "Filtres",
+      "reset": "Réinitialiser les filtres"
     }
   },
   "metadata": {
@@ -39,6 +44,7 @@
     "templates": "Templates",
     "subscriptions": "Abonnements",
     "analytics": "Analytiques",
+    "logs": "Journal d'activité",
     "test": "Test"
   },
   "breadcrumb": {},
@@ -882,6 +888,37 @@
       "monthlyRevenue": "Revenu mensuel (12 derniers mois)",
       "loading": "Chargement des statistiques…",
       "noData": "Aucune donnée disponible."
+    },
+    "logs": {
+      "title": "Journal d'activité",
+      "statsTitle": "Répartition des statuts HTTP (6 derniers mois)",
+      "exportButton": "Exporter CSV par email",
+      "exportSuccess": "L'export CSV a été envoyé à votre adresse email.",
+      "exportError": "Erreur lors de l'export.",
+      "loading": "Chargement des logs…",
+      "noData": "Aucun log disponible.",
+      "filters": {
+        "searchPlaceholder": "Rechercher par URL ou utilisateur…",
+        "statusLabel": "Statut HTTP",
+        "statusPlaceholder": "Sélectionner des statuts…",
+        "statusEmpty": "Aucun statut trouvé.",
+        "dateLabel": "Période",
+        "datePlaceholder": "Toutes les dates",
+        "from": "À partir du",
+        "to": "Jusqu'au",
+        "clearDate": "Effacer la période"
+      },
+      "table": {
+        "id": "ID",
+        "userId": "Utilisateur",
+        "method": "Méthode",
+        "url": "URL",
+        "durationMs": "Durée (ms)",
+        "respStatus": "Statut",
+        "createdAt": "Date",
+        "reqBody": "Corps de la requête",
+        "respBody": "Corps de la réponse"
+      }
     }
   },
   "profile": {
