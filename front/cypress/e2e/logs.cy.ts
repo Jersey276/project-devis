@@ -140,6 +140,7 @@ describe("Logs — filtre statut HTTP", () => {
 
     cy.contains("Réinitialiser").click();
     cy.wait("@getLogsReset");
+    cy.get("body").should("not.have.attr", "data-scroll-locked");
 
     cy.contains("200").should("be.visible");
     cy.contains("201").should("be.visible");
