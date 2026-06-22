@@ -106,7 +106,7 @@ describe("Logs — filtre statut HTTP", () => {
     cy.intercept("GET", "/api/logs?*resp_statuses=204*", { statusCode: 200, body: LOGS_FILTERED_204 }).as("getLogsFiltered");
 
     cy.contains("Filtres").click();
-    cy.contains("Sélectionner des statuts…").click();
+    cy.get('[placeholder="Sélectionner des statuts…"]').click();
     cy.contains("204").click();
     cy.get("body").type("{esc}");
 
@@ -117,7 +117,7 @@ describe("Logs — filtre statut HTTP", () => {
     cy.intercept("GET", "/api/logs?*resp_statuses=204*", { statusCode: 200, body: LOGS_FILTERED_204 }).as("getLogsFiltered");
 
     cy.contains("Filtres").click();
-    cy.contains("Sélectionner des statuts…").click();
+    cy.get('[placeholder="Sélectionner des statuts…"]').click();
     cy.contains("204").click();
     cy.get("body").type("{esc}");
 
@@ -133,7 +133,7 @@ describe("Logs — filtre statut HTTP", () => {
     cy.intercept("GET", "/api/logs?page=1&page_size=50", { statusCode: 200, body: LOGS_PAGE_1 }).as("getLogsReset");
 
     cy.contains("Filtres").click();
-    cy.contains("Sélectionner des statuts…").click();
+    cy.get('[placeholder="Sélectionner des statuts…"]').click();
     cy.contains("204").click();
     cy.get("body").type("{esc}");
     cy.wait("@getLogsFiltered");
