@@ -122,7 +122,6 @@ export default function LogsFilters({ filters, onChange }: LogsFiltersProps) {
           <Combobox
             value={filters.resp_statuses.map(String)}
             onValueChange={handleStatusesChange}
-            items={HTTP_STATUSES}
             multiple
           >
             <ComboboxTrigger
@@ -149,11 +148,11 @@ export default function LogsFilters({ filters, onChange }: LogsFiltersProps) {
             <ComboboxContent anchor={statusAnchor}>
               <ComboboxEmpty>{t("statusEmpty")}</ComboboxEmpty>
               <ComboboxList>
-                {(item: string) => (
+                {HTTP_STATUSES.map((item) => (
                   <ComboboxItem key={item} value={item}>
                     {item}
                   </ComboboxItem>
-                )}
+                ))}
               </ComboboxList>
             </ComboboxContent>
           </Combobox>
