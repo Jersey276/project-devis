@@ -1,0 +1,177 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { apiFetch } from "@/lib/api";
+import type { ActivityLog, ActivityLogDetail } from "./logs-dashboard";
+
+type LogsTableProps = {
+  logs: ActivityLog[];
+};
+
+const PREVIEW_LIMIT = 500;
+
+function statusBadgeClass(status: number): string {
+  if (status >= 500) return "text-red-600 font-semibold";
+  if (status >= 400) return "text-orange-500 font-semibold";
+  if (status >= 300) return "text-yellow-600";
+  return "text-green-600";
+}
+
+function tryFormatJSON(raw: string): string {
+  if (!raw) return "";
+  try {
+    return JSON.stringify(JSON.parse(raw), null, 2);
+  } catch {
+    // Not JSON — try to parse as query string (key=value&...)
+    if (raw.includes("=")) {
+      try {
+        const params = Object.fromEntries(new URLSearchParams(raw));
+        return JSON.stringify(params, null, 2);
+      } catch {
+        return raw;
+      }
+    }
+    return raw;
+  }
+}
+
+function BodyPanel({ label, value }: { label: string; value: string }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!value) return null;
+  const formatted = tryFormatJSON(value);
+  const truncated = !expanded && formatted.length > PREVIEW_LIMIT;
+  const displayed = truncated ? formatted.slice(0, PREVIEW_LIMIT) + "…" : formatted;
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <pre className="overflow-auto rounded bg-muted px-3 py-2 font-mono text-xs whitespace-pre-wrap break-all">
+        {displayed}
+      </pre>
+      {formatted.length > PREVIEW_LIMIT && (
+        <button
+          className="text-xs text-primary underline"
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded ? "Réduire" : "Voir tout"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+type DetailRowProps = {
+  id: number;
+  tTable: ReturnType<typeof useTranslations>;
+};
+
+function DetailRow({ id, tTable }: DetailRowProps) {
+  const [detail, setDetail] = useState<ActivityLogDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    apiFetch(`/api/logs/${id}`).then(({ ok, body }) => {
+      if (ok && body.success) {
+        setDetail(body.log as ActivityLogDetail);
+      } else {
+        setError(true);
+      }
+      setLoading(false);
+    });
+  }, [id]);
+
+  return (
+    <TableRow>
+      <TableCell colSpan={8} className="bg-muted/30 px-4 py-3">
+        {loading && (
+          <p className="text-xs text-muted-foreground">Chargement…</p>
+        )}
+        {error && (
+          <p className="text-xs text-destructive">Erreur lors du chargement.</p>
+        )}
+        {detail && (
+          <div className="space-y-3">
+            <BodyPanel label={tTable("reqBody")} value={detail.req_body} />
+            <BodyPanel label={tTable("respBody")} value={detail.resp_body} />
+          </div>
+        )}
+      </TableCell>
+    </TableRow>
+  );
+}
+
+export default function LogsTable({ logs }: LogsTableProps) {
+  const t = useTranslations("admin.logs.table");
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+
+  const toggle = (id: number) =>
+    setExpandedId((prev) => (prev === id ? null : id));
+
+  return (
+    <div className="overflow-x-auto rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-8" />
+            <TableHead className="w-16">{t("id")}</TableHead>
+            <TableHead>{t("userId")}</TableHead>
+            <TableHead className="w-20">{t("method")}</TableHead>
+            <TableHead>{t("url")}</TableHead>
+            <TableHead className="w-28 text-right">{t("durationMs")}</TableHead>
+            <TableHead className="w-20 text-center">{t("respStatus")}</TableHead>
+            <TableHead className="w-40">{t("createdAt")}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {logs.map((log) => (
+            <>
+              <TableRow
+                key={log.id}
+                className="cursor-pointer hover:bg-muted/50"
+                onClick={() => toggle(log.id)}
+              >
+                <TableCell className="text-center text-muted-foreground">
+                  <span className="text-xs">{expandedId === log.id ? "▾" : "▸"}</span>
+                </TableCell>
+                <TableCell className="text-muted-foreground">{log.id}</TableCell>
+                <TableCell className="max-w-30 truncate text-xs" title={log.user_id}>
+                  {log.user_id || "—"}
+                </TableCell>
+                <TableCell>
+                  <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+                    {log.method}
+                  </span>
+                </TableCell>
+                <TableCell className="max-w-64 truncate font-mono text-xs" title={log.url}>
+                  {log.url}
+                </TableCell>
+                <TableCell className="text-right font-mono text-xs">
+                  {log.duration_ms} ms
+                </TableCell>
+                <TableCell className={`text-center font-mono text-sm ${statusBadgeClass(log.resp_status)}`}>
+                  {log.resp_status}
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {new Date(log.created_at).toLocaleString("fr-FR")}
+                </TableCell>
+              </TableRow>
+
+              {expandedId === log.id && (
+                <DetailRow key={`${log.id}-detail`} id={log.id} tTable={t} />
+              )}
+            </>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}

@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package audit;
+
+option go_package = "gateway/audit";
+
+service AuditService {
+    rpc LogActivity(LogActivityRequest)           returns (LogActivityResponse);
+    rpc ListActivityLogs(ListActivityLogsRequest) returns (ListActivityLogsResponse);
+    rpc GetActivityLog(GetActivityLogRequest)     returns (GetActivityLogResponse);
+    rpc GetActivityStats(GetActivityStatsRequest) returns (GetActivityStatsResponse);
+    rpc ExportActivityLogs(ExportActivityLogsRequest) returns (ExportActivityLogsResponse);
+}
+
+// ─── LogActivity ─────────────────────────────────────────────────────────────
+
+message LogActivityRequest {
+    string user_id     = 1;
+    string method      = 2;
+    string url         = 3;
+    int32  duration_ms = 4;
+    string req_body    = 5;
+    string resp_body   = 6;
+    int32  resp_status = 7;
+}
+
+message LogActivityResponse {
+    bool  success = 1;
+    int32 code    = 2;
+}
+
+// ─── ListActivityLogs ────────────────────────────────────────────────────────
+
+message ActivityLogFilters {
+    string user_id      = 1;
+    string url_contains = 2;
+    int32  resp_status  = 3;
+    string date_from    = 4; // RFC3339
+    string date_to      = 5; // RFC3339
+}
+
+message ListActivityLogsRequest {
+    ActivityLogFilters filters   = 1;
+    int32              page      = 2;
+    int32              page_size = 3;
+}
+
+// Lightweight row returned by ListActivityLogs (no bodies).
+message ActivityLog {
+    int64  id          = 1;
+    string user_id     = 2;
+    string method      = 3;
+    string url         = 4;
+    int32  duration_ms = 5;
+    int32  resp_status = 6;
+    string created_at  = 7; // RFC3339
+}
+
+message ListActivityLogsResponse {
+    bool              success = 1;
+    int32             code    = 2;
+    repeated ActivityLog logs = 3;
+    int64             total   = 4;
+}
+
+// ─── GetActivityLog ──────────────────────────────────────────────────────────
+
+message GetActivityLogRequest {
+    int64 id = 1;
+}
+
+message ActivityLogDetail {
+    int64  id          = 1;
+    string user_id     = 2;
+    string method      = 3;
+    string url         = 4;
+    int32  duration_ms = 5;
+    string req_body    = 6;
+    string resp_body   = 7;
+    int32  resp_status = 8;
+    string created_at  = 9;
+}
+
+message GetActivityLogResponse {
+    bool              success = 1;
+    int32             code    = 2;
+    ActivityLogDetail log     = 3;
+}
+
+// ─── GetActivityStats ────────────────────────────────────────────────────────
+
+message GetActivityStatsRequest {}
+
+message StatusCount {
+    string date        = 1; // YYYY-MM-DD
+    int32  resp_status = 2;
+    int64  count       = 3;
+}
+
+message GetActivityStatsResponse {
+    bool                  success = 1;
+    int32                 code    = 2;
+    repeated StatusCount  stats   = 3;
+}
+
+// ─── ExportActivityLogs ──────────────────────────────────────────────────────
+
+message ExportActivityLogsRequest {
+    ActivityLogFilters filters           = 1;
+    string             recipient_email   = 2;
+    string             recipient_name    = 3;
+}
+
+message ExportActivityLogsResponse {
+    bool  success = 1;
+    int32 code    = 2;
+}

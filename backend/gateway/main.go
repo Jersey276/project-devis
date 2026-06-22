@@ -16,12 +16,15 @@ type Route struct {
 }
 
 func main() {
-	r := setupRouter()
+	auditClient := middleware.InitAuditClient()
+	auditLogger := middleware.NewAuditLogger(auditClient)
+	r := setupRouter(auditLogger)
 	r.Run(":8080")
 }
 
-func setupRouter() *gin.Engine {
+func setupRouter(auditLogger *middleware.AuditLogger) *gin.Engine {
 	r := gin.Default()
+	r.Use(auditLogger.Middleware())
 
 	emailNotifier := services.NewEmailNotifier()
 
@@ -81,6 +84,11 @@ func setupRouter() *gin.Engine {
 	emailLogs := api.Group("/email-logs")
 	emailLogs.Use(middleware.AuthRequired())
 	controllers.EmailLogsRoutes(emailLogs, authorizer)
+
+	logs := api.Group("/logs")
+	logs.Use(middleware.AuthRequired())
+	logs.Use(middleware.RequireSuperAdmin())
+	controllers.AuditRoutes(logs)
 
 	return r
 }
