@@ -7,6 +7,8 @@ option go_package = "project-devis-export/services/grpc";
 service ExportService {
     rpc ExportQuote(ExportQuoteRequest) returns (ExportQuoteResponse);
     rpc ExportSchedule(ExportScheduleRequest) returns (ExportQuoteResponse);
+    rpc ExportInvoice(ExportInvoiceRequest) returns (ExportQuoteResponse);
+    rpc ExportCreditNote(ExportCreditNoteRequest) returns (ExportQuoteResponse);
 }
 
 message ExportQuoteRequest {
@@ -24,4 +26,16 @@ message ExportQuoteResponse {
 message ExportScheduleRequest {
     string schedule_id = 1;
     string user_id     = 2;
+}
+
+message ExportInvoiceRequest {
+    string invoice_id = 1;
+    string user_id    = 2;
+    bool   facturx    = 3;  // if true, return a Factur-X PDF/A-3 (issued only)
+}
+
+message ExportCreditNoteRequest {
+    string credit_note_id = 1;
+    string user_id        = 2;
+    bool   facturx        = 3;  // if true, return a Factur-X PDF/A-3 (issued only)
 }

@@ -103,7 +103,10 @@ func QuotesRoutes(r *gin.RouterGroup, emailNotifier gatewaySvc.EmailNotifier) {
 	one.POST("/restore", func(c *gin.Context) { RestoreQuote(c, client) })
 	one.POST("/drop", func(c *gin.Context) { DropQuote(c, client) })
 	one.POST("/continue", func(c *gin.Context) { ContinueQuote(c, client) })
-	one.POST("/send", func(c *gin.Context) { SendQuote(c, client, usersClient, exportClient, emailNotifier) })
+	one.POST("/validate", func(c *gin.Context) { ValidateQuote(c, client) })
+	one.POST("/negociate", func(c *gin.Context) {
+		NegociateQuote(c, client, usersClient, exportClient, emailNotifier)
+	})
 
 	lines := one.Group("/lines")
 	lines.GET("", func(c *gin.Context) { ListQuoteLines(c, client) })
@@ -512,6 +515,77 @@ func ContinueQuote(c *gin.Context, client quote.QuoteServiceClient) {
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+func ValidateQuote(c *gin.Context, client quote.QuoteServiceClient) {
+	resp, err := client.ValidateQuote(c.Request.Context(), &quote.ValidateQuoteRequest{
+		QuoteId: c.Param("id"),
+		UserId:  userIDFromCtx(c),
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// NegociateQuote moves a quote into negotiation and sends it to the client by
+// email with the PDF attached — entering negotiation is the act of sending.
+func NegociateQuote(
+	c *gin.Context,
+	quoteClient quote.QuoteServiceClient,
+	usersClient users.UserServiceClient,
+	exportClient export.ExportServiceClient,
+	emailNotifier gatewaySvc.EmailNotifier,
+) {
+	userID := userIDFromCtx(c)
+	quoteID := c.Param("id")
+
+	resp, err := quoteClient.NegociateQuote(c.Request.Context(), &quote.NegociateQuoteRequest{
+		QuoteId: quoteID,
+		UserId:  userID,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+
+	clientResp, err := usersClient.GetClient(c.Request.Context(), &users.GetClientRequest{
+		ClientId: resp.ClientId,
+		UserId:   userID,
+	})
+	if err != nil || !clientResp.Success {
+		log.Printf("NegociateQuote: could not fetch client %s: %v", resp.ClientId, err)
+		c.JSON(http.StatusOK, gin.H{"success": true})
+		return
+	}
+	client := clientResp.Client
+
+	var pdfBytes []byte
+	exportResp, exportErr := exportClient.ExportQuote(c.Request.Context(), &export.ExportQuoteRequest{
+		QuoteId: quoteID,
+		UserId:  userID,
+	})
+	if exportErr != nil || !exportResp.Success {
+		log.Printf("NegociateQuote: PDF generation failed for quote %s: %v", quoteID, exportErr)
+	} else {
+		pdfBytes = exportResp.Pdf
+	}
+
+	clientName := strings.TrimSpace(client.FirstName + " " + client.LastName)
+	if err := emailNotifier.SendQuoteEmail(c.Request.Context(), userID, quoteID, client.Email, clientName, resp.Name, pdfBytes); err != nil {
+		log.Printf("NegociateQuote: email send failed for quote %s: %v", quoteID, err)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
 // ─── Line handlers ───────────────────────────────────────────────────────────
 
 type lineInput struct {
@@ -668,6 +742,8 @@ func stateToLower(s quote.QuoteState) string {
 	switch s {
 	case quote.QuoteState_QUOTE_STATE_DRAFT:
 		return "draft"
+	case quote.QuoteState_QUOTE_STATE_NEGOCIATION:
+		return "negociation"
 	case quote.QuoteState_QUOTE_STATE_SENT:
 		return "sent"
 	case quote.QuoteState_QUOTE_STATE_VALIDATED:
@@ -721,55 +797,3 @@ func marshalLines(lines []*quote.QuoteLine) []gin.H {
 	return out
 }
 
-func SendQuote(
-	c *gin.Context,
-	quoteClient quote.QuoteServiceClient,
-	usersClient users.UserServiceClient,
-	exportClient export.ExportServiceClient,
-	emailNotifier gatewaySvc.EmailNotifier,
-) {
-	userID := userIDFromCtx(c)
-	quoteID := c.Param("id")
-
-	sendResp, err := quoteClient.SendQuote(c.Request.Context(), &quote.SendQuoteRequest{
-		QuoteId: quoteID,
-		UserId:  userID,
-	})
-	if err != nil {
-		quoteErrors.unavailable(c)
-		return
-	}
-	if !sendResp.Success {
-		quoteErrors.reply(c, sendResp.Code)
-		return
-	}
-
-	clientResp, err := usersClient.GetClient(c.Request.Context(), &users.GetClientRequest{
-		ClientId: sendResp.ClientId,
-		UserId:   userID,
-	})
-	if err != nil || !clientResp.Success {
-		log.Printf("SendQuote: could not fetch client %s: %v", sendResp.ClientId, err)
-		c.JSON(http.StatusOK, gin.H{"success": true})
-		return
-	}
-	client := clientResp.Client
-
-	var pdfBytes []byte
-	exportResp, exportErr := exportClient.ExportQuote(c.Request.Context(), &export.ExportQuoteRequest{
-		QuoteId: quoteID,
-		UserId:  userID,
-	})
-	if exportErr != nil || !exportResp.Success {
-		log.Printf("SendQuote: PDF generation failed for quote %s: %v", quoteID, exportErr)
-	} else {
-		pdfBytes = exportResp.Pdf
-	}
-
-	clientName := strings.TrimSpace(client.FirstName + " " + client.LastName)
-	if err := emailNotifier.SendQuoteEmail(c.Request.Context(), userID, quoteID, client.Email, clientName, sendResp.Name, pdfBytes); err != nil {
-		log.Printf("SendQuote: email send failed for quote %s: %v", quoteID, err)
-	}
-
-	c.JSON(http.StatusOK, gin.H{"success": true})
-}

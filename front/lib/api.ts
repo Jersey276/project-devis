@@ -10,11 +10,16 @@ export type FieldErrors = Record<string, string[]>;
 
 export type ApiFieldError = { field: string; error_code: number[] };
 
+// Some services (users gateway) return already-localized per-field messages under
+// `errors` instead of the auth-style coded `field_errors`. Both are supported.
+export type ApiFieldMessage = { field: string; message: string };
+
 export type ApiBody = {
   success: boolean;
   message?: string;
   code?: number;
   field_errors?: ApiFieldError[];
+  errors?: ApiFieldMessage[];
   [key: string]: unknown;
 };
 
@@ -162,12 +167,20 @@ export async function apiFetch(
 
 export function fieldErrorsFromBody(body: ApiBody): FieldErrors {
   const errors: FieldErrors = {};
-  if (!Array.isArray(body.field_errors)) return errors;
-  for (const entry of body.field_errors) {
-    errors[entry.field] = entry.error_code.map(
-      (code) =>
-        FIELD_VALIDATION_MESSAGES[code] ?? `Erreur de validation (${code}).`,
-    );
+  // Auth-style coded errors, translated client-side.
+  if (Array.isArray(body.field_errors)) {
+    for (const entry of body.field_errors) {
+      errors[entry.field] = entry.error_code.map(
+        (code) =>
+          FIELD_VALIDATION_MESSAGES[code] ?? `Erreur de validation (${code}).`,
+      );
+    }
+  }
+  // Users-style errors carry an already-localized message per field.
+  if (Array.isArray(body.errors)) {
+    for (const entry of body.errors) {
+      (errors[entry.field] ??= []).push(entry.message);
+    }
   }
   return errors;
 }

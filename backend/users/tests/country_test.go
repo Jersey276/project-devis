@@ -69,10 +69,10 @@ func TestCreateCountry_InvalidCode(t *testing.T) {
 func TestListCountries_Success(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	mock.ExpectQuery(`SELECT id, code, name FROM countries`).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "code", "name"}).
-			AddRow(1, "FR", "France").
-			AddRow(2, "DE", "Germany"))
+	mock.ExpectQuery(`SELECT id, code, name, is_eu FROM countries`).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "code", "name", "is_eu"}).
+			AddRow(1, "FR", "France", true).
+			AddRow(2, "DE", "Germany", true))
 
 	resp, err := srv.ListCountries(context.Background(), &usersGrpc.ListCountriesRequest{})
 	if err != nil {

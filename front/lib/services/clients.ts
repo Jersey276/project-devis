@@ -1,5 +1,5 @@
 import { apiFetch, type ApiResult } from "@/lib/api";
-import type { BackendClient } from "@/types/backend";
+import type { BackendClient, ClientType } from "@/types/backend";
 
 // Full-replace shape: all fields are required strings on the wire.
 // Empty string clears the column server-side (see client.Update action).
@@ -10,7 +10,9 @@ export type ClientPayload = {
   phone: string;
   company: string;
   siren: string;
+  siret: string;
   vat: string;
+  client_type: ClientType;
 };
 
 export async function listClients(): Promise<ApiResult> {
@@ -44,4 +46,4 @@ export async function archiveClient(clientId: string): Promise<ApiResult> {
   });
 }
 
-export type { BackendClient };
+export type { BackendClient, ClientType };

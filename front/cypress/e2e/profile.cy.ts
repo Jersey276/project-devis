@@ -4,6 +4,7 @@ const USER = {
   phone: "0102030405",
   company: "Acme",
   siren: "123456789",
+  siret: "12345678900012",
   vat: "FR12345",
 };
 
@@ -149,7 +150,11 @@ describe("Profile page", () => {
           phone: "0606060606",
           company: USER.company,
           siren: USER.siren,
+          siret: USER.siret,
           vat: USER.vat,
+          oss_enabled: false,
+          iban: "",
+          bic: "",
         });
       });
       cy.get("[data-sonner-toaster]").should(

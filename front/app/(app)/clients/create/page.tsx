@@ -46,8 +46,9 @@ export default function CreateClientPage() {
     try {
       const createRes = await createClient(client);
       if (!createRes.ok || !createRes.body.success) {
-        if (createRes.status === 422) {
-          setClientErrors(fieldErrorsFromBody(createRes.body));
+        const parsed = fieldErrorsFromBody(createRes.body);
+        if (Object.keys(parsed).length > 0) {
+          setClientErrors(parsed);
         } else {
           toast.error(
             (createRes.body.message as string) ?? t("createFailedToast"),
@@ -71,8 +72,9 @@ export default function CreateClientPage() {
           },
         );
         if (!addrRes.ok || !addrRes.body.success) {
-          if (addrRes.status === 422) {
-            setAddressErrors(fieldErrorsFromBody(addrRes.body));
+          const parsedAddr = fieldErrorsFromBody(addrRes.body);
+          if (Object.keys(parsedAddr).length > 0) {
+            setAddressErrors(parsedAddr);
           } else {
             toast.error(
               (addrRes.body.message as string) ?? t("addressFailedToast"),

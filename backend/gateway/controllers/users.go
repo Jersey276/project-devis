@@ -147,7 +147,7 @@ func GetMe(c *gin.Context, client users.UserServiceClient) {
 		usersErrors.reply(c, resp.Code)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "user": resp.User})
+	c.JSON(http.StatusOK, gin.H{"success": true, "user": marshalUser(resp.User)})
 }
 
 func ensureUserWritable(c *gin.Context, client users.UserServiceClient) bool {
@@ -172,11 +172,15 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	var input struct {
-		Phone   string `json:"phone"`
-		Company string `json:"company"`
-		Siren   string `json:"siren"`
-		Vat     string `json:"vat"`
-		LogoURL string `json:"logo_url"`
+		Phone      string `json:"phone"`
+		Company    string `json:"company"`
+		Siren      string `json:"siren"`
+		Vat        string `json:"vat"`
+		Siret      string `json:"siret"`
+		LogoURL    string `json:"logo_url"`
+		OssEnabled bool   `json:"oss_enabled"`
+		Iban       string `json:"iban"`
+		Bic        string `json:"bic"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
@@ -187,18 +191,26 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	resp, err := client.UpdateUser(c.Request.Context(), &users.UpdateUserRequest{
-		UserId:  userIDFromCtx(c),
-		Phone:   input.Phone,
-		Company: input.Company,
-		Siren:   input.Siren,
-		Vat:     input.Vat,
-		LogoUrl: input.LogoURL,
+		UserId:     userIDFromCtx(c),
+		Phone:      input.Phone,
+		Company:    input.Company,
+		Siren:      input.Siren,
+		Vat:        input.Vat,
+		Siret:      input.Siret,
+		LogoUrl:    input.LogoURL,
+		OssEnabled: input.OssEnabled,
+		Iban:       input.Iban,
+		Bic:        input.Bic,
 	})
 	if err != nil {
 		usersErrors.unavailable(c)
 		return
 	}
 	if !resp.Success {
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+			return
+		}
 		usersErrors.reply(c, resp.Code)
 		return
 	}
@@ -572,13 +584,115 @@ func marshalAddresses(in []*users.Address) []gin.H {
 // — omitting a field will silently null it. See client.Update action for the
 // SQL-side contract.
 type clientInput struct {
-	FirstName string `json:"first_name" binding:"required"`
-	LastName  string `json:"last_name" binding:"required"`
-	Email     string `json:"email"`
-	Phone     string `json:"phone"`
-	Company   string `json:"company"`
-	Siren     string `json:"siren"`
-	Vat       string `json:"vat"`
+	FirstName  string `json:"first_name" binding:"required"`
+	LastName   string `json:"last_name" binding:"required"`
+	Email      string `json:"email"`
+	Phone      string `json:"phone"`
+	Company    string `json:"company"`
+	Siren      string `json:"siren"`
+	Vat        string `json:"vat"`
+	Siret      string `json:"siret"`
+	ClientType string `json:"client_type"`
+}
+
+// clientTypeFromInput maps the JSON client_type string ("individual"/"business")
+// to the proto enum. An empty or unknown value maps to UNSPECIFIED, which the
+// users service defaults to "individual" (B2C).
+func clientTypeFromInput(s string) users.ClientType {
+	switch s {
+	case "individual":
+		return users.ClientType_CLIENT_TYPE_INDIVIDUAL
+	case "business":
+		return users.ClientType_CLIENT_TYPE_BUSINESS
+	default:
+		return users.ClientType_CLIENT_TYPE_UNSPECIFIED
+	}
+}
+
+// clientTypeToString is the inverse of clientTypeFromInput for response
+// marshalling.
+func clientTypeToString(t users.ClientType) string {
+	switch t {
+	case users.ClientType_CLIENT_TYPE_INDIVIDUAL:
+		return "individual"
+	case users.ClientType_CLIENT_TYPE_BUSINESS:
+		return "business"
+	default:
+		return ""
+	}
+}
+
+// marshalClient renders a proto Client as a JSON object with the client_type
+// enum projected to its string form, mirroring marshalAddress.
+func marshalClient(cl *users.Client) gin.H {
+	if cl == nil {
+		return nil
+	}
+	return gin.H{
+		"client_id":   cl.ClientId,
+		"user_id":     cl.UserId,
+		"first_name":  cl.FirstName,
+		"last_name":   cl.LastName,
+		"email":       cl.Email,
+		"phone":       cl.Phone,
+		"company":     cl.Company,
+		"siren":       cl.Siren,
+		"vat":         cl.Vat,
+		"siret":       cl.Siret,
+		"archived":    cl.Archived,
+		"client_type": clientTypeToString(cl.ClientType),
+	}
+}
+
+func marshalClients(in []*users.Client) []gin.H {
+	out := make([]gin.H, 0, len(in))
+	for _, cl := range in {
+		out = append(out, marshalClient(cl))
+	}
+	return out
+}
+
+// marshalUser renders a proto User as a JSON object. Explicit projection avoids
+// the protobuf-go `omitempty` tags dropping false booleans (oss_enabled), which
+// the front-end relies on reading explicitly.
+func marshalUser(u *users.User) gin.H {
+	if u == nil {
+		return nil
+	}
+	return gin.H{
+		"user_id":     u.UserId,
+		"email":       u.Email,
+		"phone":       u.Phone,
+		"company":     u.Company,
+		"siren":       u.Siren,
+		"vat":         u.Vat,
+		"siret":       u.Siret,
+		"logo_url":    u.LogoUrl,
+		"suspended":   u.Suspended,
+		"oss_enabled": u.OssEnabled,
+		"iban":        u.Iban,
+		"bic":         u.Bic,
+	}
+}
+
+func marshalCountry(co *users.Country) gin.H {
+	if co == nil {
+		return nil
+	}
+	return gin.H{
+		"id":    co.Id,
+		"code":  co.Code,
+		"name":  co.Name,
+		"is_eu": co.IsEu,
+	}
+}
+
+func marshalCountries(in []*users.Country) []gin.H {
+	out := make([]gin.H, 0, len(in))
+	for _, co := range in {
+		out = append(out, marshalCountry(co))
+	}
+	return out
 }
 
 func ListClients(c *gin.Context, client users.UserServiceClient) {
@@ -595,7 +709,7 @@ func ListClients(c *gin.Context, client users.UserServiceClient) {
 		usersErrors.reply(c, resp.Code)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "clients": resp.Clients})
+	c.JSON(http.StatusOK, gin.H{"success": true, "clients": marshalClients(resp.Clients)})
 }
 
 func CreateClient(c *gin.Context, client users.UserServiceClient) {
@@ -605,14 +719,16 @@ func CreateClient(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	resp, err := client.CreateClient(c.Request.Context(), &users.CreateClientRequest{
-		UserId:    userIDFromCtx(c),
-		FirstName: input.FirstName,
-		LastName:  input.LastName,
-		Email:     input.Email,
-		Phone:     input.Phone,
-		Company:   input.Company,
-		Siren:     input.Siren,
-		Vat:       input.Vat,
+		UserId:     userIDFromCtx(c),
+		FirstName:  input.FirstName,
+		LastName:   input.LastName,
+		Email:      input.Email,
+		Phone:      input.Phone,
+		Company:    input.Company,
+		Siren:      input.Siren,
+		Vat:        input.Vat,
+		Siret:      input.Siret,
+		ClientType: clientTypeFromInput(input.ClientType),
 	})
 	if err != nil {
 		usersErrors.unavailable(c)
@@ -642,7 +758,7 @@ func GetClient(c *gin.Context, client users.UserServiceClient) {
 		usersErrors.reply(c, resp.Code)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "client": resp.Client})
+	c.JSON(http.StatusOK, gin.H{"success": true, "client": marshalClient(resp.Client)})
 }
 
 func UpdateClient(c *gin.Context, client users.UserServiceClient) {
@@ -652,15 +768,17 @@ func UpdateClient(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	resp, err := client.UpdateClient(c.Request.Context(), &users.UpdateClientRequest{
-		ClientId:  c.Param("clientId"),
-		UserId:    userIDFromCtx(c),
-		FirstName: input.FirstName,
-		LastName:  input.LastName,
-		Email:     input.Email,
-		Phone:     input.Phone,
-		Company:   input.Company,
-		Siren:     input.Siren,
-		Vat:       input.Vat,
+		ClientId:   c.Param("clientId"),
+		UserId:     userIDFromCtx(c),
+		FirstName:  input.FirstName,
+		LastName:   input.LastName,
+		Email:      input.Email,
+		Phone:      input.Phone,
+		Company:    input.Company,
+		Siren:      input.Siren,
+		Vat:        input.Vat,
+		Siret:      input.Siret,
+		ClientType: clientTypeFromInput(input.ClientType),
 	})
 	if err != nil {
 		usersErrors.unavailable(c)
@@ -703,7 +821,7 @@ func ListCountries(c *gin.Context, client users.UserServiceClient) {
 		usersErrors.reply(c, resp.Code)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "countries": resp.Countries})
+	c.JSON(http.StatusOK, gin.H{"success": true, "countries": marshalCountries(resp.Countries)})
 }
 
 func CreateCountry(c *gin.Context, client users.UserServiceClient) {

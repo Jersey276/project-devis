@@ -9,22 +9,22 @@ import (
 )
 
 const (
-	StateDraft     = "draft"
-	StateSent      = "sent"
-	StateValidated = "validated"
-	StateDrop      = "drop"
+	StateDraft       = "draft"
+	StateNegociation = "negociation"
+	StateValidated   = "validated"
+	StateDrop        = "drop"
 )
 
 func EditableStates() []string {
-	return []string{StateDraft, StateSent}
+	return []string{StateDraft, StateNegociation}
 }
 
 func StateFromString(s string) quoteGrpc.QuoteState {
 	switch s {
 	case StateDraft:
 		return quoteGrpc.QuoteState_QUOTE_STATE_DRAFT
-	case StateSent:
-		return quoteGrpc.QuoteState_QUOTE_STATE_SENT
+	case StateNegociation:
+		return quoteGrpc.QuoteState_QUOTE_STATE_NEGOCIATION
 	case StateValidated:
 		return quoteGrpc.QuoteState_QUOTE_STATE_VALIDATED
 	case StateDrop:

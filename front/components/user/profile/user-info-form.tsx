@@ -11,6 +11,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   apiFetch,
   fieldErrorsFromBody,
@@ -25,8 +26,12 @@ export type UserProfile = {
   phone: string;
   company: string;
   siren: string;
+  siret: string;
   vat: string;
   suspended: boolean;
+  oss_enabled: boolean;
+  iban: string;
+  bic: string;
 };
 
 type UserInfoFormProps = {
@@ -45,27 +50,58 @@ export default function UserInfoForm({
   const [phone, setPhone] = useState(user.phone ?? "");
   const [company, setCompany] = useState(user.company ?? "");
   const [siren, setSiren] = useState(user.siren ?? "");
+  const [siret, setSiret] = useState(user.siret ?? "");
   const [vat, setVat] = useState(user.vat ?? "");
+  const [ossEnabled, setOssEnabled] = useState(user.oss_enabled ?? false);
+  const [iban, setIban] = useState(user.iban ?? "");
+  const [bic, setBic] = useState(user.bic ?? "");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
+
+  // Mirrors backend sqlutil.ValidateSIRET: empty is allowed; otherwise 14 digits
+  // and, when a SIREN is set, the SIRET must start with it. Catches the bad value
+  // before the round-trip; the server still validates authoritatively.
+  function validateSiret(): string | null {
+    const s = siret.replace(/\s/g, "");
+    if (s === "") return null;
+    if (!/^\d{14}$/.test(s)) return t("siretInvalidLength");
+    const sn = siren.replace(/\s/g, "");
+    if (sn !== "" && !s.startsWith(sn)) return t("siretSirenMismatch");
+    return null;
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (readOnly) return;
     setFieldErrors({});
+    const siretError = validateSiret();
+    if (siretError) {
+      setFieldErrors({ siret: [siretError] });
+      return;
+    }
     setSubmitting(true);
     try {
-      const { ok, status, body } = await apiFetch("/api/users/me", {
+      const { ok, body } = await apiFetch("/api/users/me", {
         method: "PUT",
-        body: JSON.stringify({ phone, company, siren, vat }),
+        body: JSON.stringify({
+          phone,
+          company,
+          siren,
+          siret,
+          vat,
+          oss_enabled: ossEnabled,
+          iban,
+          bic,
+        }),
       });
       if (ok && body.success) {
         toast.success(t("successToast"));
-        onSaved?.({ ...user, phone, company, siren, vat });
+        onSaved?.({ ...user, phone, company, siren, siret, vat, oss_enabled: ossEnabled, iban, bic });
         return;
       }
-      if (status === 422 && Array.isArray(body.field_errors)) {
-        setFieldErrors(fieldErrorsFromBody(body));
+      const parsed = fieldErrorsFromBody(body);
+      if (Object.keys(parsed).length > 0) {
+        setFieldErrors(parsed);
         return;
       }
       toast.error(body.message ?? tCommon("errors.generic"));
@@ -153,7 +189,62 @@ export default function UserInfoForm({
             />
             <FieldError errors={toErrorProps(fieldErrors.vat)} />
           </Field>
+
+          <Field data-invalid={!!fieldErrors.siret?.length}>
+            <FieldLabel htmlFor="siret">{t("siretLabel")}</FieldLabel>
+            <Input
+              id="siret"
+              name="siret"
+              value={siret}
+              onChange={(e) => setSiret(e.target.value)}
+              aria-invalid={!!fieldErrors.siret?.length}
+              disabled={readOnly}
+            />
+            <FieldError errors={toErrorProps(fieldErrors.siret)} />
+          </Field>
         </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Field data-invalid={!!fieldErrors.iban?.length}>
+            <FieldLabel htmlFor="iban">{t("ibanLabel")}</FieldLabel>
+            <Input
+              id="iban"
+              name="iban"
+              value={iban}
+              onChange={(e) => setIban(e.target.value)}
+              aria-invalid={!!fieldErrors.iban?.length}
+              disabled={readOnly}
+            />
+            <FieldDescription>{t("ibanHint")}</FieldDescription>
+            <FieldError errors={toErrorProps(fieldErrors.iban)} />
+          </Field>
+
+          <Field data-invalid={!!fieldErrors.bic?.length}>
+            <FieldLabel htmlFor="bic">{t("bicLabel")}</FieldLabel>
+            <Input
+              id="bic"
+              name="bic"
+              value={bic}
+              onChange={(e) => setBic(e.target.value)}
+              aria-invalid={!!fieldErrors.bic?.length}
+              disabled={readOnly}
+            />
+            <FieldError errors={toErrorProps(fieldErrors.bic)} />
+          </Field>
+        </div>
+
+        <Field orientation="horizontal">
+          <Checkbox
+            id="oss_enabled"
+            checked={ossEnabled}
+            onCheckedChange={(checked) => setOssEnabled(checked === true)}
+            disabled={readOnly}
+          />
+          <div className="grid gap-1">
+            <FieldLabel htmlFor="oss_enabled">{t("ossEnabledLabel")}</FieldLabel>
+            <FieldDescription>{t("ossEnabledHint")}</FieldDescription>
+          </div>
+        </Field>
       </FieldGroup>
 
       <div className="flex justify-end">

@@ -90,8 +90,7 @@ describe.skip("Quote — customer mode", () => {
       cy.get("input[name='name']").should("be.disabled");
 
       // No drop/continue actions in the header regardless of step.
-      cy.contains("button", "Abandonner").should("not.exist");
-      cy.contains("button", "Continuer").should("not.exist");
+      cy.contains("button", "Changer l'état").should("not.exist");
 
       // Step 2 — lines: every line input is disabled, no add/remove buttons.
       cy.get("[data-step-tab='1']").click();

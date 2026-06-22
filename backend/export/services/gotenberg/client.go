@@ -33,9 +33,22 @@ func New(addr string) *Client {
 }
 
 // Convert posts the given HTML document to Gotenberg's Chromium HTML→PDF
-// endpoint and returns the rendered PDF bytes. Gotenberg requires the entry
-// file to be named exactly "index.html".
+// endpoint and returns the rendered PDF bytes.
 func (c *Client) Convert(ctx context.Context, html []byte) ([]byte, error) {
+	return c.convertHTML(ctx, html, nil)
+}
+
+// ConvertPDFA3 renders the HTML to a PDF/A-3b document (the archivable profile
+// that allows embedded files). It is the first step of Factur-X assembly: the
+// returned PDF is later given an embedded factur-x.xml attachment.
+func (c *Client) ConvertPDFA3(ctx context.Context, html []byte) ([]byte, error) {
+	return c.convertHTML(ctx, html, map[string]string{"pdfa": "PDF/A-3b"})
+}
+
+// convertHTML posts the HTML to the Chromium endpoint with optional extra form
+// fields (e.g. pdfa) and returns the rendered PDF bytes. Gotenberg requires the
+// entry file to be named exactly "index.html".
+func (c *Client) convertHTML(ctx context.Context, html []byte, formFields map[string]string) ([]byte, error) {
 	var body bytes.Buffer
 	mw := multipart.NewWriter(&body)
 
@@ -48,6 +61,11 @@ func (c *Client) Convert(ctx context.Context, html []byte) ([]byte, error) {
 	}
 	if _, err := fw.Write(html); err != nil {
 		return nil, fmt.Errorf("gotenberg: write html: %w", err)
+	}
+	for k, v := range formFields {
+		if err := mw.WriteField(k, v); err != nil {
+			return nil, fmt.Errorf("gotenberg: write field %s: %w", k, err)
+		}
 	}
 	if err := mw.Close(); err != nil {
 		return nil, fmt.Errorf("gotenberg: close multipart: %w", err)

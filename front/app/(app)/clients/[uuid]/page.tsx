@@ -175,6 +175,12 @@ export default function ClientProfilePage() {
                 {client.siren}
               </p>
             )}
+            {client.siret && (
+              <p>
+                <span className="font-medium">{t("info.siret")}</span>{" "}
+                {client.siret}
+              </p>
+            )}
             {client.vat && (
               <p>
                 <span className="font-medium">{t("info.vat")}</span>{" "}

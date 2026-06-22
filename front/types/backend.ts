@@ -1,4 +1,8 @@
-export type BackendQuoteState = "draft" | "sent" | "validated" | "drop";
+export type BackendQuoteState =
+  | "draft"
+  | "negociation"
+  | "validated"
+  | "drop";
 
 export type BackendQuote = {
   quote_id: string;
@@ -123,6 +127,10 @@ export type BackendTemplateLine = {
   updated_at: string;
 };
 
+// "individual" = B2C, "business" = B2B. Empty string for legacy clients not yet
+// classified.
+export type ClientType = "individual" | "business" | "";
+
 export type BackendClient = {
   client_id: string;
   user_id: string;
@@ -132,8 +140,10 @@ export type BackendClient = {
   phone: string;
   company: string;
   siren: string;
+  siret: string;
   vat: string;
   archived: boolean;
+  client_type: ClientType;
 };
 
 export type BackendAddressOwnerType = "user" | "client";
@@ -193,6 +203,150 @@ export type BackendScheduleDetails = {
   column_totals: BackendScheduleColumnTotal[];
   quote_total_cents: number;
   planned_total_cents: number;
+};
+
+// ─── Invoice ─────────────────────────────────────────────────────────────────
+
+export type BackendInvoiceStatus = "DRAFT" | "ISSUED" | "PAID" | "CANCELLED";
+
+// E-invoicing lifecycle status (réforme FR B2B), orthogonal to the business
+// status. "NONE" = no platform lifecycle yet.
+export type BackendInvoiceLifecycleStatus =
+  | "NONE"
+  | "DEPOSITED"
+  | "RECEIVED"
+  | "APPROVED"
+  | "REJECTED"
+  | "COLLECTED";
+
+export type BackendInvoiceLifecycleEvent = {
+  status: Exclude<BackendInvoiceLifecycleStatus, "NONE">;
+  note: string;
+  created_at: string;
+};
+
+export type BackendInvoiceSummary = {
+  invoice_id: string;
+  invoice_number: string;
+  status: BackendInvoiceStatus;
+  quote_id: string;
+  schedule_id: string;
+  issued_at: string;
+  due_date: string;
+  total_ttc_cents: number;
+  lifecycle_status: BackendInvoiceLifecycleStatus;
+};
+
+// E-reporting (B5/C5): periodic aggregate transmitted to the platform.
+// TRANSACTION = domestic B2C sales; CROSS_BORDER_B2C = intra-EU distance sales.
+export type BackendReportKind = "TRANSACTION" | "CROSS_BORDER_B2C";
+
+export type BackendInvoiceReportSummary = {
+  kind: BackendReportKind;
+  year: number;
+  month: number;
+  status: BackendInvoiceLifecycleStatus;
+  total_ht_cents: number;
+  total_vat_cents: number;
+  submitted_at: string;
+};
+
+export type BackendOSSThresholdStatus = {
+  year: number;
+  cumulative_ht_cents: number;
+  threshold_cents: number;
+  oss_enabled: boolean;
+  oss_active: boolean;
+  // N-1 rule (art. 259 D CGI): prior year crossed the threshold → destination
+  // VAT from the first euro this year.
+  prior_year_over_threshold: boolean;
+  prior_year_cumulative_ht_cents: number;
+};
+
+export type BackendInvoiceParty = {
+  company: string;
+  first_name: string;
+  last_name: string;
+  siren: string;
+  siret: string;
+  vat: string;
+  email: string;
+  phone: string;
+  logo_url: string;
+  street: string;
+  additional_street: string;
+  zip_code: string;
+  city: string;
+  iban: string;
+  bic: string;
+};
+
+export type BackendInvoiceLine = {
+  quote_line_id: string;
+  name: string;
+  unit: string;
+  quantity: string;
+  unit_price_cents: number;
+  line_ht_cents: number;
+  tax_id: number;
+  tax_rate: string;
+  tax_label: string;
+};
+
+export type BackendInvoiceVatLine = {
+  tax_rate: string;
+  base_ht_cents: number;
+  vat_cents: number;
+};
+
+export type BackendInvoiceDetails = {
+  invoice_id: string;
+  quote_id: string;
+  schedule_id: string;
+  billed_month_indexes: number[];
+  status: BackendInvoiceStatus;
+  invoice_number: string;
+  issued_at: string;
+  sale_date: string;
+  due_date: string;
+  issuer: BackendInvoiceParty;
+  client: BackendInvoiceParty;
+  lines: BackendInvoiceLine[];
+  vat_breakdown: BackendInvoiceVatLine[];
+  total_ht_cents: number;
+  total_vat_cents: number;
+  total_ttc_cents: number;
+  vat_exempt: boolean;
+  credited_positions: number[];
+  lifecycle_status: BackendInvoiceLifecycleStatus;
+};
+
+export type BackendCreditNoteSummary = {
+  credit_note_id: string;
+  credit_note_number: string;
+  invoice_id: string;
+  invoice_number: string;
+  issued_at: string;
+  is_total: boolean;
+  total_ttc_cents: number;
+};
+
+export type BackendCreditNoteDetails = {
+  credit_note_id: string;
+  invoice_id: string;
+  invoice_number: string;
+  credit_note_number: string;
+  issued_at: string;
+  reason: string;
+  is_total: boolean;
+  issuer: BackendInvoiceParty;
+  client: BackendInvoiceParty;
+  lines: BackendInvoiceLine[];
+  vat_breakdown: BackendInvoiceVatLine[];
+  total_ht_cents: number;
+  total_vat_cents: number;
+  total_ttc_cents: number;
+  vat_exempt: boolean;
 };
 
 export type ScheduleBalanceState = "under" | "balanced" | "over";

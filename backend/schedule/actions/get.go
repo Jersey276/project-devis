@@ -133,3 +133,73 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 
 	return resp, nil
 }
+
+// GetScheduleCells returns the raw per-(line, month) amounts of a schedule.
+// Downstream services (invoicing) need this granularity to bill a subset of
+// months with a correct per-line breakdown — GetSchedule only exposes totals.
+func (s *Server) GetScheduleCells(ctx context.Context, req *scheduleGrpc.GetScheduleCellsRequest) (*scheduleGrpc.GetScheduleCellsResponse, error) {
+	startedAt := time.Now()
+	var resp *scheduleGrpc.GetScheduleCellsResponse
+	var err error
+	defer deferObserve("get_schedule_cells", startedAt, func() (int32, bool) {
+		if resp == nil {
+			return CodeInternalError, false
+		}
+		return resp.Code, resp.Success
+	}, &err)()
+
+	if req == nil || strings.TrimSpace(req.ScheduleId) == "" || strings.TrimSpace(req.UserId) == "" {
+		resp = &scheduleGrpc.GetScheduleCellsResponse{Success: false, Code: CodeInvalidInput}
+		return resp, nil
+	}
+
+	// Ownership guard: the schedule must belong to the caller.
+	var exists bool
+	err = s.db.QueryRowContext(ctx,
+		`SELECT EXISTS(SELECT 1 FROM schedules WHERE schedule_id=$1 AND user_id=$2)`,
+		req.ScheduleId, req.UserId,
+	).Scan(&exists)
+	if err != nil {
+		resp = &scheduleGrpc.GetScheduleCellsResponse{Success: false, Code: CodeInternalError}
+		return resp, err
+	}
+	if !exists {
+		resp = &scheduleGrpc.GetScheduleCellsResponse{Success: false, Code: CodeNotFound}
+		return resp, nil
+	}
+
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT quote_line_id, month_index, amount_cents
+		 FROM schedule_cells WHERE schedule_id=$1
+		 ORDER BY quote_line_id, month_index`,
+		req.ScheduleId,
+	)
+	if err != nil {
+		resp = &scheduleGrpc.GetScheduleCellsResponse{Success: false, Code: CodeInternalError}
+		return resp, err
+	}
+	defer rows.Close()
+
+	cells := make([]*scheduleGrpc.ScheduleCell, 0)
+	for rows.Next() {
+		var lineID string
+		var monthIndex int32
+		var amountCents int64
+		if err := rows.Scan(&lineID, &monthIndex, &amountCents); err != nil {
+			resp = &scheduleGrpc.GetScheduleCellsResponse{Success: false, Code: CodeInternalError}
+			return resp, err
+		}
+		cells = append(cells, &scheduleGrpc.ScheduleCell{
+			QuoteLineId: lineID,
+			MonthIndex:  monthIndex,
+			AmountCents: amountCents,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		resp = &scheduleGrpc.GetScheduleCellsResponse{Success: false, Code: CodeInternalError}
+		return resp, err
+	}
+
+	resp = &scheduleGrpc.GetScheduleCellsResponse{Success: true, Code: CodeSuccess, Cells: cells}
+	return resp, nil
+}

@@ -63,8 +63,9 @@ export default function ClientDialog({
     try {
       const createRes = await createClient(client);
       if (!createRes.ok || !createRes.body.success) {
-        if (createRes.status === 422) {
-          setClientErrors(fieldErrorsFromBody(createRes.body));
+        const parsed = fieldErrorsFromBody(createRes.body);
+        if (Object.keys(parsed).length > 0) {
+          setClientErrors(parsed);
         } else {
           toast.error(createRes.body.message ?? tCreate("createFailedToast"));
         }

@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package export;
+
+// Duplicated downstream client proto (convention du repo : go_package réécrit par
+// service). invoice n'appelle que ExportInvoice (Factur-X) pour le dépôt PA (B6).
+option go_package = "project-devis-invoice/services/exportgrpc";
+
+service ExportService {
+    rpc ExportQuote(ExportQuoteRequest) returns (ExportQuoteResponse);
+    rpc ExportSchedule(ExportScheduleRequest) returns (ExportQuoteResponse);
+    rpc ExportInvoice(ExportInvoiceRequest) returns (ExportQuoteResponse);
+    rpc ExportCreditNote(ExportCreditNoteRequest) returns (ExportQuoteResponse);
+}
+
+message ExportQuoteRequest {
+    string quote_id = 1;
+    string user_id  = 2;
+}
+
+message ExportQuoteResponse {
+    bool   success  = 1;
+    int32  code     = 2;
+    bytes  pdf      = 3;
+    string filename = 4;
+}
+
+message ExportScheduleRequest {
+    string schedule_id = 1;
+    string user_id     = 2;
+}
+
+message ExportInvoiceRequest {
+    string invoice_id = 1;
+    string user_id    = 2;
+    bool   facturx    = 3;  // if true, return a Factur-X PDF/A-3 (issued only)
+}
+
+message ExportCreditNoteRequest {
+    string credit_note_id = 1;
+    string user_id        = 2;
+    bool   facturx        = 3;  // if true, return a Factur-X PDF/A-3 (issued only)
+}

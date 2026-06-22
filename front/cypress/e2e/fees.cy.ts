@@ -121,7 +121,7 @@ describe("Fees page", () => {
       cy.get("[data-slot='dialog-content']").should("be.visible");
 
       // Category defaults to "fixed"; pick "Prestation" (service).
-      cy.get("[data-slot='select-trigger']").click();
+      cy.get("[data-slot='dialog-content'] [data-slot='select-trigger']").click();
       cy.contains("[data-slot='select-item']", "Prestation").click();
 
       cy.get("input[name='name']").type("Frais de dossier");

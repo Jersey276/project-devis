@@ -59,6 +59,16 @@ func setupRouter() *gin.Engine {
 	fees.Use(middleware.AuthRequired())
 	fees.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionFees))
 	controllers.FeesRoutes(fees)
+	
+	invoices := api.Group("/invoices")
+	invoices.Use(middleware.AuthRequired())
+	invoices.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionInvoices))
+	controllers.InvoicesRoutes(invoices)
+
+	creditNotes := api.Group("/credit-notes")
+	creditNotes.Use(middleware.AuthRequired())
+	creditNotes.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionInvoices))
+	controllers.CreditNotesRoutes(creditNotes)
 
 	plans := api.Group("/plans")
 	plans.Use(middleware.AuthRequired())

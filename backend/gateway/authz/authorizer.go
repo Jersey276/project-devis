@@ -24,6 +24,7 @@ const (
 	ResourceSubscriptionSchedules     Resource = "subscription.schedules"
 	ResourceSubscriptionEmailTracking Resource = "subscription.email_tracking"
 	ResourceSubscriptionFees          Resource = "subscription.fees"
+	ResourceSubscriptionInvoices      Resource = "subscription.invoices"
 )
 
 type Subject struct {

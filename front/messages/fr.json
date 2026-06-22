@@ -30,6 +30,7 @@
     "quote": "Devis",
     "schedule": "Échéanciers",
     "invoices": "Factures",
+    "creditNotes": "Avoirs",
     "clients": "Clients",
     "fees": "Frais",
     "users": "Utilisateurs",
@@ -141,6 +142,34 @@
     "invite": {}
   },
   "quote": {
+    "stateDropdown": {
+      "trigger": "Changer l'état",
+      "error": "Le changement d'état a échoué.",
+      "transitions": {
+        "validate": "Valider",
+        "negociate": "Mettre en négociation",
+        "drop": "Refuser",
+        "continue": "Reprendre"
+      },
+      "confirm": {
+        "cancel": "Annuler",
+        "validate": {
+          "title": "Valider ce devis ?",
+          "description": "La validation verrouille le devis et permet de générer une facture. Cette action est définitive.",
+          "confirm": "Valider"
+        },
+        "negociate": {
+          "title": "Mettre ce devis en négociation ?",
+          "description": "Le devis sera envoyé au client par email (avec le PDF) et passera en état « En négociation ».",
+          "confirm": "Mettre en négociation"
+        },
+        "drop": {
+          "title": "Refuser ce devis ?",
+          "description": "Le devis sera marqué comme abandonné. Vous pourrez le reprendre ensuite.",
+          "confirm": "Refuser"
+        }
+      }
+    },
     "list": {
       "title": "Devis",
       "newButton": "Nouveau devis",
@@ -174,15 +203,6 @@
       "exportFailedToast": "Échec de l'export.",
       "saveAsTemplateButton": "Enregistrer comme template",
       "saveAsTemplateSuccessToast": "Template enregistré.",
-      "dropButton": "Abandonner",
-      "dropDialog": {
-        "title": "Abandonner ce devis ?",
-        "description": "Le devis ne pourra plus être modifié. Vous pourrez le réactiver via le bouton Continuer.",
-        "confirm": "Confirmer"
-      },
-      "dropFailedToast": "Impossible d'abandonner le devis.",
-      "continueButton": "Continuer",
-      "continueFailedToast": "Impossible de réactiver le devis.",
       "stepLabel": "Étape {n} · {label}",
       "prev": "Précédent",
       "next": "Suivant",
@@ -193,6 +213,8 @@
         "selectClient": "Veuillez sélectionner un client.",
         "selectAddress": "Veuillez sélectionner une adresse.",
         "selectUserAddress": "Veuillez sélectionner une adresse de prestataire.",
+        "revertedToDraftToast": "Le devis a été modifié et repassé en brouillon.",
+        "resendToClient": "Renvoyer au client",
         "nameSaveFailedToast": "Échec de l'enregistrement du nom.",
         "clientSaveFailedToast": "Échec de l'enregistrement du client.",
         "addressSaveFailedToast": "Échec de l'enregistrement de l'adresse.",
@@ -288,7 +310,7 @@
   "status": {
     "quote": {
       "draft": "Brouillon",
-      "sent": "Envoyé",
+      "negociation": "En négociation",
       "validated": "Validé",
       "drop": "Abandonné",
       "archived": "Archivé"
@@ -313,12 +335,18 @@
       "deleteFailedToast": "Impossible de supprimer le client."
     },
     "form": {
+      "clientTypeLabel": "Type de client",
+      "clientType": {
+        "individual": "Particulier",
+        "business": "Professionnel"
+      },
       "firstNameLabel": "Prénom",
       "lastNameLabel": "Nom",
       "emailLabel": "Adresse mail",
       "phoneLabel": "Téléphone",
       "companyLabel": "Société",
       "sirenLabel": "SIREN",
+      "siretLabel": "SIRET",
       "vatLabel": "TVA",
       "mainAddressLabel": "Adresse principale",
       "placeholders": {
@@ -328,6 +356,7 @@
         "phone": "06 12 34 56 78",
         "company": "Acme SARL",
         "siren": "123 456 789",
+        "siret": "123 456 789 00012",
         "vat": "FR12345678901"
       }
     },
@@ -371,6 +400,7 @@
         "phone": "Téléphone:",
         "company": "Société:",
         "siren": "SIREN:",
+        "siret": "SIRET:",
         "vat": "TVA:"
       },
       "addressesTitle": "Adresses"
@@ -414,12 +444,226 @@
     }
   },
   "invoice": {
+    "status": {
+      "DRAFT": "Brouillon",
+      "ISSUED": "Émise",
+      "PAID": "Payée",
+      "CANCELLED": "Annulée"
+    },
+    "lifecycle": {
+      "title": "Statut e-invoicing",
+      "advance": "Faire évoluer le statut",
+      "targetPlaceholder": "Nouveau statut",
+      "note": "Note (facultatif)",
+      "confirm": "Valider",
+      "cancel": "Annuler",
+      "actionError": "La mise à jour du statut e-invoicing a échoué.",
+      "deposit": {
+        "action": "Déposer sur la plateforme",
+        "error": "Le dépôt sur la plateforme a échoué."
+      },
+      "status": {
+        "NONE": "—",
+        "DEPOSITED": "Déposée",
+        "RECEIVED": "Reçue",
+        "APPROVED": "Approuvée",
+        "REJECTED": "Refusée",
+        "COLLECTED": "Encaissée"
+      },
+      "history": {
+        "title": "Historique e-invoicing",
+        "empty": "Aucun événement."
+      }
+    },
+    "oss": {
+      "title": "Régime OSS — ventes à distance B2C ({year})",
+      "cumulative": "Chiffre d'affaires intra-UE B2C : {cumulative} sur un seuil de {threshold} ({pct} %).",
+      "remaining": "Il reste {remaining} avant la bascule automatique vers la TVA du pays de destination.",
+      "activeThreshold": "Seuil atteint : la TVA du pays de destination s'applique désormais (guichet unique OSS, art. 259 D du CGI).",
+      "activeOptIn": "Option OSS activée : la TVA du pays de destination s'applique aux ventes à distance B2C intra-UE (art. 259 D du CGI).",
+      "activePriorYear": "Seuil franchi l'an dernier : la TVA du pays de destination s'applique dès le 1er euro cette année (guichet unique OSS, art. 259 D du CGI)."
+    },
+    "reporting": {
+      "title": "E-reporting",
+      "description": "Transmission périodique à la plateforme des opérations hors champ de la facturation électronique : ventes B2C en France (transaction) et ventes à distance B2C intra-UE (transfrontalier).",
+      "submit": "Transmettre la période",
+      "submitError": "La transmission a échoué.",
+      "empty": "Aucune période transmise.",
+      "kind": {
+        "TRANSACTION": "Transaction (B2C France)",
+        "CROSS_BORDER_B2C": "Transfrontalier (B2C intra-UE)"
+      },
+      "col": {
+        "kind": "Type",
+        "period": "Période",
+        "totalHt": "Total HT",
+        "totalVat": "Total TVA",
+        "status": "Statut"
+      },
+      "month": {
+        "1": "Janvier",
+        "2": "Février",
+        "3": "Mars",
+        "4": "Avril",
+        "5": "Mai",
+        "6": "Juin",
+        "7": "Juillet",
+        "8": "Août",
+        "9": "Septembre",
+        "10": "Octobre",
+        "11": "Novembre",
+        "12": "Décembre"
+      }
+    },
     "list": {
       "title": "Factures",
-      "placeholder": "Page des factures"
+      "empty": "Aucune facture.",
+      "loadError": "Impossible de charger les factures.",
+      "pdfError": "Export PDF impossible.",
+      "actionError": "L'action a échoué.",
+      "columns": {
+        "number": "Numéro",
+        "status": "Statut",
+        "lifecycle": "Statut e-invoicing",
+        "quote": "Devis",
+        "dueDate": "Échéance",
+        "totalTtc": "Total TTC",
+        "actions": "Actions"
+      },
+      "actions": {
+        "open": "Ouvrir",
+        "downloadPdf": "Télécharger le PDF",
+        "markPaid": "Marquer payée",
+        "deleteDraft": "Supprimer le brouillon"
+      },
+      "deleteError": "La suppression du brouillon a échoué.",
+      "deleteConfirmTitle": "Supprimer ce brouillon ?",
+      "deleteConfirmBody": "Ce brouillon sera définitivement supprimé. Cette action est sans effet sur les factures déjà émises.",
+      "deleteConfirmAction": "Supprimer",
+      "deleteCancel": "Annuler"
     },
     "detail": {
-      "title": "Détail de la facture {id}"
+      "titleNumbered": "Facture N° {number}",
+      "titleDraft": "Facture (brouillon)",
+      "loading": "Chargement…",
+      "loadError": "Impossible de charger la facture.",
+      "notFound": "Facture introuvable.",
+      "pdfError": "Export PDF impossible.",
+      "actionError": "L'action a échoué.",
+      "downloadPdf": "Télécharger le PDF",
+      "downloadFacturx": "Télécharger Factur-X",
+      "facturxError": "Export Factur-X impossible.",
+      "markPaid": "Marquer payée",
+      "deleteDraft": "Supprimer le brouillon",
+      "deleteError": "La suppression du brouillon a échoué.",
+      "deleteConfirmTitle": "Supprimer ce brouillon ?",
+      "deleteConfirmBody": "Ce brouillon sera définitivement supprimé. Cette action est sans effet sur les factures déjà émises.",
+      "deleteConfirmAction": "Supprimer",
+      "deleteCancel": "Annuler",
+      "createCreditNote": "Créer un avoir",
+      "issuer": "Émetteur",
+      "client": "Client",
+      "saleDate": "Date de vente",
+      "dueDate": "Échéance",
+      "issuedAt": "Émise le",
+      "lines": {
+        "name": "Désignation",
+        "quantity": "Qté",
+        "unit": "Unité",
+        "unitPrice": "PU HT",
+        "vat": "TVA",
+        "totalHt": "Total HT"
+      },
+      "totals": {
+        "ht": "Total HT",
+        "vat": "Total TVA",
+        "ttc": "Total TTC"
+      },
+      "vatExemptNotice": "TVA non applicable, art. 293 B du CGI."
+    },
+    "generateFromSchedule": {
+      "title": "Générer une facture",
+      "description": "Sélectionnez les mois de l'échéancier à facturer.",
+      "month": "Mois {index}",
+      "selectedTotal": "Total sélectionné",
+      "issueNow": "Émettre immédiatement (attribue le numéro de facture)",
+      "cancel": "Annuler",
+      "submit": "Générer",
+      "submitting": "Génération…",
+      "error": "La génération de la facture a échoué."
+    },
+    "generateFromQuote": {
+      "generate": "Générer une facture",
+      "submitting": "Génération…",
+      "error": "La génération de la facture a échoué."
+    }
+  },
+  "creditNote": {
+    "list": {
+      "title": "Avoirs",
+      "empty": "Aucun avoir.",
+      "loadError": "Impossible de charger les avoirs.",
+      "pdfError": "Export PDF impossible.",
+      "total": "Total",
+      "partial": "Partiel",
+      "columns": {
+        "number": "Numéro",
+        "invoice": "Facture",
+        "type": "Type",
+        "issuedAt": "Date",
+        "totalTtc": "Montant TTC",
+        "actions": "Actions"
+      },
+      "actions": {
+        "open": "Ouvrir",
+        "downloadPdf": "Télécharger le PDF"
+      }
+    },
+    "create": {
+      "title": "Créer un avoir",
+      "selectLines": "Sélectionnez les lignes à avoirer",
+      "alreadyCredited": "déjà avoirée",
+      "totalCredit": "Tout sélectionner",
+      "selectedTotal": "Total sélectionné",
+      "reason": "Motif (optionnel)",
+      "cancel": "Annuler",
+      "submit": "Créer l'avoir",
+      "submitting": "Création…",
+      "error": "La création de l'avoir a échoué."
+    },
+    "detail": {
+      "breadcrumb": "Avoir",
+      "title": "Avoir N° {number}",
+      "originInvoice": "En référence à la facture N° {number}",
+      "loading": "Chargement…",
+      "loadError": "Impossible de charger l'avoir.",
+      "notFound": "Avoir introuvable.",
+      "pdfError": "Export PDF impossible.",
+      "downloadPdf": "Télécharger le PDF",
+      "downloadFacturx": "Télécharger Factur-X",
+      "facturxError": "Export Factur-X impossible.",
+      "issuer": "Émetteur",
+      "client": "Client",
+      "lines": {
+        "name": "Désignation",
+        "quantity": "Qté",
+        "unit": "Unité",
+        "unitPrice": "PU HT",
+        "vat": "TVA",
+        "totalHt": "Total HT"
+      },
+      "totals": {
+        "ht": "Total HT",
+        "vat": "Total TVA",
+        "ttc": "Total TTC"
+      },
+      "vatExemptNotice": "TVA non applicable, art. 293 B du CGI."
+    },
+    "linkedSection": {
+      "title": "Avoirs",
+      "total": "Avoir total",
+      "partial": "Avoir partiel",
+      "downloadPdf": "PDF"
     }
   },
   "admin": {
@@ -659,7 +903,15 @@
       "phoneLabel": "Téléphone",
       "companyLabel": "Société",
       "sirenLabel": "SIREN",
+      "siretLabel": "SIRET",
       "vatLabel": "N° de TVA",
+      "ossEnabledLabel": "Régime OSS activé",
+      "ossEnabledHint": "Pour la vente à distance à des particuliers d'autres pays de l'UE : applique la TVA du pays de destination. À activer une fois le seuil de 10 000 € franchi.",
+      "ibanLabel": "IBAN",
+      "ibanHint": "Affiché sur vos factures électroniques comme coordonnées de paiement.",
+      "bicLabel": "BIC",
+      "siretInvalidLength": "Le SIRET doit comporter 14 chiffres.",
+      "siretSirenMismatch": "Le SIRET doit commencer par le SIREN.",
       "successToast": "Informations mises à jour."
     },
     "connection": {
