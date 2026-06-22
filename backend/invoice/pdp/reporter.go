@@ -32,6 +32,7 @@ type ReportLine struct {
 // (already-aggregated lines + totals) so the seam holds no business logic.
 type SubmitReportInput struct {
 	UserID        string
+	IssuerSIREN   string // 9-digit SIREN, required by the Iopole e-reporting API
 	Kind          ReportKind
 	Period        ReportPeriod
 	Lines         []ReportLine

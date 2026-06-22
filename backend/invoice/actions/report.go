@@ -50,8 +50,15 @@ func (s *Server) SubmitInvoiceReport(ctx context.Context, req *invoiceGrpc.Submi
 		return &invoiceGrpc.GenericResponse{Success: false, Code: codes.InternalError}, err
 	}
 
+	var issuerSIREN string
+	_ = s.db.QueryRowContext(ctx,
+		`SELECT issuer_siren FROM invoice_party_snapshots WHERE user_id = $1 LIMIT 1`,
+		req.UserId,
+	).Scan(&issuerSIREN)
+
 	result, err := s.reporter.SubmitReport(ctx, pdp.SubmitReportInput{
 		UserID:        req.UserId,
+		IssuerSIREN:   issuerSIREN,
 		Kind:          kind,
 		Period:        period,
 		Lines:         lines,
