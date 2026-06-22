@@ -30,12 +30,17 @@ func NewDirectory(baseURL, tokenURL, clientID, clientSecret, customerID string) 
 	}
 }
 
-// Resolve looks the recipient SIRET up in the French directory. An empty result set
-// means the recipient is not reachable for e-invoicing → pdp.ErrRecipientNotFound,
-// which the deposit flow maps to RecipientNotInDirectory (4014).
+// Resolve looks the recipient up in the French directory. Iopole's /v1/directory/french
+// accepts a SIREN (9 digits); if a full SIRET (14 digits) is provided we strip the
+// NIC suffix. An empty result set means the recipient is not reachable for e-invoicing
+// → pdp.ErrRecipientNotFound, which the deposit flow maps to RecipientNotInDirectory (4014).
 func (d *Directory) Resolve(ctx context.Context, siret string) (pdp.RecipientRouting, error) {
-	u := fmt.Sprintf("%s/v1/directory/french?q=%s&withPlatformDetails=true",
-		d.baseURL, url.QueryEscape(siret))
+	q := siret
+	if len(siret) == 14 {
+		q = siret[:9] // Iopole rejects 14-digit queries; search by SIREN only
+	}
+	u := fmt.Sprintf("%s/v1/directory/french?q=%s",
+		d.baseURL, url.QueryEscape(q))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return pdp.RecipientRouting{}, err
