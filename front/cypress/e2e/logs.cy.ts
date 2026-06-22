@@ -107,7 +107,7 @@ describe("Logs — filtre statut HTTP", () => {
 
     cy.contains("Filtres").click();
     cy.get('[placeholder="Sélectionner des statuts…"]').click();
-    cy.contains("204").click();
+    cy.get('[data-slot="combobox-item"]').contains("204").click();
     cy.get("body").type("{esc}");
 
     cy.wait("@getLogsFiltered");
@@ -118,7 +118,7 @@ describe("Logs — filtre statut HTTP", () => {
 
     cy.contains("Filtres").click();
     cy.get('[placeholder="Sélectionner des statuts…"]').click();
-    cy.contains("204").click();
+    cy.get('[data-slot="combobox-item"]').contains("204").click();
     cy.get("body").type("{esc}");
 
     cy.wait("@getLogsFiltered");
@@ -134,7 +134,7 @@ describe("Logs — filtre statut HTTP", () => {
 
     cy.contains("Filtres").click();
     cy.get('[placeholder="Sélectionner des statuts…"]').click();
-    cy.contains("204").click();
+    cy.get('[data-slot="combobox-item"]').contains("204").click();
     cy.get("body").type("{esc}");
     cy.wait("@getLogsFiltered");
 
