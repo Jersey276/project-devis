@@ -8,6 +8,7 @@ on:
       - "backend/quote/**"
       - "backend/export/**"
       - "backend/schedule/**"
+      - "backend/audit/**"
     branches:
       - dev
 
@@ -38,6 +39,10 @@ jobs:
               - "backend/export/**"
             schedule:
               - "backend/schedule/**"
+            audit:
+              - "backend/audit/**"
+            gateway:
+              - "backend/gateway/**"
   ci:
     needs: check-changes
     if: needs.check-changes.outputs.services != '[]'
