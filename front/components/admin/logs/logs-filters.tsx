@@ -1,21 +1,13 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import {
-  Combobox,
-  ComboboxTrigger,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox";
+import { SelectCombobox } from "@/components/ui/select-combobox";
 import { FilterSidebar, FilterSidebarSection } from "@/components/ui/filter-sidebar";
-import { Badge } from "@/components/ui/badge";
 import { CalendarIcon } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 
@@ -33,7 +25,11 @@ export const emptyLogFilters: LogFilters = {
   date_to: "",
 };
 
-const HTTP_STATUSES = ["200", "201", "204", "301", "302", "400", "401", "403", "404", "409", "422", "429", "500", "502", "503"];
+const HTTP_STATUS_ITEMS = [
+  "200", "201", "204", "301", "302",
+  "400", "401", "403", "404", "409", "422", "429",
+  "500", "502", "503",
+].map((s) => ({ value: s, label: s }));
 
 function dateToISO(d: Date): string {
   return d.toISOString().split("T")[0];
@@ -75,24 +71,18 @@ export default function LogsFilters({ filters, onChange }: LogsFiltersProps) {
     to: isoToDate(filters.date_to),
   });
   const [dateOpen, setDateOpen] = useState(false);
-  const statusAnchor = useRef<HTMLButtonElement>(null);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange({ ...filters, search: e.target.value });
   };
 
-  const handleStatusesChange = (values: string[]) => {
-    onChange({ ...filters, resp_statuses: values.map(Number) });
-  };
-
   const handleDateSelect = (range: DateRange | undefined) => {
     setDateRange(range);
-    const next = {
+    onChange({
       ...filters,
       date_from: range?.from ? dateToISO(range.from) : "",
       date_to: range?.to ? dateToISO(range.to) : "",
-    };
-    onChange(next);
+    });
     if (range?.from && range?.to) {
       setDateOpen(false);
     }
@@ -119,43 +109,14 @@ export default function LogsFilters({ filters, onChange }: LogsFiltersProps) {
         onReset={handleReset}
       >
         <FilterSidebarSection label={t("statusLabel")}>
-          <Combobox
-            value={filters.resp_statuses.map(String)}
-            onValueChange={handleStatusesChange}
+          <SelectCombobox
             multiple
-          >
-            <ComboboxTrigger
-              ref={statusAnchor}
-              className="border-input bg-background ring-offset-background flex min-h-9 w-full flex-wrap items-center gap-1 rounded-md border px-3 py-1.5 text-sm shadow-xs"
-            >
-              {filters.resp_statuses.length === 0 ? (
-                <span className="text-muted-foreground text-sm">{t("statusPlaceholder")}</span>
-              ) : (
-                <>
-                  {filters.resp_statuses.slice(0, 5).map((s) => (
-                    <Badge key={s} variant="secondary" className="text-xs px-1.5 py-0 font-mono">
-                      {s}
-                    </Badge>
-                  ))}
-                  {filters.resp_statuses.length > 5 && (
-                    <Badge variant="outline" className="text-xs px-1.5 py-0">
-                      +{filters.resp_statuses.length - 5}
-                    </Badge>
-                  )}
-                </>
-              )}
-            </ComboboxTrigger>
-            <ComboboxContent anchor={statusAnchor}>
-              <ComboboxEmpty>{t("statusEmpty")}</ComboboxEmpty>
-              <ComboboxList>
-                {HTTP_STATUSES.map((item) => (
-                  <ComboboxItem key={item} value={item}>
-                    {item}
-                  </ComboboxItem>
-                ))}
-              </ComboboxList>
-            </ComboboxContent>
-          </Combobox>
+            items={HTTP_STATUS_ITEMS}
+            value={filters.resp_statuses.map(String)}
+            onValueChange={(values) => onChange({ ...filters, resp_statuses: values.map(Number) })}
+            placeholder={t("statusPlaceholder")}
+            emptyLabel={t("statusEmpty")}
+          />
         </FilterSidebarSection>
 
         <FilterSidebarSection label={t("dateLabel")}>

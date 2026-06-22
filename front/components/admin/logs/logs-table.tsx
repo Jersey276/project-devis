@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import {
   Table,
@@ -94,6 +94,8 @@ function DetailPanel({ detail, error, tTable }: DetailPanelProps) {
   );
 }
 
+const DATE_FORMAT = new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "medium" });
+
 export default function LogsTable({ logs }: LogsTableProps) {
   const t = useTranslations("admin.logs.table");
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -131,9 +133,8 @@ export default function LogsTable({ logs }: LogsTableProps) {
         </TableHeader>
         <TableBody>
           {logs.map((log) => (
-            <>
+            <Fragment key={log.id}>
               <TableRow
-                key={log.id}
                 className="cursor-pointer hover:bg-muted/50"
                 onClick={() => toggle(log.id)}
               >
@@ -159,19 +160,18 @@ export default function LogsTable({ logs }: LogsTableProps) {
                   {log.resp_status}
                 </TableCell>
                 <TableCell className="text-xs text-muted-foreground hidden lg:table-cell">
-                  {new Date(log.created_at).toLocaleString("fr-FR")}
+                  {DATE_FORMAT.format(new Date(log.created_at))}
                 </TableCell>
               </TableRow>
 
               {expandedId === log.id && (
                 <DetailPanel
-                  key={`${log.id}-detail`}
                   detail={cache[log.id] instanceof Object ? (cache[log.id] as ActivityLogDetail) : null}
                   error={cache[log.id] === "error"}
                   tTable={t}
                 />
               )}
-            </>
+            </Fragment>
           ))}
         </TableBody>
       </Table>
