@@ -104,9 +104,9 @@ export default function LogsFilters({ filters, onChange }: LogsFiltersProps) {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <Input
-        className="w-64"
+        className="w-full sm:w-64"
         placeholder={t("searchPlaceholder")}
         value={filters.search}
         onChange={handleSearch}

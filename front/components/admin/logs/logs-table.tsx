@@ -120,13 +120,13 @@ export default function LogsTable({ logs }: LogsTableProps) {
         <TableHeader>
           <TableRow>
             <TableHead className="w-8" />
-            <TableHead className="w-16">{t("id")}</TableHead>
-            <TableHead>{t("userId")}</TableHead>
+            <TableHead className="w-16 hidden sm:table-cell">{t("id")}</TableHead>
+            <TableHead className="hidden md:table-cell">{t("userId")}</TableHead>
             <TableHead className="w-20">{t("method")}</TableHead>
             <TableHead>{t("url")}</TableHead>
-            <TableHead className="w-28 text-right">{t("durationMs")}</TableHead>
+            <TableHead className="w-28 text-right hidden sm:table-cell">{t("durationMs")}</TableHead>
             <TableHead className="w-20 text-center">{t("respStatus")}</TableHead>
-            <TableHead className="w-40">{t("createdAt")}</TableHead>
+            <TableHead className="w-40 hidden lg:table-cell">{t("createdAt")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -140,8 +140,8 @@ export default function LogsTable({ logs }: LogsTableProps) {
                 <TableCell className="text-center text-muted-foreground">
                   <span className="text-xs">{expandedId === log.id ? "▾" : "▸"}</span>
                 </TableCell>
-                <TableCell className="text-muted-foreground">{log.id}</TableCell>
-                <TableCell className="max-w-30 truncate text-xs" title={log.user_id}>
+                <TableCell className="text-muted-foreground hidden sm:table-cell">{log.id}</TableCell>
+                <TableCell className="max-w-30 truncate text-xs hidden md:table-cell" title={log.user_id}>
                   {log.user_id || "—"}
                 </TableCell>
                 <TableCell>
@@ -149,16 +149,16 @@ export default function LogsTable({ logs }: LogsTableProps) {
                     {log.method}
                   </span>
                 </TableCell>
-                <TableCell className="max-w-64 truncate font-mono text-xs" title={log.url}>
+                <TableCell className="max-w-40 sm:max-w-64 truncate font-mono text-xs" title={log.url}>
                   {log.url}
                 </TableCell>
-                <TableCell className="text-right font-mono text-xs">
+                <TableCell className="text-right font-mono text-xs hidden sm:table-cell">
                   {log.duration_ms} ms
                 </TableCell>
                 <TableCell className={`text-center font-mono text-sm ${statusBadgeClass(log.resp_status)}`}>
                   {log.resp_status}
                 </TableCell>
-                <TableCell className="text-xs text-muted-foreground">
+                <TableCell className="text-xs text-muted-foreground hidden lg:table-cell">
                   {new Date(log.created_at).toLocaleString("fr-FR")}
                 </TableCell>
               </TableRow>
