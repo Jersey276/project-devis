@@ -108,7 +108,7 @@ describe("Logs — filtre statut HTTP", () => {
     cy.contains("Filtres").click();
     cy.get('[placeholder="Sélectionner des statuts…"]').click();
     cy.get('[data-slot="combobox-item"]').contains("204").click();
-    cy.get("body").type("{esc}");
+    cy.get('[data-slot="sheet-title"]').click();
 
     cy.wait("@getLogsFiltered");
   });
@@ -119,13 +119,13 @@ describe("Logs — filtre statut HTTP", () => {
     cy.contains("Filtres").click();
     cy.get('[placeholder="Sélectionner des statuts…"]').click();
     cy.get('[data-slot="combobox-item"]').contains("204").click();
-    cy.get("body").type("{esc}");
+    cy.get('[data-slot="sheet-title"]').click();
 
     cy.wait("@getLogsFiltered");
 
-    cy.contains("204").should("be.visible");
-    cy.contains("200").should("not.exist");
-    cy.contains("201").should("not.exist");
+    cy.get('[data-slot="table-cell"]').contains("204").should("be.visible");
+    cy.get('[data-slot="table-cell"]').contains("200").should("not.exist");
+    cy.get('[data-slot="table-cell"]').contains("201").should("not.exist");
   });
 
   it("remet à zéro le filtre statut après reset", () => {
@@ -135,7 +135,7 @@ describe("Logs — filtre statut HTTP", () => {
     cy.contains("Filtres").click();
     cy.get('[placeholder="Sélectionner des statuts…"]').click();
     cy.get('[data-slot="combobox-item"]').contains("204").click();
-    cy.get("body").type("{esc}");
+    cy.get('[data-slot="sheet-title"]').click();
     cy.wait("@getLogsFiltered");
 
     cy.contains("Réinitialiser").click();
