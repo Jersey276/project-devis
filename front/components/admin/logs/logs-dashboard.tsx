@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { apiFetch } from "@/lib/api";
 import LogsStatsChart from "./logs-stats-chart";
 import LogsTable from "./logs-table";
-import LogsFilters, { type LogFilters, emptyLogFilters } from "./logs-filters";
+import LogsFilters, { type LogFilters } from "./logs-filters";
 import ExportButton from "./export-button";
 
 export type ActivityLog = {
@@ -34,12 +35,36 @@ const PAGE_SIZE = 50;
 
 export default function LogsDashboard() {
   const t = useTranslations("admin.logs");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const page = Number(searchParams.get("page") ?? "1");
+  const filters: LogFilters = {
+    search: searchParams.get("search") ?? "",
+    resp_statuses: searchParams.get("resp_statuses")
+      ? searchParams.get("resp_statuses")!.split(",").map(Number)
+      : [],
+    date_from: searchParams.get("date_from") ?? "",
+    date_to: searchParams.get("date_to") ?? "",
+  };
 
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState<LogFilters>(emptyLogFilters);
+
+  function pushParams(newFilters: LogFilters, newPage: number) {
+    const p = new URLSearchParams();
+    if (newPage > 1) p.set("page", String(newPage));
+    if (newFilters.search) p.set("search", newFilters.search);
+    if (newFilters.resp_statuses.length > 0)
+      p.set("resp_statuses", newFilters.resp_statuses.join(","));
+    if (newFilters.date_from) p.set("date_from", newFilters.date_from);
+    if (newFilters.date_to) p.set("date_to", newFilters.date_to);
+    router.push(`${pathname}?${p.toString()}`);
+  }
+
+  const handleFiltersChange = (newFilters: LogFilters) => pushParams(newFilters, 1);
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
@@ -61,16 +86,12 @@ export default function LogsDashboard() {
       setTotal((body.total ?? 0) as number);
     }
     setLoading(false);
-  }, [page, filters]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     fetchLogs();
   }, [fetchLogs]);
-
-  const handleFiltersChange = (newFilters: LogFilters) => {
-    setPage(1);
-    setFilters(newFilters);
-  };
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -98,7 +119,7 @@ export default function LogsDashboard() {
               <button
                 className="rounded border px-3 py-1 disabled:opacity-40"
                 disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
+                onClick={() => pushParams(filters, page - 1)}
               >
                 ←
               </button>
@@ -108,7 +129,7 @@ export default function LogsDashboard() {
               <button
                 className="rounded border px-3 py-1 disabled:opacity-40"
                 disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
+                onClick={() => pushParams(filters, page + 1)}
               >
                 →
               </button>
