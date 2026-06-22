@@ -31,7 +31,6 @@ function tryFormatJSON(raw: string): string {
   try {
     return JSON.stringify(JSON.parse(raw), null, 2);
   } catch {
-    // Not JSON — try to parse as query string (key=value&...)
     if (raw.includes("=")) {
       try {
         const params = Object.fromEntries(new URLSearchParams(raw));
@@ -68,31 +67,17 @@ function BodyPanel({ label, value }: { label: string; value: string }) {
   );
 }
 
-type DetailRowProps = {
-  id: number;
+type DetailPanelProps = {
+  detail: ActivityLogDetail | null;
+  error: boolean;
   tTable: ReturnType<typeof useTranslations>;
 };
 
-function DetailRow({ id, tTable }: DetailRowProps) {
-  const [detail, setDetail] = useState<ActivityLogDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    apiFetch(`/api/logs/${id}`).then(({ ok, body }) => {
-      if (ok && body.success) {
-        setDetail(body.log as ActivityLogDetail);
-      } else {
-        setError(true);
-      }
-      setLoading(false);
-    });
-  }, [id]);
-
+function DetailPanel({ detail, error, tTable }: DetailPanelProps) {
   return (
     <TableRow>
       <TableCell colSpan={8} className="bg-muted/30 px-4 py-3">
-        {loading && (
+        {!detail && !error && (
           <p className="text-xs text-muted-foreground">Chargement…</p>
         )}
         {error && (
@@ -112,6 +97,19 @@ function DetailRow({ id, tTable }: DetailRowProps) {
 export default function LogsTable({ logs }: LogsTableProps) {
   const t = useTranslations("admin.logs.table");
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [cache, setCache] = useState<Record<number, ActivityLogDetail | "error">>({});
+
+  useEffect(() => {
+    if (expandedId === null || cache[expandedId] !== undefined) return;
+    apiFetch(`/api/logs/${expandedId}`).then(({ ok, body }) => {
+      const id = expandedId;
+      setCache((prev) => ({
+        ...prev,
+        [id]: ok && body.success ? (body.log as ActivityLogDetail) : "error",
+      }));
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expandedId]);
 
   const toggle = (id: number) =>
     setExpandedId((prev) => (prev === id ? null : id));
@@ -166,7 +164,12 @@ export default function LogsTable({ logs }: LogsTableProps) {
               </TableRow>
 
               {expandedId === log.id && (
-                <DetailRow key={`${log.id}-detail`} id={log.id} tTable={t} />
+                <DetailPanel
+                  key={`${log.id}-detail`}
+                  detail={cache[log.id] instanceof Object ? (cache[log.id] as ActivityLogDetail) : null}
+                  error={cache[log.id] === "error"}
+                  tTable={t}
+                />
               )}
             </>
           ))}

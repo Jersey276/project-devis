@@ -169,7 +169,7 @@ type ActivityLogFilters struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	UrlContains   string                 `protobuf:"bytes,2,opt,name=url_contains,json=urlContains,proto3" json:"url_contains,omitempty"`
-	RespStatus    int32                  `protobuf:"varint,3,opt,name=resp_status,json=respStatus,proto3" json:"resp_status,omitempty"`
+	RespStatuses  []int32                `protobuf:"varint,3,rep,packed,name=resp_statuses,json=respStatuses,proto3" json:"resp_statuses,omitempty"`
 	DateFrom      string                 `protobuf:"bytes,4,opt,name=date_from,json=dateFrom,proto3" json:"date_from,omitempty"` // RFC3339
 	DateTo        string                 `protobuf:"bytes,5,opt,name=date_to,json=dateTo,proto3" json:"date_to,omitempty"`       // RFC3339
 	unknownFields protoimpl.UnknownFields
@@ -220,11 +220,11 @@ func (x *ActivityLogFilters) GetUrlContains() string {
 	return ""
 }
 
-func (x *ActivityLogFilters) GetRespStatus() int32 {
+func (x *ActivityLogFilters) GetRespStatuses() []int32 {
 	if x != nil {
-		return x.RespStatus
+		return x.RespStatuses
 	}
-	return 0
+	return nil
 }
 
 func (x *ActivityLogFilters) GetDateFrom() string {
@@ -959,12 +959,11 @@ const file_services_grpc_audit_proto_rawDesc = "" +
 	"respStatus\"C\n" +
 	"\x13LogActivityResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\x05R\x04code\"\xa7\x01\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\"\xab\x01\n" +
 	"\x12ActivityLogFilters\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
-	"\furl_contains\x18\x02 \x01(\tR\vurlContains\x12\x1f\n" +
-	"\vresp_status\x18\x03 \x01(\x05R\n" +
-	"respStatus\x12\x1b\n" +
+	"\furl_contains\x18\x02 \x01(\tR\vurlContains\x12#\n" +
+	"\rresp_statuses\x18\x03 \x03(\x05R\frespStatuses\x12\x1b\n" +
 	"\tdate_from\x18\x04 \x01(\tR\bdateFrom\x12\x17\n" +
 	"\adate_to\x18\x05 \x01(\tR\x06dateTo\"\x7f\n" +
 	"\x17ListActivityLogsRequest\x123\n" +

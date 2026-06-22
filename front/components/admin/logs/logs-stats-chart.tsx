@@ -64,21 +64,20 @@ function formatDate(dateStr: string): string {
 export default function LogsStatsChart() {
   const t = useTranslations("admin.logs");
   const [data, setData] = useState<ChartPoint[]>([]);
-  const [presentGroups, setPresentGroups] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     apiFetch("/api/logs/stats").then(({ ok, body }) => {
       if (ok && body.success) {
-        const raw = (body.stats ?? []) as RawStat[];
-        const points = pivot(raw);
-        setData(points);
-        const groups = Array.from(new Set(raw.map((r) => groupKey(r.resp_status)))).sort();
-        setPresentGroups(groups);
+        setData(pivot((body.stats ?? []) as RawStat[]));
       }
       setLoading(false);
     });
   }, []);
+
+  const presentGroups = Array.from(
+    new Set(data.flatMap((p) => Object.keys(p).filter((k) => k !== "date")))
+  ).sort();
 
   if (loading) {
     return <p className="text-sm text-muted-foreground">{t("loading")}</p>;

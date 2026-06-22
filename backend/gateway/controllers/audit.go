@@ -1,69 +1,56 @@
 package controllers
 
 import (
-	"log"
 	"net/http"
-	"os"
 	"strconv"
-	"sync"
+	"strings"
 
 	"gateway/audit"
 	"gateway/middleware"
 
 	"github.com/gin-gonic/gin"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
-
-var (
-	auditCtrlClientOnce sync.Once
-	auditCtrlClient     audit.AuditServiceClient
-)
-
-func getAuditClient() (audit.AuditServiceClient, error) {
-	var initErr error
-	auditCtrlClientOnce.Do(func() {
-		addr := os.Getenv("AUDIT_SERVICE_ADDRESS")
-		if addr == "" {
-			addr = "localhost:50060"
-		}
-		conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			log.Fatalf("failed to connect to audit gRPC server: %v", err)
-		}
-		auditCtrlClient = audit.NewAuditServiceClient(conn)
-		_ = initErr
-	})
-	return auditCtrlClient, nil
-}
 
 var auditErrors = &serviceErrors{
 	unavailableMessage: "Service de journal d'activité indisponible.",
 	codes:              map[int32]codeMapping{},
 }
 
-func AuditRoutes(r *gin.RouterGroup) {
-	client, _ := getAuditClient()
+func AuditRoutes(r *gin.RouterGroup, client audit.AuditServiceClient) {
 	r.GET("", func(c *gin.Context) { listActivityLogs(c, client) })
 	r.GET("/stats", func(c *gin.Context) { getActivityStats(c, client) })
 	r.GET("/:id", func(c *gin.Context) { getActivityLog(c, client) })
 	r.POST("/export", func(c *gin.Context) { exportActivityLogs(c, client) })
 }
 
+func parseRespStatuses(raw string) []int32 {
+	if raw == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ",")
+	out := make([]int32, 0, len(parts))
+	for _, p := range parts {
+		v, err := strconv.ParseInt(strings.TrimSpace(p), 10, 32)
+		if err == nil && v > 0 {
+			out = append(out, int32(v))
+		}
+	}
+	return out
+}
+
 func listActivityLogs(c *gin.Context, client audit.AuditServiceClient) {
 	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 32)
 	pageSize, _ := strconv.ParseInt(c.DefaultQuery("page_size", "50"), 10, 32)
-	respStatus, _ := strconv.ParseInt(c.Query("resp_status"), 10, 32)
 
 	resp, err := client.ListActivityLogs(c.Request.Context(), &audit.ListActivityLogsRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Filters: &audit.ActivityLogFilters{
-			UserId:      c.Query("user_id"),
-			UrlContains: c.Query("url_contains"),
-			RespStatus:  int32(respStatus),
-			DateFrom:    c.Query("date_from"),
-			DateTo:      c.Query("date_to"),
+			UserId:       c.Query("user_id"),
+			UrlContains:  c.Query("url_contains"),
+			RespStatuses: parseRespStatuses(c.Query("resp_statuses")),
+			DateFrom:     c.Query("date_from"),
+			DateTo:       c.Query("date_to"),
 		},
 	})
 	if err != nil {
@@ -155,11 +142,11 @@ func getActivityStats(c *gin.Context, client audit.AuditServiceClient) {
 func exportActivityLogs(c *gin.Context, client audit.AuditServiceClient) {
 	var body struct {
 		Filters struct {
-			UserID      string `json:"user_id"`
-			URLContains string `json:"url_contains"`
-			RespStatus  int32  `json:"resp_status"`
-			DateFrom    string `json:"date_from"`
-			DateTo      string `json:"date_to"`
+			UserID       string  `json:"user_id"`
+			URLContains  string  `json:"url_contains"`
+			RespStatuses []int32 `json:"resp_statuses"`
+			DateFrom     string  `json:"date_from"`
+			DateTo       string  `json:"date_to"`
 		} `json:"filters"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
@@ -174,11 +161,11 @@ func exportActivityLogs(c *gin.Context, client audit.AuditServiceClient) {
 		RecipientEmail: email,
 		RecipientName:  userID,
 		Filters: &audit.ActivityLogFilters{
-			UserId:      body.Filters.UserID,
-			UrlContains: body.Filters.URLContains,
-			RespStatus:  body.Filters.RespStatus,
-			DateFrom:    body.Filters.DateFrom,
-			DateTo:      body.Filters.DateTo,
+			UserId:       body.Filters.UserID,
+			UrlContains:  body.Filters.URLContains,
+			RespStatuses: body.Filters.RespStatuses,
+			DateFrom:     body.Filters.DateFrom,
+			DateTo:       body.Filters.DateTo,
 		},
 	})
 	if err != nil {

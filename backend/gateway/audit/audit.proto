@@ -32,11 +32,11 @@ message LogActivityResponse {
 // ─── ListActivityLogs ────────────────────────────────────────────────────────
 
 message ActivityLogFilters {
-    string user_id      = 1;
-    string url_contains = 2;
-    int32  resp_status  = 3;
-    string date_from    = 4; // RFC3339
-    string date_to      = 5; // RFC3339
+    string         user_id       = 1;
+    string         url_contains  = 2;
+    repeated int32 resp_statuses = 3;
+    string         date_from     = 4; // RFC3339
+    string         date_to       = 5; // RFC3339
 }
 
 message ListActivityLogsRequest {

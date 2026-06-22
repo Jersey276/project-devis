@@ -95,7 +95,13 @@ type bodyWriter struct {
 }
 
 func (bw *bodyWriter) Write(b []byte) (int, error) {
-	bw.body.Write(b)
+	if remaining := auditBodyLimit - bw.body.Len(); remaining > 0 {
+		if len(b) <= remaining {
+			bw.body.Write(b)
+		} else {
+			bw.body.Write(b[:remaining])
+		}
+	}
 	return bw.ResponseWriter.Write(b)
 }
 
@@ -120,7 +126,6 @@ func (al *AuditLogger) Middleware() gin.HandlerFunc {
 		c.Next()
 
 		durationMs := int32(time.Since(start).Milliseconds())
-		respBody := truncate(bw.body.String(), auditBodyLimit)
 		userID, _ := c.Get(CtxUserID)
 		userIDStr, _ := userID.(string)
 
@@ -129,8 +134,8 @@ func (al *AuditLogger) Middleware() gin.HandlerFunc {
 			method:     c.Request.Method,
 			url:        c.Request.URL.Path,
 			durationMs: durationMs,
-			reqBody:    truncate(reqBodyStr, auditBodyLimit),
-			respBody:   respBody,
+			reqBody:    reqBodyStr,
+			respBody:   bw.body.String(),
 			respStatus: int32(c.Writer.Status()),
 		}
 
@@ -142,9 +147,3 @@ func (al *AuditLogger) Middleware() gin.HandlerFunc {
 	}
 }
 
-func truncate(s string, limit int) string {
-	if len(s) <= limit {
-		return s
-	}
-	return s[:limit]
-}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"gateway/audit"
 	"gateway/authz"
 	"gateway/controllers"
 	"gateway/middleware"
@@ -18,11 +19,11 @@ type Route struct {
 func main() {
 	auditClient := middleware.InitAuditClient()
 	auditLogger := middleware.NewAuditLogger(auditClient)
-	r := setupRouter(auditLogger)
+	r := setupRouter(auditLogger, auditClient)
 	r.Run(":8080")
 }
 
-func setupRouter(auditLogger *middleware.AuditLogger) *gin.Engine {
+func setupRouter(auditLogger *middleware.AuditLogger, auditClient audit.AuditServiceClient) *gin.Engine {
 	r := gin.Default()
 	r.Use(auditLogger.Middleware())
 
@@ -88,7 +89,7 @@ func setupRouter(auditLogger *middleware.AuditLogger) *gin.Engine {
 	logs := api.Group("/logs")
 	logs.Use(middleware.AuthRequired())
 	logs.Use(middleware.RequireSuperAdmin())
-	controllers.AuditRoutes(logs)
+	controllers.AuditRoutes(logs, auditClient)
 
 	return r
 }

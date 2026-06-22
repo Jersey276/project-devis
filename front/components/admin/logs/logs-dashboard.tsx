@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { apiFetch } from "@/lib/api";
 import LogsStatsChart from "./logs-stats-chart";
 import LogsTable from "./logs-table";
-import LogsFilters, { type LogFilters } from "./logs-filters";
+import LogsFilters, { type LogFilters, emptyLogFilters } from "./logs-filters";
 import ExportButton from "./export-button";
 
 export type ActivityLog = {
@@ -39,13 +39,7 @@ export default function LogsDashboard() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState<LogFilters>({
-    user_id: "",
-    url_contains: "",
-    resp_status: "",
-    date_from: "",
-    date_to: "",
-  });
+  const [filters, setFilters] = useState<LogFilters>(emptyLogFilters);
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
@@ -53,9 +47,11 @@ export default function LogsDashboard() {
       page: String(page),
       page_size: String(PAGE_SIZE),
     });
-    if (filters.user_id) params.set("user_id", filters.user_id);
-    if (filters.url_contains) params.set("url_contains", filters.url_contains);
-    if (filters.resp_status) params.set("resp_status", filters.resp_status);
+    if (filters.search) {
+      params.set("url_contains", filters.search);
+      params.set("user_id", filters.search);
+    }
+    if (filters.resp_statuses.length > 0) params.set("resp_statuses", filters.resp_statuses.join(","));
     if (filters.date_from) params.set("date_from", filters.date_from);
     if (filters.date_to) params.set("date_to", filters.date_to);
 

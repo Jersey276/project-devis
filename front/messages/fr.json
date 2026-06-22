@@ -14,6 +14,11 @@
     },
     "datePicker": {
       "placeholder": "Choisir une date"
+    },
+    "filterSidebar": {
+      "trigger": "Filtres",
+      "title": "Filtres",
+      "reset": "Réinitialiser les filtres"
     }
   },
   "metadata": {
@@ -893,12 +898,15 @@
       "loading": "Chargement des logs…",
       "noData": "Aucun log disponible.",
       "filters": {
-        "userId": "Utilisateur",
-        "urlContains": "URL contient",
-        "respStatus": "Statut HTTP",
-        "dateFrom": "Du",
-        "dateTo": "Au",
-        "reset": "Réinitialiser"
+        "searchPlaceholder": "Rechercher par URL ou utilisateur…",
+        "statusLabel": "Statut HTTP",
+        "statusPlaceholder": "Sélectionner des statuts…",
+        "statusEmpty": "Aucun statut trouvé.",
+        "dateLabel": "Période",
+        "datePlaceholder": "Toutes les dates",
+        "from": "À partir du",
+        "to": "Jusqu'au",
+        "clearDate": "Effacer la période"
       },
       "table": {
         "id": "ID",

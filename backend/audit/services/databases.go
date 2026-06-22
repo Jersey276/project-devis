@@ -21,10 +21,10 @@ func connectDB(user, passwordFile, name string) *sql.DB {
 	}
 
 	password := ""
-	if path := passwordFile; path != "" {
-		data, err := os.ReadFile(path)
+	if passwordFile != "" {
+		data, err := os.ReadFile(passwordFile)
 		if err != nil {
-			log.Fatalf("failed to read password file %s: %v", path, err)
+			log.Fatalf("failed to read password file %s: %v", passwordFile, err)
 		}
 		password = strings.TrimSpace(string(data))
 	}

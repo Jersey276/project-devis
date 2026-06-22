@@ -65,32 +65,30 @@ func buildFilters(f *auditGrpc.ActivityLogFilters) (string, []interface{}) {
 	}
 	var clauses []string
 	var args []interface{}
-	n := 1
 
 	if f.UserId != "" {
 		args = append(args, f.UserId)
-		clauses = append(clauses, fmt.Sprintf("user_id = $%d", n))
-		n++
+		clauses = append(clauses, fmt.Sprintf("user_id = $%d", len(args)))
 	}
 	if f.UrlContains != "" {
 		args = append(args, "%"+f.UrlContains+"%")
-		clauses = append(clauses, fmt.Sprintf("url ILIKE $%d", n))
-		n++
+		clauses = append(clauses, fmt.Sprintf("url ILIKE $%d", len(args)))
 	}
-	if f.RespStatus != 0 {
-		args = append(args, f.RespStatus)
-		clauses = append(clauses, fmt.Sprintf("resp_status = $%d", n))
-		n++
+	if len(f.RespStatuses) > 0 {
+		placeholders := make([]string, len(f.RespStatuses))
+		for i, s := range f.RespStatuses {
+			args = append(args, s)
+			placeholders[i] = fmt.Sprintf("$%d", len(args))
+		}
+		clauses = append(clauses, "resp_status IN ("+strings.Join(placeholders, ",")+")")
 	}
 	if f.DateFrom != "" {
 		args = append(args, f.DateFrom)
-		clauses = append(clauses, fmt.Sprintf("created_at >= $%d", n))
-		n++
+		clauses = append(clauses, fmt.Sprintf("created_at >= $%d", len(args)))
 	}
 	if f.DateTo != "" {
 		args = append(args, f.DateTo)
-		clauses = append(clauses, fmt.Sprintf("created_at <= $%d", n))
-		n++
+		clauses = append(clauses, fmt.Sprintf("created_at <= $%d", len(args)))
 	}
 
 	if len(clauses) == 0 {

@@ -23,9 +23,9 @@ export default function ExportButton({ filters }: ExportButtonProps) {
       method: "POST",
       body: JSON.stringify({
         filters: {
-          user_id: filters.user_id,
-          url_contains: filters.url_contains,
-          resp_status: filters.resp_status ? Number(filters.resp_status) : 0,
+          url_contains: filters.search,
+          user_id: filters.search,
+          resp_statuses: filters.resp_statuses,
           date_from: filters.date_from,
           date_to: filters.date_to,
         },
