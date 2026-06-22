@@ -742,6 +742,8 @@ func stateToLower(s quote.QuoteState) string {
 	switch s {
 	case quote.QuoteState_QUOTE_STATE_DRAFT:
 		return "draft"
+	case quote.QuoteState_QUOTE_STATE_NEGOCIATION:
+		return "negociation"
 	case quote.QuoteState_QUOTE_STATE_SENT:
 		return "sent"
 	case quote.QuoteState_QUOTE_STATE_VALIDATED:

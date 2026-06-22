@@ -213,6 +213,8 @@
         "selectClient": "Veuillez sélectionner un client.",
         "selectAddress": "Veuillez sélectionner une adresse.",
         "selectUserAddress": "Veuillez sélectionner une adresse de prestataire.",
+        "revertedToDraftToast": "Le devis a été modifié et repassé en brouillon.",
+        "resendToClient": "Renvoyer au client",
         "nameSaveFailedToast": "Échec de l'enregistrement du nom.",
         "clientSaveFailedToast": "Échec de l'enregistrement du client.",
         "addressSaveFailedToast": "Échec de l'enregistrement de l'adresse.",

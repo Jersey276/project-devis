@@ -27,6 +27,7 @@ import {
   createLine,
   createQuote,
   getQuote,
+  negociateQuote,
   updateQuote,
 } from "@/lib/services/quotes";
 import { exportQuotePdf } from "@/lib/services/export";
@@ -188,6 +189,30 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const totals = useMemo(() => computeTotals(items, taxById), [items, taxById]);
 
   // ────────────────────────────────────────────────────────────
+  // Helpers
+
+  // Called after any updateQuote that implicitly reverted a negociation quote
+  // back to draft. Syncs local state and offers to resend to the client.
+  const handleRevertedToDraft = useCallback(() => {
+    setQuoteState("draft");
+    if (!quoteId) return;
+    toast(t("errors.revertedToDraftToast"), {
+      action: {
+        label: t("errors.resendToClient"),
+        onClick: () => {
+          void negociateQuote(quoteId).then(({ ok, body }) => {
+            if (ok && body.success) {
+              setQuoteState("negociation");
+            } else {
+              toast.error((body.message as string) ?? t("errors.nameSaveFailedToast"));
+            }
+          });
+        },
+      },
+    });
+  }, [quoteId, t]);
+
+  // ────────────────────────────────────────────────────────────
   // Step 1 handlers
 
   const handleProjectNameChange = useCallback(
@@ -200,13 +225,16 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         nameTimerRef.current = null;
         const current = projectNameRef.current.trim();
         if (current.length === 0) return;
+        const wasNegociation = quoteState === "negociation";
         const { ok, body } = await updateQuote(quoteId, { name: current });
         if (!ok || !body.success) {
           toast.error((body.message as string) ?? t("errors.nameSaveFailedToast"));
+        } else if (wasNegociation) {
+          handleRevertedToDraft();
         }
       }, SAVE_DEBOUNCE_MS);
     },
-    [isReadonly, quoteId, t],
+    [handleRevertedToDraft, isReadonly, quoteId, quoteState, t],
   );
 
   const handleNextFromStep1 = useCallback(async () => {
@@ -277,13 +305,16 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       if (!quoteId || isReadonly || !value) return;
       const name = projectNameRef.current.trim();
       if (name.length === 0) return;
+      const wasNegociation = quoteState === "negociation";
       void updateQuote(quoteId, { name, clientId: value }).then(({ ok, body }) => {
         if (!ok || !body.success) {
           toast.error((body.message as string) ?? t("errors.clientSaveFailedToast"));
+        } else if (wasNegociation) {
+          handleRevertedToDraft();
         }
       });
     },
-    [isReadonly, quoteId, t],
+    [handleRevertedToDraft, isReadonly, quoteId, quoteState, t],
   );
 
   const handleAddressIdChange = useCallback(
@@ -293,9 +324,12 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       if (!quoteId || isReadonly || value == null) return;
       const name = projectNameRef.current.trim();
       if (name.length === 0) return;
+      const wasNegociation = quoteState === "negociation";
       void updateQuote(quoteId, { name, addressId: value }).then(({ ok, body }) => {
         if (!ok || !body.success) {
           toast.error((body.message as string) ?? t("errors.addressSaveFailedToast"));
+        } else if (wasNegociation) {
+          handleRevertedToDraft();
         }
       });
     },
@@ -309,13 +343,16 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       if (!quoteId || isReadonly || value == null) return;
       const name = projectNameRef.current.trim();
       if (name.length === 0) return;
+      const wasNegociation = quoteState === "negociation";
       void updateQuote(quoteId, { name, userAddressId: value }).then(({ ok, body }) => {
         if (!ok || !body.success) {
           toast.error((body.message as string) ?? t("errors.userAddressSaveFailedToast"));
+        } else if (wasNegociation) {
+          handleRevertedToDraft();
         }
       });
     },
-    [isReadonly, quoteId, t],
+    [handleRevertedToDraft, isReadonly, quoteId, quoteState, t],
   );
 
   const handleExport = useCallback(async () => {
