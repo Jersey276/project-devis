@@ -31,7 +31,7 @@ const LOG_DETAIL = {
   },
 };
 
-const STATS = {
+const LOGS_STATS = {
   success: true,
   stats: [
     { date: "2026-06-01", resp_status: 200, count: 50 },
@@ -54,7 +54,7 @@ function stubSuperAdmin() {
       },
     },
   }).as("getAuthMe");
-  cy.intercept("GET", "/api/logs/stats", { statusCode: 200, body: STATS }).as("getStats");
+  cy.intercept("GET", "/api/logs/stats", { statusCode: 200, body: LOGS_STATS }).as("getStats");
 }
 
 describe("Logs — page principale", () => {
