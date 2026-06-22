@@ -595,15 +595,16 @@ describe("Quote", () => {
       cy.wait("@getQuote");
 
       cy.get("[data-quote-state='draft']").should("exist");
-      cy.contains("button", "Abandonner").click();
+      cy.contains("button", "Changer l'état").click();
+      cy.contains("[role='menuitem']", "Refuser").click();
       cy.get("[data-slot='alert-dialog-content']").should("be.visible");
-      cy.contains("button", "Confirmer").click();
+      cy.contains("button", "Refuser").click();
 
       cy.wait("@dropQuote");
       cy.get("[data-quote-state='drop']").should("exist");
       cy.get("[data-slot='quote-state-badge']").should("contain", "Abandonné");
       cy.get("input[name='name']").should("be.disabled");
-      cy.contains("button", "Continuer").should("be.visible");
+      cy.contains("button", "Changer l'état").should("be.visible");
       cy.contains("button", "Abandonner").should("not.exist");
     });
 
@@ -618,7 +619,9 @@ describe("Quote", () => {
       cy.visit("/quote/q-1");
       cy.wait("@getQuote");
 
-      cy.contains("button", "Abandonner").click();
+      cy.contains("button", "Changer l'état").click();
+      cy.contains("[role='menuitem']", "Refuser").click();
+      cy.get("[data-slot='alert-dialog-content']").should("be.visible");
       cy.contains("button", "Annuler").click();
       cy.get("[data-slot='alert-dialog-content']").should("not.exist");
       cy.get("[data-quote-state='draft']").should("exist");
@@ -641,7 +644,8 @@ describe("Quote", () => {
 
       cy.get("[data-quote-state='drop']").should("exist");
       cy.get("input[name='name']").should("be.disabled");
-      cy.contains("button", "Continuer").click();
+      cy.contains("button", "Changer l'état").click();
+      cy.contains("[role='menuitem']", "Reprendre").click();
       cy.wait("@continueQuote");
 
       cy.get("[data-quote-state='draft']").should("exist");
@@ -664,8 +668,7 @@ describe("Quote", () => {
 
       cy.get("[data-quote-state='validated']").should("exist");
       cy.get("input[name='name']").should("be.disabled");
-      cy.contains("button", "Abandonner").should("not.exist");
-      cy.contains("button", "Continuer").should("not.exist");
+      cy.contains("button", "Changer l'état").should("not.exist");
     });
 
     it("blocks PDF export when quote is refused", () => {

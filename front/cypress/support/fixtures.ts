@@ -80,6 +80,7 @@ export type ClientFixture = {
   siren: string;
   siret: string;
   vat: string;
+  client_type: "individual" | "business";
   archived: boolean;
 };
 
@@ -95,6 +96,7 @@ export function client(over: Partial<ClientFixture> = {}): ClientFixture {
     siren: "",
     siret: "",
     vat: "",
+    client_type: "business",
     archived: false,
     ...over,
   };
