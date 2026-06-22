@@ -148,6 +148,34 @@ echeancier valide:
   `export` est deja client de `invoice` (`export -> invoice.GetInvoice`) ; le
   back-call `invoice -> export.ExportInvoice` est un appel reseau distinct et
   non-reentrant (pas de cycle a la compilation, pas de deadlock).
+- **E-reporting transaction / transfrontalier B2C (B5/C5)** : transmission
+  **periodique** (par mois civil) d'**agregats** d'operations hors champ de la
+  facturation electronique, distincte du depot facture-par-facture (B6). Deux types
+  de rapport, sur des perimetres **disjoints** :
+  - `TRANSACTION` (B5) = ventes B2C **domestiques** (`client_type='individual'`,
+    `client_country_code='FR'`) ;
+  - `CROSS_BORDER_B2C` (C5) = ventes a distance B2C **intra-UE** = l'assiette OSS
+    deja gelee (`client_type='individual'`, `client_country_code<>'FR'`,
+    `counts_toward_oss_threshold`), donc alignee sur le cumul OSS (cf. ADR 0002).
+
+  3e seam neutre `pdp.Reporter` (`SubmitReport`/`FetchReportStatus`), avec
+  `NoopReporter` (defaut prod, inerte) + `MockReporter` (tests) — meme philosophie
+  que `pdp.Client`. L'agregat est calcule **en local** sur les snapshots geles
+  (`actions/reporting.go:reportingAggregate`) : net HT/TVA par taux et pays de
+  destination, factures `ISSUED|PAID` **moins** avoirs du mois, meme logique nette
+  que l'assiette OSS. RPC `SubmitInvoiceReport` (`POST /api/invoices/reports`) :
+  agrege, appelle la PA, puis **upsert** une ligne `invoice_reports` (migration
+  000015 ; UNIQUE `(user_id, kind, period_year, period_month)`, `ON CONFLICT` pour
+  resoumettre une periode non terminale ; refus si deja `APPROVED`/`COLLECTED`). Le
+  statut reutilise le vocabulaire B3 (NONE/DEPOSITED/.../COLLECTED) **sur la ligne**
+  (pas de journal d'evenements : un agregat periodique n'a pas l'exigence
+  d'inalterabilite d'une facture). `ListInvoiceReports` (`GET /api/invoices/reports`)
+  alimente la section front. Worker `PollReportStatuses`/`StartReportPoller`
+  (`actions/report_poll.go`) : meme planif stricte que B6 (`reconcileSteps`, un cran
+  a la fois), derriere `REPORT_POLL_INTERVAL` (vide = desactive), inerte en no-op.
+  `invoice_reports` est une table mutable ordinaire : le trigger d'inalterabilite des
+  factures n'est **pas** touche. **Adaptateur Iopole reel differe** : meme sous
+  `PDP_PROVIDER=iopole`, le reporter reste no-op (TODO).
 - **Cadre e-invoicing FR** : le Factur-X B2C/OSS genere est coherent mais
   facultatif (l'obligation PPF/PDP vise le B2B domestique ; le transfrontalier
   releve de l'e-reporting).
@@ -160,6 +188,9 @@ configure pour le pays du client, l'emission est bloquee.
 `PDPSubmissionFailed` (4013, B6) : le depot sur la plateforme a echoue (l'appel
 PA renvoie une erreur ou un statut inattendu) ; le cycle de vie reste inchange.
 La gateway le mappe en `502 Bad Gateway`.
+`ReportSubmissionFailed` (4015, B5/C5) : la transmission de l'e-reporting a la
+plateforme a echoue ; la ligne `invoice_reports` n'est pas creee/avancee. Gateway
+-> `502 Bad Gateway`.
 
 ## Ports
 

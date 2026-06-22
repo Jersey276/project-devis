@@ -481,6 +481,38 @@
       "activeOptIn": "Option OSS activée : la TVA du pays de destination s'applique aux ventes à distance B2C intra-UE (art. 259 D du CGI).",
       "activePriorYear": "Seuil franchi l'an dernier : la TVA du pays de destination s'applique dès le 1er euro cette année (guichet unique OSS, art. 259 D du CGI)."
     },
+    "reporting": {
+      "title": "E-reporting",
+      "description": "Transmission périodique à la plateforme des opérations hors champ de la facturation électronique : ventes B2C en France (transaction) et ventes à distance B2C intra-UE (transfrontalier).",
+      "submit": "Transmettre la période",
+      "submitError": "La transmission a échoué.",
+      "empty": "Aucune période transmise.",
+      "kind": {
+        "TRANSACTION": "Transaction (B2C France)",
+        "CROSS_BORDER_B2C": "Transfrontalier (B2C intra-UE)"
+      },
+      "col": {
+        "kind": "Type",
+        "period": "Période",
+        "totalHt": "Total HT",
+        "totalVat": "Total TVA",
+        "status": "Statut"
+      },
+      "month": {
+        "1": "Janvier",
+        "2": "Février",
+        "3": "Mars",
+        "4": "Avril",
+        "5": "Mai",
+        "6": "Juin",
+        "7": "Juillet",
+        "8": "Août",
+        "9": "Septembre",
+        "10": "Octobre",
+        "11": "Novembre",
+        "12": "Décembre"
+      }
+    },
     "list": {
       "title": "Factures",
       "empty": "Aucune facture.",

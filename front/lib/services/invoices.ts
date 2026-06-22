@@ -5,7 +5,9 @@ import type {
   BackendInvoiceDetails,
   BackendInvoiceLifecycleEvent,
   BackendInvoiceLifecycleStatus,
+  BackendInvoiceReportSummary,
   BackendInvoiceSummary,
+  BackendReportKind,
 } from "@/types/backend";
 
 export type CreateInvoiceFromSchedulePayload = {
@@ -39,6 +41,37 @@ export async function getInvoice(invoiceId: string): Promise<ApiResult> {
 // CGI): net B2C intra-EU turnover vs the EUR 10 000 threshold.
 export async function getOSSThresholdStatus(): Promise<ApiResult> {
   return apiFetch("/api/invoices/oss-status");
+}
+
+// E-reporting (B5/C5): list the issuer's transmitted period aggregates.
+export async function listInvoiceReports(
+  kind?: BackendReportKind,
+): Promise<ApiResult> {
+  const path = kind
+    ? `/api/invoices/reports?kind=${encodeURIComponent(kind)}`
+    : "/api/invoices/reports";
+  return apiFetch(path);
+}
+
+// E-reporting (B5/C5): transmit one civil-month aggregate to the platform. The
+// backend aggregates the matching sales (net of credit notes); a no-op platform
+// is used until a PA (Plateforme Agréée) is contracted.
+export async function submitInvoiceReport(
+  kind: BackendReportKind,
+  year: number,
+  month: number,
+): Promise<ApiResult> {
+  return apiFetch("/api/invoices/reports", {
+    method: "POST",
+    body: JSON.stringify({ kind, year, month }),
+  });
+}
+
+export function readInvoiceReportsFromBody(
+  body: Record<string, unknown>,
+): BackendInvoiceReportSummary[] {
+  if (!Array.isArray(body.reports)) return [];
+  return body.reports as BackendInvoiceReportSummary[];
 }
 
 export async function createInvoiceFromSchedule(

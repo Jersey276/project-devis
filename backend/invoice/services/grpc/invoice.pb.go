@@ -2652,6 +2652,278 @@ func (x *ListInvoiceLifecycleEventsResponse) GetEvents() []*InvoiceLifecycleEven
 	return nil
 }
 
+type SubmitInvoiceReportRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Kind          string                 `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`    // TRANSACTION | CROSS_BORDER_B2C
+	Year          int32                  `protobuf:"varint,3,opt,name=year,proto3" json:"year,omitempty"`   // civil year (Europe/Paris)
+	Month         int32                  `protobuf:"varint,4,opt,name=month,proto3" json:"month,omitempty"` // 1-12
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SubmitInvoiceReportRequest) Reset() {
+	*x = SubmitInvoiceReportRequest{}
+	mi := &file_invoice_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SubmitInvoiceReportRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SubmitInvoiceReportRequest) ProtoMessage() {}
+
+func (x *SubmitInvoiceReportRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_invoice_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SubmitInvoiceReportRequest.ProtoReflect.Descriptor instead.
+func (*SubmitInvoiceReportRequest) Descriptor() ([]byte, []int) {
+	return file_invoice_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *SubmitInvoiceReportRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *SubmitInvoiceReportRequest) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *SubmitInvoiceReportRequest) GetYear() int32 {
+	if x != nil {
+		return x.Year
+	}
+	return 0
+}
+
+func (x *SubmitInvoiceReportRequest) GetMonth() int32 {
+	if x != nil {
+		return x.Month
+	}
+	return 0
+}
+
+type ListInvoiceReportsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Kind          string                 `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"` // optional filter (TRANSACTION | CROSS_BORDER_B2C)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListInvoiceReportsRequest) Reset() {
+	*x = ListInvoiceReportsRequest{}
+	mi := &file_invoice_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListInvoiceReportsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListInvoiceReportsRequest) ProtoMessage() {}
+
+func (x *ListInvoiceReportsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_invoice_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListInvoiceReportsRequest.ProtoReflect.Descriptor instead.
+func (*ListInvoiceReportsRequest) Descriptor() ([]byte, []int) {
+	return file_invoice_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *ListInvoiceReportsRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *ListInvoiceReportsRequest) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+type InvoiceReportSummary struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Kind          string                 `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`
+	Year          int32                  `protobuf:"varint,2,opt,name=year,proto3" json:"year,omitempty"`
+	Month         int32                  `protobuf:"varint,3,opt,name=month,proto3" json:"month,omitempty"`
+	Status        string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"` // NONE | DEPOSITED | RECEIVED | APPROVED | REJECTED | COLLECTED
+	TotalHtCents  int64                  `protobuf:"varint,5,opt,name=total_ht_cents,json=totalHtCents,proto3" json:"total_ht_cents,omitempty"`
+	TotalVatCents int64                  `protobuf:"varint,6,opt,name=total_vat_cents,json=totalVatCents,proto3" json:"total_vat_cents,omitempty"`
+	SubmittedAt   string                 `protobuf:"bytes,7,opt,name=submitted_at,json=submittedAt,proto3" json:"submitted_at,omitempty"` // RFC3339
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InvoiceReportSummary) Reset() {
+	*x = InvoiceReportSummary{}
+	mi := &file_invoice_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InvoiceReportSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InvoiceReportSummary) ProtoMessage() {}
+
+func (x *InvoiceReportSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_invoice_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InvoiceReportSummary.ProtoReflect.Descriptor instead.
+func (*InvoiceReportSummary) Descriptor() ([]byte, []int) {
+	return file_invoice_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *InvoiceReportSummary) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *InvoiceReportSummary) GetYear() int32 {
+	if x != nil {
+		return x.Year
+	}
+	return 0
+}
+
+func (x *InvoiceReportSummary) GetMonth() int32 {
+	if x != nil {
+		return x.Month
+	}
+	return 0
+}
+
+func (x *InvoiceReportSummary) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *InvoiceReportSummary) GetTotalHtCents() int64 {
+	if x != nil {
+		return x.TotalHtCents
+	}
+	return 0
+}
+
+func (x *InvoiceReportSummary) GetTotalVatCents() int64 {
+	if x != nil {
+		return x.TotalVatCents
+	}
+	return 0
+}
+
+func (x *InvoiceReportSummary) GetSubmittedAt() string {
+	if x != nil {
+		return x.SubmittedAt
+	}
+	return ""
+}
+
+type ListInvoiceReportsResponse struct {
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	Success       bool                    `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code          int32                   `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	Reports       []*InvoiceReportSummary `protobuf:"bytes,3,rep,name=reports,proto3" json:"reports,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListInvoiceReportsResponse) Reset() {
+	*x = ListInvoiceReportsResponse{}
+	mi := &file_invoice_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListInvoiceReportsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListInvoiceReportsResponse) ProtoMessage() {}
+
+func (x *ListInvoiceReportsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_invoice_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListInvoiceReportsResponse.ProtoReflect.Descriptor instead.
+func (*ListInvoiceReportsResponse) Descriptor() ([]byte, []int) {
+	return file_invoice_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *ListInvoiceReportsResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ListInvoiceReportsResponse) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *ListInvoiceReportsResponse) GetReports() []*InvoiceReportSummary {
+	if x != nil {
+		return x.Reports
+	}
+	return nil
+}
+
 var File_invoice_proto protoreflect.FileDescriptor
 
 const file_invoice_proto_rawDesc = "" +
@@ -2893,8 +3165,27 @@ const file_invoice_proto_rawDesc = "" +
 	"\"ListInvoiceLifecycleEventsResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x126\n" +
-	"\x06events\x18\x03 \x03(\v2\x1e.invoice.InvoiceLifecycleEventR\x06events2\xb4\n" +
-	"\n" +
+	"\x06events\x18\x03 \x03(\v2\x1e.invoice.InvoiceLifecycleEventR\x06events\"s\n" +
+	"\x1aSubmitInvoiceReportRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
+	"\x04kind\x18\x02 \x01(\tR\x04kind\x12\x12\n" +
+	"\x04year\x18\x03 \x01(\x05R\x04year\x12\x14\n" +
+	"\x05month\x18\x04 \x01(\x05R\x05month\"H\n" +
+	"\x19ListInvoiceReportsRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
+	"\x04kind\x18\x02 \x01(\tR\x04kind\"\xdd\x01\n" +
+	"\x14InvoiceReportSummary\x12\x12\n" +
+	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x12\n" +
+	"\x04year\x18\x02 \x01(\x05R\x04year\x12\x14\n" +
+	"\x05month\x18\x03 \x01(\x05R\x05month\x12\x16\n" +
+	"\x06status\x18\x04 \x01(\tR\x06status\x12$\n" +
+	"\x0etotal_ht_cents\x18\x05 \x01(\x03R\ftotalHtCents\x12&\n" +
+	"\x0ftotal_vat_cents\x18\x06 \x01(\x03R\rtotalVatCents\x12!\n" +
+	"\fsubmitted_at\x18\a \x01(\tR\vsubmittedAt\"\x83\x01\n" +
+	"\x1aListInvoiceReportsResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x127\n" +
+	"\areports\x18\x03 \x03(\v2\x1d.invoice.InvoiceReportSummaryR\areports2\xe9\v\n" +
 	"\x0eInvoiceService\x12f\n" +
 	"\x19CreateInvoiceFromSchedule\x12).invoice.CreateInvoiceFromScheduleRequest\x1a\x1e.invoice.CreateInvoiceResponse\x12`\n" +
 	"\x16CreateInvoiceFromQuote\x12&.invoice.CreateInvoiceFromQuoteRequest\x1a\x1e.invoice.CreateInvoiceResponse\x12L\n" +
@@ -2911,7 +3202,9 @@ const file_invoice_proto_rawDesc = "" +
 	"\x15GetOSSThresholdStatus\x12%.invoice.GetOSSThresholdStatusRequest\x1a&.invoice.GetOSSThresholdStatusResponse\x12`\n" +
 	"\x19SetInvoiceLifecycleStatus\x12).invoice.SetInvoiceLifecycleStatusRequest\x1a\x18.invoice.GenericResponse\x12u\n" +
 	"\x1aListInvoiceLifecycleEvents\x12*.invoice.ListInvoiceLifecycleEventsRequest\x1a+.invoice.ListInvoiceLifecycleEventsResponse\x12J\n" +
-	"\x0eDepositInvoice\x12\x1e.invoice.DepositInvoiceRequest\x1a\x18.invoice.GenericResponseB\x11Z\x0fgateway/invoiceb\x06proto3"
+	"\x0eDepositInvoice\x12\x1e.invoice.DepositInvoiceRequest\x1a\x18.invoice.GenericResponse\x12T\n" +
+	"\x13SubmitInvoiceReport\x12#.invoice.SubmitInvoiceReportRequest\x1a\x18.invoice.GenericResponse\x12]\n" +
+	"\x12ListInvoiceReports\x12\".invoice.ListInvoiceReportsRequest\x1a#.invoice.ListInvoiceReportsResponseB\x11Z\x0fgateway/invoiceb\x06proto3"
 
 var (
 	file_invoice_proto_rawDescOnce sync.Once
@@ -2925,7 +3218,7 @@ func file_invoice_proto_rawDescGZIP() []byte {
 	return file_invoice_proto_rawDescData
 }
 
-var file_invoice_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
+var file_invoice_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
 var file_invoice_proto_goTypes = []any{
 	(*GenericResponse)(nil),                    // 0: invoice.GenericResponse
 	(*ValidationError)(nil),                    // 1: invoice.ValidationError
@@ -2961,6 +3254,10 @@ var file_invoice_proto_goTypes = []any{
 	(*ListInvoiceLifecycleEventsRequest)(nil),  // 31: invoice.ListInvoiceLifecycleEventsRequest
 	(*DepositInvoiceRequest)(nil),              // 32: invoice.DepositInvoiceRequest
 	(*ListInvoiceLifecycleEventsResponse)(nil), // 33: invoice.ListInvoiceLifecycleEventsResponse
+	(*SubmitInvoiceReportRequest)(nil),         // 34: invoice.SubmitInvoiceReportRequest
+	(*ListInvoiceReportsRequest)(nil),          // 35: invoice.ListInvoiceReportsRequest
+	(*InvoiceReportSummary)(nil),               // 36: invoice.InvoiceReportSummary
+	(*ListInvoiceReportsResponse)(nil),         // 37: invoice.ListInvoiceReportsResponse
 }
 var file_invoice_proto_depIdxs = []int32{
 	1,  // 0: invoice.CreateInvoiceResponse.validation_errors:type_name -> invoice.ValidationError
@@ -2978,41 +3275,46 @@ var file_invoice_proto_depIdxs = []int32{
 	20, // 12: invoice.GetCreditNoteResponse.credit_note:type_name -> invoice.CreditNoteDetails
 	23, // 13: invoice.ListCreditNotesResponse.credit_notes:type_name -> invoice.CreditNoteSummary
 	30, // 14: invoice.ListInvoiceLifecycleEventsResponse.events:type_name -> invoice.InvoiceLifecycleEvent
-	2,  // 15: invoice.InvoiceService.CreateInvoiceFromSchedule:input_type -> invoice.CreateInvoiceFromScheduleRequest
-	3,  // 16: invoice.InvoiceService.CreateInvoiceFromQuote:input_type -> invoice.CreateInvoiceFromQuoteRequest
-	5,  // 17: invoice.InvoiceService.IssueInvoice:input_type -> invoice.IssueInvoiceRequest
-	6,  // 18: invoice.InvoiceService.MarkInvoicePaid:input_type -> invoice.MarkInvoicePaidRequest
-	7,  // 19: invoice.InvoiceService.DeleteDraftInvoice:input_type -> invoice.DeleteDraftInvoiceRequest
-	8,  // 20: invoice.InvoiceService.GetInvoice:input_type -> invoice.GetInvoiceRequest
-	14, // 21: invoice.InvoiceService.ListInvoices:input_type -> invoice.ListInvoicesRequest
-	17, // 22: invoice.InvoiceService.CreateCreditNote:input_type -> invoice.CreateCreditNoteRequest
-	19, // 23: invoice.InvoiceService.GetCreditNote:input_type -> invoice.GetCreditNoteRequest
-	22, // 24: invoice.InvoiceService.ListCreditNotes:input_type -> invoice.ListCreditNotesRequest
-	25, // 25: invoice.InvoiceService.VerifyChain:input_type -> invoice.VerifyChainRequest
-	27, // 26: invoice.InvoiceService.GetOSSThresholdStatus:input_type -> invoice.GetOSSThresholdStatusRequest
-	29, // 27: invoice.InvoiceService.SetInvoiceLifecycleStatus:input_type -> invoice.SetInvoiceLifecycleStatusRequest
-	31, // 28: invoice.InvoiceService.ListInvoiceLifecycleEvents:input_type -> invoice.ListInvoiceLifecycleEventsRequest
-	32, // 29: invoice.InvoiceService.DepositInvoice:input_type -> invoice.DepositInvoiceRequest
-	4,  // 30: invoice.InvoiceService.CreateInvoiceFromSchedule:output_type -> invoice.CreateInvoiceResponse
-	4,  // 31: invoice.InvoiceService.CreateInvoiceFromQuote:output_type -> invoice.CreateInvoiceResponse
-	4,  // 32: invoice.InvoiceService.IssueInvoice:output_type -> invoice.CreateInvoiceResponse
-	0,  // 33: invoice.InvoiceService.MarkInvoicePaid:output_type -> invoice.GenericResponse
-	0,  // 34: invoice.InvoiceService.DeleteDraftInvoice:output_type -> invoice.GenericResponse
-	13, // 35: invoice.InvoiceService.GetInvoice:output_type -> invoice.GetInvoiceResponse
-	16, // 36: invoice.InvoiceService.ListInvoices:output_type -> invoice.ListInvoicesResponse
-	18, // 37: invoice.InvoiceService.CreateCreditNote:output_type -> invoice.CreateCreditNoteResponse
-	21, // 38: invoice.InvoiceService.GetCreditNote:output_type -> invoice.GetCreditNoteResponse
-	24, // 39: invoice.InvoiceService.ListCreditNotes:output_type -> invoice.ListCreditNotesResponse
-	26, // 40: invoice.InvoiceService.VerifyChain:output_type -> invoice.VerifyChainResponse
-	28, // 41: invoice.InvoiceService.GetOSSThresholdStatus:output_type -> invoice.GetOSSThresholdStatusResponse
-	0,  // 42: invoice.InvoiceService.SetInvoiceLifecycleStatus:output_type -> invoice.GenericResponse
-	33, // 43: invoice.InvoiceService.ListInvoiceLifecycleEvents:output_type -> invoice.ListInvoiceLifecycleEventsResponse
-	0,  // 44: invoice.InvoiceService.DepositInvoice:output_type -> invoice.GenericResponse
-	30, // [30:45] is the sub-list for method output_type
-	15, // [15:30] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	36, // 15: invoice.ListInvoiceReportsResponse.reports:type_name -> invoice.InvoiceReportSummary
+	2,  // 16: invoice.InvoiceService.CreateInvoiceFromSchedule:input_type -> invoice.CreateInvoiceFromScheduleRequest
+	3,  // 17: invoice.InvoiceService.CreateInvoiceFromQuote:input_type -> invoice.CreateInvoiceFromQuoteRequest
+	5,  // 18: invoice.InvoiceService.IssueInvoice:input_type -> invoice.IssueInvoiceRequest
+	6,  // 19: invoice.InvoiceService.MarkInvoicePaid:input_type -> invoice.MarkInvoicePaidRequest
+	7,  // 20: invoice.InvoiceService.DeleteDraftInvoice:input_type -> invoice.DeleteDraftInvoiceRequest
+	8,  // 21: invoice.InvoiceService.GetInvoice:input_type -> invoice.GetInvoiceRequest
+	14, // 22: invoice.InvoiceService.ListInvoices:input_type -> invoice.ListInvoicesRequest
+	17, // 23: invoice.InvoiceService.CreateCreditNote:input_type -> invoice.CreateCreditNoteRequest
+	19, // 24: invoice.InvoiceService.GetCreditNote:input_type -> invoice.GetCreditNoteRequest
+	22, // 25: invoice.InvoiceService.ListCreditNotes:input_type -> invoice.ListCreditNotesRequest
+	25, // 26: invoice.InvoiceService.VerifyChain:input_type -> invoice.VerifyChainRequest
+	27, // 27: invoice.InvoiceService.GetOSSThresholdStatus:input_type -> invoice.GetOSSThresholdStatusRequest
+	29, // 28: invoice.InvoiceService.SetInvoiceLifecycleStatus:input_type -> invoice.SetInvoiceLifecycleStatusRequest
+	31, // 29: invoice.InvoiceService.ListInvoiceLifecycleEvents:input_type -> invoice.ListInvoiceLifecycleEventsRequest
+	32, // 30: invoice.InvoiceService.DepositInvoice:input_type -> invoice.DepositInvoiceRequest
+	34, // 31: invoice.InvoiceService.SubmitInvoiceReport:input_type -> invoice.SubmitInvoiceReportRequest
+	35, // 32: invoice.InvoiceService.ListInvoiceReports:input_type -> invoice.ListInvoiceReportsRequest
+	4,  // 33: invoice.InvoiceService.CreateInvoiceFromSchedule:output_type -> invoice.CreateInvoiceResponse
+	4,  // 34: invoice.InvoiceService.CreateInvoiceFromQuote:output_type -> invoice.CreateInvoiceResponse
+	4,  // 35: invoice.InvoiceService.IssueInvoice:output_type -> invoice.CreateInvoiceResponse
+	0,  // 36: invoice.InvoiceService.MarkInvoicePaid:output_type -> invoice.GenericResponse
+	0,  // 37: invoice.InvoiceService.DeleteDraftInvoice:output_type -> invoice.GenericResponse
+	13, // 38: invoice.InvoiceService.GetInvoice:output_type -> invoice.GetInvoiceResponse
+	16, // 39: invoice.InvoiceService.ListInvoices:output_type -> invoice.ListInvoicesResponse
+	18, // 40: invoice.InvoiceService.CreateCreditNote:output_type -> invoice.CreateCreditNoteResponse
+	21, // 41: invoice.InvoiceService.GetCreditNote:output_type -> invoice.GetCreditNoteResponse
+	24, // 42: invoice.InvoiceService.ListCreditNotes:output_type -> invoice.ListCreditNotesResponse
+	26, // 43: invoice.InvoiceService.VerifyChain:output_type -> invoice.VerifyChainResponse
+	28, // 44: invoice.InvoiceService.GetOSSThresholdStatus:output_type -> invoice.GetOSSThresholdStatusResponse
+	0,  // 45: invoice.InvoiceService.SetInvoiceLifecycleStatus:output_type -> invoice.GenericResponse
+	33, // 46: invoice.InvoiceService.ListInvoiceLifecycleEvents:output_type -> invoice.ListInvoiceLifecycleEventsResponse
+	0,  // 47: invoice.InvoiceService.DepositInvoice:output_type -> invoice.GenericResponse
+	0,  // 48: invoice.InvoiceService.SubmitInvoiceReport:output_type -> invoice.GenericResponse
+	37, // 49: invoice.InvoiceService.ListInvoiceReports:output_type -> invoice.ListInvoiceReportsResponse
+	33, // [33:50] is the sub-list for method output_type
+	16, // [16:33] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_invoice_proto_init() }
@@ -3026,7 +3328,7 @@ func file_invoice_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_invoice_proto_rawDesc), len(file_invoice_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   34,
+			NumMessages:   38,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

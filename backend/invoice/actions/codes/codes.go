@@ -23,5 +23,7 @@ const (
 	PDPSubmissionFailed     int32 = 4013
 	RecipientNotInDirectory int32 = 4014
 
+	ReportSubmissionFailed int32 = 4015
+
 	InternalError int32 = 2001
 )

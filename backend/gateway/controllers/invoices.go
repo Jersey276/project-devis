@@ -30,6 +30,7 @@ const (
 	InvoiceCodeLifecycleRequiresIssued       int32 = 4012
 	InvoiceCodePDPSubmissionFailed           int32 = 4013
 	InvoiceCodeRecipientNotInDirectory       int32 = 4014
+	InvoiceCodeReportSubmissionFailed        int32 = 4015
 
 	InvoiceCodeInternalError int32 = 2001
 )
@@ -61,6 +62,7 @@ var invoiceErrors = &serviceErrors{
 		InvoiceCodeLifecycleRequiresIssued:       {http.StatusConflict, "Le statut e-invoicing ne s'applique qu'aux factures émises."},
 		InvoiceCodePDPSubmissionFailed:           {http.StatusBadGateway, "Le dépôt sur la plateforme a échoué. Réessayez plus tard."},
 		InvoiceCodeRecipientNotInDirectory:       {http.StatusUnprocessableEntity, "Le destinataire est introuvable dans l'annuaire e-invoicing : vérifiez son SIRET."},
+		InvoiceCodeReportSubmissionFailed:        {http.StatusBadGateway, "La transmission de l'e-reporting à la plateforme a échoué. Réessayez plus tard."},
 		InvoiceCodeInternalError:                 {http.StatusInternalServerError, "Une erreur interne est survenue."},
 	},
 	unavailableMessage: "Service de facturation indisponible.",
@@ -81,6 +83,9 @@ func InvoicesRoutes(r *gin.RouterGroup) {
 	r.GET("", func(c *gin.Context) { ListInvoices(c, client) })
 	r.GET("/verify-chain", func(c *gin.Context) { VerifyChain(c, client) })
 	r.GET("/oss-status", func(c *gin.Context) { GetOSSThresholdStatus(c, client) })
+	// E-reporting (B5/C5): period aggregates, not tied to one invoice.
+	r.GET("/reports", func(c *gin.Context) { ListInvoiceReports(c, client) })
+	r.POST("/reports", func(c *gin.Context) { SubmitInvoiceReport(c, client) })
 	r.POST("/from-schedule", func(c *gin.Context) { CreateInvoiceFromSchedule(c, client) })
 	r.POST("/from-quote", func(c *gin.Context) { CreateInvoiceFromQuote(c, client) })
 
@@ -342,6 +347,53 @@ func ListInvoiceLifecycleEvents(c *gin.Context, client invoice.InvoiceServiceCli
 		})
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "events": out})
+}
+
+func SubmitInvoiceReport(c *gin.Context, client invoice.InvoiceServiceClient) {
+	var input struct {
+		Kind  string `json:"kind" binding:"required"`
+		Year  int32  `json:"year" binding:"required"`
+		Month int32  `json:"month" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+	resp, err := client.SubmitInvoiceReport(c.Request.Context(), &invoice.SubmitInvoiceReportRequest{
+		UserId: userIDFromCtx(c),
+		Kind:   input.Kind,
+		Year:   input.Year,
+		Month:  input.Month,
+	})
+	replyGeneric(c, resp, err)
+}
+
+func ListInvoiceReports(c *gin.Context, client invoice.InvoiceServiceClient) {
+	resp, err := client.ListInvoiceReports(c.Request.Context(), &invoice.ListInvoiceReportsRequest{
+		UserId: userIDFromCtx(c),
+		Kind:   c.Query("kind"),
+	})
+	if err != nil {
+		invoiceErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		invoiceErrors.reply(c, resp.Code)
+		return
+	}
+	out := make([]gin.H, 0, len(resp.Reports))
+	for _, r := range resp.Reports {
+		out = append(out, gin.H{
+			"kind":            r.Kind,
+			"year":            r.Year,
+			"month":           r.Month,
+			"status":          r.Status,
+			"total_ht_cents":  r.TotalHtCents,
+			"total_vat_cents": r.TotalVatCents,
+			"submitted_at":    r.SubmittedAt,
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "reports": out})
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────

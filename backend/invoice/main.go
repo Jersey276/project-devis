@@ -66,9 +66,9 @@ func main() {
 	// PA (Plateforme Agréée) adapter selection (B6). Default = no-op (no real PA,
 	// no network call). PDP_PROVIDER=iopole wires the real Iopole adapter, which
 	// deposits the Factur-X PDF/A-3 fetched from the export service.
-	pdpClient, pdpDirectory := buildPDPAdapters()
+	pdpClient, pdpDirectory, reporter := buildPDPAdapters()
 
-	server := actions.NewServer(db, qClient, uClient, sClient, pdpClient, pdpDirectory)
+	server := actions.NewServer(db, qClient, uClient, sClient, pdpClient, pdpDirectory, reporter)
 
 	// B6 status poller: reconciles deposited invoices' lifecycle with the PA.
 	// Disabled by default (interval 0) — inert with the no-op adapter; set
@@ -76,6 +76,14 @@ func main() {
 	if interval := parseDurationOrZero("PDP_POLL_INTERVAL"); interval > 0 {
 		go server.StartPDPPoller(context.Background(), interval, pdpPollSweepTimeout)
 		log.Printf("invoice pdp poller enabled (interval=%s)", interval)
+	}
+
+	// B5/C5 e-reporting poller: reconciles submitted period aggregates' status with
+	// the PA. Same gating philosophy as the PDP poller — disabled by default, inert
+	// with the no-op reporter; set REPORT_POLL_INTERVAL once a real PA is wired.
+	if interval := parseDurationOrZero("REPORT_POLL_INTERVAL"); interval > 0 {
+		go server.StartReportPoller(context.Background(), interval, pdpPollSweepTimeout)
+		log.Printf("invoice report poller enabled (interval=%s)", interval)
 	}
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
@@ -92,11 +100,13 @@ func main() {
 	}
 }
 
-// buildPDPAdapters selects the PA client+directory from PDP_PROVIDER. Anything but
-// "iopole" (including unset) keeps the inert no-op adapters, so production is
-// unchanged until a provider is explicitly configured. The Iopole client deposits
-// the Factur-X PDF/A-3 obtained from the export service.
-func buildPDPAdapters() (pdp.Client, pdp.Directory) {
+// buildPDPAdapters selects the PA client+directory+reporter from PDP_PROVIDER.
+// Anything but "iopole" (including unset) keeps the inert no-op adapters, so
+// production is unchanged until a provider is explicitly configured. The Iopole
+// client deposits the Factur-X PDF/A-3 obtained from the export service. The
+// e-reporting adapter (B5/C5) has no real Iopole implementation yet, so it stays
+// no-op even under PDP_PROVIDER=iopole (deferred to a later iteration).
+func buildPDPAdapters() (pdp.Client, pdp.Directory, pdp.Reporter) {
 	switch envOrDefault("PDP_PROVIDER", "noop") {
 	case "iopole":
 		baseURL := envOrDefault("IOPOLE_BASE_URL", "https://api.ppd.iopole.fr/v1/api")
@@ -113,11 +123,12 @@ func buildPDPAdapters() (pdp.Client, pdp.Directory) {
 		}
 		docs := actions.NewExportDocumentSource(exportGrpc.NewExportServiceClient(eConn))
 
-		log.Printf("invoice PA adapter: iopole (base=%s)", baseURL)
+		log.Printf("invoice PA adapter: iopole (base=%s); e-reporting adapter: noop (not yet implemented)", baseURL)
 		return iopole.NewClient(baseURL, tokenURL, clientID, clientSecret, customerID, docs),
-			iopole.NewDirectory(baseURL, tokenURL, clientID, clientSecret, customerID)
+			iopole.NewDirectory(baseURL, tokenURL, clientID, clientSecret, customerID),
+			pdp.NoopReporter{}
 	default:
-		return pdp.NoopClient{}, pdp.NoopDirectory{}
+		return pdp.NoopClient{}, pdp.NoopDirectory{}, pdp.NoopReporter{}
 	}
 }
 

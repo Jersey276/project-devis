@@ -19,7 +19,7 @@ func TestPoll_AdvancesThroughPlatformStatus(t *testing.T) {
 		time.Date(2099, 5, 1, 9, 0, 0, 0, time.UTC), 1)
 
 	mock := &pdp.MockClient{SubmitResult: pdp.SubmitResult{SubmissionID: "sub-poll", Status: pdp.PlatformSubmitted}}
-	srv := actions.NewServer(db, nil, nil, nil, mock, nil)
+	srv := actions.NewServer(db, nil, nil, nil, mock, nil, nil)
 	ctx := context.Background()
 
 	if resp, err := srv.DepositInvoice(ctx, &invoiceGrpc.DepositInvoiceRequest{InvoiceId: "inv-poll", UserId: userID}); err != nil || !resp.Success {
@@ -65,7 +65,7 @@ func TestPoll_RejectedFromDeposited(t *testing.T) {
 		time.Date(2099, 5, 1, 9, 0, 0, 0, time.UTC), 1)
 
 	mock := &pdp.MockClient{SubmitResult: pdp.SubmitResult{SubmissionID: "sub-rej", Status: pdp.PlatformSubmitted}}
-	srv := actions.NewServer(db, nil, nil, nil, mock, nil)
+	srv := actions.NewServer(db, nil, nil, nil, mock, nil, nil)
 	ctx := context.Background()
 	if resp, err := srv.DepositInvoice(ctx, &invoiceGrpc.DepositInvoiceRequest{InvoiceId: "inv-rej", UserId: userID}); err != nil || !resp.Success {
 		t.Fatalf("deposit: err=%v success=%v", err, resp.GetSuccess())
@@ -86,7 +86,7 @@ func TestPoll_UnknownLeavesUntouched(t *testing.T) {
 		time.Date(2099, 5, 1, 9, 0, 0, 0, time.UTC), 1)
 
 	mock := &pdp.MockClient{SubmitResult: pdp.SubmitResult{SubmissionID: "sub-unk", Status: pdp.PlatformSubmitted}}
-	srv := actions.NewServer(db, nil, nil, nil, mock, nil)
+	srv := actions.NewServer(db, nil, nil, nil, mock, nil, nil)
 	ctx := context.Background()
 	if resp, err := srv.DepositInvoice(ctx, &invoiceGrpc.DepositInvoiceRequest{InvoiceId: "inv-unk", UserId: userID}); err != nil || !resp.Success {
 		t.Fatalf("deposit: err=%v success=%v", err, resp.GetSuccess())
@@ -111,7 +111,7 @@ func TestPoll_SkipsInvoicesWithoutSubmissionID(t *testing.T) {
 		time.Date(2099, 5, 1, 9, 0, 0, 0, time.UTC), 1)
 
 	// Deposited via the no-op adapter: DEPOSITED but pdp_submission_id stays NULL.
-	srv := actions.NewServer(db, nil, nil, nil, pdp.NoopClient{}, nil)
+	srv := actions.NewServer(db, nil, nil, nil, pdp.NoopClient{}, nil, nil)
 	ctx := context.Background()
 	if resp, err := srv.DepositInvoice(ctx, &invoiceGrpc.DepositInvoiceRequest{InvoiceId: "inv-nosub", UserId: userID}); err != nil || !resp.Success {
 		t.Fatalf("deposit: err=%v success=%v", err, resp.GetSuccess())
@@ -120,7 +120,7 @@ func TestPoll_SkipsInvoicesWithoutSubmissionID(t *testing.T) {
 	// A mock that would advance — but the row has no submission id, so it must be
 	// excluded from the sweep entirely.
 	mock := &pdp.MockClient{StatusResult: pdp.PlatformApproved}
-	pollSrv := actions.NewServer(db, nil, nil, nil, mock, nil)
+	pollSrv := actions.NewServer(db, nil, nil, nil, mock, nil, nil)
 	pollSrv.PollPDPStatuses(ctx)
 
 	if got := lifecycleState(t, db, "inv-nosub"); got != "DEPOSITED" {

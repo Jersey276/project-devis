@@ -38,6 +38,11 @@ service InvoiceService {
     // DEPOSITED transition through the same lifecycle guards as the manual RPC.
     // No-op platform by default until a PA (Plateforme Agréée) is contracted.
     rpc DepositInvoice(DepositInvoiceRequest) returns (GenericResponse);
+
+    // E-reporting (B5/C5): transmit a period aggregate (domestic B2C or intra-EU
+    // distance sales). No-op platform by default until a PA is contracted.
+    rpc SubmitInvoiceReport(SubmitInvoiceReportRequest) returns (GenericResponse);
+    rpc ListInvoiceReports(ListInvoiceReportsRequest) returns (ListInvoiceReportsResponse);
 }
 
 message GenericResponse {
@@ -347,4 +352,34 @@ message ListInvoiceLifecycleEventsResponse {
     bool                           success = 1;
     int32                          code    = 2;
     repeated InvoiceLifecycleEvent events  = 3;
+}
+
+// ─── E-reporting (B5/C5) ─────────────────────────────────────────────────────
+
+message SubmitInvoiceReportRequest {
+    string user_id = 1;
+    string kind    = 2;  // TRANSACTION | CROSS_BORDER_B2C
+    int32  year    = 3;
+    int32  month   = 4;  // 1-12
+}
+
+message ListInvoiceReportsRequest {
+    string user_id = 1;
+    string kind    = 2;  // optional filter
+}
+
+message InvoiceReportSummary {
+    string kind            = 1;
+    int32  year            = 2;
+    int32  month           = 3;
+    string status          = 4;
+    int64  total_ht_cents  = 5;
+    int64  total_vat_cents = 6;
+    string submitted_at    = 7;  // RFC3339
+}
+
+message ListInvoiceReportsResponse {
+    bool                          success = 1;
+    int32                         code    = 2;
+    repeated InvoiceReportSummary reports = 3;
 }

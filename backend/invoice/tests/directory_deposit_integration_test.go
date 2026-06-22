@@ -46,7 +46,7 @@ func TestDeposit_ResolvesRecipientAndFreezesRouting(t *testing.T) {
 
 	mock := &pdp.MockClient{SubmitResult: pdp.SubmitResult{SubmissionID: "sub-1", Status: pdp.PlatformSubmitted}}
 	dir := &pdp.MockDirectory{ResolveResult: pdp.RecipientRouting{RoutingID: "route-1", PlatformName: "PA Test"}}
-	srv := actions.NewServer(db, nil, nil, nil, mock, dir)
+	srv := actions.NewServer(db, nil, nil, nil, mock, dir, nil)
 
 	resp, err := srv.DepositInvoice(context.Background(), &invoiceGrpc.DepositInvoiceRequest{InvoiceId: "inv-dir", UserId: userID})
 	if err != nil {
@@ -76,7 +76,7 @@ func TestDeposit_RecipientNotInDirectoryBlocks(t *testing.T) {
 
 	mock := &pdp.MockClient{SubmitResult: pdp.SubmitResult{SubmissionID: "sub-1", Status: pdp.PlatformSubmitted}}
 	dir := &pdp.MockDirectory{ResolveErr: pdp.ErrRecipientNotFound}
-	srv := actions.NewServer(db, nil, nil, nil, mock, dir)
+	srv := actions.NewServer(db, nil, nil, nil, mock, dir, nil)
 
 	resp, err := srv.DepositInvoice(context.Background(), &invoiceGrpc.DepositInvoiceRequest{InvoiceId: "inv-dir-miss", UserId: userID})
 	if err != nil {
@@ -106,7 +106,7 @@ func TestDeposit_NoopDirectoryDepositsWithoutRouting(t *testing.T) {
 
 	// nil directory => NoopDirectory: resolves everyone, empty routing handle.
 	mock := &pdp.MockClient{SubmitResult: pdp.SubmitResult{SubmissionID: "sub-1", Status: pdp.PlatformSubmitted}}
-	srv := actions.NewServer(db, nil, nil, nil, mock, nil)
+	srv := actions.NewServer(db, nil, nil, nil, mock, nil, nil)
 
 	resp, err := srv.DepositInvoice(context.Background(), &invoiceGrpc.DepositInvoiceRequest{InvoiceId: "inv-dir-noop", UserId: userID})
 	if err != nil {

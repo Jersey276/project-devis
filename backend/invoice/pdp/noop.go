@@ -24,3 +24,16 @@ type NoopDirectory struct{}
 func (NoopDirectory) Resolve(context.Context, string) (RecipientRouting, error) {
 	return RecipientRouting{}, nil
 }
+
+// NoopReporter is the default e-reporting adapter (B5/C5): it accepts every report
+// locally without calling any external platform, assigning no report id. So the
+// feature works end-to-end and stays inert in production until a real PA is wired.
+type NoopReporter struct{}
+
+func (NoopReporter) SubmitReport(context.Context, SubmitReportInput) (SubmitReportResult, error) {
+	return SubmitReportResult{Status: PlatformSubmitted}, nil
+}
+
+func (NoopReporter) FetchReportStatus(context.Context, string) (PlatformStatus, error) {
+	return PlatformUnknown, nil
+}

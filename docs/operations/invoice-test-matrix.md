@@ -188,6 +188,19 @@ Aucun endpoint, regle metier, migration ou modification du format scelle ne doit
 | INV-BE-088 | Unit           | Annuaire FR Iopole, present / absent           | Resoudre un SIRET               | Present -> `RoutingID=businessEntityId` + nom ; absent (`data:[]`) -> `ErrRecipientNotFound` | P0 | `pdp/iopole/iopole_test.go:TestResolve_FoundAndNotFound` |
 | INV-BE-089 | Unit           | Les 15 codes Iopole + inconnu/vide             | Mapper le statut                | Mapping vers `PlatformStatus` ; `DISPUTED`/`SUSPENDED`/inconnu -> `UNKNOWN` | P0    | `pdp/iopole/iopole_test.go:TestMapStatus_AllIopoleCodes` |
 
+### Backend metier - E-reporting transaction / transfrontalier B2C (B5/C5)
+
+<!-- markdownlint-disable MD060 -->
+
+| ID         | Niveau         | Preconditions                                  | Action                          | Resultat attendu                                                          | Priorite | Source                                                       |
+| ---------- | -------------- | ---------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------- | -------- | ------------------------------------------------------------ |
+| INV-BE-090 | Integration DB | Ventes B2C FR + une vente intra-UE + un autre mois | Soumettre `TRANSACTION` (B5) | Agrege le B2C FR du mois uniquement (intra-UE et autres mois exclus), `DEPOSITED`, `report_id` gele, PA appelee | P0 | `report_integration_test.go:TestSubmitReport_TransactionScope` |
+| INV-BE-091 | Integration DB | Ventes B2C intra-UE (assiette OSS) + avoir + une vente FR | Soumettre `CROSS_BORDER_B2C` (C5) | Agrege l'intra-UE net des avoirs (FR exclu) | P0 | `report_integration_test.go:TestSubmitReport_CrossBorderNetsCreditNotes` |
+| INV-BE-092 | Integration DB | Periode deja soumise (non terminale) + nouvelle vente | Resoumettre la meme periode | Une seule ligne (UPSERT `ON CONFLICT`), agregat rafraichi | P1 | `report_integration_test.go:TestSubmitReport_ResubmitUpserts` |
+| INV-BE-093 | Integration DB | Rapport `DEPOSITED` + `report_id`, PA renvoie `APPROVED` | Sweep (`PollReportStatuses`) | Statut avance `DEPOSITED->RECEIVED->APPROVED` (crans B3, sans saut) | P0 | `report_integration_test.go:TestReportPoller_AdvancesStatus` |
+| INV-BE-094 | Unit           | Type de rapport (TRANSACTION / CROSS_BORDER_B2C / inconnu) | Construire le predicat de perimetre | TRANSACTION = individual + FR ; CROSS_BORDER = individual + non-FR + assiette OSS ; inconnu -> faux | P0 | `actions/reporting_test.go:TestReportScopeClause` |
+| INV-BE-095 | Unit           | Adaptateur no-op (defaut)                      | Soumettre / interroger un rapport | `SUBMITTED` + `ReportID` vide ; `FetchReportStatus` -> `UNKNOWN` (inerte) | P1 | `pdp/reporter_test.go:TestNoopReporter_SubmitAcceptsLocally` |
+
 <!-- markdownlint-enable MD060 -->
 
 ### Gateway - Contrat API HTTP (a couvrir)

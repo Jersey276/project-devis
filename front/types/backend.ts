@@ -237,6 +237,20 @@ export type BackendInvoiceSummary = {
   lifecycle_status: BackendInvoiceLifecycleStatus;
 };
 
+// E-reporting (B5/C5): periodic aggregate transmitted to the platform.
+// TRANSACTION = domestic B2C sales; CROSS_BORDER_B2C = intra-EU distance sales.
+export type BackendReportKind = "TRANSACTION" | "CROSS_BORDER_B2C";
+
+export type BackendInvoiceReportSummary = {
+  kind: BackendReportKind;
+  year: number;
+  month: number;
+  status: BackendInvoiceLifecycleStatus;
+  total_ht_cents: number;
+  total_vat_cents: number;
+  submitted_at: string;
+};
+
 export type BackendOSSThresholdStatus = {
   year: number;
   cumulative_ht_cents: number;

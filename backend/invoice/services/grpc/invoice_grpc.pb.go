@@ -34,6 +34,8 @@ const (
 	InvoiceService_SetInvoiceLifecycleStatus_FullMethodName  = "/invoice.InvoiceService/SetInvoiceLifecycleStatus"
 	InvoiceService_ListInvoiceLifecycleEvents_FullMethodName = "/invoice.InvoiceService/ListInvoiceLifecycleEvents"
 	InvoiceService_DepositInvoice_FullMethodName             = "/invoice.InvoiceService/DepositInvoice"
+	InvoiceService_SubmitInvoiceReport_FullMethodName        = "/invoice.InvoiceService/SubmitInvoiceReport"
+	InvoiceService_ListInvoiceReports_FullMethodName         = "/invoice.InvoiceService/ListInvoiceReports"
 )
 
 // InvoiceServiceClient is the client API for InvoiceService service.
@@ -68,6 +70,11 @@ type InvoiceServiceClient interface {
 	// DEPOSITED transition through the same lifecycle guards as the manual RPC.
 	// No-op platform by default until a PA (Plateforme Agréée) is contracted.
 	DepositInvoice(ctx context.Context, in *DepositInvoiceRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// E-reporting (B5/C5): transmit a period aggregate of out-of-scope-of-
+	// e-invoicing operations — domestic B2C (TRANSACTION) or intra-EU distance
+	// sales (CROSS_BORDER_B2C). No-op platform by default until a PA is contracted.
+	SubmitInvoiceReport(ctx context.Context, in *SubmitInvoiceReportRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	ListInvoiceReports(ctx context.Context, in *ListInvoiceReportsRequest, opts ...grpc.CallOption) (*ListInvoiceReportsResponse, error)
 }
 
 type invoiceServiceClient struct {
@@ -228,6 +235,26 @@ func (c *invoiceServiceClient) DepositInvoice(ctx context.Context, in *DepositIn
 	return out, nil
 }
 
+func (c *invoiceServiceClient) SubmitInvoiceReport(ctx context.Context, in *SubmitInvoiceReportRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, InvoiceService_SubmitInvoiceReport_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *invoiceServiceClient) ListInvoiceReports(ctx context.Context, in *ListInvoiceReportsRequest, opts ...grpc.CallOption) (*ListInvoiceReportsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListInvoiceReportsResponse)
+	err := c.cc.Invoke(ctx, InvoiceService_ListInvoiceReports_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InvoiceServiceServer is the server API for InvoiceService service.
 // All implementations must embed UnimplementedInvoiceServiceServer
 // for forward compatibility.
@@ -260,6 +287,11 @@ type InvoiceServiceServer interface {
 	// DEPOSITED transition through the same lifecycle guards as the manual RPC.
 	// No-op platform by default until a PA (Plateforme Agréée) is contracted.
 	DepositInvoice(context.Context, *DepositInvoiceRequest) (*GenericResponse, error)
+	// E-reporting (B5/C5): transmit a period aggregate of out-of-scope-of-
+	// e-invoicing operations — domestic B2C (TRANSACTION) or intra-EU distance
+	// sales (CROSS_BORDER_B2C). No-op platform by default until a PA is contracted.
+	SubmitInvoiceReport(context.Context, *SubmitInvoiceReportRequest) (*GenericResponse, error)
+	ListInvoiceReports(context.Context, *ListInvoiceReportsRequest) (*ListInvoiceReportsResponse, error)
 	mustEmbedUnimplementedInvoiceServiceServer()
 }
 
@@ -314,6 +346,12 @@ func (UnimplementedInvoiceServiceServer) ListInvoiceLifecycleEvents(context.Cont
 }
 func (UnimplementedInvoiceServiceServer) DepositInvoice(context.Context, *DepositInvoiceRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DepositInvoice not implemented")
+}
+func (UnimplementedInvoiceServiceServer) SubmitInvoiceReport(context.Context, *SubmitInvoiceReportRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SubmitInvoiceReport not implemented")
+}
+func (UnimplementedInvoiceServiceServer) ListInvoiceReports(context.Context, *ListInvoiceReportsRequest) (*ListInvoiceReportsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListInvoiceReports not implemented")
 }
 func (UnimplementedInvoiceServiceServer) mustEmbedUnimplementedInvoiceServiceServer() {}
 func (UnimplementedInvoiceServiceServer) testEmbeddedByValue()                        {}
@@ -606,6 +644,42 @@ func _InvoiceService_DepositInvoice_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InvoiceService_SubmitInvoiceReport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubmitInvoiceReportRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InvoiceServiceServer).SubmitInvoiceReport(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InvoiceService_SubmitInvoiceReport_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InvoiceServiceServer).SubmitInvoiceReport(ctx, req.(*SubmitInvoiceReportRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InvoiceService_ListInvoiceReports_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListInvoiceReportsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InvoiceServiceServer).ListInvoiceReports(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InvoiceService_ListInvoiceReports_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InvoiceServiceServer).ListInvoiceReports(ctx, req.(*ListInvoiceReportsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InvoiceService_ServiceDesc is the grpc.ServiceDesc for InvoiceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -672,6 +746,14 @@ var InvoiceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DepositInvoice",
 			Handler:    _InvoiceService_DepositInvoice_Handler,
+		},
+		{
+			MethodName: "SubmitInvoiceReport",
+			Handler:    _InvoiceService_SubmitInvoiceReport_Handler,
+		},
+		{
+			MethodName: "ListInvoiceReports",
+			Handler:    _InvoiceService_ListInvoiceReports_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

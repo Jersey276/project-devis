@@ -41,7 +41,7 @@ func TestSetLifecycle_TransitionAppendsEvent(t *testing.T) {
 	seedIssuedInvoice(t, db, userID, "inv-lc", "2099-0001",
 		time.Date(2099, 4, 1, 9, 0, 0, 0, time.UTC), 1)
 
-	srv := actions.NewServer(db, nil, nil, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil, nil, nil)
 	resp, err := srv.SetInvoiceLifecycleStatus(context.Background(), &invoiceGrpc.SetInvoiceLifecycleStatusRequest{
 		InvoiceId: "inv-lc", UserId: userID, Status: "DEPOSITED", Note: "déposée sur le PDP",
 	})
@@ -65,7 +65,7 @@ func TestSetLifecycle_InvalidTransitionLeavesStateUntouched(t *testing.T) {
 	seedIssuedInvoice(t, db, userID, "inv-bad", "2099-0001",
 		time.Date(2099, 4, 1, 9, 0, 0, 0, time.UTC), 1)
 
-	srv := actions.NewServer(db, nil, nil, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil, nil, nil)
 	// NONE → APPROVED skips two hops; must be refused.
 	resp, err := srv.SetInvoiceLifecycleStatus(context.Background(), &invoiceGrpc.SetInvoiceLifecycleStatusRequest{
 		InvoiceId: "inv-bad", UserId: userID, Status: "APPROVED",
@@ -89,7 +89,7 @@ func TestSetLifecycle_DraftRefused(t *testing.T) {
 	const userID = "lifecycle-draft"
 	seedDraftInvoice(t, db, userID, "inv-draft-lc")
 
-	srv := actions.NewServer(db, nil, nil, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil, nil, nil)
 	resp, err := srv.SetInvoiceLifecycleStatus(context.Background(), &invoiceGrpc.SetInvoiceLifecycleStatusRequest{
 		InvoiceId: "inv-draft-lc", UserId: userID, Status: "DEPOSITED",
 	})
@@ -106,7 +106,7 @@ func TestSetLifecycle_WrongOwnerNotFound(t *testing.T) {
 	seedIssuedInvoice(t, db, "owner-a", "inv-own", "2099-0001",
 		time.Date(2099, 4, 1, 9, 0, 0, 0, time.UTC), 1)
 
-	srv := actions.NewServer(db, nil, nil, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil, nil, nil)
 	resp, err := srv.SetInvoiceLifecycleStatus(context.Background(), &invoiceGrpc.SetInvoiceLifecycleStatusRequest{
 		InvoiceId: "inv-own", UserId: "owner-b", Status: "DEPOSITED",
 	})
@@ -124,7 +124,7 @@ func TestListLifecycleEvents_OrderedHistory(t *testing.T) {
 	seedIssuedInvoice(t, db, userID, "inv-hist", "2099-0001",
 		time.Date(2099, 4, 1, 9, 0, 0, 0, time.UTC), 1)
 
-	srv := actions.NewServer(db, nil, nil, nil, nil, nil)
+	srv := actions.NewServer(db, nil, nil, nil, nil, nil, nil)
 	ctx := context.Background()
 	for _, s := range []string{"DEPOSITED", "RECEIVED", "APPROVED"} {
 		resp, err := srv.SetInvoiceLifecycleStatus(ctx, &invoiceGrpc.SetInvoiceLifecycleStatusRequest{

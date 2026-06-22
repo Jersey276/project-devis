@@ -41,3 +41,25 @@ func (m *MockDirectory) Resolve(_ context.Context, siret string) (RecipientRouti
 	}
 	return m.ResolveResult, nil
 }
+
+// MockReporter is a programmable e-reporting adapter for tests: canned
+// result/error plus a recorded log of submitted reports.
+type MockReporter struct {
+	SubmitResult SubmitReportResult
+	SubmitErr    error
+	StatusResult PlatformStatus
+	StatusErr    error
+	Reports      []SubmitReportInput
+}
+
+func (m *MockReporter) SubmitReport(_ context.Context, in SubmitReportInput) (SubmitReportResult, error) {
+	m.Reports = append(m.Reports, in)
+	if m.SubmitErr != nil {
+		return SubmitReportResult{}, m.SubmitErr
+	}
+	return m.SubmitResult, nil
+}
+
+func (m *MockReporter) FetchReportStatus(context.Context, string) (PlatformStatus, error) {
+	return m.StatusResult, m.StatusErr
+}
