@@ -58,13 +58,30 @@ export default function UserInfoForm({
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
+  // Mirrors backend sqlutil.ValidateSIRET: empty is allowed; otherwise 14 digits
+  // and, when a SIREN is set, the SIRET must start with it. Catches the bad value
+  // before the round-trip; the server still validates authoritatively.
+  function validateSiret(): string | null {
+    const s = siret.replace(/\s/g, "");
+    if (s === "") return null;
+    if (!/^\d{14}$/.test(s)) return t("siretInvalidLength");
+    const sn = siren.replace(/\s/g, "");
+    if (sn !== "" && !s.startsWith(sn)) return t("siretSirenMismatch");
+    return null;
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (readOnly) return;
     setFieldErrors({});
+    const siretError = validateSiret();
+    if (siretError) {
+      setFieldErrors({ siret: [siretError] });
+      return;
+    }
     setSubmitting(true);
     try {
-      const { ok, status, body } = await apiFetch("/api/users/me", {
+      const { ok, body } = await apiFetch("/api/users/me", {
         method: "PUT",
         body: JSON.stringify({
           phone,
@@ -82,8 +99,9 @@ export default function UserInfoForm({
         onSaved?.({ ...user, phone, company, siren, siret, vat, oss_enabled: ossEnabled, iban, bic });
         return;
       }
-      if (status === 422 && Array.isArray(body.field_errors)) {
-        setFieldErrors(fieldErrorsFromBody(body));
+      const parsed = fieldErrorsFromBody(body);
+      if (Object.keys(parsed).length > 0) {
+        setFieldErrors(parsed);
         return;
       }
       toast.error(body.message ?? tCommon("errors.generic"));

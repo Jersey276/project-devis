@@ -13,10 +13,14 @@ func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateUserRequest) (
 	if req.UserId == "" {
 		return &usersGrpc.UpdateUserResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
-	// UpdateUserResponse carries no per-field errors; a bad SIRET is rejected as
-	// InvalidInput (the front validates the SIRET/SIREN coherence too).
-	if sqlutil.ValidateSIRET(req.Siret, req.Siren) != "" {
-		return &usersGrpc.UpdateUserResponse{Success: false, Code: codes.InvalidInput}, nil
+	// Surface a bad SIRET on the field, like UpdateClient — a bare InvalidInput
+	// reaches the front as a 400 with no clue which field is wrong.
+	if msg := sqlutil.ValidateSIRET(req.Siret, req.Siren); msg != "" {
+		return &usersGrpc.UpdateUserResponse{
+			Success:          false,
+			Code:             codes.InvalidInput,
+			ValidationErrors: []*usersGrpc.ValidationError{{Field: "siret", Message: msg}},
+		}, nil
 	}
 
 	res, err := db.ExecContext(ctx,

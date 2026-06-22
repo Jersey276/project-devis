@@ -69,14 +69,15 @@ export default function EditClientPage() {
     setFieldErrors({});
     setSubmitting(true);
     try {
-      const { ok, status, body } = await updateClient(uuid, client);
+      const { ok, body } = await updateClient(uuid, client);
       if (ok && body.success) {
         toast.success(t("successToast"));
         router.push(`/clients/${uuid}`);
         return;
       }
-      if (status === 422) {
-        setFieldErrors(fieldErrorsFromBody(body));
+      const parsed = fieldErrorsFromBody(body);
+      if (Object.keys(parsed).length > 0) {
+        setFieldErrors(parsed);
       } else {
         toast.error((body.message as string) ?? t("failedToast"));
       }

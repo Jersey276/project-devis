@@ -172,6 +172,14 @@ services:
       QUOTE_SERVICE_ADDRESS: devis-quote:50053
       USER_SERVICE_ADDRESS: devis-user:50052
       SCHEDULE_SERVICE_ADDRESS: devis-schedule:50056
+      EXPORT_SERVICE_ADDRESS: devis-export:50054
+      PDP_PROVIDER: ${PDP_PROVIDER:-noop}
+      PDP_POLL_INTERVAL: ${PDP_POLL_INTERVAL:-}
+      IOPOLE_BASE_URL: ${IOPOLE_BASE_URL:-}
+      IOPOLE_TOKEN_URL: ${IOPOLE_TOKEN_URL:-}
+      IOPOLE_CLIENT_ID: ${IOPOLE_CLIENT_ID:-}
+      IOPOLE_CLIENT_SECRET: ${IOPOLE_CLIENT_SECRET:-}
+      IOPOLE_CUSTOMER_ID: ${IOPOLE_CUSTOMER_ID:-}
     depends_on:
       postgres-init:
         condition: service_completed_successfully

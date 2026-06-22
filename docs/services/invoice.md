@@ -124,7 +124,30 @@ echeancier valide:
   facture scellee, colonnes legales/financieres toujours gelees). Le no-op resolvant
   tout le monde, le depot (et son endpoint `POST /api/invoices/:id/deposit`) reste
   inchange tant qu'aucun annuaire reel n'est branche.
-  Hors perimetre : adaptateur PA reel (annuaire + plateforme a contractualiser).
+- **Adaptateur PA reel Iopole (B6, derniere iteration)** : implementation concrete
+  des seams `pdp.Client` / `pdp.Directory` contre l'API Iopole (Plateforme Agreee),
+  dans le sous-package `backend/invoice/pdp/iopole/` (transport HTTP + OAuth2 isoles
+  hors du package `pdp` neutre, qui reste sans I/O). Selection par variable
+  d'environnement : **`PDP_PROVIDER=iopole`** branche l'adaptateur reel ; toute autre
+  valeur (dont l'absence) garde les adaptateurs no-op — la production reste donc
+  inerte tant qu'on ne configure pas explicitement le fournisseur. Auth = OAuth2
+  client_credentials (Keycloak, `IOPOLE_TOKEN_URL`), header tenant `customer-id`
+  (`IOPOLE_CUSTOMER_ID`). Depot = `POST /v1/invoice` en `multipart/form-data` (champ
+  `file`), ou l'on envoie le **PDF/A-3 Factur-X** obtenu en reutilisant le pipeline
+  EN16931 valide : `DepositInvoice` (via l'adaptateur) appelle
+  `export.ExportInvoice(facturx=true)` (client gRPC `services/exportgrpc/`,
+  `EXPORT_SERVICE_ADDRESS`) plutot que de regenerer le document. L'`id` retourne par
+  Iopole devient le `pdp_submission_id` gele. Statut = `GET
+  /v1/invoice/{id}/status-history` : on prend l'item le plus recent et on mappe son
+  `status.code` (15 valeurs Iopole) vers le vocabulaire `PlatformStatus`
+  (`SUBMITTED|ISSUED -> SUBMITTED`, `RECEIVED|MADE_AVAILABLE|IN_HAND -> RECEIVED`,
+  `APPROVED|PARTIALLY_APPROVED|COMPLETED -> APPROVED`, `PAYMENT_SENT|PAYMENT_RECEIVED
+  -> COLLECTED`, `REJECTED|REFUSED|UNACCEPTABLE -> REJECTED`, `DISPUTED|SUSPENDED` et
+  inconnu -> `UNKNOWN` = aucune transition). Annuaire = `GET /v1/directory/french?q=
+  {siret}` : `data` vide -> `ErrRecipientNotFound` (donc 4014). Note dependance :
+  `export` est deja client de `invoice` (`export -> invoice.GetInvoice`) ; le
+  back-call `invoice -> export.ExportInvoice` est un appel reseau distinct et
+  non-reentrant (pas de cycle a la compilation, pas de deadlock).
 - **Cadre e-invoicing FR** : le Factur-X B2C/OSS genere est coherent mais
   facultatif (l'obligation PPF/PDP vise le B2B domestique ; le transfrontalier
   releve de l'e-reporting).

@@ -876,6 +876,8 @@
       "ibanLabel": "IBAN",
       "ibanHint": "Affiché sur vos factures électroniques comme coordonnées de paiement.",
       "bicLabel": "BIC",
+      "siretInvalidLength": "Le SIRET doit comporter 14 chiffres.",
+      "siretSirenMismatch": "Le SIRET doit commencer par le SIREN.",
       "successToast": "Informations mises à jour."
     },
     "connection": {

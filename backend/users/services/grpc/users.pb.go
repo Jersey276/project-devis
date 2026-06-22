@@ -704,11 +704,12 @@ func (x *UpdateUserRequest) GetSiret() string {
 }
 
 type UpdateUserResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Success          bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code             int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	ValidationErrors []*ValidationError     `protobuf:"bytes,3,rep,name=validation_errors,json=validationErrors,proto3" json:"validation_errors,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *UpdateUserResponse) Reset() {
@@ -753,6 +754,13 @@ func (x *UpdateUserResponse) GetCode() int32 {
 		return x.Code
 	}
 	return 0
+}
+
+func (x *UpdateUserResponse) GetValidationErrors() []*ValidationError {
+	if x != nil {
+		return x.ValidationErrors
+	}
+	return nil
 }
 
 type DeleteUserRequest struct {
@@ -4992,10 +5000,11 @@ const file_users_proto_rawDesc = "" +
 	"\x04iban\x18\b \x01(\tR\x04iban\x12\x10\n" +
 	"\x03bic\x18\t \x01(\tR\x03bic\x12\x14\n" +
 	"\x05siret\x18\n" +
-	" \x01(\tR\x05siret\"B\n" +
+	" \x01(\tR\x05siret\"\x87\x01\n" +
 	"\x12UpdateUserResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\x05R\x04code\",\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x12C\n" +
+	"\x11validation_errors\x18\x03 \x03(\v2\x16.users.ValidationErrorR\x10validationErrors\",\n" +
 	"\x11DeleteUserRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\"3\n" +
 	"\x18GetUserAccessInfoRequest\x12\x17\n" +
@@ -5493,121 +5502,122 @@ var file_users_proto_goTypes = []any{
 var file_users_proto_depIdxs = []int32{
 	3,  // 0: users.CreateUserResponse.validation_errors:type_name -> users.ValidationError
 	4,  // 1: users.GetUserResponse.user:type_name -> users.User
-	15, // 2: users.ListAdminAccountsResponse.accounts:type_name -> users.AdminAccount
-	0,  // 3: users.Client.client_type:type_name -> users.ClientType
-	0,  // 4: users.CreateClientRequest.client_type:type_name -> users.ClientType
-	3,  // 5: users.CreateClientResponse.validation_errors:type_name -> users.ValidationError
-	21, // 6: users.GetClientResponse.client:type_name -> users.Client
-	21, // 7: users.ListClientsResponse.clients:type_name -> users.Client
-	0,  // 8: users.UpdateClientRequest.client_type:type_name -> users.ClientType
-	3,  // 9: users.UpdateClientResponse.validation_errors:type_name -> users.ValidationError
-	1,  // 10: users.Address.owner_type:type_name -> users.OwnerType
-	1,  // 11: users.CreateAddressRequest.owner_type:type_name -> users.OwnerType
-	3,  // 12: users.CreateAddressResponse.validation_errors:type_name -> users.ValidationError
-	1,  // 13: users.GetAddressRequest.owner_type:type_name -> users.OwnerType
-	31, // 14: users.GetAddressResponse.address:type_name -> users.Address
-	1,  // 15: users.ListAddressesRequest.owner_type:type_name -> users.OwnerType
-	31, // 16: users.ListAddressesResponse.addresses:type_name -> users.Address
-	1,  // 17: users.UpdateAddressRequest.owner_type:type_name -> users.OwnerType
-	3,  // 18: users.UpdateAddressResponse.validation_errors:type_name -> users.ValidationError
-	1,  // 19: users.ArchiveAddressRequest.owner_type:type_name -> users.OwnerType
-	3,  // 20: users.CreateCountryResponse.validation_errors:type_name -> users.ValidationError
-	41, // 21: users.GetCountryResponse.country:type_name -> users.Country
-	41, // 22: users.ListCountriesResponse.countries:type_name -> users.Country
-	3,  // 23: users.UpdateCountryResponse.validation_errors:type_name -> users.ValidationError
-	41, // 24: users.CountryGroup.countries:type_name -> users.Country
-	63, // 25: users.CountryGroup.taxes:type_name -> users.Tax
-	3,  // 26: users.CreateCountryGroupResponse.validation_errors:type_name -> users.ValidationError
-	51, // 27: users.GetCountryGroupResponse.country_group:type_name -> users.CountryGroup
-	51, // 28: users.ListCountryGroupsResponse.country_groups:type_name -> users.CountryGroup
-	3,  // 29: users.UpdateCountryGroupResponse.validation_errors:type_name -> users.ValidationError
-	3,  // 30: users.CreateTaxResponse.validation_errors:type_name -> users.ValidationError
-	63, // 31: users.GetTaxResponse.tax:type_name -> users.Tax
-	63, // 32: users.ListTaxesResponse.taxes:type_name -> users.Tax
-	3,  // 33: users.UpdateTaxResponse.validation_errors:type_name -> users.ValidationError
-	5,  // 34: users.UserService.CreateUser:input_type -> users.CreateUserRequest
-	7,  // 35: users.UserService.GetUser:input_type -> users.GetUserRequest
-	9,  // 36: users.UserService.UpdateUser:input_type -> users.UpdateUserRequest
-	11, // 37: users.UserService.DeleteUser:input_type -> users.DeleteUserRequest
-	12, // 38: users.UserService.GetUserAccessInfo:input_type -> users.GetUserAccessInfoRequest
-	13, // 39: users.UserService.GetUserAccessInfoByEmail:input_type -> users.GetUserAccessInfoByEmailRequest
-	16, // 40: users.UserService.ListAdminAccounts:input_type -> users.ListAdminAccountsRequest
-	18, // 41: users.UserService.UpdateAdminAccount:input_type -> users.UpdateAdminAccountRequest
-	19, // 42: users.UserService.SuspendAdminAccount:input_type -> users.SuspendAdminAccountRequest
-	20, // 43: users.UserService.TouchUserLastLogin:input_type -> users.TouchUserLastLoginRequest
-	22, // 44: users.UserService.CreateClient:input_type -> users.CreateClientRequest
-	24, // 45: users.UserService.GetClient:input_type -> users.GetClientRequest
-	26, // 46: users.UserService.ListClients:input_type -> users.ListClientsRequest
-	28, // 47: users.UserService.UpdateClient:input_type -> users.UpdateClientRequest
-	30, // 48: users.UserService.ArchiveClient:input_type -> users.ArchiveClientRequest
-	32, // 49: users.UserService.CreateAddress:input_type -> users.CreateAddressRequest
-	34, // 50: users.UserService.GetAddress:input_type -> users.GetAddressRequest
-	36, // 51: users.UserService.ListAddresses:input_type -> users.ListAddressesRequest
-	38, // 52: users.UserService.UpdateAddress:input_type -> users.UpdateAddressRequest
-	40, // 53: users.UserService.ArchiveAddress:input_type -> users.ArchiveAddressRequest
-	42, // 54: users.UserService.CreateCountry:input_type -> users.CreateCountryRequest
-	44, // 55: users.UserService.GetCountry:input_type -> users.GetCountryRequest
-	46, // 56: users.UserService.ListCountries:input_type -> users.ListCountriesRequest
-	48, // 57: users.UserService.UpdateCountry:input_type -> users.UpdateCountryRequest
-	50, // 58: users.UserService.DeleteCountry:input_type -> users.DeleteCountryRequest
-	52, // 59: users.UserService.CreateCountryGroup:input_type -> users.CreateCountryGroupRequest
-	54, // 60: users.UserService.GetCountryGroup:input_type -> users.GetCountryGroupRequest
-	56, // 61: users.UserService.ListCountryGroups:input_type -> users.ListCountryGroupsRequest
-	58, // 62: users.UserService.UpdateCountryGroup:input_type -> users.UpdateCountryGroupRequest
-	60, // 63: users.UserService.DeleteCountryGroup:input_type -> users.DeleteCountryGroupRequest
-	61, // 64: users.UserService.AttachCountry:input_type -> users.AttachCountryRequest
-	62, // 65: users.UserService.DetachCountry:input_type -> users.DetachCountryRequest
-	64, // 66: users.UserService.CreateTax:input_type -> users.CreateTaxRequest
-	66, // 67: users.UserService.GetTax:input_type -> users.GetTaxRequest
-	68, // 68: users.UserService.ListTaxes:input_type -> users.ListTaxesRequest
-	69, // 69: users.UserService.ListTaxesForUser:input_type -> users.ListTaxesForUserRequest
-	70, // 70: users.UserService.ListTaxesForCountry:input_type -> users.ListTaxesForCountryRequest
-	72, // 71: users.UserService.UpdateTax:input_type -> users.UpdateTaxRequest
-	74, // 72: users.UserService.DeleteTax:input_type -> users.DeleteTaxRequest
-	6,  // 73: users.UserService.CreateUser:output_type -> users.CreateUserResponse
-	8,  // 74: users.UserService.GetUser:output_type -> users.GetUserResponse
-	10, // 75: users.UserService.UpdateUser:output_type -> users.UpdateUserResponse
-	2,  // 76: users.UserService.DeleteUser:output_type -> users.GenericResponse
-	14, // 77: users.UserService.GetUserAccessInfo:output_type -> users.GetUserAccessInfoResponse
-	14, // 78: users.UserService.GetUserAccessInfoByEmail:output_type -> users.GetUserAccessInfoResponse
-	17, // 79: users.UserService.ListAdminAccounts:output_type -> users.ListAdminAccountsResponse
-	2,  // 80: users.UserService.UpdateAdminAccount:output_type -> users.GenericResponse
-	2,  // 81: users.UserService.SuspendAdminAccount:output_type -> users.GenericResponse
-	2,  // 82: users.UserService.TouchUserLastLogin:output_type -> users.GenericResponse
-	23, // 83: users.UserService.CreateClient:output_type -> users.CreateClientResponse
-	25, // 84: users.UserService.GetClient:output_type -> users.GetClientResponse
-	27, // 85: users.UserService.ListClients:output_type -> users.ListClientsResponse
-	29, // 86: users.UserService.UpdateClient:output_type -> users.UpdateClientResponse
-	2,  // 87: users.UserService.ArchiveClient:output_type -> users.GenericResponse
-	33, // 88: users.UserService.CreateAddress:output_type -> users.CreateAddressResponse
-	35, // 89: users.UserService.GetAddress:output_type -> users.GetAddressResponse
-	37, // 90: users.UserService.ListAddresses:output_type -> users.ListAddressesResponse
-	39, // 91: users.UserService.UpdateAddress:output_type -> users.UpdateAddressResponse
-	2,  // 92: users.UserService.ArchiveAddress:output_type -> users.GenericResponse
-	43, // 93: users.UserService.CreateCountry:output_type -> users.CreateCountryResponse
-	45, // 94: users.UserService.GetCountry:output_type -> users.GetCountryResponse
-	47, // 95: users.UserService.ListCountries:output_type -> users.ListCountriesResponse
-	49, // 96: users.UserService.UpdateCountry:output_type -> users.UpdateCountryResponse
-	2,  // 97: users.UserService.DeleteCountry:output_type -> users.GenericResponse
-	53, // 98: users.UserService.CreateCountryGroup:output_type -> users.CreateCountryGroupResponse
-	55, // 99: users.UserService.GetCountryGroup:output_type -> users.GetCountryGroupResponse
-	57, // 100: users.UserService.ListCountryGroups:output_type -> users.ListCountryGroupsResponse
-	59, // 101: users.UserService.UpdateCountryGroup:output_type -> users.UpdateCountryGroupResponse
-	2,  // 102: users.UserService.DeleteCountryGroup:output_type -> users.GenericResponse
-	2,  // 103: users.UserService.AttachCountry:output_type -> users.GenericResponse
-	2,  // 104: users.UserService.DetachCountry:output_type -> users.GenericResponse
-	65, // 105: users.UserService.CreateTax:output_type -> users.CreateTaxResponse
-	67, // 106: users.UserService.GetTax:output_type -> users.GetTaxResponse
-	71, // 107: users.UserService.ListTaxes:output_type -> users.ListTaxesResponse
-	71, // 108: users.UserService.ListTaxesForUser:output_type -> users.ListTaxesResponse
-	71, // 109: users.UserService.ListTaxesForCountry:output_type -> users.ListTaxesResponse
-	73, // 110: users.UserService.UpdateTax:output_type -> users.UpdateTaxResponse
-	2,  // 111: users.UserService.DeleteTax:output_type -> users.GenericResponse
-	73, // [73:112] is the sub-list for method output_type
-	34, // [34:73] is the sub-list for method input_type
-	34, // [34:34] is the sub-list for extension type_name
-	34, // [34:34] is the sub-list for extension extendee
-	0,  // [0:34] is the sub-list for field type_name
+	3,  // 2: users.UpdateUserResponse.validation_errors:type_name -> users.ValidationError
+	15, // 3: users.ListAdminAccountsResponse.accounts:type_name -> users.AdminAccount
+	0,  // 4: users.Client.client_type:type_name -> users.ClientType
+	0,  // 5: users.CreateClientRequest.client_type:type_name -> users.ClientType
+	3,  // 6: users.CreateClientResponse.validation_errors:type_name -> users.ValidationError
+	21, // 7: users.GetClientResponse.client:type_name -> users.Client
+	21, // 8: users.ListClientsResponse.clients:type_name -> users.Client
+	0,  // 9: users.UpdateClientRequest.client_type:type_name -> users.ClientType
+	3,  // 10: users.UpdateClientResponse.validation_errors:type_name -> users.ValidationError
+	1,  // 11: users.Address.owner_type:type_name -> users.OwnerType
+	1,  // 12: users.CreateAddressRequest.owner_type:type_name -> users.OwnerType
+	3,  // 13: users.CreateAddressResponse.validation_errors:type_name -> users.ValidationError
+	1,  // 14: users.GetAddressRequest.owner_type:type_name -> users.OwnerType
+	31, // 15: users.GetAddressResponse.address:type_name -> users.Address
+	1,  // 16: users.ListAddressesRequest.owner_type:type_name -> users.OwnerType
+	31, // 17: users.ListAddressesResponse.addresses:type_name -> users.Address
+	1,  // 18: users.UpdateAddressRequest.owner_type:type_name -> users.OwnerType
+	3,  // 19: users.UpdateAddressResponse.validation_errors:type_name -> users.ValidationError
+	1,  // 20: users.ArchiveAddressRequest.owner_type:type_name -> users.OwnerType
+	3,  // 21: users.CreateCountryResponse.validation_errors:type_name -> users.ValidationError
+	41, // 22: users.GetCountryResponse.country:type_name -> users.Country
+	41, // 23: users.ListCountriesResponse.countries:type_name -> users.Country
+	3,  // 24: users.UpdateCountryResponse.validation_errors:type_name -> users.ValidationError
+	41, // 25: users.CountryGroup.countries:type_name -> users.Country
+	63, // 26: users.CountryGroup.taxes:type_name -> users.Tax
+	3,  // 27: users.CreateCountryGroupResponse.validation_errors:type_name -> users.ValidationError
+	51, // 28: users.GetCountryGroupResponse.country_group:type_name -> users.CountryGroup
+	51, // 29: users.ListCountryGroupsResponse.country_groups:type_name -> users.CountryGroup
+	3,  // 30: users.UpdateCountryGroupResponse.validation_errors:type_name -> users.ValidationError
+	3,  // 31: users.CreateTaxResponse.validation_errors:type_name -> users.ValidationError
+	63, // 32: users.GetTaxResponse.tax:type_name -> users.Tax
+	63, // 33: users.ListTaxesResponse.taxes:type_name -> users.Tax
+	3,  // 34: users.UpdateTaxResponse.validation_errors:type_name -> users.ValidationError
+	5,  // 35: users.UserService.CreateUser:input_type -> users.CreateUserRequest
+	7,  // 36: users.UserService.GetUser:input_type -> users.GetUserRequest
+	9,  // 37: users.UserService.UpdateUser:input_type -> users.UpdateUserRequest
+	11, // 38: users.UserService.DeleteUser:input_type -> users.DeleteUserRequest
+	12, // 39: users.UserService.GetUserAccessInfo:input_type -> users.GetUserAccessInfoRequest
+	13, // 40: users.UserService.GetUserAccessInfoByEmail:input_type -> users.GetUserAccessInfoByEmailRequest
+	16, // 41: users.UserService.ListAdminAccounts:input_type -> users.ListAdminAccountsRequest
+	18, // 42: users.UserService.UpdateAdminAccount:input_type -> users.UpdateAdminAccountRequest
+	19, // 43: users.UserService.SuspendAdminAccount:input_type -> users.SuspendAdminAccountRequest
+	20, // 44: users.UserService.TouchUserLastLogin:input_type -> users.TouchUserLastLoginRequest
+	22, // 45: users.UserService.CreateClient:input_type -> users.CreateClientRequest
+	24, // 46: users.UserService.GetClient:input_type -> users.GetClientRequest
+	26, // 47: users.UserService.ListClients:input_type -> users.ListClientsRequest
+	28, // 48: users.UserService.UpdateClient:input_type -> users.UpdateClientRequest
+	30, // 49: users.UserService.ArchiveClient:input_type -> users.ArchiveClientRequest
+	32, // 50: users.UserService.CreateAddress:input_type -> users.CreateAddressRequest
+	34, // 51: users.UserService.GetAddress:input_type -> users.GetAddressRequest
+	36, // 52: users.UserService.ListAddresses:input_type -> users.ListAddressesRequest
+	38, // 53: users.UserService.UpdateAddress:input_type -> users.UpdateAddressRequest
+	40, // 54: users.UserService.ArchiveAddress:input_type -> users.ArchiveAddressRequest
+	42, // 55: users.UserService.CreateCountry:input_type -> users.CreateCountryRequest
+	44, // 56: users.UserService.GetCountry:input_type -> users.GetCountryRequest
+	46, // 57: users.UserService.ListCountries:input_type -> users.ListCountriesRequest
+	48, // 58: users.UserService.UpdateCountry:input_type -> users.UpdateCountryRequest
+	50, // 59: users.UserService.DeleteCountry:input_type -> users.DeleteCountryRequest
+	52, // 60: users.UserService.CreateCountryGroup:input_type -> users.CreateCountryGroupRequest
+	54, // 61: users.UserService.GetCountryGroup:input_type -> users.GetCountryGroupRequest
+	56, // 62: users.UserService.ListCountryGroups:input_type -> users.ListCountryGroupsRequest
+	58, // 63: users.UserService.UpdateCountryGroup:input_type -> users.UpdateCountryGroupRequest
+	60, // 64: users.UserService.DeleteCountryGroup:input_type -> users.DeleteCountryGroupRequest
+	61, // 65: users.UserService.AttachCountry:input_type -> users.AttachCountryRequest
+	62, // 66: users.UserService.DetachCountry:input_type -> users.DetachCountryRequest
+	64, // 67: users.UserService.CreateTax:input_type -> users.CreateTaxRequest
+	66, // 68: users.UserService.GetTax:input_type -> users.GetTaxRequest
+	68, // 69: users.UserService.ListTaxes:input_type -> users.ListTaxesRequest
+	69, // 70: users.UserService.ListTaxesForUser:input_type -> users.ListTaxesForUserRequest
+	70, // 71: users.UserService.ListTaxesForCountry:input_type -> users.ListTaxesForCountryRequest
+	72, // 72: users.UserService.UpdateTax:input_type -> users.UpdateTaxRequest
+	74, // 73: users.UserService.DeleteTax:input_type -> users.DeleteTaxRequest
+	6,  // 74: users.UserService.CreateUser:output_type -> users.CreateUserResponse
+	8,  // 75: users.UserService.GetUser:output_type -> users.GetUserResponse
+	10, // 76: users.UserService.UpdateUser:output_type -> users.UpdateUserResponse
+	2,  // 77: users.UserService.DeleteUser:output_type -> users.GenericResponse
+	14, // 78: users.UserService.GetUserAccessInfo:output_type -> users.GetUserAccessInfoResponse
+	14, // 79: users.UserService.GetUserAccessInfoByEmail:output_type -> users.GetUserAccessInfoResponse
+	17, // 80: users.UserService.ListAdminAccounts:output_type -> users.ListAdminAccountsResponse
+	2,  // 81: users.UserService.UpdateAdminAccount:output_type -> users.GenericResponse
+	2,  // 82: users.UserService.SuspendAdminAccount:output_type -> users.GenericResponse
+	2,  // 83: users.UserService.TouchUserLastLogin:output_type -> users.GenericResponse
+	23, // 84: users.UserService.CreateClient:output_type -> users.CreateClientResponse
+	25, // 85: users.UserService.GetClient:output_type -> users.GetClientResponse
+	27, // 86: users.UserService.ListClients:output_type -> users.ListClientsResponse
+	29, // 87: users.UserService.UpdateClient:output_type -> users.UpdateClientResponse
+	2,  // 88: users.UserService.ArchiveClient:output_type -> users.GenericResponse
+	33, // 89: users.UserService.CreateAddress:output_type -> users.CreateAddressResponse
+	35, // 90: users.UserService.GetAddress:output_type -> users.GetAddressResponse
+	37, // 91: users.UserService.ListAddresses:output_type -> users.ListAddressesResponse
+	39, // 92: users.UserService.UpdateAddress:output_type -> users.UpdateAddressResponse
+	2,  // 93: users.UserService.ArchiveAddress:output_type -> users.GenericResponse
+	43, // 94: users.UserService.CreateCountry:output_type -> users.CreateCountryResponse
+	45, // 95: users.UserService.GetCountry:output_type -> users.GetCountryResponse
+	47, // 96: users.UserService.ListCountries:output_type -> users.ListCountriesResponse
+	49, // 97: users.UserService.UpdateCountry:output_type -> users.UpdateCountryResponse
+	2,  // 98: users.UserService.DeleteCountry:output_type -> users.GenericResponse
+	53, // 99: users.UserService.CreateCountryGroup:output_type -> users.CreateCountryGroupResponse
+	55, // 100: users.UserService.GetCountryGroup:output_type -> users.GetCountryGroupResponse
+	57, // 101: users.UserService.ListCountryGroups:output_type -> users.ListCountryGroupsResponse
+	59, // 102: users.UserService.UpdateCountryGroup:output_type -> users.UpdateCountryGroupResponse
+	2,  // 103: users.UserService.DeleteCountryGroup:output_type -> users.GenericResponse
+	2,  // 104: users.UserService.AttachCountry:output_type -> users.GenericResponse
+	2,  // 105: users.UserService.DetachCountry:output_type -> users.GenericResponse
+	65, // 106: users.UserService.CreateTax:output_type -> users.CreateTaxResponse
+	67, // 107: users.UserService.GetTax:output_type -> users.GetTaxResponse
+	71, // 108: users.UserService.ListTaxes:output_type -> users.ListTaxesResponse
+	71, // 109: users.UserService.ListTaxesForUser:output_type -> users.ListTaxesResponse
+	71, // 110: users.UserService.ListTaxesForCountry:output_type -> users.ListTaxesResponse
+	73, // 111: users.UserService.UpdateTax:output_type -> users.UpdateTaxResponse
+	2,  // 112: users.UserService.DeleteTax:output_type -> users.GenericResponse
+	74, // [74:113] is the sub-list for method output_type
+	35, // [35:74] is the sub-list for method input_type
+	35, // [35:35] is the sub-list for extension type_name
+	35, // [35:35] is the sub-list for extension extendee
+	0,  // [0:35] is the sub-list for field type_name
 }
 
 func init() { file_users_proto_init() }

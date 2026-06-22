@@ -130,6 +130,7 @@ message UpdateUserRequest {
 message UpdateUserResponse {
     bool success = 1;
     int32 code = 2;
+    repeated ValidationError validation_errors = 3;
 }
 
 message DeleteUserRequest {

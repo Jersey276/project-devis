@@ -14,6 +14,8 @@ import (
 
 	"project-devis-invoice/actions"
 	"project-devis-invoice/pdp"
+	"project-devis-invoice/pdp/iopole"
+	exportGrpc "project-devis-invoice/services/exportgrpc"
 	quoteGrpc "project-devis-invoice/services/quotegrpc"
 	scheduleGrpc "project-devis-invoice/services/schedulegrpc"
 	usersGrpc "project-devis-invoice/services/usersgrpc"
@@ -61,12 +63,10 @@ func main() {
 	uClient := usersGrpc.NewUserServiceClient(uConn)
 	sClient := scheduleGrpc.NewScheduleServiceClient(sConn)
 
-	// No PA contracted yet (B6): default to the no-op adapters. The address is read
-	// as a forward seam; real adapters (platform + directory) are wired here once a
-	// provider is chosen.
-	_ = envOrDefault("PDP_SERVICE_ADDRESS", "")
-	var pdpClient pdp.Client = pdp.NoopClient{}
-	var pdpDirectory pdp.Directory = pdp.NoopDirectory{}
+	// PA (Plateforme Agréée) adapter selection (B6). Default = no-op (no real PA,
+	// no network call). PDP_PROVIDER=iopole wires the real Iopole adapter, which
+	// deposits the Factur-X PDF/A-3 fetched from the export service.
+	pdpClient, pdpDirectory := buildPDPAdapters()
 
 	server := actions.NewServer(db, qClient, uClient, sClient, pdpClient, pdpDirectory)
 
@@ -89,6 +89,35 @@ func main() {
 	log.Printf("invoice gRPC server listening on %s", lis.Addr().String())
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("serve failed: %v", err)
+	}
+}
+
+// buildPDPAdapters selects the PA client+directory from PDP_PROVIDER. Anything but
+// "iopole" (including unset) keeps the inert no-op adapters, so production is
+// unchanged until a provider is explicitly configured. The Iopole client deposits
+// the Factur-X PDF/A-3 obtained from the export service.
+func buildPDPAdapters() (pdp.Client, pdp.Directory) {
+	switch envOrDefault("PDP_PROVIDER", "noop") {
+	case "iopole":
+		baseURL := envOrDefault("IOPOLE_BASE_URL", "https://api.ppd.iopole.fr/v1/api")
+		tokenURL := envOrDefault("IOPOLE_TOKEN_URL",
+			"https://auth.preprod.iopole.fr/realms/iopole/protocol/openid-connect/token")
+		clientID := os.Getenv("IOPOLE_CLIENT_ID")
+		clientSecret := os.Getenv("IOPOLE_CLIENT_SECRET")
+		customerID := os.Getenv("IOPOLE_CUSTOMER_ID")
+
+		exportAddr := envOrDefault("EXPORT_SERVICE_ADDRESS", "localhost:50054")
+		eConn, err := grpc.NewClient(exportAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			log.Fatalf("dial export service (iopole document source): %v", err)
+		}
+		docs := actions.NewExportDocumentSource(exportGrpc.NewExportServiceClient(eConn))
+
+		log.Printf("invoice PA adapter: iopole (base=%s)", baseURL)
+		return iopole.NewClient(baseURL, tokenURL, clientID, clientSecret, customerID, docs),
+			iopole.NewDirectory(baseURL, tokenURL, clientID, clientSecret, customerID)
+	default:
+		return pdp.NoopClient{}, pdp.NoopDirectory{}
 	}
 }
 

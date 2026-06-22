@@ -207,6 +207,10 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	if !resp.Success {
+		if len(resp.ValidationErrors) > 0 {
+			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
+			return
+		}
 		usersErrors.reply(c, resp.Code)
 		return
 	}
