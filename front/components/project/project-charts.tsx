@@ -156,7 +156,7 @@ export default function ProjectCharts({ quotes, totalHtCents, collectedHtCents }
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" tick={{ fontSize: 10 }} />
             <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-            <Tooltip formatter={(v: number) => [formatEuros(v * 100), "Montant HT"]} />
+            <Tooltip formatter={(v) => [formatEuros((v as number) * 100), "Montant HT"]} />
             <Bar dataKey="montant" fill="#3b82f6" name="Montant HT" />
           </BarChart>
         </ResponsiveContainer>

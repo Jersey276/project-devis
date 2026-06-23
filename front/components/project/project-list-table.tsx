@@ -35,7 +35,7 @@ import { listProjects, deleteProject } from "@/lib/services/projects";
 import { listClients } from "@/lib/services/clients";
 import { clientName, PROJECT_STATUS_ITEMS } from "@/lib/project-utils";
 import { toast } from "sonner";
-import type { BackendClient, ProjectStatus } from "@/types/backend";
+import type { BackendClient, BackendProject, ProjectStatus } from "@/types/backend";
 
 const PAGE_SIZE = 20;
 
@@ -160,7 +160,7 @@ function ProjectListTableInner() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const filters = (
-    <FilterSidebar activeCount={activeFilterCount}>
+    <FilterSidebar triggerLabel={tCommon("trigger")} title={tCommon("title")} activeCount={activeFilterCount}>
       <FilterSidebarSection label={tCommon("search")}>
         <Input
           value={search}
@@ -192,7 +192,7 @@ function ProjectListTableInner() {
       >
         <DataTableHeader>
           <DataTableRow>
-            <DataTableSortableHead column="name">{t("list.columns.name")}</DataTableSortableHead>
+            <DataTableSortableHead name="name">{t("list.columns.name")}</DataTableSortableHead>
             <DataTableHead>{t("list.columns.client")}</DataTableHead>
             <DataTableHead>{t("list.columns.status")}</DataTableHead>
             <DataTableHead>{t("list.columns.quoteCount")}</DataTableHead>

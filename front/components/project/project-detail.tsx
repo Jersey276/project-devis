@@ -31,7 +31,7 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
     getProjectDetail(projectId, controller.signal).then(({ ok, body }) => {
       setLoading(false);
       if (!ok) { setError(body?.message ?? t("errors.load")); return; }
-      setDetail(body as BackendProjectDetail);
+      setDetail(body as unknown as BackendProjectDetail);
     }).catch(() => {});
     return () => controller.abort();
   }, [projectId, refreshKey, t]);
