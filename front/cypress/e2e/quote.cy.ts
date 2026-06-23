@@ -33,7 +33,7 @@ describe("Quote", () => {
   describe("List", () => {
     it("renders quotes and maps state + archived_at to status", () => {
       cy.login();
-      cy.intercept("GET", "/api/quotes", {
+      cy.intercept("GET", "/api/quotes**", {
         statusCode: 200,
         body: {
           success: true,
@@ -72,7 +72,7 @@ describe("Quote", () => {
 
     it("shows the empty state when no quotes are returned", () => {
       cy.login();
-      cy.intercept("GET", "/api/quotes", {
+      cy.intercept("GET", "/api/quotes**", {
         statusCode: 200,
         body: { success: true, quotes: [] },
       }).as("listQuotesEmpty");
@@ -84,7 +84,7 @@ describe("Quote", () => {
 
     it("creates a schedule from the quote row actions menu", () => {
       cy.login();
-      cy.intercept("GET", "/api/quotes", {
+      cy.intercept("GET", "/api/quotes**", {
         statusCode: 200,
         body: {
           success: true,
@@ -718,7 +718,7 @@ describe("Quote", () => {
           lines: [],
         },
       }).as("getQuote");
-      cy.intercept("GET", "/api/quotes", {
+      cy.intercept("GET", "/api/quotes**", {
         statusCode: 200,
         body: {
           success: true,
