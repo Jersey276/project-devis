@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strings"
 	"time"
 
@@ -23,15 +24,31 @@ func (s *Server) ListInvoices(ctx context.Context, req *invoiceGrpc.ListInvoices
 		return &invoiceGrpc.ListInvoicesResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 
-	query := `SELECT invoice_id, invoice_number, status, quote_id, schedule_id,
-	                 issued_at, due_date, total_ttc_cents, lifecycle_status
-	          FROM invoices WHERE user_id=$1`
-	args := []any{req.UserId}
-	if q := strings.TrimSpace(req.QuoteId); q != "" {
-		query += ` AND quote_id=$2`
-		args = append(args, q)
+	page := req.Page
+	if page < 1 {
+		page = 1
 	}
-	query += ` ORDER BY created_at DESC`
+	pageSize := req.PageSize
+	if pageSize < 1 || pageSize > 200 {
+		pageSize = 20
+	}
+	offset := (page - 1) * pageSize
+
+	where, args := buildInvoiceFilters(req.UserId, req.QuoteId, req.Filters)
+
+	var total int64
+	if err = s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM invoices"+where, args...).Scan(&total); err != nil {
+		return &invoiceGrpc.ListInvoicesResponse{Success: false, Code: codes.InternalError}, err
+	}
+
+	args = append(args, pageSize, offset)
+	n := len(args)
+	query := fmt.Sprintf(
+		`SELECT invoice_id, invoice_number, status, quote_id, schedule_id,
+		        issued_at, due_date, total_ttc_cents, lifecycle_status
+		 FROM invoices%s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
+		where, n-1, n,
+	)
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -68,5 +85,65 @@ func (s *Server) ListInvoices(ctx context.Context, req *invoiceGrpc.ListInvoices
 		return &invoiceGrpc.ListInvoicesResponse{Success: false, Code: codes.InternalError}, err
 	}
 
-	return &invoiceGrpc.ListInvoicesResponse{Success: true, Code: codes.Success, Invoices: out}, nil
+	return &invoiceGrpc.ListInvoicesResponse{Success: true, Code: codes.Success, Invoices: out, Total: total}, nil
+}
+
+func buildInvoiceFilters(userID, legacyQuoteID string, f *invoiceGrpc.InvoiceFilters) (string, []interface{}) {
+	args := []interface{}{userID}
+	clauses := []string{"user_id = $1"}
+
+	if strings.TrimSpace(legacyQuoteID) != "" {
+		args = append(args, legacyQuoteID)
+		clauses = append(clauses, fmt.Sprintf("quote_id = $%d", len(args)))
+	}
+
+	if f == nil {
+		return " WHERE " + strings.Join(clauses, " AND "), args
+	}
+
+	if len(f.Statuses) > 0 {
+		placeholders := make([]string, len(f.Statuses))
+		for i, s := range f.Statuses {
+			args = append(args, s)
+			placeholders[i] = fmt.Sprintf("$%d", len(args))
+		}
+		clauses = append(clauses, "status IN ("+strings.Join(placeholders, ",")+")")
+	}
+	if len(f.LifecycleStatuses) > 0 {
+		placeholders := make([]string, len(f.LifecycleStatuses))
+		for i, s := range f.LifecycleStatuses {
+			args = append(args, s)
+			placeholders[i] = fmt.Sprintf("$%d", len(args))
+		}
+		clauses = append(clauses, "lifecycle_status IN ("+strings.Join(placeholders, ",")+")")
+	}
+	if f.IssuedFrom != "" {
+		args = append(args, f.IssuedFrom)
+		clauses = append(clauses, fmt.Sprintf("issued_at >= $%d", len(args)))
+	}
+	if f.IssuedTo != "" {
+		args = append(args, f.IssuedTo)
+		clauses = append(clauses, fmt.Sprintf("issued_at <= $%d", len(args)))
+	}
+	if f.DueFrom != "" {
+		args = append(args, f.DueFrom)
+		clauses = append(clauses, fmt.Sprintf("due_date >= $%d", len(args)))
+	}
+	if f.DueTo != "" {
+		args = append(args, f.DueTo)
+		clauses = append(clauses, fmt.Sprintf("due_date <= $%d", len(args)))
+	}
+	if f.QuoteIdFilter != "" {
+		args = append(args, f.QuoteIdFilter)
+		clauses = append(clauses, fmt.Sprintf("quote_id = $%d", len(args)))
+	}
+	// client_id filter via subquery (invoices don't store client_id directly)
+	if f.ClientId != "" {
+		args = append(args, f.ClientId)
+		clauses = append(clauses, fmt.Sprintf(
+			"quote_id IN (SELECT quote_id FROM quotes WHERE client_id = $%d)", len(args),
+		))
+	}
+
+	return " WHERE " + strings.Join(clauses, " AND "), args
 }

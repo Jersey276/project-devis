@@ -191,9 +191,23 @@ message GetInvoiceResponse {
     InvoiceDetails invoice = 3;
 }
 
+message InvoiceFilters {
+    repeated string statuses           = 1;
+    repeated string lifecycle_statuses = 2;
+    string          issued_from        = 3;
+    string          issued_to          = 4;
+    string          due_from           = 5;
+    string          due_to             = 6;
+    string          client_id          = 7;
+    string          quote_id_filter    = 8;
+}
+
 message ListInvoicesRequest {
-    string user_id  = 1;
-    string quote_id = 2;  // optional filter
+    string         user_id   = 1;
+    string         quote_id  = 2;  // optional filter (legacy)
+    int32          page      = 3;
+    int32          page_size = 4;
+    InvoiceFilters filters   = 5;
 }
 
 message InvoiceSummary {
@@ -212,6 +226,7 @@ message ListInvoicesResponse {
     bool                    success  = 1;
     int32                   code     = 2;
     repeated InvoiceSummary invoices = 3;
+    int64                   total    = 4;
 }
 
 // ─── Credit notes (avoirs) ───────────────────────────────────────────────────
@@ -264,9 +279,18 @@ message GetCreditNoteResponse {
     CreditNoteDetails credit_note = 3;
 }
 
+message CreditNoteFilters {
+    string is_total    = 1;
+    string issued_from = 2;
+    string issued_to   = 3;
+}
+
 message ListCreditNotesRequest {
-    string user_id    = 1;
-    string invoice_id = 2;  // optional filter
+    string            user_id    = 1;
+    string            invoice_id = 2;  // optional filter (legacy)
+    int32             page       = 3;
+    int32             page_size  = 4;
+    CreditNoteFilters filters    = 5;
 }
 
 message CreditNoteSummary {
@@ -283,6 +307,7 @@ message ListCreditNotesResponse {
     bool                       success      = 1;
     int32                      code         = 2;
     repeated CreditNoteSummary credit_notes = 3;
+    int64                      total        = 4;
 }
 
 // ─── Inalterability ──────────────────────────────────────────────────────────

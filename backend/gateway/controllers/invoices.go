@@ -3,6 +3,8 @@ package controllers
 import (
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 
 	invoice "gateway/invoice"
 
@@ -101,9 +103,32 @@ func InvoicesRoutes(r *gin.RouterGroup) {
 }
 
 func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient) {
+	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 32)
+	pageSize, _ := strconv.ParseInt(c.DefaultQuery("page_size", "20"), 10, 32)
+
+	var statuses, lifecycleStatuses []string
+	if raw := c.Query("statuses"); raw != "" {
+		statuses = strings.Split(raw, ",")
+	}
+	if raw := c.Query("lifecycle_statuses"); raw != "" {
+		lifecycleStatuses = strings.Split(raw, ",")
+	}
+
 	resp, err := client.ListInvoices(c.Request.Context(), &invoice.ListInvoicesRequest{
-		UserId:  userIDFromCtx(c),
-		QuoteId: c.Query("quote_id"),
+		UserId:   userIDFromCtx(c),
+		QuoteId:  c.Query("quote_id"),
+		Page:     int32(page),
+		PageSize: int32(pageSize),
+		Filters: &invoice.InvoiceFilters{
+			Statuses:          statuses,
+			LifecycleStatuses: lifecycleStatuses,
+			IssuedFrom:        c.Query("issued_from"),
+			IssuedTo:          c.Query("issued_to"),
+			DueFrom:           c.Query("due_from"),
+			DueTo:             c.Query("due_to"),
+			ClientId:          c.Query("client_id"),
+			QuoteIdFilter:     c.Query("quote_id_filter"),
+		},
 	})
 	if err != nil {
 		invoiceErrors.unavailable(c)
@@ -127,7 +152,7 @@ func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient) {
 			"lifecycle_status": in.LifecycleStatus,
 		})
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "invoices": out})
+	c.JSON(http.StatusOK, gin.H{"success": true, "invoices": out, "total": resp.Total})
 }
 
 func CreateInvoiceFromSchedule(c *gin.Context, client invoice.InvoiceServiceClient) {
