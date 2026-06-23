@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"os"
+	"strconv"
 
 	invoice "gateway/invoice"
 
@@ -31,9 +32,19 @@ func CreditNotesRoutes(r *gin.RouterGroup) {
 }
 
 func ListCreditNotes(c *gin.Context, client invoice.InvoiceServiceClient) {
+	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 32)
+	pageSize, _ := strconv.ParseInt(c.DefaultQuery("page_size", "20"), 10, 32)
+
 	resp, err := client.ListCreditNotes(c.Request.Context(), &invoice.ListCreditNotesRequest{
 		UserId:    userIDFromCtx(c),
 		InvoiceId: c.Query("invoice_id"),
+		Page:      int32(page),
+		PageSize:  int32(pageSize),
+		Filters: &invoice.CreditNoteFilters{
+			IsTotal:    c.Query("is_total"),
+			IssuedFrom: c.Query("issued_from"),
+			IssuedTo:   c.Query("issued_to"),
+		},
 	})
 	if err != nil {
 		invoiceErrors.unavailable(c)
@@ -47,7 +58,7 @@ func ListCreditNotes(c *gin.Context, client invoice.InvoiceServiceClient) {
 	for _, cn := range resp.CreditNotes {
 		out = append(out, creditNoteSummaryToJSON(cn))
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "credit_notes": out})
+	c.JSON(http.StatusOK, gin.H{"success": true, "credit_notes": out, "total": resp.Total})
 }
 
 func GetCreditNote(c *gin.Context, client invoice.InvoiceServiceClient) {
