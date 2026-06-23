@@ -696,10 +696,23 @@ func marshalCountries(in []*users.Country) []gin.H {
 }
 
 func ListClients(c *gin.Context, client users.UserServiceClient) {
-	includeArchived := c.Query("archived") == "true"
+	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 32)
+	pageSize, _ := strconv.ParseInt(c.DefaultQuery("page_size", "20"), 10, 32)
+
+	var clientTypes []string
+	if raw := c.Query("client_types"); raw != "" {
+		clientTypes = strings.Split(raw, ",")
+	}
+
 	resp, err := client.ListClients(c.Request.Context(), &users.ListClientsRequest{
 		UserId:          userIDFromCtx(c),
-		IncludeArchived: includeArchived,
+		IncludeArchived: c.Query("archived") == "true",
+		Page:            int32(page),
+		PageSize:        int32(pageSize),
+		Filters: &users.ClientFilters{
+			Search:      c.Query("search"),
+			ClientTypes: clientTypes,
+		},
 	})
 	if err != nil {
 		usersErrors.unavailable(c)
@@ -709,7 +722,7 @@ func ListClients(c *gin.Context, client users.UserServiceClient) {
 		usersErrors.reply(c, resp.Code)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "clients": marshalClients(resp.Clients)})
+	c.JSON(http.StatusOK, gin.H{"success": true, "clients": marshalClients(resp.Clients), "total": resp.Total})
 }
 
 func CreateClient(c *gin.Context, client users.UserServiceClient) {

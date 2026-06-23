@@ -15,8 +15,9 @@ export type ClientPayload = {
   client_type: ClientType;
 };
 
-export async function listClients(): Promise<ApiResult> {
-  return apiFetch("/api/users/clients");
+export async function listClients(queryString?: string): Promise<ApiResult> {
+  const url = queryString ? `/api/users/clients?${queryString}` : "/api/users/clients";
+  return apiFetch(url);
 }
 
 export async function createClient(payload: ClientPayload): Promise<ApiResult> {
