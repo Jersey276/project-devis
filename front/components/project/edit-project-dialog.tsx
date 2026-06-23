@@ -81,7 +81,8 @@ export default function EditProjectDialog({ project, open, onOpenChange, onUpdat
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>Modifier le projet</ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
-        <ResponsiveDialogBody className="flex flex-col gap-4">
+        <ResponsiveDialogBody>
+          <div className="flex flex-col gap-4">
           <Field>
             <FieldLabel>Nom du projet</FieldLabel>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
@@ -112,6 +113,7 @@ export default function EditProjectDialog({ project, open, onOpenChange, onUpdat
               placeholder="Statut"
             />
           </Field>
+          </div>
         </ResponsiveDialogBody>
         <ResponsiveDialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>

@@ -82,7 +82,8 @@ export default function CreateProjectDialog({ onCreated }: { onCreated?: () => v
           <ResponsiveDialogHeader>
             <ResponsiveDialogTitle>Nouveau projet</ResponsiveDialogTitle>
           </ResponsiveDialogHeader>
-          <ResponsiveDialogBody className="flex flex-col gap-4">
+          <ResponsiveDialogBody>
+            <div className="flex flex-col gap-4">
             <Field>
               <FieldLabel>Nom du projet</FieldLabel>
               <Input
@@ -108,6 +109,7 @@ export default function CreateProjectDialog({ onCreated }: { onCreated?: () => v
                 </ComboboxContent>
               </Combobox>
             </Field>
+            </div>
           </ResponsiveDialogBody>
           <ResponsiveDialogFooter>
             <Button variant="outline" onClick={() => handleClose(false)} disabled={busy}>
