@@ -95,7 +95,7 @@ export default function CreateProjectDialog({ onCreated }: { onCreated?: () => v
             </Field>
             <Field>
               <FieldLabel>Client (optionnel)</FieldLabel>
-              <Combobox value={clientId} onValueChange={setClientId}>
+              <Combobox value={clientId} onValueChange={(v) => setClientId(v ?? "")}>
                 <ComboboxInput placeholder="Rechercher un client…" />
                 <ComboboxContent>
                   <ComboboxList>

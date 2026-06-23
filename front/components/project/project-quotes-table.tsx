@@ -234,7 +234,7 @@ export default function ProjectQuotesTable({
       {/* Add quote row */}
       <div className="flex items-center gap-2">
         <div className="w-64">
-          <Combobox value={addQuoteId} onValueChange={setAddQuoteId}>
+          <Combobox value={addQuoteId} onValueChange={(v) => setAddQuoteId(v ?? "")}>
             <ComboboxInput placeholder="Ajouter un devis…" />
             <ComboboxContent>
               <ComboboxList>

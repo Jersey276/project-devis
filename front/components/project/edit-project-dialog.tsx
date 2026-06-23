@@ -90,7 +90,7 @@ export default function EditProjectDialog({ project, open, onOpenChange, onUpdat
           </Field>
           <Field>
             <FieldLabel>Client</FieldLabel>
-            <Combobox value={clientId} onValueChange={setClientId}>
+            <Combobox value={clientId} onValueChange={(v) => setClientId(v ?? "")}>
               <ComboboxInput placeholder="Rechercher un client…" />
               <ComboboxContent>
                 <ComboboxList>
