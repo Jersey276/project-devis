@@ -157,7 +157,7 @@ function InvoiceListTableInner() {
     });
   }, []);
 
-  const fetchInvoices = useCallback(async () => {
+  const fetchInvoices = useCallback(async (signal?: AbortSignal) => {
     const params = new URLSearchParams({ page: String(page), page_size: String(PAGE_SIZE) });
     if (statuses.length > 0) params.set("statuses", statuses.join(","));
     if (lifecycleStatuses.length > 0) params.set("lifecycle_statuses", lifecycleStatuses.join(","));
@@ -168,7 +168,8 @@ function InvoiceListTableInner() {
     if (clientId) params.set("client_id", clientId);
     if (quoteIdFilter) params.set("quote_id_filter", quoteIdFilter);
 
-    const { ok, body } = await listInvoices(params.toString());
+    const { ok, body } = await listInvoices(params.toString(), signal);
+    if (signal?.aborted) return;
     if (!ok || !body.success) {
       setError((body.message as string) ?? t("loadError"));
       return;
@@ -180,7 +181,9 @@ function InvoiceListTableInner() {
   }, [searchParams]);
 
   useEffect(() => {
-    void fetchInvoices();
+    const controller = new AbortController();
+    void fetchInvoices(controller.signal);
+    return () => controller.abort();
   }, [fetchInvoices]);
 
   const clientItems = useMemo(

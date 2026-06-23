@@ -25,9 +25,9 @@ export type CreateInvoiceFromQuotePayload = {
   issueNow?: boolean;
 };
 
-export async function listInvoices(queryString?: string): Promise<ApiResult> {
+export async function listInvoices(queryString?: string, signal?: AbortSignal): Promise<ApiResult> {
   const path = queryString ? `/api/invoices?${queryString}` : "/api/invoices";
-  return apiFetch(path);
+  return apiFetch(path, { signal });
 }
 
 export async function getInvoice(invoiceId: string): Promise<ApiResult> {
