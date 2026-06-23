@@ -1307,6 +1307,8 @@ type ListInvoicesRequest struct {
 	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
 	PageSize      int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	Filters       *InvoiceFilters        `protobuf:"bytes,5,opt,name=filters,proto3" json:"filters,omitempty"`
+	SortBy        string                 `protobuf:"bytes,6,opt,name=sort_by,json=sortBy,proto3" json:"sort_by,omitempty"`
+	SortDirection string                 `protobuf:"bytes,7,opt,name=sort_direction,json=sortDirection,proto3" json:"sort_direction,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1374,6 +1376,20 @@ func (x *ListInvoicesRequest) GetFilters() *InvoiceFilters {
 		return x.Filters
 	}
 	return nil
+}
+
+func (x *ListInvoicesRequest) GetSortBy() string {
+	if x != nil {
+		return x.SortBy
+	}
+	return ""
+}
+
+func (x *ListInvoicesRequest) GetSortDirection() string {
+	if x != nil {
+		return x.SortDirection
+	}
+	return ""
 }
 
 type InvoiceSummary struct {
@@ -2049,6 +2065,8 @@ type ListCreditNotesRequest struct {
 	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
 	PageSize      int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	Filters       *CreditNoteFilters     `protobuf:"bytes,5,opt,name=filters,proto3" json:"filters,omitempty"`
+	SortBy        string                 `protobuf:"bytes,6,opt,name=sort_by,json=sortBy,proto3" json:"sort_by,omitempty"`
+	SortDirection string                 `protobuf:"bytes,7,opt,name=sort_direction,json=sortDirection,proto3" json:"sort_direction,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2116,6 +2134,20 @@ func (x *ListCreditNotesRequest) GetFilters() *CreditNoteFilters {
 		return x.Filters
 	}
 	return nil
+}
+
+func (x *ListCreditNotesRequest) GetSortBy() string {
+	if x != nil {
+		return x.SortBy
+	}
+	return ""
+}
+
+func (x *ListCreditNotesRequest) GetSortDirection() string {
+	if x != nil {
+		return x.SortDirection
+	}
+	return ""
 }
 
 type CreditNoteSummary struct {
@@ -3272,13 +3304,15 @@ const file_invoice_proto_rawDesc = "" +
 	"\bdue_from\x18\x05 \x01(\tR\adueFrom\x12\x15\n" +
 	"\x06due_to\x18\x06 \x01(\tR\x05dueTo\x12\x1b\n" +
 	"\tclient_id\x18\a \x01(\tR\bclientId\x12&\n" +
-	"\x0fquote_id_filter\x18\b \x01(\tR\rquoteIdFilter\"\xad\x01\n" +
+	"\x0fquote_id_filter\x18\b \x01(\tR\rquoteIdFilter\"\xed\x01\n" +
 	"\x13ListInvoicesRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x19\n" +
 	"\bquote_id\x18\x02 \x01(\tR\aquoteId\x12\x12\n" +
 	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x121\n" +
-	"\afilters\x18\x05 \x01(\v2\x17.invoice.InvoiceFiltersR\afilters\"\xb5\x02\n" +
+	"\afilters\x18\x05 \x01(\v2\x17.invoice.InvoiceFiltersR\afilters\x12\x17\n" +
+	"\asort_by\x18\x06 \x01(\tR\x06sortBy\x12%\n" +
+	"\x0esort_direction\x18\a \x01(\tR\rsortDirection\"\xb5\x02\n" +
 	"\x0eInvoiceSummary\x12\x1d\n" +
 	"\n" +
 	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12%\n" +
@@ -3342,14 +3376,16 @@ const file_invoice_proto_rawDesc = "" +
 	"\bis_total\x18\x01 \x01(\tR\aisTotal\x12\x1f\n" +
 	"\vissued_from\x18\x02 \x01(\tR\n" +
 	"issuedFrom\x12\x1b\n" +
-	"\tissued_to\x18\x03 \x01(\tR\bissuedTo\"\xb7\x01\n" +
+	"\tissued_to\x18\x03 \x01(\tR\bissuedTo\"\xf7\x01\n" +
 	"\x16ListCreditNotesRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1d\n" +
 	"\n" +
 	"invoice_id\x18\x02 \x01(\tR\tinvoiceId\x12\x12\n" +
 	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x124\n" +
-	"\afilters\x18\x05 \x01(\v2\x1a.invoice.CreditNoteFiltersR\afilters\"\x8d\x02\n" +
+	"\afilters\x18\x05 \x01(\v2\x1a.invoice.CreditNoteFiltersR\afilters\x12\x17\n" +
+	"\asort_by\x18\x06 \x01(\tR\x06sortBy\x12%\n" +
+	"\x0esort_direction\x18\a \x01(\tR\rsortDirection\"\x8d\x02\n" +
 	"\x11CreditNoteSummary\x12$\n" +
 	"\x0ecredit_note_id\x18\x01 \x01(\tR\fcreditNoteId\x12,\n" +
 	"\x12credit_note_number\x18\x02 \x01(\tR\x10creditNoteNumber\x12\x1d\n" +

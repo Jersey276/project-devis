@@ -1062,6 +1062,8 @@ type ListSchedulesRequest struct {
 	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
 	PageSize      int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	Filters       *ScheduleFilters       `protobuf:"bytes,5,opt,name=filters,proto3" json:"filters,omitempty"`
+	SortBy        string                 `protobuf:"bytes,6,opt,name=sort_by,json=sortBy,proto3" json:"sort_by,omitempty"`
+	SortDirection string                 `protobuf:"bytes,7,opt,name=sort_direction,json=sortDirection,proto3" json:"sort_direction,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1129,6 +1131,20 @@ func (x *ListSchedulesRequest) GetFilters() *ScheduleFilters {
 		return x.Filters
 	}
 	return nil
+}
+
+func (x *ListSchedulesRequest) GetSortBy() string {
+	if x != nil {
+		return x.SortBy
+	}
+	return ""
+}
+
+func (x *ListSchedulesRequest) GetSortDirection() string {
+	if x != nil {
+		return x.SortDirection
+	}
+	return ""
 }
 
 type ListSchedulesResponse struct {
@@ -1292,13 +1308,15 @@ const file_schedule_proto_rawDesc = "" +
 	"\bstatuses\x18\x01 \x03(\tR\bstatuses\x12\x1d\n" +
 	"\n" +
 	"start_from\x18\x02 \x01(\tR\tstartFrom\x12\x19\n" +
-	"\bstart_to\x18\x03 \x01(\tR\astartTo\"\xb0\x01\n" +
+	"\bstart_to\x18\x03 \x01(\tR\astartTo\"\xf0\x01\n" +
 	"\x14ListSchedulesRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x19\n" +
 	"\bquote_id\x18\x02 \x01(\tR\aquoteId\x12\x12\n" +
 	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x123\n" +
-	"\afilters\x18\x05 \x01(\v2\x19.schedule.ScheduleFiltersR\afilters\"\x94\x01\n" +
+	"\afilters\x18\x05 \x01(\v2\x19.schedule.ScheduleFiltersR\afilters\x12\x17\n" +
+	"\asort_by\x18\x06 \x01(\tR\x06sortBy\x12%\n" +
+	"\x0esort_direction\x18\a \x01(\tR\rsortDirection\"\x94\x01\n" +
 	"\x15ListSchedulesResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x127\n" +

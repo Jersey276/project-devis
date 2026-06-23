@@ -121,11 +121,13 @@ message ScheduleFilters {
 }
 
 message ListSchedulesRequest {
-    string          user_id   = 1;
-    string          quote_id  = 2;
-    int32           page      = 3;
-    int32           page_size = 4;
-    ScheduleFilters filters   = 5;
+    string          user_id        = 1;
+    string          quote_id       = 2;
+    int32           page           = 3;
+    int32           page_size      = 4;
+    ScheduleFilters filters        = 5;
+    string          sort_by        = 6;
+    string          sort_direction = 7;
 }
 
 message ListSchedulesResponse {

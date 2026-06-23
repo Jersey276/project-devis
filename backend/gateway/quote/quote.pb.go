@@ -614,6 +614,8 @@ type ListQuotesRequest struct {
 	Page            int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
 	PageSize        int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	Filters         *QuoteFilters          `protobuf:"bytes,5,opt,name=filters,proto3" json:"filters,omitempty"`
+	SortBy          string                 `protobuf:"bytes,6,opt,name=sort_by,json=sortBy,proto3" json:"sort_by,omitempty"`
+	SortDirection   string                 `protobuf:"bytes,7,opt,name=sort_direction,json=sortDirection,proto3" json:"sort_direction,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -681,6 +683,20 @@ func (x *ListQuotesRequest) GetFilters() *QuoteFilters {
 		return x.Filters
 	}
 	return nil
+}
+
+func (x *ListQuotesRequest) GetSortBy() string {
+	if x != nil {
+		return x.SortBy
+	}
+	return ""
+}
+
+func (x *ListQuotesRequest) GetSortDirection() string {
+	if x != nil {
+		return x.SortDirection
+	}
+	return ""
 }
 
 type ListQuotesResponse struct {
@@ -2961,13 +2977,15 @@ const file_quote_proto_rawDesc = "" +
 	"\fQuoteFilters\x12\x16\n" +
 	"\x06search\x18\x01 \x01(\tR\x06search\x12\x16\n" +
 	"\x06states\x18\x02 \x03(\tR\x06states\x12\x1b\n" +
-	"\tclient_id\x18\x03 \x01(\tR\bclientId\"\xb7\x01\n" +
+	"\tclient_id\x18\x03 \x01(\tR\bclientId\"\xf7\x01\n" +
 	"\x11ListQuotesRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12)\n" +
 	"\x10include_archived\x18\x02 \x01(\bR\x0fincludeArchived\x12\x12\n" +
 	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12-\n" +
-	"\afilters\x18\x05 \x01(\v2\x13.quote.QuoteFiltersR\afilters\"~\n" +
+	"\afilters\x18\x05 \x01(\v2\x13.quote.QuoteFiltersR\afilters\x12\x17\n" +
+	"\asort_by\x18\x06 \x01(\tR\x06sortBy\x12%\n" +
+	"\x0esort_direction\x18\a \x01(\tR\rsortDirection\"~\n" +
 	"\x12ListQuotesResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12$\n" +

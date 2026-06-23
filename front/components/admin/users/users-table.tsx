@@ -20,7 +20,7 @@ import { FilterSidebar, FilterSidebarSection } from "@/components/ui/filter-side
 import { SelectCombobox } from "@/components/ui/select-combobox";
 import {
   DataTable,
-  DataTableBody,
+  DataTableBodyRows,
   DataTableCell,
   DataTableHead,
   DataTableHeader,
@@ -202,41 +202,30 @@ function UsersTableInner() {
             </DataTableHead>
           </DataTableRow>
         </DataTableHeader>
-        <DataTableBody>
-          {users.length === 0 ? (
-            <DataTableRow>
-              <DataTableCell className="text-muted-foreground">
-                {t("empty")}
+        <DataTableBodyRows<AdminUserAccount>
+          emptyColSpan={6}
+          empty={<span className="text-muted-foreground">{t("empty")}</span>}
+          render={(user) => (
+            <DataTableRow key={user.user_id}>
+              <DataTableCell>{user.last_name || "-"}</DataTableCell>
+              <DataTableCell>{user.first_name || "-"}</DataTableCell>
+              <DataTableCell>{user.email}</DataTableCell>
+              <DataTableCell>
+                <Badge
+                  variant={user.role === "admin" ? "secondary" : "outline"}
+                >
+                  {user.role === "admin" ? t("roleAdmin") : t("roleUser")}
+                </Badge>
               </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
+              <DataTableCell className="text-muted-foreground">
+                {formatLastLogin(user.last_login_at, t("neverLoggedIn"))}
+              </DataTableCell>
+              <DataTableCell className="w-12 text-right">
+                <DataTableRowActions id={user.user_id} row={user} />
+              </DataTableCell>
             </DataTableRow>
-          ) : (
-            users.map((user) => (
-              <DataTableRow key={user.user_id}>
-                <DataTableCell>{user.last_name || "-"}</DataTableCell>
-                <DataTableCell>{user.first_name || "-"}</DataTableCell>
-                <DataTableCell>{user.email}</DataTableCell>
-                <DataTableCell>
-                  <Badge
-                    variant={user.role === "admin" ? "secondary" : "outline"}
-                  >
-                    {user.role === "admin" ? t("roleAdmin") : t("roleUser")}
-                  </Badge>
-                </DataTableCell>
-                <DataTableCell className="text-muted-foreground">
-                  {formatLastLogin(user.last_login_at, t("neverLoggedIn"))}
-                </DataTableCell>
-                <DataTableCell className="w-12 text-right">
-                  <DataTableRowActions id={user.user_id} row={user} />
-                </DataTableCell>
-              </DataTableRow>
-            ))
           )}
-        </DataTableBody>
+        />
       </DataTable>
 
       <UserEditDialog

@@ -106,6 +106,8 @@ message ListQuotesRequest {
     int32 page = 3;
     int32 page_size = 4;
     QuoteFilters filters = 5;
+    string sort_by = 6;
+    string sort_direction = 7;
 }
 
 message ListQuotesResponse {

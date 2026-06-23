@@ -79,23 +79,45 @@ function DataTable({
 
   const setSort = React.useCallback(
     (column: string, direction: "asc" | "desc") => {
-      setCurrentSortBy(column);
-      setCurrentSortDirection(direction);
+      if (!onSortChange) {
+        setCurrentSortBy(column);
+        setCurrentSortDirection(direction);
+      }
       onSortChange?.(column, direction);
     },
     [onSortChange],
   );
 
+  const sortedDatas = React.useMemo(() => {
+    if (onSortChange) return datas;
+    if (!currentSortBy) return datas;
+    return [...datas].sort((a, b) => {
+      const aVal = (a as Record<string, unknown>)[currentSortBy];
+      const bVal = (b as Record<string, unknown>)[currentSortBy];
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+      const cmp =
+        typeof aVal === "number" && typeof bVal === "number"
+          ? aVal - bVal
+          : String(aVal).localeCompare(String(bVal), undefined, { numeric: true });
+      return currentSortDirection === "desc" ? -cmp : cmp;
+    });
+  }, [datas, currentSortBy, currentSortDirection, onSortChange]);
+
+  const activeSortBy = onSortChange ? sortBy : currentSortBy;
+  const activeSortDirection = onSortChange ? (sortDirection ?? "asc") : currentSortDirection;
+
   const contextValue = React.useMemo(
     () => ({
-      datas,
+      datas: sortedDatas,
       row_actions: row_actions || [],
       filters,
-      sortBy: currentSortBy,
-      sortDirection: currentSortDirection,
+      sortBy: activeSortBy,
+      sortDirection: activeSortDirection,
       setSort,
     }),
-    [datas, row_actions, filters, currentSortBy, currentSortDirection, setSort],
+    [sortedDatas, row_actions, filters, activeSortBy, activeSortDirection, setSort],
   );
 
   return (
@@ -154,6 +176,29 @@ function DataTableSortableHead({
 
 function DataTableBody({ children }: { children: React.ReactNode }) {
   return <TableBody>{children}</TableBody>;
+}
+
+function DataTableBodyRows<T extends object>({
+  render,
+  empty,
+  emptyColSpan,
+}: {
+  render: (item: T, index: number) => React.ReactNode;
+  empty?: React.ReactNode;
+  emptyColSpan?: number;
+}) {
+  const { datas } = useDataContext();
+  const items = datas as T[];
+  if (items.length === 0 && empty) {
+    return (
+      <TableBody>
+        <TableRow>
+          <TableCell colSpan={emptyColSpan}>{empty}</TableCell>
+        </TableRow>
+      </TableBody>
+    );
+  }
+  return <TableBody>{items.map((item, i) => render(item, i))}</TableBody>;
 }
 
 function DataTableRowActions({
@@ -237,6 +282,7 @@ export {
   DataTableHead,
   DataTableSortableHead,
   DataTableBody,
+  DataTableBodyRows,
   DataTableHeader,
   DataTableRowActions,
   useDataContext,

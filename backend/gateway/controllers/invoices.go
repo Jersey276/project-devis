@@ -115,10 +115,12 @@ func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient) {
 	}
 
 	resp, err := client.ListInvoices(c.Request.Context(), &invoice.ListInvoicesRequest{
-		UserId:   userIDFromCtx(c),
-		QuoteId:  c.Query("quote_id"),
-		Page:     int32(page),
-		PageSize: int32(pageSize),
+		UserId:        userIDFromCtx(c),
+		QuoteId:       c.Query("quote_id"),
+		Page:          int32(page),
+		PageSize:      int32(pageSize),
+		SortBy:        c.DefaultQuery("sort_by", "created_at"),
+		SortDirection: c.DefaultQuery("sort_direction", "desc"),
 		Filters: &invoice.InvoiceFilters{
 			Statuses:          statuses,
 			LifecycleStatuses: lifecycleStatuses,

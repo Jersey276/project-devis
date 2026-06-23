@@ -43,12 +43,14 @@ func (s *Server) ListSchedules(ctx context.Context, req *scheduleGrpc.ListSchedu
 		return resp, err
 	}
 
+	orderBy := buildScheduleOrderBy(req.SortBy, req.SortDirection)
+
 	args = append(args, pageSize, offset)
 	n := len(args)
 	query := fmt.Sprintf(
 		`SELECT schedule_id, quote_id, status, name, start_month, duration_months
-		 FROM schedules%s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
-		where, n-1, n,
+		 FROM schedules%s ORDER BY %s LIMIT $%d OFFSET $%d`,
+		where, orderBy, n-1, n,
 	)
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
@@ -88,6 +90,26 @@ func (s *Server) ListSchedules(ctx context.Context, req *scheduleGrpc.ListSchedu
 		Total:     total,
 	}
 	return resp, nil
+}
+
+var allowedScheduleSortColumns = map[string]string{
+	"id":              "schedule_id",
+	"name":            "name",
+	"quoteId":         "quote_id",
+	"status":          "status",
+	"startMonth":      "start_month",
+	"durationMonths":  "duration_months",
+}
+
+func buildScheduleOrderBy(sortBy, sortDirection string) string {
+	col, ok := allowedScheduleSortColumns[sortBy]
+	if !ok {
+		col = "created_at"
+	}
+	if strings.ToUpper(sortDirection) == "ASC" {
+		return col + " ASC"
+	}
+	return col + " DESC"
 }
 
 func buildScheduleFilters(userID, quoteID string, f *scheduleGrpc.ScheduleFilters) (string, []interface{}) {

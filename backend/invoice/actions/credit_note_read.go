@@ -171,14 +171,16 @@ func (s *Server) ListCreditNotes(ctx context.Context, req *invoiceGrpc.ListCredi
 		return &invoiceGrpc.ListCreditNotesResponse{Success: false, Code: codes.InternalError}, err
 	}
 
+	orderBy := buildCreditNoteOrderBy(req.SortBy, req.SortDirection)
+
 	args = append(args, pageSize, offset)
 	n := len(args)
 	query := fmt.Sprintf(
 		`SELECT cn.credit_note_id, cn.credit_note_number, cn.invoice_id, i.invoice_number,
 		        cn.issued_at, cn.is_total, cn.total_ttc_cents
 		 FROM credit_notes cn
-		 JOIN invoices i ON i.invoice_id = cn.invoice_id%s ORDER BY cn.created_at DESC LIMIT $%d OFFSET $%d`,
-		where, n-1, n,
+		 JOIN invoices i ON i.invoice_id = cn.invoice_id%s ORDER BY %s LIMIT $%d OFFSET $%d`,
+		where, orderBy, n-1, n,
 	)
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
@@ -214,6 +216,16 @@ func (s *Server) ListCreditNotes(ctx context.Context, req *invoiceGrpc.ListCredi
 	}
 
 	return &invoiceGrpc.ListCreditNotesResponse{Success: true, Code: codes.Success, CreditNotes: out, Total: total}, nil
+}
+
+var allowedCreditNoteSortColumns = map[string]string{
+	"number":        "cn.credit_note_number",
+	"invoiceNumber": "i.invoice_number",
+	"issuedAt":      "cn.issued_at",
+}
+
+func buildCreditNoteOrderBy(sortBy, sortDirection string) string {
+	return buildOrderBy(allowedCreditNoteSortColumns, "cn.created_at", sortBy, sortDirection)
 }
 
 func buildCreditNoteFilters(userID, legacyInvoiceID string, f *invoiceGrpc.CreditNoteFilters) (string, []interface{}) {

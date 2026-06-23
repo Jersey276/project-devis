@@ -5,7 +5,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   DataTable,
-  DataTableBody,
+  DataTableBodyRows,
   DataTableCell,
   DataTableHead,
   DataTableHeader,
@@ -62,6 +62,8 @@ function CreditNoteListTableInner() {
   const isTotal = searchParams.get("is_total") ?? "";
   const issuedFrom = searchParams.get("issued_from") ?? "";
   const issuedTo = searchParams.get("issued_to") ?? "";
+  const sortBy = searchParams.get("sort_by") ?? "created_at";
+  const sortDirection = (searchParams.get("sort_direction") ?? "desc") as "asc" | "desc";
 
   const [items, setItems] = useState<CreditNoteRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -72,16 +74,22 @@ function CreditNoteListTableInner() {
     issuedFrom?: string;
     issuedTo?: string;
     page?: number;
+    sortBy?: string;
+    sortDirection?: string;
   }) {
     const next = new URLSearchParams();
     const pg = p.page ?? 1;
     const it = p.isTotal ?? isTotal;
     const iF = p.issuedFrom ?? issuedFrom;
     const iT = p.issuedTo ?? issuedTo;
+    const sb = p.sortBy ?? sortBy;
+    const sd = p.sortDirection ?? sortDirection;
     if (pg > 1) next.set("page", String(pg));
     if (it) next.set("is_total", it);
     if (iF) next.set("issued_from", iF);
     if (iT) next.set("issued_to", iT);
+    if (sb !== "created_at") next.set("sort_by", sb);
+    if (sd !== "desc") next.set("sort_direction", sd);
     router.push(`${pathname}?${next.toString()}`);
   }
 
@@ -90,6 +98,8 @@ function CreditNoteListTableInner() {
     if (isTotal) params.set("is_total", isTotal);
     if (issuedFrom) params.set("issued_from", issuedFrom);
     if (issuedTo) params.set("issued_to", issuedTo);
+    params.set("sort_by", sortBy);
+    params.set("sort_direction", sortDirection);
 
     const { ok, body } = await listCreditNotes(params.toString());
     if (!ok || !body.success) {
@@ -165,8 +175,9 @@ function CreditNoteListTableInner() {
         <div className="flex-1 min-w-0">
           <DataTable
             datas={items}
-            sortBy="number"
-            sortDirection="desc"
+            sortBy={sortBy}
+            sortDirection={sortDirection}
+            onSortChange={(col, dir) => pushParams({ sortBy: col, sortDirection: dir, page: 1 })}
             row_actions={rowActions}
           >
             <DataTableHeader>
@@ -177,51 +188,36 @@ function CreditNoteListTableInner() {
                 <DataTableSortableHead name="invoiceNumber">
                   {t("columns.invoice")}
                 </DataTableSortableHead>
-                <DataTableSortableHead name="isTotal">
-                  {t("columns.type")}
-                </DataTableSortableHead>
+                <DataTableHead>{t("columns.type")}</DataTableHead>
                 <DataTableSortableHead name="issuedAt">
                   {t("columns.issuedAt")}
                 </DataTableSortableHead>
-                <DataTableSortableHead name="totalTtc">
-                  {t("columns.totalTtc")}
-                </DataTableSortableHead>
+                <DataTableHead>{t("columns.totalTtc")}</DataTableHead>
                 <DataTableHead>{t("columns.actions")}</DataTableHead>
               </DataTableRow>
             </DataTableHeader>
-            <DataTableBody>
-              {items.length === 0 ? (
-                <DataTableRow>
-                  <DataTableCell className="text-muted-foreground">
-                    {t("empty")}
+            <DataTableBodyRows<CreditNoteRow>
+              emptyColSpan={6}
+              empty={<span className="text-muted-foreground">{t("empty")}</span>}
+              render={(item) => (
+                <DataTableRow key={item.id}>
+                  <DataTableCell>{item.number}</DataTableCell>
+                  <DataTableCell>{item.invoiceNumber || "—"}</DataTableCell>
+                  <DataTableCell>
+                    <Badge variant={item.isTotal ? "default" : "secondary"}>
+                      {item.isTotal ? t("total") : t("partial")}
+                    </Badge>
                   </DataTableCell>
-                  <DataTableCell> </DataTableCell>
-                  <DataTableCell> </DataTableCell>
-                  <DataTableCell> </DataTableCell>
-                  <DataTableCell> </DataTableCell>
-                  <DataTableCell> </DataTableCell>
+                  <DataTableCell>{item.issuedAt || "—"}</DataTableCell>
+                  <DataTableCell className="tabular-nums">
+                    -{formatEurosFromCents(item.totalTtc)}
+                  </DataTableCell>
+                  <DataTableCell>
+                    <DataTableRowActions id={item.id} row={item} />
+                  </DataTableCell>
                 </DataTableRow>
-              ) : (
-                items.map((item) => (
-                  <DataTableRow key={item.id}>
-                    <DataTableCell>{item.number}</DataTableCell>
-                    <DataTableCell>{item.invoiceNumber || "—"}</DataTableCell>
-                    <DataTableCell>
-                      <Badge variant={item.isTotal ? "default" : "secondary"}>
-                        {item.isTotal ? t("total") : t("partial")}
-                      </Badge>
-                    </DataTableCell>
-                    <DataTableCell>{item.issuedAt || "—"}</DataTableCell>
-                    <DataTableCell className="tabular-nums">
-                      -{formatEurosFromCents(item.totalTtc)}
-                    </DataTableCell>
-                    <DataTableCell>
-                      <DataTableRowActions id={item.id} row={item} />
-                    </DataTableCell>
-                  </DataTableRow>
-                ))
               )}
-            </DataTableBody>
+            />
           </DataTable>
 
           {totalPages > 1 && (

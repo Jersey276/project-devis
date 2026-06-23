@@ -205,11 +205,13 @@ message InvoiceFilters {
 }
 
 message ListInvoicesRequest {
-    string         user_id   = 1;
-    string         quote_id  = 2;  // optional filter (legacy, kept for embedded use)
-    int32          page      = 3;
-    int32          page_size = 4;
-    InvoiceFilters filters   = 5;
+    string         user_id        = 1;
+    string         quote_id       = 2;  // optional filter (legacy, kept for embedded use)
+    int32          page           = 3;
+    int32          page_size      = 4;
+    InvoiceFilters filters        = 5;
+    string         sort_by        = 6;
+    string         sort_direction = 7;
 }
 
 message InvoiceSummary {
@@ -288,11 +290,13 @@ message CreditNoteFilters {
 }
 
 message ListCreditNotesRequest {
-    string            user_id    = 1;
-    string            invoice_id = 2;  // optional filter (legacy)
-    int32             page       = 3;
-    int32             page_size  = 4;
-    CreditNoteFilters filters    = 5;
+    string            user_id        = 1;
+    string            invoice_id     = 2;  // optional filter (legacy)
+    int32             page           = 3;
+    int32             page_size      = 4;
+    CreditNoteFilters filters        = 5;
+    string            sort_by        = 6;
+    string            sort_direction = 7;
 }
 
 message CreditNoteSummary {

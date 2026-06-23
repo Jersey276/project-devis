@@ -145,6 +145,8 @@ func ListQuotes(c *gin.Context, client quote.QuoteServiceClient, usersClient use
 				States:   states,
 				ClientId: c.Query("client_id"),
 			},
+			SortBy:        c.DefaultQuery("sort_by", "created_at"),
+			SortDirection: c.DefaultQuery("sort_direction", "desc"),
 		})
 		if err != nil {
 			return err

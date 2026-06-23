@@ -5,7 +5,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   DataTable,
-  DataTableBody,
+  DataTableBodyRows,
   DataTableCell,
   DataTableHead,
   DataTableHeader,
@@ -106,6 +106,8 @@ function InvoiceListTableInner() {
   const dueTo = searchParams.get("due_to") ?? "";
   const clientId = searchParams.get("client_id") ?? "";
   const quoteIdFilter = searchParams.get("quote_id_filter") ?? "";
+  const sortBy = searchParams.get("sort_by") ?? "created_at";
+  const sortDirection = (searchParams.get("sort_direction") ?? "desc") as "asc" | "desc";
 
   const [items, setItems] = useState<InvoiceRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -125,6 +127,8 @@ function InvoiceListTableInner() {
     clientId?: string;
     quoteIdFilter?: string;
     page?: number;
+    sortBy?: string;
+    sortDirection?: string;
   }) {
     const next = new URLSearchParams();
     const pg = p.page ?? 1;
@@ -136,6 +140,8 @@ function InvoiceListTableInner() {
     const dT = p.dueTo ?? dueTo;
     const cid = p.clientId ?? clientId;
     const qid = p.quoteIdFilter ?? quoteIdFilter;
+    const sb = p.sortBy ?? sortBy;
+    const sd = p.sortDirection ?? sortDirection;
     if (pg > 1) next.set("page", String(pg));
     if (st.length > 0) next.set("statuses", st.join(","));
     if (lc.length > 0) next.set("lifecycle_statuses", lc.join(","));
@@ -145,6 +151,8 @@ function InvoiceListTableInner() {
     if (dT) next.set("due_to", dT);
     if (cid) next.set("client_id", cid);
     if (qid) next.set("quote_id_filter", qid);
+    if (sb !== "created_at") next.set("sort_by", sb);
+    if (sd !== "desc") next.set("sort_direction", sd);
     router.push(`${pathname}?${next.toString()}`);
   }
 
@@ -167,6 +175,8 @@ function InvoiceListTableInner() {
     if (dueTo) params.set("due_to", dueTo);
     if (clientId) params.set("client_id", clientId);
     if (quoteIdFilter) params.set("quote_id_filter", quoteIdFilter);
+    params.set("sort_by", sortBy);
+    params.set("sort_direction", sortDirection);
 
     const { ok, body } = await listInvoices(params.toString(), signal);
     if (signal?.aborted) return;
@@ -328,8 +338,9 @@ function InvoiceListTableInner() {
         <div className="flex-1 min-w-0">
           <DataTable
             datas={items}
-            sortBy="number"
-            sortDirection="desc"
+            sortBy={sortBy}
+            sortDirection={sortDirection}
+            onSortChange={(col, dir) => pushParams({ sortBy: col, sortDirection: dir, page: 1 })}
             row_actions={rowActions}
           >
             <DataTableHeader>
@@ -349,47 +360,33 @@ function InvoiceListTableInner() {
                 <DataTableSortableHead name="dueDate">
                   {t("columns.dueDate")}
                 </DataTableSortableHead>
-                <DataTableSortableHead name="totalTtc">
-                  {t("columns.totalTtc")}
-                </DataTableSortableHead>
+                <DataTableHead>{t("columns.totalTtc")}</DataTableHead>
                 <DataTableHead>{t("columns.actions")}</DataTableHead>
               </DataTableRow>
             </DataTableHeader>
-            <DataTableBody>
-              {items.length === 0 ? (
-                <DataTableRow>
-                  <DataTableCell className="text-muted-foreground">
-                    {t("empty")}
+            <DataTableBodyRows<InvoiceRow>
+              emptyColSpan={7}
+              empty={<span className="text-muted-foreground">{t("empty")}</span>}
+              render={(item) => (
+                <DataTableRow key={item.id}>
+                  <DataTableCell>{item.number || "—"}</DataTableCell>
+                  <DataTableCell>
+                    <InvoiceStatusBadge status={item.status} />
                   </DataTableCell>
-                  <DataTableCell> </DataTableCell>
-                  <DataTableCell> </DataTableCell>
-                  <DataTableCell> </DataTableCell>
-                  <DataTableCell> </DataTableCell>
-                  <DataTableCell> </DataTableCell>
-                  <DataTableCell> </DataTableCell>
+                  <DataTableCell>
+                    <InvoiceLifecycleBadge status={item.lifecycle} />
+                  </DataTableCell>
+                  <DataTableCell>{item.quoteId}</DataTableCell>
+                  <DataTableCell>{item.dueDate || "—"}</DataTableCell>
+                  <DataTableCell className="tabular-nums">
+                    {formatEurosFromCents(item.totalTtc)}
+                  </DataTableCell>
+                  <DataTableCell>
+                    <DataTableRowActions id={item.id} row={item} />
+                  </DataTableCell>
                 </DataTableRow>
-              ) : (
-                items.map((item) => (
-                  <DataTableRow key={item.id}>
-                    <DataTableCell>{item.number || "—"}</DataTableCell>
-                    <DataTableCell>
-                      <InvoiceStatusBadge status={item.status} />
-                    </DataTableCell>
-                    <DataTableCell>
-                      <InvoiceLifecycleBadge status={item.lifecycle} />
-                    </DataTableCell>
-                    <DataTableCell>{item.quoteId}</DataTableCell>
-                    <DataTableCell>{item.dueDate || "—"}</DataTableCell>
-                    <DataTableCell className="tabular-nums">
-                      {formatEurosFromCents(item.totalTtc)}
-                    </DataTableCell>
-                    <DataTableCell>
-                      <DataTableRowActions id={item.id} row={item} />
-                    </DataTableCell>
-                  </DataTableRow>
-                ))
               )}
-            </DataTableBody>
+            />
           </DataTable>
 
           {totalPages > 1 && (

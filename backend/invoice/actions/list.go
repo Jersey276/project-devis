@@ -41,13 +41,15 @@ func (s *Server) ListInvoices(ctx context.Context, req *invoiceGrpc.ListInvoices
 		return &invoiceGrpc.ListInvoicesResponse{Success: false, Code: codes.InternalError}, err
 	}
 
+	orderBy := buildInvoiceOrderBy(req.SortBy, req.SortDirection)
+
 	args = append(args, pageSize, offset)
 	n := len(args)
 	query := fmt.Sprintf(
 		`SELECT invoice_id, invoice_number, status, quote_id, schedule_id,
 		        issued_at, due_date, total_ttc_cents, lifecycle_status
-		 FROM invoices%s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
-		where, n-1, n,
+		 FROM invoices%s ORDER BY %s LIMIT $%d OFFSET $%d`,
+		where, orderBy, n-1, n,
 	)
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
@@ -86,6 +88,32 @@ func (s *Server) ListInvoices(ctx context.Context, req *invoiceGrpc.ListInvoices
 	}
 
 	return &invoiceGrpc.ListInvoicesResponse{Success: true, Code: codes.Success, Invoices: out, Total: total}, nil
+}
+
+var allowedInvoiceSortColumns = map[string]string{
+	"number":    "invoice_number",
+	"status":    "status",
+	"lifecycle": "lifecycle_status",
+	"quoteId":   "quote_id",
+	"dueDate":   "due_date",
+}
+
+func buildInvoiceOrderBy(sortBy, sortDirection string) string {
+	return buildOrderBy(allowedInvoiceSortColumns, "created_at", sortBy, sortDirection)
+}
+
+// buildOrderBy maps a frontend column name to its DB equivalent via the
+// allowed whitelist and appends the sanitised direction. Falls back to
+// defaultCol when sortBy is not in the whitelist.
+func buildOrderBy(allowed map[string]string, defaultCol, sortBy, sortDirection string) string {
+	col, ok := allowed[sortBy]
+	if !ok {
+		col = defaultCol
+	}
+	if strings.ToUpper(sortDirection) == "ASC" {
+		return col + " ASC"
+	}
+	return col + " DESC"
 }
 
 func buildInvoiceFilters(userID, legacyQuoteID string, f *invoiceGrpc.InvoiceFilters) (string, []interface{}) {

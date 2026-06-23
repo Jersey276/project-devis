@@ -36,10 +36,12 @@ func ListCreditNotes(c *gin.Context, client invoice.InvoiceServiceClient) {
 	pageSize, _ := strconv.ParseInt(c.DefaultQuery("page_size", "20"), 10, 32)
 
 	resp, err := client.ListCreditNotes(c.Request.Context(), &invoice.ListCreditNotesRequest{
-		UserId:    userIDFromCtx(c),
-		InvoiceId: c.Query("invoice_id"),
-		Page:      int32(page),
-		PageSize:  int32(pageSize),
+		UserId:        userIDFromCtx(c),
+		InvoiceId:     c.Query("invoice_id"),
+		Page:          int32(page),
+		PageSize:      int32(pageSize),
+		SortBy:        c.DefaultQuery("sort_by", "created_at"),
+		SortDirection: c.DefaultQuery("sort_direction", "desc"),
 		Filters: &invoice.CreditNoteFilters{
 			IsTotal:    c.Query("is_total"),
 			IssuedFrom: c.Query("issued_from"),

@@ -32,12 +32,14 @@ func List(ctx context.Context, db *sql.DB, req *quoteGrpc.ListQuotesRequest) (*q
 		return &quoteGrpc.ListQuotesResponse{Success: false, Code: codes.InternalError}, err
 	}
 
+	orderBy := buildQuoteOrderBy(req.SortBy, req.SortDirection)
+
 	args = append(args, pageSize, offset)
 	n := len(args)
 	query := fmt.Sprintf(
 		`SELECT quote_id, user_id, name, archived_at, state, client_id, address_id, COALESCE(user_address_id, 0)
-		 FROM quotes%s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
-		where, n-1, n,
+		 FROM quotes%s ORDER BY %s LIMIT $%d OFFSET $%d`,
+		where, orderBy, n-1, n,
 	)
 
 	rows, err := db.QueryContext(ctx, query, args...)
@@ -77,6 +79,25 @@ func List(ctx context.Context, db *sql.DB, req *quoteGrpc.ListQuotesRequest) (*q
 	}
 
 	return &quoteGrpc.ListQuotesResponse{Success: true, Code: codes.Success, Quotes: quotes, Total: total}, nil
+}
+
+var allowedQuoteSortColumns = map[string]string{
+	"id":         "quote_id",
+	"projectName": "name",
+	"status":     "state",
+	"totalTtc":   "created_at", // pas de colonne total en DB, fallback
+	"created_at": "created_at",
+}
+
+func buildQuoteOrderBy(sortBy, sortDirection string) string {
+	col, ok := allowedQuoteSortColumns[sortBy]
+	if !ok {
+		col = "created_at"
+	}
+	if strings.ToUpper(sortDirection) == "ASC" {
+		return col + " ASC"
+	}
+	return col + " DESC"
 }
 
 func buildQuoteFilters(userID string, includeArchived bool, f *quoteGrpc.QuoteFilters) (string, []interface{}) {

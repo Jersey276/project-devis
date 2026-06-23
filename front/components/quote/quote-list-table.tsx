@@ -5,7 +5,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   DataTable,
-  DataTableBody,
+  DataTableBodyRows,
   DataTableCell,
   DataTableHead,
   DataTableHeader,
@@ -68,6 +68,8 @@ function QuoteListTableInner() {
   const search = searchParams.get("search") ?? "";
   const states = searchParams.get("states") ? searchParams.get("states")!.split(",") : [];
   const clientId = searchParams.get("client_id") ?? "";
+  const sortBy = searchParams.get("sort_by") ?? "created_at";
+  const sortDirection = (searchParams.get("sort_direction") ?? "desc") as "asc" | "desc";
 
   const [items, setItems] = useState<QuoteListItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -77,16 +79,20 @@ function QuoteListTableInner() {
   const [scheduleQuoteId, setScheduleQuoteId] = useState<string | null>(null);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
 
-  function pushParams(p: { search?: string; states?: string[]; clientId?: string; page?: number }) {
+  function pushParams(p: { search?: string; states?: string[]; clientId?: string; page?: number; sortBy?: string; sortDirection?: string }) {
     const next = new URLSearchParams();
     const s = p.search ?? search;
     const st = p.states ?? states;
     const cid = p.clientId ?? clientId;
     const pg = p.page ?? 1;
+    const sb = p.sortBy ?? sortBy;
+    const sd = p.sortDirection ?? sortDirection;
     if (pg > 1) next.set("page", String(pg));
     if (s) next.set("search", s);
     if (st.length > 0) next.set("states", st.join(","));
     if (cid) next.set("client_id", cid);
+    if (sb !== "created_at") next.set("sort_by", sb);
+    if (sd !== "desc") next.set("sort_direction", sd);
     router.push(`${pathname}?${next.toString()}`);
   }
 
@@ -104,6 +110,8 @@ function QuoteListTableInner() {
     if (search) params.set("search", search);
     if (states.length > 0) params.set("states", states.join(","));
     if (clientId) params.set("client_id", clientId);
+    params.set("sort_by", sortBy);
+    params.set("sort_direction", sortDirection);
 
     const { ok, body } = await listQuotes(params.toString());
     if (ok && Array.isArray(body.quotes)) {
@@ -243,35 +251,35 @@ function QuoteListTableInner() {
         </div>
       )}
 
-      <DataTable datas={visibleItems} sortBy="id" sortDirection="asc" row_actions={rowActions}>
+      <DataTable
+        datas={visibleItems}
+        sortBy={sortBy}
+        sortDirection={sortDirection}
+        onSortChange={(col, dir) => pushParams({ sortBy: col, sortDirection: dir, page: 1 })}
+        row_actions={rowActions}
+      >
         <DataTableHeader>
           <DataTableRow>
             <DataTableSortableHead name="id">{t("columns.id")}</DataTableSortableHead>
             <DataTableSortableHead name="projectName">{t("columns.project")}</DataTableSortableHead>
             <DataTableSortableHead name="status">{t("columns.status")}</DataTableSortableHead>
-            <DataTableSortableHead name="totalTtc">{t("columns.totalTtc")}</DataTableSortableHead>
+            <DataTableHead>{t("columns.totalTtc")}</DataTableHead>
             <DataTableHead>{t("columns.actions")}</DataTableHead>
           </DataTableRow>
         </DataTableHeader>
-        <DataTableBody>
-          {visibleItems.length === 0 ? (
-            <DataTableRow>
-              {[...Array(5)].map((_, i) => (
-                <DataTableCell key={i} className={i === 0 ? "text-muted-foreground" : ""}>{i === 0 ? t("empty") : " "}</DataTableCell>
-              ))}
+        <DataTableBodyRows<QuoteListItem>
+          emptyColSpan={5}
+          empty={<span className="text-muted-foreground">{t("empty")}</span>}
+          render={(quote) => (
+            <DataTableRow key={quote.id}>
+              <DataTableCell>{quote.id}</DataTableCell>
+              <DataTableCell>{quote.projectName}</DataTableCell>
+              <DataTableCell>{tStatus(quote.status)}</DataTableCell>
+              <DataTableCell className="tabular-nums">{formatEurosFromCents(quote.totalTtc)}</DataTableCell>
+              <DataTableCell><DataTableRowActions id={quote.id} row={quote} /></DataTableCell>
             </DataTableRow>
-          ) : (
-            visibleItems.map((quote) => (
-              <DataTableRow key={quote.id}>
-                <DataTableCell>{quote.id}</DataTableCell>
-                <DataTableCell>{quote.projectName}</DataTableCell>
-                <DataTableCell>{tStatus(quote.status)}</DataTableCell>
-                <DataTableCell className="tabular-nums">{formatEurosFromCents(quote.totalTtc)}</DataTableCell>
-                <DataTableCell><DataTableRowActions id={quote.id} row={quote} /></DataTableCell>
-              </DataTableRow>
-            ))
           )}
-        </DataTableBody>
+        />
       </DataTable>
 
       {!isCustomer && total > 0 && (

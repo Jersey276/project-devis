@@ -158,10 +158,12 @@ func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient) {
 	}
 
 	resp, err := client.ListSchedules(c.Request.Context(), &schedule.ListSchedulesRequest{
-		UserId:   userIDFromCtx(c),
-		QuoteId:  c.Query("quote_id"),
-		Page:     int32(page),
-		PageSize: int32(pageSize),
+		UserId:        userIDFromCtx(c),
+		QuoteId:       c.Query("quote_id"),
+		Page:          int32(page),
+		PageSize:      int32(pageSize),
+		SortBy:        c.DefaultQuery("sort_by", "created_at"),
+		SortDirection: c.DefaultQuery("sort_direction", "desc"),
 		Filters: &schedule.ScheduleFilters{
 			Statuses:  statuses,
 			StartFrom: c.Query("start_from"),

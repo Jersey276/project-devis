@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import {
   DataTable,
-  DataTableBody,
+  DataTableBodyRows,
   DataTableCell,
   DataTableHead,
   DataTableHeader,
@@ -175,8 +175,8 @@ export default function PlansTable() {
             </DataTableHead>
           </DataTableRow>
         </DataTableHeader>
-        <DataTableBody>
-          {plans.map((plan) => (
+        <DataTableBodyRows<BackendPlan>
+          render={(plan) => (
             <DataTableRow key={plan.plan_id}>
               <DataTableCell className="font-medium">{plan.name}</DataTableCell>
               <DataTableCell>
@@ -200,8 +200,8 @@ export default function PlansTable() {
                 <DataTableRowActions id={String(plan.plan_id)} row={plan} />
               </DataTableCell>
             </DataTableRow>
-          ))}
-        </DataTableBody>
+          )}
+        />
       </DataTable>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
