@@ -1064,6 +1064,7 @@ type ListSchedulesRequest struct {
 	Filters       *ScheduleFilters       `protobuf:"bytes,5,opt,name=filters,proto3" json:"filters,omitempty"`
 	SortBy        string                 `protobuf:"bytes,6,opt,name=sort_by,json=sortBy,proto3" json:"sort_by,omitempty"`
 	SortDirection string                 `protobuf:"bytes,7,opt,name=sort_direction,json=sortDirection,proto3" json:"sort_direction,omitempty"`
+	QuoteIds      []string               `protobuf:"bytes,8,rep,name=quote_ids,json=quoteIds,proto3" json:"quote_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1145,6 +1146,13 @@ func (x *ListSchedulesRequest) GetSortDirection() string {
 		return x.SortDirection
 	}
 	return ""
+}
+
+func (x *ListSchedulesRequest) GetQuoteIds() []string {
+	if x != nil {
+		return x.QuoteIds
+	}
+	return nil
 }
 
 type ListSchedulesResponse struct {
@@ -1308,7 +1316,7 @@ const file_schedule_proto_rawDesc = "" +
 	"\bstatuses\x18\x01 \x03(\tR\bstatuses\x12\x1d\n" +
 	"\n" +
 	"start_from\x18\x02 \x01(\tR\tstartFrom\x12\x19\n" +
-	"\bstart_to\x18\x03 \x01(\tR\astartTo\"\xf0\x01\n" +
+	"\bstart_to\x18\x03 \x01(\tR\astartTo\"\x8d\x02\n" +
 	"\x14ListSchedulesRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x19\n" +
 	"\bquote_id\x18\x02 \x01(\tR\aquoteId\x12\x12\n" +
@@ -1316,7 +1324,8 @@ const file_schedule_proto_rawDesc = "" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x123\n" +
 	"\afilters\x18\x05 \x01(\v2\x19.schedule.ScheduleFiltersR\afilters\x12\x17\n" +
 	"\asort_by\x18\x06 \x01(\tR\x06sortBy\x12%\n" +
-	"\x0esort_direction\x18\a \x01(\tR\rsortDirection\"\x94\x01\n" +
+	"\x0esort_direction\x18\a \x01(\tR\rsortDirection\x12\x1b\n" +
+	"\tquote_ids\x18\b \x03(\tR\bquoteIds\"\x94\x01\n" +
 	"\x15ListSchedulesResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x127\n" +

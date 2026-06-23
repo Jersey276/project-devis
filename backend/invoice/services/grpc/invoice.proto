@@ -202,6 +202,7 @@ message InvoiceFilters {
     string          due_to             = 6;
     string          client_id          = 7;
     string          quote_id_filter    = 8;
+    repeated string quote_ids          = 9;
 }
 
 message ListInvoicesRequest {
@@ -215,15 +216,16 @@ message ListInvoicesRequest {
 }
 
 message InvoiceSummary {
-    string invoice_id      = 1;
-    string invoice_number  = 2;
-    string status          = 3;
-    string quote_id        = 4;
-    string schedule_id     = 5;
-    string issued_at       = 6;
-    string due_date        = 7;
-    int64  total_ttc_cents = 8;
+    string invoice_id       = 1;
+    string invoice_number   = 2;
+    string status           = 3;
+    string quote_id         = 4;
+    string schedule_id      = 5;
+    string issued_at        = 6;
+    string due_date         = 7;
+    int64  total_ttc_cents  = 8;
     string lifecycle_status = 9;  // "NONE" until a lifecycle event is recorded
+    int64  total_ht_cents   = 10;
 }
 
 message ListInvoicesResponse {

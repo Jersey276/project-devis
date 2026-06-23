@@ -234,6 +234,7 @@ export type BackendInvoiceSummary = {
   issued_at: string;
   due_date: string;
   total_ttc_cents: number;
+  total_ht_cents: number;
   lifecycle_status: BackendInvoiceLifecycleStatus;
 };
 
@@ -347,6 +348,33 @@ export type BackendCreditNoteDetails = {
   total_vat_cents: number;
   total_ttc_cents: number;
   vat_exempt: boolean;
+};
+
+// ─── Project ──────────────────────────────────────────────────────────────────
+
+export type ProjectStatus = "active" | "archived" | "completed";
+
+export type BackendProject = {
+  project_id: string;
+  user_id: string;
+  name: string;
+  client_id: string;
+  status: ProjectStatus;
+  quote_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BackendProjectQuoteRow = BackendQuote & {
+  schedules: BackendScheduleSummary[];
+  invoices: BackendInvoiceSummary[];
+};
+
+export type BackendProjectDetail = {
+  project: BackendProject;
+  quotes: BackendProjectQuoteRow[];
+  total_ht_cents: number;
+  collected_ht_cents: number;
 };
 
 export type ScheduleBalanceState = "under" | "balanced" | "over";

@@ -64,6 +64,11 @@ func setupRouter(auditLogger *middleware.AuditLogger, auditClient audit.AuditSer
 	fees.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionFees))
 	controllers.FeesRoutes(fees)
 
+	projects := audited.Group("/projects")
+	projects.Use(middleware.AuthRequired())
+	projects.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionSchedules))
+	controllers.ProjectsRoutes(projects)
+
 	invoices := audited.Group("/invoices")
 	invoices.Use(middleware.AuthRequired())
 	invoices.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionInvoices))

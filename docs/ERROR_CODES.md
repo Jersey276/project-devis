@@ -90,3 +90,20 @@ The gateway returns HTTP **422 Unprocessable Entity** when `field_errors` is non
 ## Routes that use FormGenericResponse
 
 - auth: `Register` / `POST /auth/register` (field validation by auth service)
+
+---
+
+## Service Project — codes métier
+
+Définis dans `backend/project/actions/codes/codes.go`.
+Mappés vers HTTP dans `backend/gateway/controllers/projects.go`.
+
+| Code   | Constante       | HTTP | Message gateway                              |
+| ------ | --------------- | ---- | -------------------------------------------- |
+| `0`    | `Success`       | 200  | —                                            |
+| `1001` | `NotFound`      | 404  | Projet introuvable.                          |
+| `1002` | `AlreadyExists` | 409  | Le devis est déjà rattaché à un autre projet.|
+| `1003` | `InvalidInput`  | 400  | Données invalides.                           |
+| `2001` | `InternalError` | 500  | Une erreur interne est survenue.             |
+
+Ces codes sont indépendants des codes du service auth — l'espace numérique est local à chaque service.
