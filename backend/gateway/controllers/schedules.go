@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -148,9 +149,24 @@ func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient) {
 		recordScheduleHTTP("list_schedules", success, grpcCode, startedAt)
 	}()
 
+	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 32)
+	pageSize, _ := strconv.ParseInt(c.DefaultQuery("page_size", "20"), 10, 32)
+
+	var statuses []string
+	if raw := c.Query("statuses"); raw != "" {
+		statuses = strings.Split(raw, ",")
+	}
+
 	resp, err := client.ListSchedules(c.Request.Context(), &schedule.ListSchedulesRequest{
-		UserId:  userIDFromCtx(c),
-		QuoteId: c.Query("quote_id"),
+		UserId:   userIDFromCtx(c),
+		QuoteId:  c.Query("quote_id"),
+		Page:     int32(page),
+		PageSize: int32(pageSize),
+		Filters: &schedule.ScheduleFilters{
+			Statuses:  statuses,
+			StartFrom: c.Query("start_from"),
+			StartTo:   c.Query("start_to"),
+		},
 	})
 	if err != nil {
 		grpcCode = ScheduleCodeInternalError
@@ -175,7 +191,7 @@ func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient) {
 			"quote_id":        s.QuoteId,
 		})
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "schedules": out})
+	c.JSON(http.StatusOK, gin.H{"success": true, "schedules": out, "total": resp.Total})
 }
 
 func CreateSchedule(c *gin.Context, client schedule.ScheduleServiceClient) {
