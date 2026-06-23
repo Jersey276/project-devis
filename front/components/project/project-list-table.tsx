@@ -102,7 +102,7 @@ function ProjectListTableInner() {
   // Load clients once for name resolution
   useEffect(() => {
     listClients().then(({ ok, body }) => {
-      if (ok && Array.isArray(body.clients)) setClients(body.clients);
+      if (ok && Array.isArray(body.clients)) setClients(body.clients as BackendClient[]);
     });
   }, []);
 
@@ -121,7 +121,7 @@ function ProjectListTableInner() {
       if (!ok) { setError(body?.message ?? "Erreur de chargement."); return; }
       setError(null);
       setItems(toRows((body.projects as BackendProject[]) ?? []));
-      setTotal(body.total ?? 0);
+      setTotal((body.total as number) ?? 0);
     }).catch(() => {});
 
     return () => controller.abort();
