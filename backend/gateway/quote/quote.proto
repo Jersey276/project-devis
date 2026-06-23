@@ -94,15 +94,25 @@ message GetQuoteResponse {
     repeated QuoteLine lines = 4;
 }
 
+message QuoteFilters {
+    string search = 1;
+    repeated string states = 2;
+    string client_id = 3;
+}
+
 message ListQuotesRequest {
     string user_id = 1;
     bool include_archived = 2;
+    int32 page = 3;
+    int32 page_size = 4;
+    QuoteFilters filters = 5;
 }
 
 message ListQuotesResponse {
     bool success = 1;
     int32 code = 2;
     repeated Quote quotes = 3;
+    int64 total = 4;
 }
 
 message UpdateQuoteRequest {
