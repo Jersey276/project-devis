@@ -35,7 +35,7 @@ func (s *Server) ListSchedules(ctx context.Context, req *scheduleGrpc.ListSchedu
 	}
 	offset := (page - 1) * pageSize
 
-	where, args := buildScheduleFilters(req.UserId, req.QuoteId, req.Filters)
+	where, args := buildScheduleFilters(req.UserId, req.QuoteId, req.QuoteIds, req.Filters)
 
 	var total int64
 	if err = s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM schedules"+where, args...).Scan(&total); err != nil {
@@ -112,13 +112,22 @@ func buildScheduleOrderBy(sortBy, sortDirection string) string {
 	return col + " DESC"
 }
 
-func buildScheduleFilters(userID, quoteID string, f *scheduleGrpc.ScheduleFilters) (string, []interface{}) {
+func buildScheduleFilters(userID, quoteID string, quoteIDs []string, f *scheduleGrpc.ScheduleFilters) (string, []interface{}) {
 	args := []interface{}{userID}
 	clauses := []string{"user_id = $1"}
 
 	if strings.TrimSpace(quoteID) != "" {
 		args = append(args, quoteID)
 		clauses = append(clauses, fmt.Sprintf("quote_id = $%d", len(args)))
+	}
+
+	if len(quoteIDs) > 0 {
+		placeholders := make([]string, len(quoteIDs))
+		for i, id := range quoteIDs {
+			args = append(args, id)
+			placeholders[i] = fmt.Sprintf("$%d", len(args))
+		}
+		clauses = append(clauses, "quote_id IN ("+strings.Join(placeholders, ",")+")")
 	}
 
 	if f != nil {

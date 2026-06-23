@@ -1209,6 +1209,7 @@ type InvoiceFilters struct {
 	DueTo             string                 `protobuf:"bytes,6,opt,name=due_to,json=dueTo,proto3" json:"due_to,omitempty"`
 	ClientId          string                 `protobuf:"bytes,7,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	QuoteIdFilter     string                 `protobuf:"bytes,8,opt,name=quote_id_filter,json=quoteIdFilter,proto3" json:"quote_id_filter,omitempty"`
+	QuoteIds          []string               `protobuf:"bytes,9,rep,name=quote_ids,json=quoteIds,proto3" json:"quote_ids,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -1297,6 +1298,13 @@ func (x *InvoiceFilters) GetQuoteIdFilter() string {
 		return x.QuoteIdFilter
 	}
 	return ""
+}
+
+func (x *InvoiceFilters) GetQuoteIds() []string {
+	if x != nil {
+		return x.QuoteIds
+	}
+	return nil
 }
 
 type ListInvoicesRequest struct {
@@ -1402,6 +1410,7 @@ type InvoiceSummary struct {
 	DueDate         string                 `protobuf:"bytes,7,opt,name=due_date,json=dueDate,proto3" json:"due_date,omitempty"`
 	TotalTtcCents   int64                  `protobuf:"varint,8,opt,name=total_ttc_cents,json=totalTtcCents,proto3" json:"total_ttc_cents,omitempty"`
 	LifecycleStatus string                 `protobuf:"bytes,9,opt,name=lifecycle_status,json=lifecycleStatus,proto3" json:"lifecycle_status,omitempty"` // "NONE" until a lifecycle event is recorded
+	TotalHtCents    int64                  `protobuf:"varint,10,opt,name=total_ht_cents,json=totalHtCents,proto3" json:"total_ht_cents,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -1497,6 +1506,13 @@ func (x *InvoiceSummary) GetLifecycleStatus() string {
 		return x.LifecycleStatus
 	}
 	return ""
+}
+
+func (x *InvoiceSummary) GetTotalHtCents() int64 {
+	if x != nil {
+		return x.TotalHtCents
+	}
+	return 0
 }
 
 type ListInvoicesResponse struct {
@@ -3293,7 +3309,7 @@ const file_invoice_proto_rawDesc = "" +
 	"\x12GetInvoiceResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x121\n" +
-	"\ainvoice\x18\x03 \x01(\v2\x17.invoice.InvoiceDetailsR\ainvoice\"\x90\x02\n" +
+	"\ainvoice\x18\x03 \x01(\v2\x17.invoice.InvoiceDetailsR\ainvoice\"\xad\x02\n" +
 	"\x0eInvoiceFilters\x12\x1a\n" +
 	"\bstatuses\x18\x01 \x03(\tR\bstatuses\x12-\n" +
 	"\x12lifecycle_statuses\x18\x02 \x03(\tR\x11lifecycleStatuses\x12\x1f\n" +
@@ -3303,7 +3319,8 @@ const file_invoice_proto_rawDesc = "" +
 	"\bdue_from\x18\x05 \x01(\tR\adueFrom\x12\x15\n" +
 	"\x06due_to\x18\x06 \x01(\tR\x05dueTo\x12\x1b\n" +
 	"\tclient_id\x18\a \x01(\tR\bclientId\x12&\n" +
-	"\x0fquote_id_filter\x18\b \x01(\tR\rquoteIdFilter\"\xed\x01\n" +
+	"\x0fquote_id_filter\x18\b \x01(\tR\rquoteIdFilter\x12\x1b\n" +
+	"\tquote_ids\x18\t \x03(\tR\bquoteIds\"\xed\x01\n" +
 	"\x13ListInvoicesRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x19\n" +
 	"\bquote_id\x18\x02 \x01(\tR\aquoteId\x12\x12\n" +
@@ -3311,7 +3328,7 @@ const file_invoice_proto_rawDesc = "" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x121\n" +
 	"\afilters\x18\x05 \x01(\v2\x17.invoice.InvoiceFiltersR\afilters\x12\x17\n" +
 	"\asort_by\x18\x06 \x01(\tR\x06sortBy\x12%\n" +
-	"\x0esort_direction\x18\a \x01(\tR\rsortDirection\"\xb5\x02\n" +
+	"\x0esort_direction\x18\a \x01(\tR\rsortDirection\"\xdb\x02\n" +
 	"\x0eInvoiceSummary\x12\x1d\n" +
 	"\n" +
 	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12%\n" +
@@ -3323,7 +3340,9 @@ const file_invoice_proto_rawDesc = "" +
 	"\tissued_at\x18\x06 \x01(\tR\bissuedAt\x12\x19\n" +
 	"\bdue_date\x18\a \x01(\tR\adueDate\x12&\n" +
 	"\x0ftotal_ttc_cents\x18\b \x01(\x03R\rtotalTtcCents\x12)\n" +
-	"\x10lifecycle_status\x18\t \x01(\tR\x0flifecycleStatus\"\x8f\x01\n" +
+	"\x10lifecycle_status\x18\t \x01(\tR\x0flifecycleStatus\x12$\n" +
+	"\x0etotal_ht_cents\x18\n" +
+	" \x01(\x03R\ftotalHtCents\"\x8f\x01\n" +
 	"\x14ListInvoicesResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x123\n" +

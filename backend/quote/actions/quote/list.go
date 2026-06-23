@@ -125,6 +125,14 @@ func buildQuoteFilters(userID string, includeArchived bool, f *quoteGrpc.QuoteFi
 			args = append(args, f.ClientId)
 			clauses = append(clauses, fmt.Sprintf("client_id = $%d", len(args)))
 		}
+		if len(f.QuoteIds) > 0 {
+			placeholders := make([]string, len(f.QuoteIds))
+			for i, id := range f.QuoteIds {
+				args = append(args, id)
+				placeholders[i] = fmt.Sprintf("$%d", len(args))
+			}
+			clauses = append(clauses, "quote_id IN ("+strings.Join(placeholders, ",")+")")
+		}
 	}
 
 	return " WHERE " + strings.Join(clauses, " AND "), args

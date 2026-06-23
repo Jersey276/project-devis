@@ -15,6 +15,7 @@ import {
   BarChart2Icon,
   CoinsIcon,
   ReceiptEuroIcon,
+  FolderIcon,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "../ui/button";
@@ -35,6 +36,7 @@ import { apiFetch } from "@/lib/api";
 import { isSuperAdmin, type AuthContext } from "@/lib/access";
 
 type NavKey =
+  | "project"
   | "quote"
   | "schedule"
   | "invoices"
@@ -64,6 +66,12 @@ type SidebarItem = {
 type SidebarView = "user" | "admin";
 
 const items: SidebarItem[] = [
+  {
+    key: "project",
+    url: "/projects",
+    icon: FolderIcon,
+    modes: ["provider"],
+  },
   {
     key: "quote",
     url: "/quote",

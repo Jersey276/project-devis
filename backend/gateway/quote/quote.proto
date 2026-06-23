@@ -98,6 +98,7 @@ message QuoteFilters {
     string search = 1;
     repeated string states = 2;
     string client_id = 3;
+    repeated string quote_ids = 4;
 }
 
 message ListQuotesRequest {

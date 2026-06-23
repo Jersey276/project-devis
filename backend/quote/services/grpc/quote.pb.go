@@ -552,6 +552,7 @@ type QuoteFilters struct {
 	Search        string                 `protobuf:"bytes,1,opt,name=search,proto3" json:"search,omitempty"`
 	States        []string               `protobuf:"bytes,2,rep,name=states,proto3" json:"states,omitempty"`
 	ClientId      string                 `protobuf:"bytes,3,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	QuoteIds      []string               `protobuf:"bytes,4,rep,name=quote_ids,json=quoteIds,proto3" json:"quote_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -605,6 +606,13 @@ func (x *QuoteFilters) GetClientId() string {
 		return x.ClientId
 	}
 	return ""
+}
+
+func (x *QuoteFilters) GetQuoteIds() []string {
+	if x != nil {
+		return x.QuoteIds
+	}
+	return nil
 }
 
 type ListQuotesRequest struct {
@@ -2973,11 +2981,12 @@ const file_quote_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12\"\n" +
 	"\x05quote\x18\x03 \x01(\v2\f.quote.QuoteR\x05quote\x12&\n" +
-	"\x05lines\x18\x04 \x03(\v2\x10.quote.QuoteLineR\x05lines\"[\n" +
+	"\x05lines\x18\x04 \x03(\v2\x10.quote.QuoteLineR\x05lines\"x\n" +
 	"\fQuoteFilters\x12\x16\n" +
 	"\x06search\x18\x01 \x01(\tR\x06search\x12\x16\n" +
 	"\x06states\x18\x02 \x03(\tR\x06states\x12\x1b\n" +
-	"\tclient_id\x18\x03 \x01(\tR\bclientId\"\xf7\x01\n" +
+	"\tclient_id\x18\x03 \x01(\tR\bclientId\x12\x1b\n" +
+	"\tquote_ids\x18\x04 \x03(\tR\bquoteIds\"\xf7\x01\n" +
 	"\x11ListQuotesRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12)\n" +
 	"\x10include_archived\x18\x02 \x01(\bR\x0fincludeArchived\x12\x12\n" +

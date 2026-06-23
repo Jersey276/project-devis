@@ -18,7 +18,8 @@
     "filterSidebar": {
       "trigger": "Filtres",
       "title": "Filtres",
-      "reset": "Réinitialiser les filtres"
+      "reset": "Réinitialiser les filtres",
+      "search": "Rechercher"
     },
     "dateRangePicker": {
       "placeholder": "Toutes les dates",
@@ -38,6 +39,7 @@
     "viewSwitchLabel": "Vue de la sidebar",
     "userViewButton": "Utilisateur",
     "adminViewButton": "Admin",
+    "project": "Projets",
     "quote": "Devis",
     "schedule": "Échéanciers",
     "invoices": "Factures",
@@ -152,6 +154,65 @@
       "backToLoginLink": "Se connecter"
     },
     "invite": {}
+  },
+  "project": {
+    "list": {
+      "title": "Projets",
+      "empty": "Aucun projet.",
+      "columns": {
+        "name": "Nom",
+        "client": "Client",
+        "status": "Statut",
+        "quoteCount": "Devis",
+        "actions": "Actions"
+      },
+      "filters": {
+        "status": "Statut"
+      },
+      "actions": {
+        "view": "Voir",
+        "edit": "Modifier",
+        "delete": "Supprimer"
+      }
+    },
+    "detail": {
+      "title": "Projet",
+      "charts": {
+        "quoteStates": "Répartition des devis par état",
+        "scheduleStatuses": "Répartition des échéanciers",
+        "revenue": "Chiffre d'affaires",
+        "totalHt": "Total HT contractualisé",
+        "collected": "Encaissé"
+      },
+      "quotesTable": {
+        "title": "Devis du projet",
+        "noSchedules": "Aucun échéancier.",
+        "noInvoices": "Aucune facture."
+      }
+    },
+    "status": {
+      "active": "Actif",
+      "archived": "Archivé",
+      "completed": "Terminé"
+    },
+    "create": {
+      "title": "Nouveau projet",
+      "nameLabel": "Nom du projet",
+      "clientLabel": "Client (optionnel)",
+      "submit": "Créer",
+      "success": "Projet créé."
+    },
+    "edit": {
+      "title": "Modifier le projet",
+      "submit": "Enregistrer",
+      "success": "Projet mis à jour."
+    },
+    "errors": {
+      "load": "Impossible de charger le projet.",
+      "create": "La création du projet a échoué.",
+      "update": "La mise à jour a échoué.",
+      "delete": "La suppression a échoué."
+    }
   },
   "quote": {
     "stateDropdown": {

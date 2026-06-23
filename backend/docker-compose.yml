@@ -57,6 +57,7 @@ services:
       EMAIL_SERVICE_ADDRESS: devis-email:50058
       INVOICE_SERVICE_ADDRESS: devis-invoice:50059
       AUDIT_SERVICE_ADDRESS: devis-audit:50060
+      PROJECT_SERVICE_ADDRESS: devis-project:50061
       EMAIL_FROM: ${EMAIL_FROM:-}
       RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}
     ports:
@@ -74,6 +75,7 @@ services:
       - devis-email
       - devis-invoice
       - devis-audit
+      - devis-project
 
   devis-subscription:
     <<: *db-service
@@ -208,6 +210,17 @@ services:
         condition: service_completed_successfully
       devis-email:
         condition: service_started
+
+  devis-project:
+    <<: *db-service
+    build:
+      <<: *service-build
+      args:
+        SERVICE_NAME: project
+    environment:
+      <<: *db-env
+      DB_USER: devis-project
+      DB_NAME: project
 
   devis-template:
     <<: *db-service

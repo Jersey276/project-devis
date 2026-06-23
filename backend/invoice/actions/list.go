@@ -47,7 +47,7 @@ func (s *Server) ListInvoices(ctx context.Context, req *invoiceGrpc.ListInvoices
 	n := len(args)
 	query := fmt.Sprintf(
 		`SELECT invoice_id, invoice_number, status, quote_id, schedule_id,
-		        issued_at, due_date, total_ttc_cents, lifecycle_status
+		        issued_at, due_date, total_ttc_cents, lifecycle_status, total_ht_cents
 		 FROM invoices%s ORDER BY %s LIMIT $%d OFFSET $%d`,
 		where, orderBy, n-1, n,
 	)
@@ -67,8 +67,9 @@ func (s *Server) ListInvoices(ctx context.Context, req *invoiceGrpc.ListInvoices
 			issuedAt, dueDate   sql.NullTime
 			totalTTC            int64
 			lifecycle           string
+			totalHT             int64
 		)
-		if err := rows.Scan(&id, &number, &status, &quoteID, &scheduleID, &issuedAt, &dueDate, &totalTTC, &lifecycle); err != nil {
+		if err := rows.Scan(&id, &number, &status, &quoteID, &scheduleID, &issuedAt, &dueDate, &totalTTC, &lifecycle, &totalHT); err != nil {
 			return &invoiceGrpc.ListInvoicesResponse{Success: false, Code: codes.InternalError}, err
 		}
 		out = append(out, &invoiceGrpc.InvoiceSummary{
@@ -81,6 +82,7 @@ func (s *Server) ListInvoices(ctx context.Context, req *invoiceGrpc.ListInvoices
 			DueDate:         formatNullTime(dueDate, "2006-01-02"),
 			TotalTtcCents:   totalTTC,
 			LifecycleStatus: lifecycle,
+			TotalHtCents:    totalHT,
 		})
 	}
 	if err := rows.Err(); err != nil {
@@ -171,6 +173,14 @@ func buildInvoiceFilters(userID, legacyQuoteID string, f *invoiceGrpc.InvoiceFil
 		clauses = append(clauses, fmt.Sprintf(
 			"quote_id IN (SELECT quote_id FROM quotes WHERE client_id = $%d)", len(args),
 		))
+	}
+	if len(f.QuoteIds) > 0 {
+		placeholders := make([]string, len(f.QuoteIds))
+		for i, id := range f.QuoteIds {
+			args = append(args, id)
+			placeholders[i] = fmt.Sprintf("$%d", len(args))
+		}
+		clauses = append(clauses, "quote_id IN ("+strings.Join(placeholders, ",")+")")
 	}
 
 	return " WHERE " + strings.Join(clauses, " AND "), args
