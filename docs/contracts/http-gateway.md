@@ -78,14 +78,32 @@ References:
 ## Endpoints quotes principaux
 
 - `GET/POST /api/quotes`
+  - `GET` params de pagination/filtres/tri : `page`, `page_size`, `search`, `states`, `client_id`, `sort_by`, `sort_direction`
+  - Colonnes triables : `id`, `projectName`, `status`, `created_at` (defaut : `created_at desc`)
 - `GET/PUT/DELETE /api/quotes/:id`
 - transitions: archive, restore, drop, continue
 - lignes: `/api/quotes/:id/lines/*`
 
+## Endpoints invoices principaux
+
+- `GET /api/invoices`
+  - params : `page`, `page_size`, `statuses`, `lifecycle_statuses`, `issued_from`, `issued_to`, `due_from`, `due_to`, `client_id`, `quote_id_filter`, `sort_by`, `sort_direction`
+  - Colonnes triables : `number`, `status`, `lifecycle`, `quoteId`, `dueDate` (defaut : `created_at desc`)
+- `GET /api/invoices/:id`
+
+## Endpoints credit-notes principaux
+
+- `GET /api/credit-notes`
+  - params : `page`, `page_size`, `invoice_id`, `is_total`, `issued_from`, `issued_to`, `sort_by`, `sort_direction`
+  - Colonnes triables : `number`, `invoiceNumber`, `issuedAt` (defaut : `created_at desc`)
+- `GET /api/credit-notes/:id`
+
 ## Endpoints schedules cibles
 
 - `POST /api/schedules`
-- `GET /api/schedules?quote_id=:quoteId`
+- `GET /api/schedules`
+  - params : `page`, `page_size`, `quote_id`, `statuses`, `start_from`, `start_to`, `sort_by`, `sort_direction`
+  - Colonnes triables : `id`, `name`, `quoteId`, `status`, `startMonth`, `durationMonths` (defaut : `created_at desc`)
 - `GET /api/schedules/:id`
 - `PATCH /api/schedules/:id/cells`
 - `POST /api/schedules/:id/validate`
@@ -98,6 +116,10 @@ Regles principales associees:
 - validation autorisee uniquement si toutes les lignes devis actives et valides sont exactement equilibrees
 - un seul echeancier `VALID` par devis
 - l'export PDF reste autorise quel que soit le statut
+
+## Parametres de tri communs
+
+Les endpoints de liste pagines acceptent `sort_by` et `sort_direction` (`asc`|`desc`). La valeur par defaut est `created_at desc`. Les colonnes acceptees sont definies cote backend par une whitelist ; une valeur non reconnue retombe sur `created_at`. Le frontend omet `sort_by` et `sort_direction` de l'URL quand ils sont egaux aux valeurs par defaut (URLs propres).
 
 ## Endpoints templates principaux
 

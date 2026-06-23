@@ -48,6 +48,21 @@ structures (statuts HTTP, plage de dates).
 - Le badge actif sur le bouton sidebar signale clairement qu'un filtre est en
   place meme quand la sidebar est fermee.
 
+## Tri côté serveur (ajout — 2026-06-23)
+
+Les tableaux pagines (devis, factures, avoirs, echeanciers) supportent un tri
+cote serveur via les params `sort_by` et `sort_direction` dans l'URL.
+
+- `DataTableSortableHead` sur une colonne → appelle `onSortChange(col, dir)` →
+  `pushParams({ sortBy, sortDirection, page: 1 })` → navigation URL → refetch.
+- `DataTable` recoit `onSortChange` en prop : sa presence desactive le tri
+  client et fait de `sortBy`/`sortDirection` les sources de verite (lus
+  directement depuis les props dans le contexte, pas recopies en etat local).
+- Les colonnes calculees en memoire (ex. `totalTtc` sur les devis) restent en
+  `DataTableHead` non triable : aucune colonne DB correspondante.
+- Cote backend, une whitelist `allowedXSortColumns` dans chaque service mappe
+  les noms frontend vers les colonnes SQL et empeche l'injection.
+
 ## Consequences negatives
 
 - Les filtres sidebar ne sont pas visibles d'emblee : un filtre de date actif
