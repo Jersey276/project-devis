@@ -120,7 +120,7 @@ function ProjectListTableInner() {
     listProjects(params.toString(), controller.signal).then(({ ok, body }) => {
       if (!ok) { setError(body?.message ?? "Erreur de chargement."); return; }
       setError(null);
-      setItems(toRows(body.projects ?? []));
+      setItems(toRows((body.projects as BackendProject[]) ?? []));
       setTotal(body.total ?? 0);
     }).catch(() => {});
 
