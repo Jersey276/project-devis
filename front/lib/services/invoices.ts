@@ -25,12 +25,9 @@ export type CreateInvoiceFromQuotePayload = {
   issueNow?: boolean;
 };
 
-export async function listInvoices(quoteId?: string): Promise<ApiResult> {
-  const q = quoteId?.trim();
-  const path = q
-    ? `/api/invoices?quote_id=${encodeURIComponent(q)}`
-    : "/api/invoices";
-  return apiFetch(path);
+export async function listInvoices(queryString?: string, signal?: AbortSignal): Promise<ApiResult> {
+  const path = queryString ? `/api/invoices?${queryString}` : "/api/invoices";
+  return apiFetch(path, { signal });
 }
 
 export async function getInvoice(invoiceId: string): Promise<ApiResult> {
@@ -178,11 +175,8 @@ export async function getCreditNote(creditNoteId: string): Promise<ApiResult> {
   return apiFetch(`/api/credit-notes/${encodeURIComponent(creditNoteId)}`);
 }
 
-export async function listCreditNotes(invoiceId?: string): Promise<ApiResult> {
-  const i = invoiceId?.trim();
-  const path = i
-    ? `/api/credit-notes?invoice_id=${encodeURIComponent(i)}`
-    : "/api/credit-notes";
+export async function listCreditNotes(queryString?: string): Promise<ApiResult> {
+  const path = queryString ? `/api/credit-notes?${queryString}` : "/api/credit-notes";
   return apiFetch(path);
 }
 

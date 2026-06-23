@@ -114,13 +114,25 @@ message ScheduleSummary {
     string quote_id         = 6;
 }
 
+message ScheduleFilters {
+    repeated string statuses   = 1;
+    string          start_from = 2;
+    string          start_to   = 3;
+}
+
 message ListSchedulesRequest {
-    string user_id  = 1;
-    string quote_id = 2;
+    string          user_id        = 1;
+    string          quote_id       = 2;
+    int32           page           = 3;
+    int32           page_size      = 4;
+    ScheduleFilters filters        = 5;
+    string          sort_by        = 6;
+    string          sort_direction = 7;
 }
 
 message ListSchedulesResponse {
     bool                     success   = 1;
     int32                    code      = 2;
     repeated ScheduleSummary schedules = 3;
+    int64                    total     = 4;
 }

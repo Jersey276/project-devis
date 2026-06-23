@@ -164,8 +164,12 @@ func TestListClients_ExcludesArchivedByDefault(t *testing.T) {
 	srv, mock := setupServer(t)
 
 	cols := []string{"client_id", "user_id", "first_name", "last_name", "email", "phone", "company", "siren", "vat", "siret", "client_type", "archived"}
-	mock.ExpectQuery(`SELECT client_id, user_id.*FROM clients WHERE user_id=\$1 AND archived_at IS NULL`).
+	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM clients WHERE user_id = \$1 AND archived_at IS NULL`).
 		WithArgs("user-1").
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(2))
+
+	mock.ExpectQuery(`SELECT client_id, user_id.*FROM clients WHERE user_id = \$1 AND archived_at IS NULL ORDER BY id LIMIT \$2 OFFSET \$3`).
+		WithArgs("user-1", int32(20), int32(0)).
 		WillReturnRows(sqlmock.NewRows(cols).
 			AddRow("c-1", "user-1", "Jean", "Dupont", nil, nil, nil, nil, nil, nil, "individual", false).
 			AddRow("c-2", "user-1", "Marie", "Martin", nil, nil, nil, nil, nil, nil, "business", false))
@@ -180,15 +184,22 @@ func TestListClients_ExcludesArchivedByDefault(t *testing.T) {
 	if len(resp.Clients) != 2 {
 		t.Fatalf("expected 2 clients, got %d", len(resp.Clients))
 	}
+	if resp.Total != 2 {
+		t.Fatalf("expected total 2, got %d", resp.Total)
+	}
 }
 
 func TestListClients_IncludeArchived(t *testing.T) {
 	srv, mock := setupServer(t)
 
 	cols := []string{"client_id", "user_id", "first_name", "last_name", "email", "phone", "company", "siren", "vat", "siret", "client_type", "archived"}
-	// IncludeArchived=true must NOT add the archived_at IS NULL filter.
-	mock.ExpectQuery(`SELECT client_id, user_id.*FROM clients WHERE user_id=\$1 ORDER`).
+	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM clients WHERE user_id = \$1`).
 		WithArgs("user-1").
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(2))
+
+	// IncludeArchived=true must NOT add the archived_at IS NULL filter.
+	mock.ExpectQuery(`SELECT client_id, user_id.*FROM clients WHERE user_id = \$1 ORDER BY id LIMIT \$2 OFFSET \$3`).
+		WithArgs("user-1", int32(20), int32(0)).
 		WillReturnRows(sqlmock.NewRows(cols).
 			AddRow("c-1", "user-1", "Jean", "Dupont", nil, nil, nil, nil, nil, nil, "individual", false).
 			AddRow("c-2", "user-1", "Marie", "Martin", nil, nil, nil, nil, nil, nil, "individual", true))

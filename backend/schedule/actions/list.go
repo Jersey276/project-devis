@@ -2,6 +2,7 @@ package actions
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -24,15 +25,35 @@ func (s *Server) ListSchedules(ctx context.Context, req *scheduleGrpc.ListSchedu
 		return resp, nil
 	}
 
-	baseQuery := `SELECT schedule_id, quote_id, status, name, start_month, duration_months FROM schedules WHERE user_id=$1`
-	args := []any{req.UserId}
-	if strings.TrimSpace(req.QuoteId) != "" {
-		baseQuery += ` AND quote_id=$2`
-		args = append(args, req.QuoteId)
+	page := req.Page
+	if page < 1 {
+		page = 1
 	}
-	baseQuery += ` ORDER BY created_at DESC`
+	pageSize := req.PageSize
+	if pageSize < 1 || pageSize > 200 {
+		pageSize = 20
+	}
+	offset := (page - 1) * pageSize
 
-	rows, err := s.db.QueryContext(ctx, baseQuery, args...)
+	where, args := buildScheduleFilters(req.UserId, req.QuoteId, req.Filters)
+
+	var total int64
+	if err = s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM schedules"+where, args...).Scan(&total); err != nil {
+		resp = &scheduleGrpc.ListSchedulesResponse{Success: false, Code: CodeInternalError}
+		return resp, err
+	}
+
+	orderBy := buildScheduleOrderBy(req.SortBy, req.SortDirection)
+
+	args = append(args, pageSize, offset)
+	n := len(args)
+	query := fmt.Sprintf(
+		`SELECT schedule_id, quote_id, status, name, start_month, duration_months
+		 FROM schedules%s ORDER BY %s LIMIT $%d OFFSET $%d`,
+		where, orderBy, n-1, n,
+	)
+
+	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		resp = &scheduleGrpc.ListSchedulesResponse{Success: false, Code: CodeInternalError}
 		return resp, err
@@ -57,7 +78,7 @@ func (s *Server) ListSchedules(ctx context.Context, req *scheduleGrpc.ListSchedu
 			DurationMonths: durationMonths,
 		})
 	}
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		resp = &scheduleGrpc.ListSchedulesResponse{Success: false, Code: CodeInternalError}
 		return resp, err
 	}
@@ -66,7 +87,58 @@ func (s *Server) ListSchedules(ctx context.Context, req *scheduleGrpc.ListSchedu
 		Success:   true,
 		Code:      CodeSuccess,
 		Schedules: schedules,
+		Total:     total,
+	}
+	return resp, nil
+}
+
+var allowedScheduleSortColumns = map[string]string{
+	"id":              "schedule_id",
+	"name":            "name",
+	"quoteId":         "quote_id",
+	"status":          "status",
+	"startMonth":      "start_month",
+	"durationMonths":  "duration_months",
+}
+
+func buildScheduleOrderBy(sortBy, sortDirection string) string {
+	col, ok := allowedScheduleSortColumns[sortBy]
+	if !ok {
+		col = "created_at"
+	}
+	if strings.ToUpper(sortDirection) == "ASC" {
+		return col + " ASC"
+	}
+	return col + " DESC"
+}
+
+func buildScheduleFilters(userID, quoteID string, f *scheduleGrpc.ScheduleFilters) (string, []interface{}) {
+	args := []interface{}{userID}
+	clauses := []string{"user_id = $1"}
+
+	if strings.TrimSpace(quoteID) != "" {
+		args = append(args, quoteID)
+		clauses = append(clauses, fmt.Sprintf("quote_id = $%d", len(args)))
 	}
 
-	return resp, nil
+	if f != nil {
+		if len(f.Statuses) > 0 {
+			placeholders := make([]string, len(f.Statuses))
+			for i, st := range f.Statuses {
+				args = append(args, st)
+				placeholders[i] = fmt.Sprintf("$%d", len(args))
+			}
+			clauses = append(clauses, "status IN ("+strings.Join(placeholders, ",")+")")
+		}
+		if f.StartFrom != "" {
+			args = append(args, f.StartFrom)
+			clauses = append(clauses, fmt.Sprintf("start_month >= $%d", len(args)))
+		}
+		if f.StartTo != "" {
+			args = append(args, f.StartTo)
+			clauses = append(clauses, fmt.Sprintf("start_month <= $%d", len(args)))
+		}
+	}
+
+	return " WHERE " + strings.Join(clauses, " AND "), args
 }

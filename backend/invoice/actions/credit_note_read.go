@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strings"
 	"time"
 
@@ -151,17 +152,36 @@ func (s *Server) ListCreditNotes(ctx context.Context, req *invoiceGrpc.ListCredi
 		return &invoiceGrpc.ListCreditNotesResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 
-	query := `SELECT cn.credit_note_id, cn.credit_note_number, cn.invoice_id, i.invoice_number,
-	                 cn.issued_at, cn.is_total, cn.total_ttc_cents
-	          FROM credit_notes cn
-	          JOIN invoices i ON i.invoice_id = cn.invoice_id
-	          WHERE cn.user_id=$1`
-	args := []any{req.UserId}
-	if inv := strings.TrimSpace(req.InvoiceId); inv != "" {
-		query += ` AND cn.invoice_id=$2`
-		args = append(args, inv)
+	page := req.Page
+	if page < 1 {
+		page = 1
 	}
-	query += ` ORDER BY cn.created_at DESC`
+	pageSize := req.PageSize
+	if pageSize < 1 || pageSize > 200 {
+		pageSize = 20
+	}
+	offset := (page - 1) * pageSize
+
+	where, args := buildCreditNoteFilters(req.UserId, req.InvoiceId, req.Filters)
+
+	var total int64
+	if err = s.db.QueryRowContext(ctx,
+		"SELECT COUNT(*) FROM credit_notes cn JOIN invoices i ON i.invoice_id = cn.invoice_id"+where, args...,
+	).Scan(&total); err != nil {
+		return &invoiceGrpc.ListCreditNotesResponse{Success: false, Code: codes.InternalError}, err
+	}
+
+	orderBy := buildCreditNoteOrderBy(req.SortBy, req.SortDirection)
+
+	args = append(args, pageSize, offset)
+	n := len(args)
+	query := fmt.Sprintf(
+		`SELECT cn.credit_note_id, cn.credit_note_number, cn.invoice_id, i.invoice_number,
+		        cn.issued_at, cn.is_total, cn.total_ttc_cents
+		 FROM credit_notes cn
+		 JOIN invoices i ON i.invoice_id = cn.invoice_id%s ORDER BY %s LIMIT $%d OFFSET $%d`,
+		where, orderBy, n-1, n,
+	)
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -195,5 +215,43 @@ func (s *Server) ListCreditNotes(ctx context.Context, req *invoiceGrpc.ListCredi
 		return &invoiceGrpc.ListCreditNotesResponse{Success: false, Code: codes.InternalError}, err
 	}
 
-	return &invoiceGrpc.ListCreditNotesResponse{Success: true, Code: codes.Success, CreditNotes: out}, nil
+	return &invoiceGrpc.ListCreditNotesResponse{Success: true, Code: codes.Success, CreditNotes: out, Total: total}, nil
+}
+
+var allowedCreditNoteSortColumns = map[string]string{
+	"number":        "cn.credit_note_number",
+	"invoiceNumber": "i.invoice_number",
+	"issuedAt":      "cn.issued_at",
+}
+
+func buildCreditNoteOrderBy(sortBy, sortDirection string) string {
+	return buildOrderBy(allowedCreditNoteSortColumns, "cn.created_at", sortBy, sortDirection)
+}
+
+func buildCreditNoteFilters(userID, legacyInvoiceID string, f *invoiceGrpc.CreditNoteFilters) (string, []interface{}) {
+	args := []interface{}{userID}
+	clauses := []string{"cn.user_id = $1"}
+
+	if strings.TrimSpace(legacyInvoiceID) != "" {
+		args = append(args, legacyInvoiceID)
+		clauses = append(clauses, fmt.Sprintf("cn.invoice_id = $%d", len(args)))
+	}
+
+	if f != nil {
+		if f.IsTotal == "true" {
+			clauses = append(clauses, "cn.is_total = true")
+		} else if f.IsTotal == "false" {
+			clauses = append(clauses, "cn.is_total = false")
+		}
+		if f.IssuedFrom != "" {
+			args = append(args, f.IssuedFrom)
+			clauses = append(clauses, fmt.Sprintf("cn.issued_at >= $%d", len(args)))
+		}
+		if f.IssuedTo != "" {
+			args = append(args, f.IssuedTo)
+			clauses = append(clauses, fmt.Sprintf("cn.issued_at <= $%d", len(args)))
+		}
+	}
+
+	return " WHERE " + strings.Join(clauses, " AND "), args
 }

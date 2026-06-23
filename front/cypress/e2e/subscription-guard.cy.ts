@@ -80,7 +80,7 @@ describe("SubscriptionGuard", () => {
       cy.login();
       stubAuthWithTier("pro");
 
-      cy.intercept("GET", "/api/schedules", {
+      cy.intercept("GET", "/api/schedules**", {
         statusCode: 200,
         body: { success: true, schedules: [] },
       }).as("getSchedules");

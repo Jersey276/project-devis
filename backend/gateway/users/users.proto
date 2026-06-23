@@ -245,15 +245,24 @@ message GetClientResponse {
     Client client = 3;
 }
 
+message ClientFilters {
+    string search = 1;
+    repeated string client_types = 2;
+}
+
 message ListClientsRequest {
     string user_id = 1;
     bool include_archived = 2;
+    int32 page = 3;
+    int32 page_size = 4;
+    ClientFilters filters = 5;
 }
 
 message ListClientsResponse {
     bool success = 1;
     int32 code = 2;
     repeated Client clients = 3;
+    int64 total = 4;
 }
 
 message UpdateClientRequest {

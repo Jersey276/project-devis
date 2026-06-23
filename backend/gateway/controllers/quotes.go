@@ -119,8 +119,14 @@ func QuotesRoutes(r *gin.RouterGroup, emailNotifier gatewaySvc.EmailNotifier) {
 // ─── Quote handlers ──────────────────────────────────────────────────────────
 
 func ListQuotes(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
-	includeArchived := c.Query("archived") == "true"
 	userID := userIDFromCtx(c)
+	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 32)
+	pageSize, _ := strconv.ParseInt(c.DefaultQuery("page_size", "20"), 10, 32)
+
+	var states []string
+	if raw := c.Query("states"); raw != "" {
+		states = strings.Split(raw, ",")
+	}
 
 	var (
 		quotesResp *quote.ListQuotesResponse
@@ -131,7 +137,16 @@ func ListQuotes(c *gin.Context, client quote.QuoteServiceClient, usersClient use
 	g.Go(func() error {
 		resp, err := client.ListQuotes(gctx, &quote.ListQuotesRequest{
 			UserId:          userID,
-			IncludeArchived: includeArchived,
+			IncludeArchived: c.Query("archived") == "true",
+			Page:            int32(page),
+			PageSize:        int32(pageSize),
+			Filters: &quote.QuoteFilters{
+				Search:   c.Query("search"),
+				States:   states,
+				ClientId: c.Query("client_id"),
+			},
+			SortBy:        c.DefaultQuery("sort_by", "created_at"),
+			SortDirection: c.DefaultQuery("sort_direction", "desc"),
 		})
 		if err != nil {
 			return err
@@ -142,7 +157,7 @@ func ListQuotes(c *gin.Context, client quote.QuoteServiceClient, usersClient use
 	g.Go(func() error {
 		resp, err := client.ListUserQuoteLines(gctx, &quote.ListUserQuoteLinesRequest{
 			UserId:          userID,
-			IncludeArchived: includeArchived,
+			IncludeArchived: c.Query("archived") == "true",
 		})
 		if err != nil {
 			return err
@@ -181,7 +196,7 @@ func ListQuotes(c *gin.Context, client quote.QuoteServiceClient, usersClient use
 		m["option_total_ttc"] = totals[q.QuoteId].option
 		out = append(out, m)
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "quotes": out})
+	c.JSON(http.StatusOK, gin.H{"success": true, "quotes": out, "total": quotesResp.Total})
 }
 
 func distinctTaxIds(lines []*quote.QuoteLine) []int32 {

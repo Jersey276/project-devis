@@ -153,8 +153,9 @@ func TestFetchStatus_EmptyHistoryIsUnknown(t *testing.T) {
 }
 
 func TestResolve_FoundAndNotFound(t *testing.T) {
+	// Iopole rejects 14-digit SIRETs; Resolve strips the NIC suffix and queries by SIREN (9 digits).
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Query().Get("q") == "11111111111111" {
+		if r.URL.Query().Get("q") == "111111111" {
 			_, _ = w.Write([]byte(`{"data":[{"businessEntityId":"be-1","name":"ACME"}]}`))
 			return
 		}
@@ -164,7 +165,7 @@ func TestResolve_FoundAndNotFound(t *testing.T) {
 
 	d := newTestDirectory(srv.URL)
 
-	got, err := d.Resolve(context.Background(), "11111111111111")
+	got, err := d.Resolve(context.Background(), "11111111100014")
 	if err != nil {
 		t.Fatalf("Resolve(found): %v", err)
 	}
@@ -172,7 +173,7 @@ func TestResolve_FoundAndNotFound(t *testing.T) {
 		t.Errorf("routing = %+v", got)
 	}
 
-	if _, err := d.Resolve(context.Background(), "99999999999999"); err != pdp.ErrRecipientNotFound {
+	if _, err := d.Resolve(context.Background(), "99999999900014"); err != pdp.ErrRecipientNotFound {
 		t.Errorf("Resolve(absent) err = %v, want ErrRecipientNotFound", err)
 	}
 }

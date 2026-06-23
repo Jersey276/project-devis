@@ -23,7 +23,7 @@ export default function LinkedCreditNotes({ invoiceId, refreshKey }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    listCreditNotes(invoiceId).then(({ ok, body }) => {
+    listCreditNotes(`invoice_id=${encodeURIComponent(invoiceId)}`).then(({ ok, body }) => {
       if (cancelled) return;
       if (ok && body.success) setItems(readCreditNotesFromBody(body));
     });

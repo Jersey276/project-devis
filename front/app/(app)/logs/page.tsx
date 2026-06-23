@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AdminGuard from "@/components/custom/admin-guard";
@@ -13,7 +14,9 @@ export default async function LogsPage() {
           <CardTitle>{t("title")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <LogsDashboard />
+          <Suspense fallback={null}>
+            <LogsDashboard />
+          </Suspense>
         </CardContent>
       </Card>
     </AdminGuard>

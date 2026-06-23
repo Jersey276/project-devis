@@ -42,6 +42,10 @@ type SelectComboboxMultipleProps = SelectComboboxBaseProps & {
 
 export type SelectComboboxProps = SelectComboboxSingleProps | SelectComboboxMultipleProps;
 
+function labelFor(items: SelectComboboxItem[], value: string): string {
+  return items.find((i) => i.value === value)?.label ?? value;
+}
+
 // ─── Sous-composant chips — lit les valeurs depuis le contexte interne ────────
 
 function MultipleInput({
@@ -57,10 +61,9 @@ function MultipleInput({
         const selected = value ?? [];
         return (
           <ComboboxChips>
-            {selected.map((v: string) => {
-              const label = items.find((i) => i.value === v)?.label ?? v;
-              return <ComboboxChip key={v}>{label}</ComboboxChip>;
-            })}
+            {selected.map((v: string) => (
+              <ComboboxChip key={v}>{labelFor(items, v)}</ComboboxChip>
+            ))}
             <ComboboxChipsInput
               placeholder={selected.length === 0 ? placeholder : undefined}
             />
@@ -98,6 +101,11 @@ export function SelectCombobox(props: SelectComboboxProps) {
     }
   };
 
+  const itemToStringLabel = React.useCallback(
+    (value: string) => labelFor(items, value),
+    [items],
+  );
+
   return (
     <div className={cn("w-full", className)}>
     <ComboboxPrimitive.Root
@@ -105,6 +113,7 @@ export function SelectCombobox(props: SelectComboboxProps) {
       defaultValue={frozenDefault}
       onValueChange={(next) => next != null && handleValueChange(next)}
       multiple={props.multiple ?? false}
+      {...(!props.multiple && { itemToStringLabel })}
     >
       {props.multiple ? (
         <MultipleInput items={items} placeholder={placeholder} />

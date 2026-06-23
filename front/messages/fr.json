@@ -19,6 +19,12 @@
       "trigger": "Filtres",
       "title": "Filtres",
       "reset": "Réinitialiser les filtres"
+    },
+    "dateRangePicker": {
+      "placeholder": "Toutes les dates",
+      "from": "À partir du",
+      "to": "Jusqu'au",
+      "clear": "Effacer la période"
     }
   },
   "metadata": {
@@ -197,7 +203,16 @@
       "exportFailedToast": "Échec de l'export.",
       "saveAsTemplateSuccessToast": "Template enregistré.",
       "saveAsTemplateFailedToast": "Impossible d'enregistrer le template.",
-      "empty": "Aucun devis pour le moment."
+      "empty": "Aucun devis pour le moment.",
+      "filters": {
+        "searchPlaceholder": "Rechercher un devis…",
+        "statusLabel": "Statut",
+        "statusPlaceholder": "Sélectionner des statuts…",
+        "statusEmpty": "Aucun statut trouvé.",
+        "clientLabel": "Client",
+        "clientPlaceholder": "Sélectionner un client…",
+        "clientEmpty": "Aucun client trouvé."
+      }
     },
     "form": {
       "createTitle": "Création d'un devis",
@@ -338,7 +353,17 @@
       },
       "loadFailedToast": "Impossible de charger les clients.",
       "deleteSuccessToast": "Client supprimé.",
-      "deleteFailedToast": "Impossible de supprimer le client."
+      "deleteFailedToast": "Impossible de supprimer le client.",
+      "filters": {
+        "searchPlaceholder": "Rechercher un client…",
+        "typeLabel": "Type de client",
+        "typePlaceholder": "Sélectionner un type…",
+        "typeEmpty": "Aucun type trouvé."
+      },
+      "pagination": {
+        "total_one": "{{count}} client",
+        "total_other": "{{count}} clients"
+      }
     },
     "form": {
       "clientTypeLabel": "Type de client",
@@ -546,7 +571,25 @@
       "deleteConfirmTitle": "Supprimer ce brouillon ?",
       "deleteConfirmBody": "Ce brouillon sera définitivement supprimé. Cette action est sans effet sur les factures déjà émises.",
       "deleteConfirmAction": "Supprimer",
-      "deleteCancel": "Annuler"
+      "deleteCancel": "Annuler",
+      "filters": {
+        "statusLabel": "Statut",
+        "statusPlaceholder": "Filtrer par statut",
+        "statusEmpty": "Aucun statut trouvé",
+        "lifecycleLabel": "Statut e-invoicing",
+        "lifecyclePlaceholder": "Filtrer par statut e-invoicing",
+        "lifecycleEmpty": "Aucun statut trouvé",
+        "issuedDateLabel": "Date d'émission",
+        "dueDateLabel": "Date d'échéance",
+        "fromPlaceholder": "Du",
+        "toPlaceholder": "Au",
+        "clientLabel": "Client",
+        "clientPlaceholder": "Filtrer par client",
+        "clientEmpty": "Aucun client trouvé",
+        "quoteLabel": "Devis",
+        "quotePlaceholder": "Filtrer par devis",
+        "quoteEmpty": "Aucun devis trouvé"
+      }
     },
     "detail": {
       "titleNumbered": "Facture N° {number}",
@@ -623,6 +666,14 @@
       "actions": {
         "open": "Ouvrir",
         "downloadPdf": "Télécharger le PDF"
+      },
+      "filters": {
+        "typeLabel": "Type",
+        "typePlaceholder": "Filtrer par type",
+        "typeEmpty": "Aucun type trouvé",
+        "issuedDateLabel": "Date d'émission",
+        "fromPlaceholder": "Du",
+        "toPlaceholder": "Au"
       }
     },
     "create": {
@@ -795,6 +846,17 @@
         "description": "L'utilisateur ne pourra plus se connecter tant que le compte est suspendu."
       },
       "suspendSuccessToast": "Compte suspendu.",
+      "filters": {
+        "searchPlaceholder": "Rechercher par nom ou email…",
+        "roleLabel": "Rôle",
+        "rolePlaceholder": "Tous les rôles",
+        "roleEmpty": "Aucun rôle trouvé.",
+        "statusLabel": "Statut",
+        "statusPlaceholder": "Tous les statuts",
+        "statusEmpty": "Aucun statut trouvé.",
+        "statusActive": "Actif",
+        "statusSuspended": "Suspendu"
+      },
       "dialog": {
         "title": "Modifier le compte",
         "firstNameLabel": "Prénom",

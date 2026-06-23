@@ -1,7 +1,10 @@
 import { apiFetch } from "@/lib/api";
 
-export function listAdminUsers() {
-  return apiFetch("/api/users/admin/accounts");
+export function listAdminUsers(params?: string) {
+  const url = params
+    ? `/api/users/admin/accounts?${params}`
+    : "/api/users/admin/accounts";
+  return apiFetch(url);
 }
 
 type UpdateAdminUserPayload = {

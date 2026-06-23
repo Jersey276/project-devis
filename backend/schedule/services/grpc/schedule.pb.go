@@ -995,17 +995,82 @@ func (x *ScheduleSummary) GetQuoteId() string {
 	return ""
 }
 
+type ScheduleFilters struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Statuses      []string               `protobuf:"bytes,1,rep,name=statuses,proto3" json:"statuses,omitempty"`
+	StartFrom     string                 `protobuf:"bytes,2,opt,name=start_from,json=startFrom,proto3" json:"start_from,omitempty"`
+	StartTo       string                 `protobuf:"bytes,3,opt,name=start_to,json=startTo,proto3" json:"start_to,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ScheduleFilters) Reset() {
+	*x = ScheduleFilters{}
+	mi := &file_schedule_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ScheduleFilters) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScheduleFilters) ProtoMessage() {}
+
+func (x *ScheduleFilters) ProtoReflect() protoreflect.Message {
+	mi := &file_schedule_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScheduleFilters.ProtoReflect.Descriptor instead.
+func (*ScheduleFilters) Descriptor() ([]byte, []int) {
+	return file_schedule_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ScheduleFilters) GetStatuses() []string {
+	if x != nil {
+		return x.Statuses
+	}
+	return nil
+}
+
+func (x *ScheduleFilters) GetStartFrom() string {
+	if x != nil {
+		return x.StartFrom
+	}
+	return ""
+}
+
+func (x *ScheduleFilters) GetStartTo() string {
+	if x != nil {
+		return x.StartTo
+	}
+	return ""
+}
+
 type ListSchedulesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	QuoteId       string                 `protobuf:"bytes,2,opt,name=quote_id,json=quoteId,proto3" json:"quote_id,omitempty"`
+	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
+	PageSize      int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	Filters       *ScheduleFilters       `protobuf:"bytes,5,opt,name=filters,proto3" json:"filters,omitempty"`
+	SortBy        string                 `protobuf:"bytes,6,opt,name=sort_by,json=sortBy,proto3" json:"sort_by,omitempty"`
+	SortDirection string                 `protobuf:"bytes,7,opt,name=sort_direction,json=sortDirection,proto3" json:"sort_direction,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListSchedulesRequest) Reset() {
 	*x = ListSchedulesRequest{}
-	mi := &file_schedule_proto_msgTypes[15]
+	mi := &file_schedule_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1017,7 +1082,7 @@ func (x *ListSchedulesRequest) String() string {
 func (*ListSchedulesRequest) ProtoMessage() {}
 
 func (x *ListSchedulesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_schedule_proto_msgTypes[15]
+	mi := &file_schedule_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1030,7 +1095,7 @@ func (x *ListSchedulesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSchedulesRequest.ProtoReflect.Descriptor instead.
 func (*ListSchedulesRequest) Descriptor() ([]byte, []int) {
-	return file_schedule_proto_rawDescGZIP(), []int{15}
+	return file_schedule_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ListSchedulesRequest) GetUserId() string {
@@ -1047,18 +1112,54 @@ func (x *ListSchedulesRequest) GetQuoteId() string {
 	return ""
 }
 
+func (x *ListSchedulesRequest) GetPage() int32 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *ListSchedulesRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListSchedulesRequest) GetFilters() *ScheduleFilters {
+	if x != nil {
+		return x.Filters
+	}
+	return nil
+}
+
+func (x *ListSchedulesRequest) GetSortBy() string {
+	if x != nil {
+		return x.SortBy
+	}
+	return ""
+}
+
+func (x *ListSchedulesRequest) GetSortDirection() string {
+	if x != nil {
+		return x.SortDirection
+	}
+	return ""
+}
+
 type ListSchedulesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
 	Schedules     []*ScheduleSummary     `protobuf:"bytes,3,rep,name=schedules,proto3" json:"schedules,omitempty"`
+	Total         int64                  `protobuf:"varint,4,opt,name=total,proto3" json:"total,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListSchedulesResponse) Reset() {
 	*x = ListSchedulesResponse{}
-	mi := &file_schedule_proto_msgTypes[16]
+	mi := &file_schedule_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1070,7 +1171,7 @@ func (x *ListSchedulesResponse) String() string {
 func (*ListSchedulesResponse) ProtoMessage() {}
 
 func (x *ListSchedulesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_schedule_proto_msgTypes[16]
+	mi := &file_schedule_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1083,7 +1184,7 @@ func (x *ListSchedulesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSchedulesResponse.ProtoReflect.Descriptor instead.
 func (*ListSchedulesResponse) Descriptor() ([]byte, []int) {
-	return file_schedule_proto_rawDescGZIP(), []int{16}
+	return file_schedule_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ListSchedulesResponse) GetSuccess() bool {
@@ -1105,6 +1206,13 @@ func (x *ListSchedulesResponse) GetSchedules() []*ScheduleSummary {
 		return x.Schedules
 	}
 	return nil
+}
+
+func (x *ListSchedulesResponse) GetTotal() int64 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
 }
 
 var File_schedule_proto protoreflect.FileDescriptor
@@ -1195,14 +1303,25 @@ const file_schedule_proto_rawDesc = "" +
 	"\vstart_month\x18\x04 \x01(\tR\n" +
 	"startMonth\x12'\n" +
 	"\x0fduration_months\x18\x05 \x01(\x05R\x0edurationMonths\x12\x19\n" +
-	"\bquote_id\x18\x06 \x01(\tR\aquoteId\"J\n" +
+	"\bquote_id\x18\x06 \x01(\tR\aquoteId\"g\n" +
+	"\x0fScheduleFilters\x12\x1a\n" +
+	"\bstatuses\x18\x01 \x03(\tR\bstatuses\x12\x1d\n" +
+	"\n" +
+	"start_from\x18\x02 \x01(\tR\tstartFrom\x12\x19\n" +
+	"\bstart_to\x18\x03 \x01(\tR\astartTo\"\xf0\x01\n" +
 	"\x14ListSchedulesRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x19\n" +
-	"\bquote_id\x18\x02 \x01(\tR\aquoteId\"~\n" +
+	"\bquote_id\x18\x02 \x01(\tR\aquoteId\x12\x12\n" +
+	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x123\n" +
+	"\afilters\x18\x05 \x01(\v2\x19.schedule.ScheduleFiltersR\afilters\x12\x17\n" +
+	"\asort_by\x18\x06 \x01(\tR\x06sortBy\x12%\n" +
+	"\x0esort_direction\x18\a \x01(\tR\rsortDirection\"\x94\x01\n" +
 	"\x15ListSchedulesResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x127\n" +
-	"\tschedules\x18\x03 \x03(\v2\x19.schedule.ScheduleSummaryR\tschedules2\x87\x04\n" +
+	"\tschedules\x18\x03 \x03(\v2\x19.schedule.ScheduleSummaryR\tschedules\x12\x14\n" +
+	"\x05total\x18\x04 \x01(\x03R\x05total2\x87\x04\n" +
 	"\x0fScheduleService\x12S\n" +
 	"\x0eCreateSchedule\x12\x1f.schedule.CreateScheduleRequest\x1a .schedule.CreateScheduleResponse\x12T\n" +
 	"\x12UpdateScheduleCell\x12#.schedule.UpdateScheduleCellRequest\x1a\x19.schedule.GenericResponse\x12P\n" +
@@ -1223,7 +1342,7 @@ func file_schedule_proto_rawDescGZIP() []byte {
 	return file_schedule_proto_rawDescData
 }
 
-var file_schedule_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_schedule_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_schedule_proto_goTypes = []any{
 	(*GenericResponse)(nil),           // 0: schedule.GenericResponse
 	(*ValidationError)(nil),           // 1: schedule.ValidationError
@@ -1240,8 +1359,9 @@ var file_schedule_proto_goTypes = []any{
 	(*ScheduleCell)(nil),              // 12: schedule.ScheduleCell
 	(*GetScheduleCellsResponse)(nil),  // 13: schedule.GetScheduleCellsResponse
 	(*ScheduleSummary)(nil),           // 14: schedule.ScheduleSummary
-	(*ListSchedulesRequest)(nil),      // 15: schedule.ListSchedulesRequest
-	(*ListSchedulesResponse)(nil),     // 16: schedule.ListSchedulesResponse
+	(*ScheduleFilters)(nil),           // 15: schedule.ScheduleFilters
+	(*ListSchedulesRequest)(nil),      // 16: schedule.ListSchedulesRequest
+	(*ListSchedulesResponse)(nil),     // 17: schedule.ListSchedulesResponse
 }
 var file_schedule_proto_depIdxs = []int32{
 	1,  // 0: schedule.CreateScheduleResponse.validation_errors:type_name -> schedule.ValidationError
@@ -1249,24 +1369,25 @@ var file_schedule_proto_depIdxs = []int32{
 	8,  // 2: schedule.ScheduleDetails.column_totals:type_name -> schedule.ScheduleColumnTotal
 	9,  // 3: schedule.GetScheduleResponse.schedule:type_name -> schedule.ScheduleDetails
 	12, // 4: schedule.GetScheduleCellsResponse.cells:type_name -> schedule.ScheduleCell
-	14, // 5: schedule.ListSchedulesResponse.schedules:type_name -> schedule.ScheduleSummary
-	2,  // 6: schedule.ScheduleService.CreateSchedule:input_type -> schedule.CreateScheduleRequest
-	4,  // 7: schedule.ScheduleService.UpdateScheduleCell:input_type -> schedule.UpdateScheduleCellRequest
-	5,  // 8: schedule.ScheduleService.ValidateSchedule:input_type -> schedule.ValidateScheduleRequest
-	6,  // 9: schedule.ScheduleService.GetSchedule:input_type -> schedule.GetScheduleRequest
-	11, // 10: schedule.ScheduleService.GetScheduleCells:input_type -> schedule.GetScheduleCellsRequest
-	15, // 11: schedule.ScheduleService.ListSchedules:input_type -> schedule.ListSchedulesRequest
-	3,  // 12: schedule.ScheduleService.CreateSchedule:output_type -> schedule.CreateScheduleResponse
-	0,  // 13: schedule.ScheduleService.UpdateScheduleCell:output_type -> schedule.GenericResponse
-	0,  // 14: schedule.ScheduleService.ValidateSchedule:output_type -> schedule.GenericResponse
-	10, // 15: schedule.ScheduleService.GetSchedule:output_type -> schedule.GetScheduleResponse
-	13, // 16: schedule.ScheduleService.GetScheduleCells:output_type -> schedule.GetScheduleCellsResponse
-	16, // 17: schedule.ScheduleService.ListSchedules:output_type -> schedule.ListSchedulesResponse
-	12, // [12:18] is the sub-list for method output_type
-	6,  // [6:12] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	15, // 5: schedule.ListSchedulesRequest.filters:type_name -> schedule.ScheduleFilters
+	14, // 6: schedule.ListSchedulesResponse.schedules:type_name -> schedule.ScheduleSummary
+	2,  // 7: schedule.ScheduleService.CreateSchedule:input_type -> schedule.CreateScheduleRequest
+	4,  // 8: schedule.ScheduleService.UpdateScheduleCell:input_type -> schedule.UpdateScheduleCellRequest
+	5,  // 9: schedule.ScheduleService.ValidateSchedule:input_type -> schedule.ValidateScheduleRequest
+	6,  // 10: schedule.ScheduleService.GetSchedule:input_type -> schedule.GetScheduleRequest
+	11, // 11: schedule.ScheduleService.GetScheduleCells:input_type -> schedule.GetScheduleCellsRequest
+	16, // 12: schedule.ScheduleService.ListSchedules:input_type -> schedule.ListSchedulesRequest
+	3,  // 13: schedule.ScheduleService.CreateSchedule:output_type -> schedule.CreateScheduleResponse
+	0,  // 14: schedule.ScheduleService.UpdateScheduleCell:output_type -> schedule.GenericResponse
+	0,  // 15: schedule.ScheduleService.ValidateSchedule:output_type -> schedule.GenericResponse
+	10, // 16: schedule.ScheduleService.GetSchedule:output_type -> schedule.GetScheduleResponse
+	13, // 17: schedule.ScheduleService.GetScheduleCells:output_type -> schedule.GetScheduleCellsResponse
+	17, // 18: schedule.ScheduleService.ListSchedules:output_type -> schedule.ListSchedulesResponse
+	13, // [13:19] is the sub-list for method output_type
+	7,  // [7:13] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_schedule_proto_init() }
@@ -1280,7 +1401,7 @@ func file_schedule_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_schedule_proto_rawDesc), len(file_schedule_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -3,6 +3,8 @@ package client
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 
 	"project-devis-users/actions/codes"
 	"project-devis-users/actions/sqlutil"
@@ -14,15 +16,33 @@ func List(ctx context.Context, db *sql.DB, req *usersGrpc.ListClientsRequest) (*
 		return &usersGrpc.ListClientsResponse{Success: false, Code: codes.InvalidInput}, nil
 	}
 
-	query := `SELECT client_id, user_id, first_name, last_name, email, phone, company, siren, vat, siret, client_type,
-	                 (archived_at IS NOT NULL)
-	          FROM clients WHERE user_id=$1`
-	if !req.IncludeArchived {
-		query += ` AND archived_at IS NULL`
+	page := req.Page
+	if page < 1 {
+		page = 1
 	}
-	query += ` ORDER BY id`
+	pageSize := req.PageSize
+	if pageSize < 1 || pageSize > 200 {
+		pageSize = 20
+	}
+	offset := (page - 1) * pageSize
 
-	rows, err := db.QueryContext(ctx, query, req.UserId)
+	where, args := buildClientFilters(req.UserId, req.IncludeArchived, req.Filters)
+
+	var total int64
+	if err := db.QueryRowContext(ctx, "SELECT COUNT(*) FROM clients"+where, args...).Scan(&total); err != nil {
+		return &usersGrpc.ListClientsResponse{Success: false, Code: codes.InternalError}, err
+	}
+
+	args = append(args, pageSize, offset)
+	n := len(args)
+	query := fmt.Sprintf(
+		`SELECT client_id, user_id, first_name, last_name, email, phone, company, siren, vat, siret, client_type,
+		        (archived_at IS NOT NULL)
+		 FROM clients%s ORDER BY id LIMIT $%d OFFSET $%d`,
+		where, n-1, n,
+	)
+
+	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return &usersGrpc.ListClientsResponse{Success: false, Code: codes.InternalError}, err
 	}
@@ -48,5 +68,35 @@ func List(ctx context.Context, db *sql.DB, req *usersGrpc.ListClientsRequest) (*
 		return &usersGrpc.ListClientsResponse{Success: false, Code: codes.InternalError}, err
 	}
 
-	return &usersGrpc.ListClientsResponse{Success: true, Code: codes.Success, Clients: clients}, nil
+	return &usersGrpc.ListClientsResponse{Success: true, Code: codes.Success, Clients: clients, Total: total}, nil
+}
+
+func buildClientFilters(userID string, includeArchived bool, f *usersGrpc.ClientFilters) (string, []interface{}) {
+	args := []interface{}{userID}
+	clauses := []string{"user_id = $1"}
+
+	if !includeArchived {
+		clauses = append(clauses, "archived_at IS NULL")
+	}
+
+	if f != nil {
+		if f.Search != "" {
+			args = append(args, "%"+f.Search+"%")
+			n := len(args)
+			clauses = append(clauses, fmt.Sprintf(
+				"(first_name ILIKE $%d OR last_name ILIKE $%d OR email ILIKE $%d OR company ILIKE $%d)",
+				n, n, n, n,
+			))
+		}
+		if len(f.ClientTypes) > 0 {
+			placeholders := make([]string, len(f.ClientTypes))
+			for i, ct := range f.ClientTypes {
+				args = append(args, ct)
+				placeholders[i] = fmt.Sprintf("$%d", len(args))
+			}
+			clauses = append(clauses, "client_type IN ("+strings.Join(placeholders, ",")+")")
+		}
+	}
+
+	return " WHERE " + strings.Join(clauses, " AND "), args
 }

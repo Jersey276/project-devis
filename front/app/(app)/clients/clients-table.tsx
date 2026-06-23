@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import {
   DataTable,
-  DataTableBody,
+  DataTableBodyRows,
   DataTableCell,
   DataTableHeader,
   DataTableHead,
@@ -73,8 +73,8 @@ export function ClientsTable({ data, onArchived }: ClientsTableProps) {
           <DataTableHead>{t("columns.actions")}</DataTableHead>
         </DataTableRow>
       </DataTableHeader>
-      <DataTableBody>
-        {data.map((client) => (
+      <DataTableBodyRows<BackendClient>
+        render={(client) => (
           <DataTableRow key={client.client_id}>
             <DataTableCell>{client.first_name}</DataTableCell>
             <DataTableCell>{client.last_name}</DataTableCell>
@@ -84,8 +84,8 @@ export function ClientsTable({ data, onArchived }: ClientsTableProps) {
               <DataTableRowActions id={client.client_id} row={client} />
             </DataTableCell>
           </DataTableRow>
-        ))}
-      </DataTableBody>
+        )}
+      />
     </DataTable>
   );
 }

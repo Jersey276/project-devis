@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   DataTable,
-  DataTableBody,
+  DataTableBodyRows,
   DataTableCell,
   DataTableHead,
   DataTableHeader,
@@ -122,31 +122,21 @@ export default function FeesTable() {
             </DataTableHead>
           </DataTableRow>
         </DataTableHeader>
-        <DataTableBody>
-          {fees.length === 0 ? (
-            <DataTableRow>
-              <DataTableCell className="text-muted-foreground">
-                {t("empty")}
+        <DataTableBodyRows<BackendFee>
+          emptyColSpan={5}
+          empty={<span className="text-muted-foreground">{t("empty")}</span>}
+          render={(fee) => (
+            <DataTableRow key={fee.fee_id}>
+              <DataTableCell>{fee.name}</DataTableCell>
+              <DataTableCell>{tCategories(fee.category)}</DataTableCell>
+              <DataTableCell>{fee.unit || "—"}</DataTableCell>
+              <DataTableCell>{formatPrice(fee.unit_price)}</DataTableCell>
+              <DataTableCell className="w-12 text-right">
+                <DataTableRowActions id={fee.fee_id} row={fee} />
               </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
             </DataTableRow>
-          ) : (
-            fees.map((fee) => (
-              <DataTableRow key={fee.fee_id}>
-                <DataTableCell>{fee.name}</DataTableCell>
-                <DataTableCell>{tCategories(fee.category)}</DataTableCell>
-                <DataTableCell>{fee.unit || "—"}</DataTableCell>
-                <DataTableCell>{formatPrice(fee.unit_price)}</DataTableCell>
-                <DataTableCell className="w-12 text-right">
-                  <DataTableRowActions id={fee.fee_id} row={fee} />
-                </DataTableCell>
-              </DataTableRow>
-            ))
           )}
-        </DataTableBody>
+        />
       </DataTable>
 
       <FeeDialog

@@ -34,8 +34,9 @@ function toLinePayload(draft: LineDraft) {
   };
 }
 
-export async function listQuotes(): Promise<ApiResult> {
-  return apiFetch("/api/quotes");
+export async function listQuotes(queryString?: string): Promise<ApiResult> {
+  const url = queryString ? `/api/quotes?${queryString}` : "/api/quotes";
+  return apiFetch(url);
 }
 
 export type CreateQuotePayload = {
