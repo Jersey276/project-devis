@@ -260,7 +260,17 @@ func marshalAdminAccount(a *users.AdminAccount) gin.H {
 }
 
 func ListAdminAccounts(c *gin.Context, client users.UserServiceClient) {
-	resp, err := client.ListAdminAccounts(c.Request.Context(), &users.ListAdminAccountsRequest{})
+	req := &users.ListAdminAccountsRequest{
+		Search: c.Query("search"),
+	}
+	if roles := c.Query("roles"); roles != "" {
+		req.Roles = strings.Split(roles, ",")
+	}
+	if statuses := c.Query("statuses"); statuses != "" {
+		req.Statuses = strings.Split(statuses, ",")
+	}
+
+	resp, err := client.ListAdminAccounts(c.Request.Context(), req)
 	if err != nil {
 		usersErrors.unavailable(c)
 		return

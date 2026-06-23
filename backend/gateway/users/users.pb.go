@@ -1101,6 +1101,9 @@ func (x *AdminAccount) GetVat() string {
 
 type ListAdminAccountsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Search        string                 `protobuf:"bytes,1,opt,name=search,proto3" json:"search,omitempty"`
+	Roles         []string               `protobuf:"bytes,2,rep,name=roles,proto3" json:"roles,omitempty"`
+	Statuses      []string               `protobuf:"bytes,3,rep,name=statuses,proto3" json:"statuses,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1133,6 +1136,27 @@ func (x *ListAdminAccountsRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ListAdminAccountsRequest.ProtoReflect.Descriptor instead.
 func (*ListAdminAccountsRequest) Descriptor() ([]byte, []int) {
 	return file_users_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ListAdminAccountsRequest) GetSearch() string {
+	if x != nil {
+		return x.Search
+	}
+	return ""
+}
+
+func (x *ListAdminAccountsRequest) GetRoles() []string {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+func (x *ListAdminAccountsRequest) GetStatuses() []string {
+	if x != nil {
+		return x.Statuses
+	}
+	return nil
 }
 
 type ListAdminAccountsResponse struct {

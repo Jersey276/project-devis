@@ -846,6 +846,17 @@
         "description": "L'utilisateur ne pourra plus se connecter tant que le compte est suspendu."
       },
       "suspendSuccessToast": "Compte suspendu.",
+      "filters": {
+        "searchPlaceholder": "Rechercher par nom ou email…",
+        "roleLabel": "Rôle",
+        "rolePlaceholder": "Tous les rôles",
+        "roleEmpty": "Aucun rôle trouvé.",
+        "statusLabel": "Statut",
+        "statusPlaceholder": "Tous les statuts",
+        "statusEmpty": "Aucun statut trouvé.",
+        "statusActive": "Actif",
+        "statusSuspended": "Suspendu"
+      },
       "dialog": {
         "title": "Modifier le compte",
         "firstNameLabel": "Prénom",

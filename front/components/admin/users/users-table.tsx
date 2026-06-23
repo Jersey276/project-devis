@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useReloadKey } from "@/hooks/use-reload-key";
 import { useTranslations } from "next-intl";
 import {
@@ -14,6 +15,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { FilterSidebar, FilterSidebarSection } from "@/components/ui/filter-sidebar";
+import { SelectCombobox } from "@/components/ui/select-combobox";
 import {
   DataTable,
   DataTableBody,
@@ -41,21 +45,47 @@ function formatLastLogin(value: string | null, fallback: string): string {
   }).format(date);
 }
 
-export default function UsersTable() {
+function UsersTableInner() {
   const t = useTranslations("admin.users");
   const tCommon = useTranslations("common");
+  const tFilters = useTranslations("admin.users.filters");
+  const tFilterSidebar = useTranslations("common.filterSidebar");
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const search = searchParams.get("search") ?? "";
+  const roles = useMemo(
+    () => (searchParams.get("roles") ? searchParams.get("roles")!.split(",") : []),
+    [searchParams],
+  );
+  const statuses = useMemo(
+    () => (searchParams.get("statuses") ? searchParams.get("statuses")!.split(",") : []),
+    [searchParams],
+  );
+
+  function pushParams(newSearch: string, newRoles: string[], newStatuses: string[]) {
+    const p = new URLSearchParams();
+    if (newSearch) p.set("search", newSearch);
+    if (newRoles.length > 0) p.set("roles", newRoles.join(","));
+    if (newStatuses.length > 0) p.set("statuses", newStatuses.join(","));
+    router.push(`${pathname}?${p.toString()}`);
+  }
 
   const { key: reloadKey, reload } = useReloadKey();
   const [users, setUsers] = useState<AdminUserAccount[]>([]);
   const [editing, setEditing] = useState<AdminUserAccount | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [pendingSuspend, setPendingSuspend] = useState<AdminUserAccount | null>(
-    null,
-  );
+  const [pendingSuspend, setPendingSuspend] = useState<AdminUserAccount | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    listAdminUsers().then(({ ok, body }) => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (roles.length > 0) params.set("roles", roles.join(","));
+    if (statuses.length > 0) params.set("statuses", statuses.join(","));
+    listAdminUsers(params.toString() || undefined).then(({ ok, body }) => {
       if (cancelled) return;
       if (ok && Array.isArray(body.users)) {
         setUsers(body.users as AdminUserAccount[]);
@@ -64,7 +94,7 @@ export default function UsersTable() {
     return () => {
       cancelled = true;
     };
-  }, [reloadKey]);
+  }, [reloadKey, search, roles, statuses]);
 
   function openEdit(user: AdminUserAccount) {
     setEditing(user);
@@ -73,7 +103,6 @@ export default function UsersTable() {
 
   async function confirmSuspend() {
     if (!pendingSuspend) return;
-
     const { ok, body } = await suspendAdminUser(pendingSuspend.user_id);
     if (ok && body.success) {
       toast.success(t("suspendSuccessToast"));
@@ -99,8 +128,57 @@ export default function UsersTable() {
     },
   ];
 
+  const ROLE_ITEMS = [
+    { value: "user", label: t("roleUser") },
+    { value: "admin", label: t("roleAdmin") },
+  ];
+
+  const STATUS_ITEMS = [
+    { value: "active", label: tFilters("statusActive") },
+    { value: "suspended", label: tFilters("statusSuspended") },
+  ];
+
+  const activeFilterCount = (roles.length > 0 ? 1 : 0) + (statuses.length > 0 ? 1 : 0);
+
   return (
     <div className="grid gap-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          className="w-full sm:w-64"
+          placeholder={tFilters("searchPlaceholder")}
+          value={search}
+          onChange={(e) => pushParams(e.target.value, roles, statuses)}
+        />
+        <FilterSidebar
+          triggerLabel={tFilterSidebar("trigger")}
+          title={tFilterSidebar("title")}
+          resetLabel={tFilterSidebar("reset")}
+          activeCount={activeFilterCount}
+          onReset={() => pushParams(search, [], [])}
+        >
+          <FilterSidebarSection label={tFilters("roleLabel")}>
+            <SelectCombobox
+              multiple
+              items={ROLE_ITEMS}
+              value={roles}
+              onValueChange={(vals) => pushParams(search, vals, statuses)}
+              placeholder={tFilters("rolePlaceholder")}
+              emptyLabel={tFilters("roleEmpty")}
+            />
+          </FilterSidebarSection>
+          <FilterSidebarSection label={tFilters("statusLabel")}>
+            <SelectCombobox
+              multiple
+              items={STATUS_ITEMS}
+              value={statuses}
+              onValueChange={(vals) => pushParams(search, roles, vals)}
+              placeholder={tFilters("statusPlaceholder")}
+              emptyLabel={tFilters("statusEmpty")}
+            />
+          </FilterSidebarSection>
+        </FilterSidebar>
+      </div>
+
       <DataTable datas={users} row_actions={rowActions} sortBy="last_name">
         <DataTableHeader>
           <DataTableRow>
@@ -190,5 +268,13 @@ export default function UsersTable() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+export default function UsersTable() {
+  return (
+    <Suspense fallback={null}>
+      <UsersTableInner />
+    </Suspense>
   );
 }
