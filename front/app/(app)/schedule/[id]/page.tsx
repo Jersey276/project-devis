@@ -14,6 +14,7 @@ import {
 } from "@/types/backend";
 import { cn, formatEurosFromCents } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useMode } from "@/lib/mode-context";
 import {
   Tooltip,
   TooltipContent,
@@ -241,6 +242,7 @@ function parseAmountEur(value: string): ParsedAmountResult {
 }
 
 export default function ScheduleDetailsPage() {
+  const { isCustomer } = useMode();
   const params = useParams<Params>();
   const scheduleId = params?.id ?? "";
   const [schedule, setSchedule] = useState<BackendScheduleDetails | null>(null);
@@ -289,7 +291,7 @@ export default function ScheduleDetailsPage() {
   }, [schedule]);
 
   const isReadOnly =
-    schedule?.status === "VALID" || schedule?.status === "DENIED";
+    isCustomer || schedule?.status === "VALID" || schedule?.status === "DENIED";
 
   const loadSchedule = useCallback(async () => {
     if (!scheduleId) return;
@@ -564,7 +566,7 @@ export default function ScheduleDetailsPage() {
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <CardTitle>Échéancier {scheduleId}</CardTitle>
           <div className="flex items-center gap-2">
-            {schedule?.status === "VALID" ? (
+            {!isCustomer && schedule?.status === "VALID" ? (
               <Button
                 type="button"
                 onClick={() => setInvoiceDialogOpen(true)}
@@ -601,13 +603,17 @@ export default function ScheduleDetailsPage() {
                 </p>
                 <p>
                   <strong>Statut:</strong>{" "}
-                  <ScheduleStatusSelect
-                    scheduleId={schedule.schedule_id}
-                    value={schedule.status}
-                    className="w-44"
-                    onUpdated={loadSchedule}
-                    onError={setError}
-                  />
+                  {isCustomer ? (
+                    <span>{schedule.status}</span>
+                  ) : (
+                    <ScheduleStatusSelect
+                      scheduleId={schedule.schedule_id}
+                      value={schedule.status}
+                      className="w-44"
+                      onUpdated={loadSchedule}
+                      onError={setError}
+                    />
+                  )}
                 </p>
                 <p>
                   <strong>Début:</strong> {schedule.start_month}
@@ -825,7 +831,7 @@ export default function ScheduleDetailsPage() {
         </CardContent>
       </Card>
 
-      {schedule ? (
+      {!isCustomer && schedule ? (
         <GenerateInvoiceFromScheduleDialog
           open={invoiceDialogOpen}
           onOpenChange={setInvoiceDialogOpen}

@@ -73,7 +73,6 @@ const items: SidebarItem[] = [
     key: "project",
     url: "/projects",
     icon: FolderIcon,
-    modes: ["provider"],
   },
   {
     key: "quote",
@@ -84,13 +83,11 @@ const items: SidebarItem[] = [
     key: "schedule",
     url: "/schedule",
     icon: QuoteIcon,
-    modes: ["provider"],
   },
   {
     key: "invoices",
     url: "/invoice",
     icon: ReceiptEuroIcon,
-    modes: ["provider"],
   },
   {
     key: "creditNotes",

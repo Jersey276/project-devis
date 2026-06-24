@@ -132,6 +132,7 @@ type CreateScheduleRequest struct {
 	Name           string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	StartMonth     string                 `protobuf:"bytes,4,opt,name=start_month,json=startMonth,proto3" json:"start_month,omitempty"`
 	DurationMonths int32                  `protobuf:"varint,5,opt,name=duration_months,json=durationMonths,proto3" json:"duration_months,omitempty"`
+	ClientId       string                 `protobuf:"bytes,6,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -199,6 +200,13 @@ func (x *CreateScheduleRequest) GetDurationMonths() int32 {
 		return x.DurationMonths
 	}
 	return 0
+}
+
+func (x *CreateScheduleRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
 }
 
 type CreateScheduleResponse struct {
@@ -919,6 +927,7 @@ type ScheduleSummary struct {
 	StartMonth     string                 `protobuf:"bytes,4,opt,name=start_month,json=startMonth,proto3" json:"start_month,omitempty"`
 	DurationMonths int32                  `protobuf:"varint,5,opt,name=duration_months,json=durationMonths,proto3" json:"duration_months,omitempty"`
 	QuoteId        string                 `protobuf:"bytes,6,opt,name=quote_id,json=quoteId,proto3" json:"quote_id,omitempty"`
+	ClientId       string                 `protobuf:"bytes,7,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -995,11 +1004,19 @@ func (x *ScheduleSummary) GetQuoteId() string {
 	return ""
 }
 
+func (x *ScheduleSummary) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
 type ScheduleFilters struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Statuses      []string               `protobuf:"bytes,1,rep,name=statuses,proto3" json:"statuses,omitempty"`
 	StartFrom     string                 `protobuf:"bytes,2,opt,name=start_from,json=startFrom,proto3" json:"start_from,omitempty"`
 	StartTo       string                 `protobuf:"bytes,3,opt,name=start_to,json=startTo,proto3" json:"start_to,omitempty"`
+	ClientId      string                 `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1051,6 +1068,13 @@ func (x *ScheduleFilters) GetStartFrom() string {
 func (x *ScheduleFilters) GetStartTo() string {
 	if x != nil {
 		return x.StartTo
+	}
+	return ""
+}
+
+func (x *ScheduleFilters) GetClientId() string {
+	if x != nil {
+		return x.ClientId
 	}
 	return ""
 }
@@ -1233,14 +1257,15 @@ const file_schedule_proto_rawDesc = "" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\"A\n" +
 	"\x0fValidationError\x12\x14\n" +
 	"\x05field\x18\x01 \x01(\tR\x05field\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\xa9\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xc6\x01\n" +
 	"\x15CreateScheduleRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x19\n" +
 	"\bquote_id\x18\x02 \x01(\tR\aquoteId\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1f\n" +
 	"\vstart_month\x18\x04 \x01(\tR\n" +
 	"startMonth\x12'\n" +
-	"\x0fduration_months\x18\x05 \x01(\x05R\x0edurationMonths\"\xaf\x01\n" +
+	"\x0fduration_months\x18\x05 \x01(\x05R\x0edurationMonths\x12\x1b\n" +
+	"\tclient_id\x18\x06 \x01(\tR\bclientId\"\xaf\x01\n" +
 	"\x16CreateScheduleResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x1f\n" +
@@ -1302,7 +1327,7 @@ const file_schedule_proto_rawDesc = "" +
 	"\x18GetScheduleCellsResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12,\n" +
-	"\x05cells\x18\x03 \x03(\v2\x16.schedule.ScheduleCellR\x05cells\"\xc3\x01\n" +
+	"\x05cells\x18\x03 \x03(\v2\x16.schedule.ScheduleCellR\x05cells\"\xe0\x01\n" +
 	"\x0fScheduleSummary\x12\x1f\n" +
 	"\vschedule_id\x18\x01 \x01(\tR\n" +
 	"scheduleId\x12\x12\n" +
@@ -1311,12 +1336,14 @@ const file_schedule_proto_rawDesc = "" +
 	"\vstart_month\x18\x04 \x01(\tR\n" +
 	"startMonth\x12'\n" +
 	"\x0fduration_months\x18\x05 \x01(\x05R\x0edurationMonths\x12\x19\n" +
-	"\bquote_id\x18\x06 \x01(\tR\aquoteId\"g\n" +
+	"\bquote_id\x18\x06 \x01(\tR\aquoteId\x12\x1b\n" +
+	"\tclient_id\x18\a \x01(\tR\bclientId\"\x84\x01\n" +
 	"\x0fScheduleFilters\x12\x1a\n" +
 	"\bstatuses\x18\x01 \x03(\tR\bstatuses\x12\x1d\n" +
 	"\n" +
 	"start_from\x18\x02 \x01(\tR\tstartFrom\x12\x19\n" +
-	"\bstart_to\x18\x03 \x01(\tR\astartTo\"\x8d\x02\n" +
+	"\bstart_to\x18\x03 \x01(\tR\astartTo\x12\x1b\n" +
+	"\tclient_id\x18\x04 \x01(\tR\bclientId\"\x8d\x02\n" +
 	"\x14ListSchedulesRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x19\n" +
 	"\bquote_id\x18\x02 \x01(\tR\aquoteId\x12\x12\n" +

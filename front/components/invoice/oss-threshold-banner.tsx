@@ -6,15 +6,18 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getOSSThresholdStatus } from "@/lib/services/invoices";
 import { formatEurosFromCents } from "@/lib/utils";
 import type { BackendOSSThresholdStatus } from "@/types/backend";
+import { useMode } from "@/lib/mode-context";
 
 // Shows where the issuer stands against the OSS distance-selling threshold
 // (art. 259 D CGI) for the current civil year. Hidden for purely domestic
 // sellers (no OSS turnover and not opted in) to avoid cluttering the page.
 export default function OSSThresholdBanner() {
   const t = useTranslations("invoice.oss");
+  const { isCustomer } = useMode();
   const [status, setStatus] = useState<BackendOSSThresholdStatus | null>(null);
 
   useEffect(() => {
+    if (isCustomer) return;
     let cancelled = false;
     getOSSThresholdStatus().then(({ ok, body }) => {
       if (cancelled || !ok || !body.success) return;
@@ -23,8 +26,9 @@ export default function OSSThresholdBanner() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isCustomer]);
 
+  if (isCustomer) return null;
   if (!status) return null;
   if (!status.oss_active && status.cumulative_ht_cents <= 0) return null;
 

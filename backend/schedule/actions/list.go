@@ -20,7 +20,11 @@ func (s *Server) ListSchedules(ctx context.Context, req *scheduleGrpc.ListSchedu
 		return resp.Code, resp.Success
 	}, &err)()
 
-	if req == nil || strings.TrimSpace(req.UserId) == "" {
+	clientID := ""
+	if req.GetFilters() != nil {
+		clientID = strings.TrimSpace(req.GetFilters().ClientId)
+	}
+	if req == nil || (strings.TrimSpace(req.UserId) == "" && clientID == "") {
 		resp = &scheduleGrpc.ListSchedulesResponse{Success: false, Code: CodeInvalidInput}
 		return resp, nil
 	}
@@ -48,7 +52,7 @@ func (s *Server) ListSchedules(ctx context.Context, req *scheduleGrpc.ListSchedu
 	args = append(args, pageSize, offset)
 	n := len(args)
 	query := fmt.Sprintf(
-		`SELECT schedule_id, quote_id, status, name, start_month, duration_months
+		`SELECT schedule_id, quote_id, status, name, start_month, duration_months, COALESCE(client_id, '')
 		 FROM schedules%s ORDER BY %s LIMIT $%d OFFSET $%d`,
 		where, orderBy, n-1, n,
 	)
@@ -62,10 +66,10 @@ func (s *Server) ListSchedules(ctx context.Context, req *scheduleGrpc.ListSchedu
 
 	schedules := make([]*scheduleGrpc.ScheduleSummary, 0)
 	for rows.Next() {
-		var scheduleID, quoteID, status, name string
+		var scheduleID, quoteID, status, name, clientID string
 		var startMonth time.Time
 		var durationMonths int32
-		if err := rows.Scan(&scheduleID, &quoteID, &status, &name, &startMonth, &durationMonths); err != nil {
+		if err := rows.Scan(&scheduleID, &quoteID, &status, &name, &startMonth, &durationMonths, &clientID); err != nil {
 			resp = &scheduleGrpc.ListSchedulesResponse{Success: false, Code: CodeInternalError}
 			return resp, err
 		}
@@ -76,6 +80,7 @@ func (s *Server) ListSchedules(ctx context.Context, req *scheduleGrpc.ListSchedu
 			Name:           name,
 			StartMonth:     startMonth.Format("2006-01"),
 			DurationMonths: durationMonths,
+			ClientId:       clientID,
 		})
 	}
 	if err = rows.Err(); err != nil {
@@ -113,8 +118,24 @@ func buildScheduleOrderBy(sortBy, sortDirection string) string {
 }
 
 func buildScheduleFilters(userID, quoteID string, quoteIDs []string, f *scheduleGrpc.ScheduleFilters) (string, []interface{}) {
-	args := []interface{}{userID}
-	clauses := []string{"user_id = $1"}
+	// client_id filter is only active when user_id is empty (customer-mode calls
+	// from the gateway). A non-empty user_id always takes precedence so that a
+	// provider cannot bypass ownership by sending an arbitrary client_id.
+	clientID := ""
+	if f != nil && strings.TrimSpace(userID) == "" {
+		clientID = strings.TrimSpace(f.ClientId)
+	}
+
+	var args []interface{}
+	var clauses []string
+
+	if clientID != "" {
+		args = append(args, clientID)
+		clauses = append(clauses, "client_id = $1")
+	} else {
+		args = append(args, userID)
+		clauses = append(clauses, "user_id = $1")
+	}
 
 	if strings.TrimSpace(quoteID) != "" {
 		args = append(args, quoteID)

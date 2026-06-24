@@ -83,7 +83,7 @@ func SchedulesRoutes(r *gin.RouterGroup, emailNotifier gatewaySvc.EmailNotifier)
 	usersClient := users.NewUserServiceClient(usersConn)
 
 	r.GET("", func(c *gin.Context) { ListSchedules(c, client) })
-	r.POST("", func(c *gin.Context) { CreateSchedule(c, client) })
+	r.POST("", func(c *gin.Context) { CreateSchedule(c, client, quoteClient) })
 
 	one := r.Group("/:id")
 	one.GET("", func(c *gin.Context) { GetSchedule(c, client) })
@@ -157,8 +157,16 @@ func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient) {
 		statuses = strings.Split(raw, ",")
 	}
 
+	filterClientID := c.Query("client_id")
+	// In customer mode, filter by client_id only — the authenticated user_id is
+	// that of the client account, not the provider who owns the schedules.
+	userID := userIDFromCtx(c)
+	if filterClientID != "" && c.GetHeader("X-Client-Mode") == "customer" {
+		userID = ""
+	}
+
 	resp, err := client.ListSchedules(c.Request.Context(), &schedule.ListSchedulesRequest{
-		UserId:        userIDFromCtx(c),
+		UserId:        userID,
 		QuoteId:       c.Query("quote_id"),
 		Page:          int32(page),
 		PageSize:      int32(pageSize),
@@ -168,6 +176,7 @@ func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient) {
 			Statuses:  statuses,
 			StartFrom: c.Query("start_from"),
 			StartTo:   c.Query("start_to"),
+			ClientId:  filterClientID,
 		},
 	})
 	if err != nil {
@@ -196,7 +205,7 @@ func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "schedules": out, "total": resp.Total})
 }
 
-func CreateSchedule(c *gin.Context, client schedule.ScheduleServiceClient) {
+func CreateSchedule(c *gin.Context, client schedule.ScheduleServiceClient, quoteClient quote.QuoteServiceClient) {
 	startedAt := time.Now()
 	grpcCode := int32(0)
 	success := false
@@ -215,12 +224,25 @@ func CreateSchedule(c *gin.Context, client schedule.ScheduleServiceClient) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
 		return
 	}
+
+	userID := userIDFromCtx(c)
+
+	// Resolve client_id from the quote so schedules can be filtered by client.
+	var clientID string
+	if quoteResp, err := quoteClient.GetQuote(c.Request.Context(), &quote.GetQuoteRequest{
+		QuoteId: input.QuoteID,
+		UserId:  userID,
+	}); err == nil && quoteResp.Success {
+		clientID = quoteResp.Quote.GetClientId()
+	}
+
 	resp, err := client.CreateSchedule(c.Request.Context(), &schedule.CreateScheduleRequest{
-		UserId:         userIDFromCtx(c),
+		UserId:         userID,
 		QuoteId:        input.QuoteID,
 		Name:           input.Name,
 		StartMonth:     input.StartMonth,
 		DurationMonths: input.DurationMonths,
+		ClientId:       clientID,
 	})
 	if err != nil {
 		grpcCode = ScheduleCodeInternalError

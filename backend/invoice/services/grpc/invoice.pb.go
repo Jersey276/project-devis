@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v7.34.0
-// source: invoice.proto
+// source: services/grpc/invoice.proto
 
 package invoice
 
@@ -31,7 +31,7 @@ type GenericResponse struct {
 
 func (x *GenericResponse) Reset() {
 	*x = GenericResponse{}
-	mi := &file_invoice_proto_msgTypes[0]
+	mi := &file_services_grpc_invoice_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -43,7 +43,7 @@ func (x *GenericResponse) String() string {
 func (*GenericResponse) ProtoMessage() {}
 
 func (x *GenericResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[0]
+	mi := &file_services_grpc_invoice_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -56,7 +56,7 @@ func (x *GenericResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenericResponse.ProtoReflect.Descriptor instead.
 func (*GenericResponse) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{0}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *GenericResponse) GetSuccess() bool {
@@ -83,7 +83,7 @@ type ValidationError struct {
 
 func (x *ValidationError) Reset() {
 	*x = ValidationError{}
-	mi := &file_invoice_proto_msgTypes[1]
+	mi := &file_services_grpc_invoice_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -95,7 +95,7 @@ func (x *ValidationError) String() string {
 func (*ValidationError) ProtoMessage() {}
 
 func (x *ValidationError) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[1]
+	mi := &file_services_grpc_invoice_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -108,7 +108,7 @@ func (x *ValidationError) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidationError.ProtoReflect.Descriptor instead.
 func (*ValidationError) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{1}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ValidationError) GetField() string {
@@ -139,7 +139,7 @@ type CreateInvoiceFromScheduleRequest struct {
 
 func (x *CreateInvoiceFromScheduleRequest) Reset() {
 	*x = CreateInvoiceFromScheduleRequest{}
-	mi := &file_invoice_proto_msgTypes[2]
+	mi := &file_services_grpc_invoice_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -151,7 +151,7 @@ func (x *CreateInvoiceFromScheduleRequest) String() string {
 func (*CreateInvoiceFromScheduleRequest) ProtoMessage() {}
 
 func (x *CreateInvoiceFromScheduleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[2]
+	mi := &file_services_grpc_invoice_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -164,7 +164,7 @@ func (x *CreateInvoiceFromScheduleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateInvoiceFromScheduleRequest.ProtoReflect.Descriptor instead.
 func (*CreateInvoiceFromScheduleRequest) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{2}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *CreateInvoiceFromScheduleRequest) GetUserId() string {
@@ -222,7 +222,7 @@ type CreateInvoiceFromQuoteRequest struct {
 
 func (x *CreateInvoiceFromQuoteRequest) Reset() {
 	*x = CreateInvoiceFromQuoteRequest{}
-	mi := &file_invoice_proto_msgTypes[3]
+	mi := &file_services_grpc_invoice_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -234,7 +234,7 @@ func (x *CreateInvoiceFromQuoteRequest) String() string {
 func (*CreateInvoiceFromQuoteRequest) ProtoMessage() {}
 
 func (x *CreateInvoiceFromQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[3]
+	mi := &file_services_grpc_invoice_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -247,7 +247,7 @@ func (x *CreateInvoiceFromQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateInvoiceFromQuoteRequest.ProtoReflect.Descriptor instead.
 func (*CreateInvoiceFromQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{3}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *CreateInvoiceFromQuoteRequest) GetUserId() string {
@@ -298,7 +298,7 @@ type CreateInvoiceResponse struct {
 
 func (x *CreateInvoiceResponse) Reset() {
 	*x = CreateInvoiceResponse{}
-	mi := &file_invoice_proto_msgTypes[4]
+	mi := &file_services_grpc_invoice_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -310,7 +310,7 @@ func (x *CreateInvoiceResponse) String() string {
 func (*CreateInvoiceResponse) ProtoMessage() {}
 
 func (x *CreateInvoiceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[4]
+	mi := &file_services_grpc_invoice_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -323,7 +323,7 @@ func (x *CreateInvoiceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateInvoiceResponse.ProtoReflect.Descriptor instead.
 func (*CreateInvoiceResponse) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{4}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CreateInvoiceResponse) GetSuccess() bool {
@@ -371,7 +371,7 @@ type IssueInvoiceRequest struct {
 
 func (x *IssueInvoiceRequest) Reset() {
 	*x = IssueInvoiceRequest{}
-	mi := &file_invoice_proto_msgTypes[5]
+	mi := &file_services_grpc_invoice_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -383,7 +383,7 @@ func (x *IssueInvoiceRequest) String() string {
 func (*IssueInvoiceRequest) ProtoMessage() {}
 
 func (x *IssueInvoiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[5]
+	mi := &file_services_grpc_invoice_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -396,7 +396,7 @@ func (x *IssueInvoiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IssueInvoiceRequest.ProtoReflect.Descriptor instead.
 func (*IssueInvoiceRequest) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{5}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *IssueInvoiceRequest) GetInvoiceId() string {
@@ -423,7 +423,7 @@ type MarkInvoicePaidRequest struct {
 
 func (x *MarkInvoicePaidRequest) Reset() {
 	*x = MarkInvoicePaidRequest{}
-	mi := &file_invoice_proto_msgTypes[6]
+	mi := &file_services_grpc_invoice_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -435,7 +435,7 @@ func (x *MarkInvoicePaidRequest) String() string {
 func (*MarkInvoicePaidRequest) ProtoMessage() {}
 
 func (x *MarkInvoicePaidRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[6]
+	mi := &file_services_grpc_invoice_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -448,7 +448,7 @@ func (x *MarkInvoicePaidRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MarkInvoicePaidRequest.ProtoReflect.Descriptor instead.
 func (*MarkInvoicePaidRequest) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{6}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *MarkInvoicePaidRequest) GetInvoiceId() string {
@@ -475,7 +475,7 @@ type DeleteDraftInvoiceRequest struct {
 
 func (x *DeleteDraftInvoiceRequest) Reset() {
 	*x = DeleteDraftInvoiceRequest{}
-	mi := &file_invoice_proto_msgTypes[7]
+	mi := &file_services_grpc_invoice_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -487,7 +487,7 @@ func (x *DeleteDraftInvoiceRequest) String() string {
 func (*DeleteDraftInvoiceRequest) ProtoMessage() {}
 
 func (x *DeleteDraftInvoiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[7]
+	mi := &file_services_grpc_invoice_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -500,7 +500,7 @@ func (x *DeleteDraftInvoiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteDraftInvoiceRequest.ProtoReflect.Descriptor instead.
 func (*DeleteDraftInvoiceRequest) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{7}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DeleteDraftInvoiceRequest) GetInvoiceId() string {
@@ -518,16 +518,19 @@ func (x *DeleteDraftInvoiceRequest) GetUserId() string {
 }
 
 type GetInvoiceRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	InvoiceId     string                 `protobuf:"bytes,1,opt,name=invoice_id,json=invoiceId,proto3" json:"invoice_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	InvoiceId string                 `protobuf:"bytes,1,opt,name=invoice_id,json=invoiceId,proto3" json:"invoice_id,omitempty"`
+	UserId    string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// client_id, when set, restricts the result to invoices belonging to that
+	// client (ownership check via quote). Used by the customer-facing view.
+	ClientId      string `protobuf:"bytes,3,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetInvoiceRequest) Reset() {
 	*x = GetInvoiceRequest{}
-	mi := &file_invoice_proto_msgTypes[8]
+	mi := &file_services_grpc_invoice_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -539,7 +542,7 @@ func (x *GetInvoiceRequest) String() string {
 func (*GetInvoiceRequest) ProtoMessage() {}
 
 func (x *GetInvoiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[8]
+	mi := &file_services_grpc_invoice_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -552,7 +555,7 @@ func (x *GetInvoiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetInvoiceRequest.ProtoReflect.Descriptor instead.
 func (*GetInvoiceRequest) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{8}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetInvoiceRequest) GetInvoiceId() string {
@@ -565,6 +568,13 @@ func (x *GetInvoiceRequest) GetInvoiceId() string {
 func (x *GetInvoiceRequest) GetUserId() string {
 	if x != nil {
 		return x.UserId
+	}
+	return ""
+}
+
+func (x *GetInvoiceRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
 	}
 	return ""
 }
@@ -607,7 +617,7 @@ type InvoiceParty struct {
 
 func (x *InvoiceParty) Reset() {
 	*x = InvoiceParty{}
-	mi := &file_invoice_proto_msgTypes[9]
+	mi := &file_services_grpc_invoice_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -619,7 +629,7 @@ func (x *InvoiceParty) String() string {
 func (*InvoiceParty) ProtoMessage() {}
 
 func (x *InvoiceParty) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[9]
+	mi := &file_services_grpc_invoice_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -632,7 +642,7 @@ func (x *InvoiceParty) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InvoiceParty.ProtoReflect.Descriptor instead.
 func (*InvoiceParty) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{9}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *InvoiceParty) GetCompany() string {
@@ -778,7 +788,7 @@ type InvoiceLine struct {
 
 func (x *InvoiceLine) Reset() {
 	*x = InvoiceLine{}
-	mi := &file_invoice_proto_msgTypes[10]
+	mi := &file_services_grpc_invoice_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -790,7 +800,7 @@ func (x *InvoiceLine) String() string {
 func (*InvoiceLine) ProtoMessage() {}
 
 func (x *InvoiceLine) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[10]
+	mi := &file_services_grpc_invoice_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -803,7 +813,7 @@ func (x *InvoiceLine) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InvoiceLine.ProtoReflect.Descriptor instead.
 func (*InvoiceLine) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{10}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *InvoiceLine) GetQuoteLineId() string {
@@ -880,7 +890,7 @@ type InvoiceVatLine struct {
 
 func (x *InvoiceVatLine) Reset() {
 	*x = InvoiceVatLine{}
-	mi := &file_invoice_proto_msgTypes[11]
+	mi := &file_services_grpc_invoice_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -892,7 +902,7 @@ func (x *InvoiceVatLine) String() string {
 func (*InvoiceVatLine) ProtoMessage() {}
 
 func (x *InvoiceVatLine) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[11]
+	mi := &file_services_grpc_invoice_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -905,7 +915,7 @@ func (x *InvoiceVatLine) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InvoiceVatLine.ProtoReflect.Descriptor instead.
 func (*InvoiceVatLine) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{11}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *InvoiceVatLine) GetTaxRate() string {
@@ -965,7 +975,7 @@ type InvoiceDetails struct {
 
 func (x *InvoiceDetails) Reset() {
 	*x = InvoiceDetails{}
-	mi := &file_invoice_proto_msgTypes[12]
+	mi := &file_services_grpc_invoice_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -977,7 +987,7 @@ func (x *InvoiceDetails) String() string {
 func (*InvoiceDetails) ProtoMessage() {}
 
 func (x *InvoiceDetails) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[12]
+	mi := &file_services_grpc_invoice_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -990,7 +1000,7 @@ func (x *InvoiceDetails) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InvoiceDetails.ProtoReflect.Descriptor instead.
 func (*InvoiceDetails) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{12}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *InvoiceDetails) GetInvoiceId() string {
@@ -1151,7 +1161,7 @@ type GetInvoiceResponse struct {
 
 func (x *GetInvoiceResponse) Reset() {
 	*x = GetInvoiceResponse{}
-	mi := &file_invoice_proto_msgTypes[13]
+	mi := &file_services_grpc_invoice_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1163,7 +1173,7 @@ func (x *GetInvoiceResponse) String() string {
 func (*GetInvoiceResponse) ProtoMessage() {}
 
 func (x *GetInvoiceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[13]
+	mi := &file_services_grpc_invoice_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1176,7 +1186,7 @@ func (x *GetInvoiceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetInvoiceResponse.ProtoReflect.Descriptor instead.
 func (*GetInvoiceResponse) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{13}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetInvoiceResponse) GetSuccess() bool {
@@ -1217,7 +1227,7 @@ type InvoiceFilters struct {
 
 func (x *InvoiceFilters) Reset() {
 	*x = InvoiceFilters{}
-	mi := &file_invoice_proto_msgTypes[14]
+	mi := &file_services_grpc_invoice_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1229,7 +1239,7 @@ func (x *InvoiceFilters) String() string {
 func (*InvoiceFilters) ProtoMessage() {}
 
 func (x *InvoiceFilters) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[14]
+	mi := &file_services_grpc_invoice_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1242,7 +1252,7 @@ func (x *InvoiceFilters) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InvoiceFilters.ProtoReflect.Descriptor instead.
 func (*InvoiceFilters) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{14}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *InvoiceFilters) GetStatuses() []string {
@@ -1323,7 +1333,7 @@ type ListInvoicesRequest struct {
 
 func (x *ListInvoicesRequest) Reset() {
 	*x = ListInvoicesRequest{}
-	mi := &file_invoice_proto_msgTypes[15]
+	mi := &file_services_grpc_invoice_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1335,7 +1345,7 @@ func (x *ListInvoicesRequest) String() string {
 func (*ListInvoicesRequest) ProtoMessage() {}
 
 func (x *ListInvoicesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[15]
+	mi := &file_services_grpc_invoice_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1348,7 +1358,7 @@ func (x *ListInvoicesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListInvoicesRequest.ProtoReflect.Descriptor instead.
 func (*ListInvoicesRequest) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{15}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ListInvoicesRequest) GetUserId() string {
@@ -1418,7 +1428,7 @@ type InvoiceSummary struct {
 
 func (x *InvoiceSummary) Reset() {
 	*x = InvoiceSummary{}
-	mi := &file_invoice_proto_msgTypes[16]
+	mi := &file_services_grpc_invoice_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1430,7 +1440,7 @@ func (x *InvoiceSummary) String() string {
 func (*InvoiceSummary) ProtoMessage() {}
 
 func (x *InvoiceSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[16]
+	mi := &file_services_grpc_invoice_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1443,7 +1453,7 @@ func (x *InvoiceSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InvoiceSummary.ProtoReflect.Descriptor instead.
 func (*InvoiceSummary) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{16}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *InvoiceSummary) GetInvoiceId() string {
@@ -1528,7 +1538,7 @@ type ListInvoicesResponse struct {
 
 func (x *ListInvoicesResponse) Reset() {
 	*x = ListInvoicesResponse{}
-	mi := &file_invoice_proto_msgTypes[17]
+	mi := &file_services_grpc_invoice_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1540,7 +1550,7 @@ func (x *ListInvoicesResponse) String() string {
 func (*ListInvoicesResponse) ProtoMessage() {}
 
 func (x *ListInvoicesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[17]
+	mi := &file_services_grpc_invoice_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1553,7 +1563,7 @@ func (x *ListInvoicesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListInvoicesResponse.ProtoReflect.Descriptor instead.
 func (*ListInvoicesResponse) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{17}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ListInvoicesResponse) GetSuccess() bool {
@@ -1596,7 +1606,7 @@ type CreateCreditNoteRequest struct {
 
 func (x *CreateCreditNoteRequest) Reset() {
 	*x = CreateCreditNoteRequest{}
-	mi := &file_invoice_proto_msgTypes[18]
+	mi := &file_services_grpc_invoice_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1608,7 +1618,7 @@ func (x *CreateCreditNoteRequest) String() string {
 func (*CreateCreditNoteRequest) ProtoMessage() {}
 
 func (x *CreateCreditNoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[18]
+	mi := &file_services_grpc_invoice_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1621,7 +1631,7 @@ func (x *CreateCreditNoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateCreditNoteRequest.ProtoReflect.Descriptor instead.
 func (*CreateCreditNoteRequest) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{18}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *CreateCreditNoteRequest) GetUserId() string {
@@ -1665,7 +1675,7 @@ type CreateCreditNoteResponse struct {
 
 func (x *CreateCreditNoteResponse) Reset() {
 	*x = CreateCreditNoteResponse{}
-	mi := &file_invoice_proto_msgTypes[19]
+	mi := &file_services_grpc_invoice_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1677,7 +1687,7 @@ func (x *CreateCreditNoteResponse) String() string {
 func (*CreateCreditNoteResponse) ProtoMessage() {}
 
 func (x *CreateCreditNoteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[19]
+	mi := &file_services_grpc_invoice_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1690,7 +1700,7 @@ func (x *CreateCreditNoteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateCreditNoteResponse.ProtoReflect.Descriptor instead.
 func (*CreateCreditNoteResponse) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{19}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *CreateCreditNoteResponse) GetSuccess() bool {
@@ -1738,7 +1748,7 @@ type GetCreditNoteRequest struct {
 
 func (x *GetCreditNoteRequest) Reset() {
 	*x = GetCreditNoteRequest{}
-	mi := &file_invoice_proto_msgTypes[20]
+	mi := &file_services_grpc_invoice_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1750,7 +1760,7 @@ func (x *GetCreditNoteRequest) String() string {
 func (*GetCreditNoteRequest) ProtoMessage() {}
 
 func (x *GetCreditNoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[20]
+	mi := &file_services_grpc_invoice_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1763,7 +1773,7 @@ func (x *GetCreditNoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCreditNoteRequest.ProtoReflect.Descriptor instead.
 func (*GetCreditNoteRequest) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{20}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *GetCreditNoteRequest) GetCreditNoteId() string {
@@ -1807,7 +1817,7 @@ type CreditNoteDetails struct {
 
 func (x *CreditNoteDetails) Reset() {
 	*x = CreditNoteDetails{}
-	mi := &file_invoice_proto_msgTypes[21]
+	mi := &file_services_grpc_invoice_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1819,7 +1829,7 @@ func (x *CreditNoteDetails) String() string {
 func (*CreditNoteDetails) ProtoMessage() {}
 
 func (x *CreditNoteDetails) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[21]
+	mi := &file_services_grpc_invoice_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1832,7 +1842,7 @@ func (x *CreditNoteDetails) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreditNoteDetails.ProtoReflect.Descriptor instead.
 func (*CreditNoteDetails) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{21}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *CreditNoteDetails) GetCreditNoteId() string {
@@ -1965,7 +1975,7 @@ type GetCreditNoteResponse struct {
 
 func (x *GetCreditNoteResponse) Reset() {
 	*x = GetCreditNoteResponse{}
-	mi := &file_invoice_proto_msgTypes[22]
+	mi := &file_services_grpc_invoice_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1977,7 +1987,7 @@ func (x *GetCreditNoteResponse) String() string {
 func (*GetCreditNoteResponse) ProtoMessage() {}
 
 func (x *GetCreditNoteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[22]
+	mi := &file_services_grpc_invoice_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1990,7 +2000,7 @@ func (x *GetCreditNoteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCreditNoteResponse.ProtoReflect.Descriptor instead.
 func (*GetCreditNoteResponse) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{22}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *GetCreditNoteResponse) GetSuccess() bool {
@@ -2025,7 +2035,7 @@ type CreditNoteFilters struct {
 
 func (x *CreditNoteFilters) Reset() {
 	*x = CreditNoteFilters{}
-	mi := &file_invoice_proto_msgTypes[23]
+	mi := &file_services_grpc_invoice_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2037,7 +2047,7 @@ func (x *CreditNoteFilters) String() string {
 func (*CreditNoteFilters) ProtoMessage() {}
 
 func (x *CreditNoteFilters) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[23]
+	mi := &file_services_grpc_invoice_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2050,7 +2060,7 @@ func (x *CreditNoteFilters) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreditNoteFilters.ProtoReflect.Descriptor instead.
 func (*CreditNoteFilters) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{23}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *CreditNoteFilters) GetIsTotal() string {
@@ -2089,7 +2099,7 @@ type ListCreditNotesRequest struct {
 
 func (x *ListCreditNotesRequest) Reset() {
 	*x = ListCreditNotesRequest{}
-	mi := &file_invoice_proto_msgTypes[24]
+	mi := &file_services_grpc_invoice_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2101,7 +2111,7 @@ func (x *ListCreditNotesRequest) String() string {
 func (*ListCreditNotesRequest) ProtoMessage() {}
 
 func (x *ListCreditNotesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[24]
+	mi := &file_services_grpc_invoice_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2114,7 +2124,7 @@ func (x *ListCreditNotesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCreditNotesRequest.ProtoReflect.Descriptor instead.
 func (*ListCreditNotesRequest) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{24}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ListCreditNotesRequest) GetUserId() string {
@@ -2181,7 +2191,7 @@ type CreditNoteSummary struct {
 
 func (x *CreditNoteSummary) Reset() {
 	*x = CreditNoteSummary{}
-	mi := &file_invoice_proto_msgTypes[25]
+	mi := &file_services_grpc_invoice_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2193,7 +2203,7 @@ func (x *CreditNoteSummary) String() string {
 func (*CreditNoteSummary) ProtoMessage() {}
 
 func (x *CreditNoteSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[25]
+	mi := &file_services_grpc_invoice_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2206,7 +2216,7 @@ func (x *CreditNoteSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreditNoteSummary.ProtoReflect.Descriptor instead.
 func (*CreditNoteSummary) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{25}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *CreditNoteSummary) GetCreditNoteId() string {
@@ -2270,7 +2280,7 @@ type ListCreditNotesResponse struct {
 
 func (x *ListCreditNotesResponse) Reset() {
 	*x = ListCreditNotesResponse{}
-	mi := &file_invoice_proto_msgTypes[26]
+	mi := &file_services_grpc_invoice_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2282,7 +2292,7 @@ func (x *ListCreditNotesResponse) String() string {
 func (*ListCreditNotesResponse) ProtoMessage() {}
 
 func (x *ListCreditNotesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[26]
+	mi := &file_services_grpc_invoice_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2295,7 +2305,7 @@ func (x *ListCreditNotesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCreditNotesResponse.ProtoReflect.Descriptor instead.
 func (*ListCreditNotesResponse) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{26}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ListCreditNotesResponse) GetSuccess() bool {
@@ -2335,7 +2345,7 @@ type VerifyChainRequest struct {
 
 func (x *VerifyChainRequest) Reset() {
 	*x = VerifyChainRequest{}
-	mi := &file_invoice_proto_msgTypes[27]
+	mi := &file_services_grpc_invoice_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2347,7 +2357,7 @@ func (x *VerifyChainRequest) String() string {
 func (*VerifyChainRequest) ProtoMessage() {}
 
 func (x *VerifyChainRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[27]
+	mi := &file_services_grpc_invoice_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2360,7 +2370,7 @@ func (x *VerifyChainRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyChainRequest.ProtoReflect.Descriptor instead.
 func (*VerifyChainRequest) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{27}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *VerifyChainRequest) GetUserId() string {
@@ -2386,7 +2396,7 @@ type VerifyChainResponse struct {
 
 func (x *VerifyChainResponse) Reset() {
 	*x = VerifyChainResponse{}
-	mi := &file_invoice_proto_msgTypes[28]
+	mi := &file_services_grpc_invoice_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2398,7 +2408,7 @@ func (x *VerifyChainResponse) String() string {
 func (*VerifyChainResponse) ProtoMessage() {}
 
 func (x *VerifyChainResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[28]
+	mi := &file_services_grpc_invoice_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2411,7 +2421,7 @@ func (x *VerifyChainResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyChainResponse.ProtoReflect.Descriptor instead.
 func (*VerifyChainResponse) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{28}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *VerifyChainResponse) GetSuccess() bool {
@@ -2479,7 +2489,7 @@ type GetOSSThresholdStatusRequest struct {
 
 func (x *GetOSSThresholdStatusRequest) Reset() {
 	*x = GetOSSThresholdStatusRequest{}
-	mi := &file_invoice_proto_msgTypes[29]
+	mi := &file_services_grpc_invoice_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2491,7 +2501,7 @@ func (x *GetOSSThresholdStatusRequest) String() string {
 func (*GetOSSThresholdStatusRequest) ProtoMessage() {}
 
 func (x *GetOSSThresholdStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[29]
+	mi := &file_services_grpc_invoice_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2504,7 +2514,7 @@ func (x *GetOSSThresholdStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOSSThresholdStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetOSSThresholdStatusRequest) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{29}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *GetOSSThresholdStatusRequest) GetUserId() string {
@@ -2533,7 +2543,7 @@ type GetOSSThresholdStatusResponse struct {
 
 func (x *GetOSSThresholdStatusResponse) Reset() {
 	*x = GetOSSThresholdStatusResponse{}
-	mi := &file_invoice_proto_msgTypes[30]
+	mi := &file_services_grpc_invoice_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2545,7 +2555,7 @@ func (x *GetOSSThresholdStatusResponse) String() string {
 func (*GetOSSThresholdStatusResponse) ProtoMessage() {}
 
 func (x *GetOSSThresholdStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[30]
+	mi := &file_services_grpc_invoice_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2558,7 +2568,7 @@ func (x *GetOSSThresholdStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOSSThresholdStatusResponse.ProtoReflect.Descriptor instead.
 func (*GetOSSThresholdStatusResponse) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{30}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *GetOSSThresholdStatusResponse) GetSuccess() bool {
@@ -2636,7 +2646,7 @@ type SetInvoiceLifecycleStatusRequest struct {
 
 func (x *SetInvoiceLifecycleStatusRequest) Reset() {
 	*x = SetInvoiceLifecycleStatusRequest{}
-	mi := &file_invoice_proto_msgTypes[31]
+	mi := &file_services_grpc_invoice_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2648,7 +2658,7 @@ func (x *SetInvoiceLifecycleStatusRequest) String() string {
 func (*SetInvoiceLifecycleStatusRequest) ProtoMessage() {}
 
 func (x *SetInvoiceLifecycleStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[31]
+	mi := &file_services_grpc_invoice_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2661,7 +2671,7 @@ func (x *SetInvoiceLifecycleStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetInvoiceLifecycleStatusRequest.ProtoReflect.Descriptor instead.
 func (*SetInvoiceLifecycleStatusRequest) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{31}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *SetInvoiceLifecycleStatusRequest) GetInvoiceId() string {
@@ -2703,7 +2713,7 @@ type InvoiceLifecycleEvent struct {
 
 func (x *InvoiceLifecycleEvent) Reset() {
 	*x = InvoiceLifecycleEvent{}
-	mi := &file_invoice_proto_msgTypes[32]
+	mi := &file_services_grpc_invoice_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2715,7 +2725,7 @@ func (x *InvoiceLifecycleEvent) String() string {
 func (*InvoiceLifecycleEvent) ProtoMessage() {}
 
 func (x *InvoiceLifecycleEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[32]
+	mi := &file_services_grpc_invoice_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2728,7 +2738,7 @@ func (x *InvoiceLifecycleEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InvoiceLifecycleEvent.ProtoReflect.Descriptor instead.
 func (*InvoiceLifecycleEvent) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{32}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *InvoiceLifecycleEvent) GetStatus() string {
@@ -2762,7 +2772,7 @@ type ListInvoiceLifecycleEventsRequest struct {
 
 func (x *ListInvoiceLifecycleEventsRequest) Reset() {
 	*x = ListInvoiceLifecycleEventsRequest{}
-	mi := &file_invoice_proto_msgTypes[33]
+	mi := &file_services_grpc_invoice_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2774,7 +2784,7 @@ func (x *ListInvoiceLifecycleEventsRequest) String() string {
 func (*ListInvoiceLifecycleEventsRequest) ProtoMessage() {}
 
 func (x *ListInvoiceLifecycleEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[33]
+	mi := &file_services_grpc_invoice_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2787,7 +2797,7 @@ func (x *ListInvoiceLifecycleEventsRequest) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use ListInvoiceLifecycleEventsRequest.ProtoReflect.Descriptor instead.
 func (*ListInvoiceLifecycleEventsRequest) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{33}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *ListInvoiceLifecycleEventsRequest) GetInvoiceId() string {
@@ -2815,7 +2825,7 @@ type DepositInvoiceRequest struct {
 
 func (x *DepositInvoiceRequest) Reset() {
 	*x = DepositInvoiceRequest{}
-	mi := &file_invoice_proto_msgTypes[34]
+	mi := &file_services_grpc_invoice_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2827,7 +2837,7 @@ func (x *DepositInvoiceRequest) String() string {
 func (*DepositInvoiceRequest) ProtoMessage() {}
 
 func (x *DepositInvoiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[34]
+	mi := &file_services_grpc_invoice_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2840,7 +2850,7 @@ func (x *DepositInvoiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DepositInvoiceRequest.ProtoReflect.Descriptor instead.
 func (*DepositInvoiceRequest) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{34}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *DepositInvoiceRequest) GetInvoiceId() string {
@@ -2875,7 +2885,7 @@ type ListInvoiceLifecycleEventsResponse struct {
 
 func (x *ListInvoiceLifecycleEventsResponse) Reset() {
 	*x = ListInvoiceLifecycleEventsResponse{}
-	mi := &file_invoice_proto_msgTypes[35]
+	mi := &file_services_grpc_invoice_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2887,7 +2897,7 @@ func (x *ListInvoiceLifecycleEventsResponse) String() string {
 func (*ListInvoiceLifecycleEventsResponse) ProtoMessage() {}
 
 func (x *ListInvoiceLifecycleEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[35]
+	mi := &file_services_grpc_invoice_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2900,7 +2910,7 @@ func (x *ListInvoiceLifecycleEventsResponse) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use ListInvoiceLifecycleEventsResponse.ProtoReflect.Descriptor instead.
 func (*ListInvoiceLifecycleEventsResponse) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{35}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ListInvoiceLifecycleEventsResponse) GetSuccess() bool {
@@ -2936,7 +2946,7 @@ type SubmitInvoiceReportRequest struct {
 
 func (x *SubmitInvoiceReportRequest) Reset() {
 	*x = SubmitInvoiceReportRequest{}
-	mi := &file_invoice_proto_msgTypes[36]
+	mi := &file_services_grpc_invoice_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2948,7 +2958,7 @@ func (x *SubmitInvoiceReportRequest) String() string {
 func (*SubmitInvoiceReportRequest) ProtoMessage() {}
 
 func (x *SubmitInvoiceReportRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[36]
+	mi := &file_services_grpc_invoice_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2961,7 +2971,7 @@ func (x *SubmitInvoiceReportRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitInvoiceReportRequest.ProtoReflect.Descriptor instead.
 func (*SubmitInvoiceReportRequest) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{36}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *SubmitInvoiceReportRequest) GetUserId() string {
@@ -3002,7 +3012,7 @@ type ListInvoiceReportsRequest struct {
 
 func (x *ListInvoiceReportsRequest) Reset() {
 	*x = ListInvoiceReportsRequest{}
-	mi := &file_invoice_proto_msgTypes[37]
+	mi := &file_services_grpc_invoice_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3014,7 +3024,7 @@ func (x *ListInvoiceReportsRequest) String() string {
 func (*ListInvoiceReportsRequest) ProtoMessage() {}
 
 func (x *ListInvoiceReportsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[37]
+	mi := &file_services_grpc_invoice_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3027,7 +3037,7 @@ func (x *ListInvoiceReportsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListInvoiceReportsRequest.ProtoReflect.Descriptor instead.
 func (*ListInvoiceReportsRequest) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{37}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ListInvoiceReportsRequest) GetUserId() string {
@@ -3059,7 +3069,7 @@ type InvoiceReportSummary struct {
 
 func (x *InvoiceReportSummary) Reset() {
 	*x = InvoiceReportSummary{}
-	mi := &file_invoice_proto_msgTypes[38]
+	mi := &file_services_grpc_invoice_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3071,7 +3081,7 @@ func (x *InvoiceReportSummary) String() string {
 func (*InvoiceReportSummary) ProtoMessage() {}
 
 func (x *InvoiceReportSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[38]
+	mi := &file_services_grpc_invoice_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3084,7 +3094,7 @@ func (x *InvoiceReportSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InvoiceReportSummary.ProtoReflect.Descriptor instead.
 func (*InvoiceReportSummary) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{38}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *InvoiceReportSummary) GetKind() string {
@@ -3147,7 +3157,7 @@ type ListInvoiceReportsResponse struct {
 
 func (x *ListInvoiceReportsResponse) Reset() {
 	*x = ListInvoiceReportsResponse{}
-	mi := &file_invoice_proto_msgTypes[39]
+	mi := &file_services_grpc_invoice_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3159,7 +3169,7 @@ func (x *ListInvoiceReportsResponse) String() string {
 func (*ListInvoiceReportsResponse) ProtoMessage() {}
 
 func (x *ListInvoiceReportsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_invoice_proto_msgTypes[39]
+	mi := &file_services_grpc_invoice_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3172,7 +3182,7 @@ func (x *ListInvoiceReportsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListInvoiceReportsResponse.ProtoReflect.Descriptor instead.
 func (*ListInvoiceReportsResponse) Descriptor() ([]byte, []int) {
-	return file_invoice_proto_rawDescGZIP(), []int{39}
+	return file_services_grpc_invoice_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *ListInvoiceReportsResponse) GetSuccess() bool {
@@ -3196,11 +3206,11 @@ func (x *ListInvoiceReportsResponse) GetReports() []*InvoiceReportSummary {
 	return nil
 }
 
-var File_invoice_proto protoreflect.FileDescriptor
+var File_services_grpc_invoice_proto protoreflect.FileDescriptor
 
-const file_invoice_proto_rawDesc = "" +
+const file_services_grpc_invoice_proto_rawDesc = "" +
 	"\n" +
-	"\rinvoice.proto\x12\ainvoice\"?\n" +
+	"\x1bservices/grpc/invoice.proto\x12\ainvoice\"?\n" +
 	"\x0fGenericResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\"A\n" +
@@ -3239,11 +3249,12 @@ const file_invoice_proto_rawDesc = "" +
 	"\x19DeleteDraftInvoiceRequest\x12\x1d\n" +
 	"\n" +
 	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"K\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"h\n" +
 	"\x11GetInvoiceRequest\x12\x1d\n" +
 	"\n" +
 	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xf3\x03\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1b\n" +
+	"\tclient_id\x18\x03 \x01(\tR\bclientId\"\xf3\x03\n" +
 	"\fInvoiceParty\x12\x18\n" +
 	"\acompany\x18\x01 \x01(\tR\acompany\x12\x1d\n" +
 	"\n" +
@@ -3509,19 +3520,19 @@ const file_invoice_proto_rawDesc = "" +
 	"\x12ListInvoiceReports\x12\".invoice.ListInvoiceReportsRequest\x1a#.invoice.ListInvoiceReportsResponseB\x11Z\x0fgateway/invoiceb\x06proto3"
 
 var (
-	file_invoice_proto_rawDescOnce sync.Once
-	file_invoice_proto_rawDescData []byte
+	file_services_grpc_invoice_proto_rawDescOnce sync.Once
+	file_services_grpc_invoice_proto_rawDescData []byte
 )
 
-func file_invoice_proto_rawDescGZIP() []byte {
-	file_invoice_proto_rawDescOnce.Do(func() {
-		file_invoice_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_invoice_proto_rawDesc), len(file_invoice_proto_rawDesc)))
+func file_services_grpc_invoice_proto_rawDescGZIP() []byte {
+	file_services_grpc_invoice_proto_rawDescOnce.Do(func() {
+		file_services_grpc_invoice_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_services_grpc_invoice_proto_rawDesc), len(file_services_grpc_invoice_proto_rawDesc)))
 	})
-	return file_invoice_proto_rawDescData
+	return file_services_grpc_invoice_proto_rawDescData
 }
 
-var file_invoice_proto_msgTypes = make([]protoimpl.MessageInfo, 40)
-var file_invoice_proto_goTypes = []any{
+var file_services_grpc_invoice_proto_msgTypes = make([]protoimpl.MessageInfo, 40)
+var file_services_grpc_invoice_proto_goTypes = []any{
 	(*GenericResponse)(nil),                    // 0: invoice.GenericResponse
 	(*ValidationError)(nil),                    // 1: invoice.ValidationError
 	(*CreateInvoiceFromScheduleRequest)(nil),   // 2: invoice.CreateInvoiceFromScheduleRequest
@@ -3563,7 +3574,7 @@ var file_invoice_proto_goTypes = []any{
 	(*InvoiceReportSummary)(nil),               // 38: invoice.InvoiceReportSummary
 	(*ListInvoiceReportsResponse)(nil),         // 39: invoice.ListInvoiceReportsResponse
 }
-var file_invoice_proto_depIdxs = []int32{
+var file_services_grpc_invoice_proto_depIdxs = []int32{
 	1,  // 0: invoice.CreateInvoiceResponse.validation_errors:type_name -> invoice.ValidationError
 	9,  // 1: invoice.InvoiceDetails.issuer:type_name -> invoice.InvoiceParty
 	9,  // 2: invoice.InvoiceDetails.client:type_name -> invoice.InvoiceParty
@@ -3623,26 +3634,26 @@ var file_invoice_proto_depIdxs = []int32{
 	0,  // [0:18] is the sub-list for field type_name
 }
 
-func init() { file_invoice_proto_init() }
-func file_invoice_proto_init() {
-	if File_invoice_proto != nil {
+func init() { file_services_grpc_invoice_proto_init() }
+func file_services_grpc_invoice_proto_init() {
+	if File_services_grpc_invoice_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_invoice_proto_rawDesc), len(file_invoice_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_services_grpc_invoice_proto_rawDesc), len(file_services_grpc_invoice_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   40,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_invoice_proto_goTypes,
-		DependencyIndexes: file_invoice_proto_depIdxs,
-		MessageInfos:      file_invoice_proto_msgTypes,
+		GoTypes:           file_services_grpc_invoice_proto_goTypes,
+		DependencyIndexes: file_services_grpc_invoice_proto_depIdxs,
+		MessageInfos:      file_services_grpc_invoice_proto_msgTypes,
 	}.Build()
-	File_invoice_proto = out.File
-	file_invoice_proto_goTypes = nil
-	file_invoice_proto_depIdxs = nil
+	File_services_grpc_invoice_proto = out.File
+	file_services_grpc_invoice_proto_goTypes = nil
+	file_services_grpc_invoice_proto_depIdxs = nil
 }

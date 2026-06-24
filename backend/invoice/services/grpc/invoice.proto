@@ -103,6 +103,9 @@ message DeleteDraftInvoiceRequest {
 message GetInvoiceRequest {
     string invoice_id = 1;
     string user_id    = 2;
+    // client_id, when set, restricts the result to invoices belonging to that
+    // client (ownership check via quote). Used by the customer-facing view.
+    string client_id  = 3;
 }
 
 message InvoiceParty {

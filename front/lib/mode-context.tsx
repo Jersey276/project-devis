@@ -6,14 +6,6 @@ export type UserMode = "provider" | "customer";
 
 const MODE_COOKIE = "user-mode";
 
-function readModeCookie(): UserMode {
-  if (typeof document === "undefined") return "provider";
-  const match = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${MODE_COOKIE}=`));
-  const value = match?.split("=")[1];
-  return value === "customer" ? "customer" : "provider";
-}
 
 function writeModeCookie(mode: UserMode) {
   document.cookie = `${MODE_COOKIE}=${mode}; path=/; max-age=31536000; SameSite=Lax`;
@@ -28,8 +20,14 @@ type ModeContextValue = {
 
 const ModeContext = createContext<ModeContextValue | null>(null);
 
-export function ModeProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setModeState] = useState<UserMode>(readModeCookie);
+export function ModeProvider({
+  initialMode,
+  children,
+}: {
+  initialMode?: UserMode;
+  children: React.ReactNode;
+}) {
+  const [mode, setModeState] = useState<UserMode>(initialMode ?? "provider");
 
   const setMode = useCallback((next: UserMode) => {
     setModeState((current) => {

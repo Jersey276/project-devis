@@ -31,11 +31,13 @@ import { FilterSidebar, FilterSidebarSection } from "@/components/ui/filter-side
 import { SelectCombobox } from "@/components/ui/select-combobox";
 import ProjectStatusBadge from "@/components/project/project-status-badge";
 import EditProjectDialog, { type EditableProject } from "@/components/project/edit-project-dialog";
+import CreateProjectDialog from "@/components/project/create-project-dialog";
 import { listProjects, deleteProject } from "@/lib/services/projects";
-import { listClients } from "@/lib/services/clients";
+import { listClients, getMyClientProfiles } from "@/lib/services/clients";
 import { clientName, PROJECT_STATUS_ITEMS } from "@/lib/project-utils";
 import { toast } from "sonner";
 import type { BackendClient, BackendProject, ProjectStatus } from "@/types/backend";
+import { useMode } from "@/lib/mode-context";
 
 const PAGE_SIZE = 20;
 
@@ -63,6 +65,7 @@ function toRows(projects: BackendProject[]): ProjectRow[] {
 function ProjectListTableInner() {
   const t = useTranslations("project");
   const tCommon = useTranslations("common.filterSidebar");
+  const { isCustomer } = useMode();
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -82,6 +85,16 @@ function ProjectListTableInner() {
   const [editProject, setEditProject] = useState<EditableProject | null>(null);
   const [busy, setBusy] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [myClientId, setMyClientId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isCustomer) return;
+    getMyClientProfiles().then(({ ok, body }) => {
+      if (ok && Array.isArray(body.clients) && body.clients.length > 0) {
+        setMyClientId((body.clients[0] as { client_id: string }).client_id);
+      }
+    });
+  }, [isCustomer]);
 
   function pushParams(p: {
     page?: number;
@@ -101,10 +114,11 @@ function ProjectListTableInner() {
 
   // Load clients once for name resolution
   useEffect(() => {
+    if (isCustomer) return;
     listClients().then(({ ok, body }) => {
       if (ok && Array.isArray(body.clients)) setClients(body.clients as BackendClient[]);
     });
-  }, []);
+  }, [isCustomer]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -116,6 +130,7 @@ function ProjectListTableInner() {
     });
     if (search) params.set("search", search);
     if (status) params.set("status", status);
+    if (isCustomer && myClientId) params.set("client_id", myClientId);
 
     listProjects(params.toString(), controller.signal).then(({ ok, body }) => {
       if (!ok) { setError(body?.message ?? "Erreur de chargement."); return; }
@@ -125,7 +140,7 @@ function ProjectListTableInner() {
     }).catch(() => {});
 
     return () => controller.abort();
-  }, [page, search, status, sortBy, sortDirection, refreshKey]);
+  }, [page, search, status, sortBy, sortDirection, refreshKey, isCustomer, myClientId]);
 
   const activeFilterCount = useMemo(() => [search, status].filter(Boolean).length, [search, status]);
 
@@ -142,20 +157,24 @@ function ProjectListTableInner() {
 
   const rowActions = useMemo<DataTableRowAction[]>(() => [
     { type: "link", label: "Voir", href: "/projects/{id}" },
-    {
-      type: "callback",
-      label: "Modifier",
-      callback: (row) => {
-        const p = row as ProjectRow;
-        setEditProject({ project_id: p.id, name: p.name, client_id: p.clientId, status: p.status });
-      },
-    },
-    {
-      type: "callback",
-      label: "Supprimer",
-      callback: (row) => setPendingDeleteId((row as ProjectRow).id),
-    },
-  ], []);
+    ...(!isCustomer
+      ? [
+          {
+            type: "callback" as const,
+            label: "Modifier",
+            callback: (row: object) => {
+              const p = row as ProjectRow;
+              setEditProject({ project_id: p.id, name: p.name, client_id: p.clientId, status: p.status });
+            },
+          },
+          {
+            type: "callback" as const,
+            label: "Supprimer",
+            callback: (row: object) => setPendingDeleteId((row as ProjectRow).id),
+          },
+        ]
+      : []),
+  ], [isCustomer]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -181,6 +200,11 @@ function ProjectListTableInner() {
 
   return (
     <>
+      {!isCustomer && (
+        <div className="mb-4 flex justify-end">
+          <CreateProjectDialog onCreated={() => setRefreshKey((k) => k + 1)} />
+        </div>
+      )}
       {error && <p className="text-sm text-destructive mb-2">{error}</p>}
       <DataTable
         datas={items as object[]}
@@ -237,24 +261,26 @@ function ProjectListTableInner() {
         !error && <p className="text-sm text-muted-foreground mt-4">{t("list.empty")}</p>
       )}
 
-      <AlertDialog open={!!pendingDeleteId} onOpenChange={(v) => { if (!v) setPendingDeleteId(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer le projet ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action est irréversible.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={busy}>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={busy}>
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {!isCustomer && (
+        <AlertDialog open={!!pendingDeleteId} onOpenChange={(v) => { if (!v) setPendingDeleteId(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer le projet ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Cette action est irréversible.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={busy}>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} disabled={busy}>
+                Supprimer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
-      {editProject && (
+      {!isCustomer && editProject && (
         <EditProjectDialog
           project={editProject}
           open={!!editProject}

@@ -1,9 +1,8 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import PageBreadcrumb from "@/components/custom/page-breadcrumb";
-import { Card, CardContent, CardHeader, CardTitle, CardAction } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProjectListTable from "@/components/project/project-list-table";
-import CreateProjectDialog from "@/components/project/create-project-dialog";
 
 export default async function ProjectsIndexPage() {
   const t = await getTranslations("project");
@@ -15,9 +14,6 @@ export default async function ProjectsIndexPage() {
       <Card>
         <CardHeader>
           <CardTitle>{t("list.title")}</CardTitle>
-          <CardAction>
-            <CreateProjectDialog />
-          </CardAction>
         </CardHeader>
         <CardContent>
           <Suspense>

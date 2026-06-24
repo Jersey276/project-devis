@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	invoice "gateway/invoice"
+	users "gateway/users"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -71,7 +72,7 @@ var invoiceErrors = &serviceErrors{
 }
 
 // InvoicesRoutes wires the /invoices API group against the invoice gRPC service.
-func InvoicesRoutes(r *gin.RouterGroup) {
+func InvoicesRoutes(r *gin.RouterGroup, usersClient users.UserServiceClient) {
 	address := os.Getenv("INVOICE_SERVICE_ADDRESS")
 	if address == "" {
 		address = "localhost:50059"
@@ -82,27 +83,43 @@ func InvoicesRoutes(r *gin.RouterGroup) {
 	}
 	client := invoice.NewInvoiceServiceClient(conn)
 
-	r.GET("", func(c *gin.Context) { ListInvoices(c, client) })
-	r.GET("/verify-chain", func(c *gin.Context) { VerifyChain(c, client) })
-	r.GET("/oss-status", func(c *gin.Context) { GetOSSThresholdStatus(c, client) })
+	customerOnly := DenyCustomer()
+
+	r.GET("", func(c *gin.Context) { ListInvoices(c, client, usersClient) })
+	r.GET("/verify-chain", customerOnly, func(c *gin.Context) { VerifyChain(c, client) })
+	r.GET("/oss-status", customerOnly, func(c *gin.Context) { GetOSSThresholdStatus(c, client) })
 	// E-reporting (B5/C5): period aggregates, not tied to one invoice.
-	r.GET("/reports", func(c *gin.Context) { ListInvoiceReports(c, client) })
-	r.POST("/reports", func(c *gin.Context) { SubmitInvoiceReport(c, client) })
-	r.POST("/from-schedule", func(c *gin.Context) { CreateInvoiceFromSchedule(c, client) })
-	r.POST("/from-quote", func(c *gin.Context) { CreateInvoiceFromQuote(c, client) })
+	r.GET("/reports", customerOnly, func(c *gin.Context) { ListInvoiceReports(c, client) })
+	r.POST("/reports", customerOnly, func(c *gin.Context) { SubmitInvoiceReport(c, client) })
+	r.POST("/from-schedule", customerOnly, func(c *gin.Context) { CreateInvoiceFromSchedule(c, client) })
+	r.POST("/from-quote", customerOnly, func(c *gin.Context) { CreateInvoiceFromQuote(c, client) })
 
 	one := r.Group("/:id")
-	one.GET("", func(c *gin.Context) { GetInvoice(c, client) })
-	one.DELETE("", func(c *gin.Context) { DeleteDraftInvoice(c, client) })
-	one.POST("/issue", func(c *gin.Context) { IssueInvoice(c, client) })
-	one.POST("/paid", func(c *gin.Context) { MarkInvoicePaid(c, client) })
-	one.POST("/credit-notes", func(c *gin.Context) { CreateCreditNote(c, client) })
-	one.POST("/lifecycle", func(c *gin.Context) { SetInvoiceLifecycleStatus(c, client) })
-	one.GET("/lifecycle-events", func(c *gin.Context) { ListInvoiceLifecycleEvents(c, client) })
-	one.POST("/deposit", func(c *gin.Context) { DepositInvoice(c, client) })
+	one.GET("", func(c *gin.Context) { GetInvoice(c, client, usersClient) })
+	one.DELETE("", customerOnly, func(c *gin.Context) { DeleteDraftInvoice(c, client) })
+	one.POST("/issue", customerOnly, func(c *gin.Context) { IssueInvoice(c, client) })
+	one.POST("/paid", customerOnly, func(c *gin.Context) { MarkInvoicePaid(c, client) })
+	one.POST("/credit-notes", customerOnly, func(c *gin.Context) { CreateCreditNote(c, client) })
+	one.POST("/lifecycle", customerOnly, func(c *gin.Context) { SetInvoiceLifecycleStatus(c, client) })
+	one.GET("/lifecycle-events", customerOnly, func(c *gin.Context) { ListInvoiceLifecycleEvents(c, client) })
+	one.POST("/deposit", customerOnly, func(c *gin.Context) { DepositInvoice(c, client) })
 }
 
-func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient) {
+// DenyCustomer returns a middleware that rejects requests made in customer mode.
+func DenyCustomer() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.GetHeader("X-Client-Mode") == "customer" {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "Action non autorisée en mode client.",
+			})
+			return
+		}
+		c.Next()
+	}
+}
+
+func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient, usersClient users.UserServiceClient) {
 	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 32)
 	pageSize, _ := strconv.ParseInt(c.DefaultQuery("page_size", "20"), 10, 32)
 
@@ -114,8 +131,21 @@ func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient) {
 		lifecycleStatuses = strings.Split(raw, ",")
 	}
 
+	// In customer mode, resolve the linked provider and force client_id so the
+	// frontend cannot list another client's invoices by manipulating query params.
+	userID := userIDFromCtx(c)
+	clientID := c.Query("client_id")
+	if c.GetHeader("X-Client-Mode") == "customer" {
+		linked := resolveMyClient(c, usersClient)
+		if linked == nil {
+			return
+		}
+		userID = linked.UserId
+		clientID = linked.ClientId
+	}
+
 	resp, err := client.ListInvoices(c.Request.Context(), &invoice.ListInvoicesRequest{
-		UserId:        userIDFromCtx(c),
+		UserId:        userID,
 		QuoteId:       c.Query("quote_id"),
 		Page:          int32(page),
 		PageSize:      int32(pageSize),
@@ -128,7 +158,7 @@ func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient) {
 			IssuedTo:          c.Query("issued_to"),
 			DueFrom:           c.Query("due_from"),
 			DueTo:             c.Query("due_to"),
-			ClientId:          c.Query("client_id"),
+			ClientId:          clientID,
 			QuoteIdFilter:     c.Query("quote_id_filter"),
 		},
 	})
@@ -209,10 +239,24 @@ func IssueInvoice(c *gin.Context, client invoice.InvoiceServiceClient) {
 	replyCreate(c, resp, err)
 }
 
-func GetInvoice(c *gin.Context, client invoice.InvoiceServiceClient) {
+func GetInvoice(c *gin.Context, client invoice.InvoiceServiceClient, usersClient users.UserServiceClient) {
+	// In customer mode, resolve the linked provider and pass client_id so the
+	// service can verify the invoice belongs to that client.
+	userID := userIDFromCtx(c)
+	clientID := ""
+	if c.GetHeader("X-Client-Mode") == "customer" {
+		linked := resolveMyClient(c, usersClient)
+		if linked == nil {
+			return
+		}
+		userID = linked.UserId
+		clientID = linked.ClientId
+	}
+
 	resp, err := client.GetInvoice(c.Request.Context(), &invoice.GetInvoiceRequest{
 		InvoiceId: c.Param("id"),
-		UserId:    userIDFromCtx(c),
+		UserId:    userID,
+		ClientId:  clientID,
 	})
 	if err != nil {
 		invoiceErrors.unavailable(c)

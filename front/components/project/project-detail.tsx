@@ -14,9 +14,11 @@ import { getProjectDetail } from "@/lib/services/projects";
 import { listClients } from "@/lib/services/clients";
 import { clientName } from "@/lib/project-utils";
 import type { BackendClient, BackendProjectDetail } from "@/types/backend";
+import { useMode } from "@/lib/mode-context";
 
 export default function ProjectDetail({ projectId }: { projectId: string }) {
   const t = useTranslations("project");
+  const { isCustomer } = useMode();
 
   const [detail, setDetail] = useState<BackendProjectDetail | null>(null);
   const [clients, setClients] = useState<BackendClient[]>([]);
@@ -77,10 +79,12 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
               <ProjectStatusBadge status={project.status} />
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <PencilIcon className="size-3.5" />
-            Modifier
-          </Button>
+          {!isCustomer && (
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+              <PencilIcon className="size-3.5" />
+              Modifier
+            </Button>
+          )}
         </CardHeader>
       </Card>
 
@@ -112,7 +116,7 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
         </CardContent>
       </Card>
 
-      {editOpen && (
+      {!isCustomer && editOpen && (
         <EditProjectDialog
           project={project}
           open={editOpen}
