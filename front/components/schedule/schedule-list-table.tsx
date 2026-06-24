@@ -36,6 +36,7 @@ const SCHEDULE_STATUS_ITEMS = [
 type ScheduleRow = {
   id: string;
   quoteId: string;
+  quoteName: string;
   name: string;
   status: string;
   startMonth: string;
@@ -46,6 +47,7 @@ function toRows(schedules: BackendScheduleSummary[]): ScheduleRow[] {
   return schedules.map((s) => ({
     id: s.schedule_id,
     quoteId: s.quote_id,
+    quoteName: s.quote_name || s.quote_id,
     name: s.name,
     status: s.status,
     startMonth: s.start_month,
@@ -188,7 +190,7 @@ function ScheduleListTableInner() {
             <DataTableRow key={item.id}>
               <DataTableCell>{item.id}</DataTableCell>
               <DataTableCell>{item.name}</DataTableCell>
-              <DataTableCell>{item.quoteId}</DataTableCell>
+              <DataTableCell>{item.quoteName}</DataTableCell>
               <DataTableCell>
                 {isCustomer ? (
                   <span>{item.status}</span>

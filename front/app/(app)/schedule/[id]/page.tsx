@@ -116,6 +116,7 @@ function buildCellDrafts(
 
   // Backward-compatible fallback while details payload does not provide cell-level data.
   for (const line of schedule.lines) {
+    if (line.data_kind === "group") continue;
     drafts[draftKey(line.quote_line_id, 1)] = centsToEuros(line.planned_cents);
   }
   return drafts;
@@ -259,9 +260,12 @@ export default function ScheduleDetailsPage() {
   const breadcrumbs = useMemo(
     () => [
       { href: "/schedule", label: "Échéanciers" },
-      { href: `/schedule/${scheduleId}`, label: scheduleId || "Détail" },
+      {
+        href: `/schedule/${scheduleId}`,
+        label: schedule?.name || scheduleId || "Détail",
+      },
     ],
-    [scheduleId],
+    [scheduleId, schedule?.name],
   );
 
   const monthHeaders = useMemo(
@@ -289,6 +293,26 @@ export default function ScheduleDetailsPage() {
       ]),
     );
   }, [schedule]);
+
+  const sortedLines = useMemo(
+    () =>
+      schedule
+        ? [...schedule.lines].sort(
+            (a, b) => (a.position ?? 0) - (b.position ?? 0),
+          )
+        : [],
+    [schedule],
+  );
+
+  const editableLines = useMemo(
+    () => sortedLines.filter((l) => l.data_kind !== "group"),
+    [sortedLines],
+  );
+
+  const editableIndexByLineId = useMemo(
+    () => new Map(editableLines.map((l, i) => [l.quote_line_id, i])),
+    [editableLines],
+  );
 
   const isReadOnly =
     isCustomer || schedule?.status === "VALID" || schedule?.status === "DENIED";
@@ -374,8 +398,7 @@ export default function ScheduleDetailsPage() {
   }
 
   function focusCellInput(lineIndex: number, monthIndex: number) {
-    if (!schedule) return;
-    const line = schedule.lines[lineIndex];
+    const line = editableLines[lineIndex];
     if (!line) return;
     const input = document.querySelector<HTMLInputElement>(
       `input[name='cell-${line.quote_line_id}-m${monthIndex}']`,
@@ -391,7 +414,7 @@ export default function ScheduleDetailsPage() {
   ) {
     if (!schedule || isReadOnly) return;
 
-    const maxLineIndex = schedule.lines.length - 1;
+    const maxLineIndex = editableLines.length - 1;
     const maxMonthIndex = schedule.duration_months;
 
     if (e.key === "Enter") {
@@ -564,7 +587,7 @@ export default function ScheduleDetailsPage() {
       <PageBreadcrumb items={breadcrumbs} />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <CardTitle>Échéancier {scheduleId}</CardTitle>
+          <CardTitle>Échéancier {schedule?.name}</CardTitle>
           <div className="flex items-center gap-2">
             {!isCustomer && schedule?.status === "VALID" ? (
               <Button
@@ -670,7 +693,27 @@ export default function ScheduleDetailsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {schedule.lines.map((line, lineIndex) => {
+                    {sortedLines.map((line) => {
+                      if (line.data_kind === "group") {
+                        return (
+                          <TableRow
+                            key={line.quote_line_id}
+                            className="bg-muted/20 hover:bg-muted/20"
+                          >
+                            <TableCell
+                              colSpan={3 + monthHeaders.length}
+                              className="sticky left-0 z-20 bg-muted/20 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                            >
+                              {line.name || "(Sans nom)"}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+
+                      const editableIndex =
+                        editableIndexByLineId.get(line.quote_line_id) ?? -1;
+                      const isChild = Boolean(line.parent_line_id);
+                      const displayName = line.name ?? line.quote_line_id;
                       const state = scheduleBalanceState(
                         line.planned_cents,
                         line.expected_cents,
@@ -685,9 +728,10 @@ export default function ScheduleDetailsPage() {
                             className={cn(
                               "sticky left-0 z-20 min-w-44",
                               stateClasses.stickyCellClass,
+                              isChild && "pl-8",
                             )}
                           >
-                            {line.quote_line_id}
+                            {displayName}
                           </TableCell>
                           <TableCell
                             data-testid={`line-total-${line.quote_line_id}`}
@@ -748,7 +792,7 @@ export default function ScheduleDetailsPage() {
                                     onKeyDown={(e) => {
                                       handleCellKeyDown(
                                         e,
-                                        lineIndex,
+                                        editableIndex,
                                         monthIndex,
                                       );
                                     }}

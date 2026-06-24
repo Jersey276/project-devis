@@ -82,11 +82,11 @@ func SchedulesRoutes(r *gin.RouterGroup, emailNotifier gatewaySvc.EmailNotifier)
 	}
 	usersClient := users.NewUserServiceClient(usersConn)
 
-	r.GET("", func(c *gin.Context) { ListSchedules(c, client) })
+	r.GET("", func(c *gin.Context) { ListSchedules(c, client, quoteClient) })
 	r.POST("", func(c *gin.Context) { CreateSchedule(c, client, quoteClient) })
 
 	one := r.Group("/:id")
-	one.GET("", func(c *gin.Context) { GetSchedule(c, client) })
+	one.GET("", func(c *gin.Context) { GetSchedule(c, client, quoteClient) })
 	one.PATCH("/cells", func(c *gin.Context) { UpdateScheduleCell(c, client) })
 	one.PATCH("/status", func(c *gin.Context) { UpdateScheduleStatus(c, client, quoteClient, usersClient, emailNotifier) })
 	one.POST("/validate", func(c *gin.Context) { ValidateSchedule(c, client, quoteClient, usersClient, emailNotifier) })
@@ -141,7 +141,7 @@ func sendScheduleEmailNotification(
 
 // ─── Handlers ────────────────────────────────────────────────────────────────
 
-func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient) {
+func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient, quoteClient quote.QuoteServiceClient) {
 	startedAt := time.Now()
 	grpcCode := int32(0)
 	success := false
@@ -191,6 +191,33 @@ func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient) {
 	}
 	grpcCode = resp.Code
 	success = true
+
+	// Collect distinct quote_ids and fetch their names in one call.
+	quoteNameByID := map[string]string{}
+	quoteIDs := make([]string, 0, len(resp.Schedules))
+	seen := map[string]struct{}{}
+	for _, s := range resp.Schedules {
+		if _, ok := seen[s.QuoteId]; !ok {
+			seen[s.QuoteId] = struct{}{}
+			quoteIDs = append(quoteIDs, s.QuoteId)
+		}
+	}
+	if len(quoteIDs) > 0 {
+		qResp, qErr := quoteClient.ListQuotes(c.Request.Context(), &quote.ListQuotesRequest{
+			UserId:   userID,
+			Page:     1,
+			PageSize: int32(len(quoteIDs)),
+			Filters:  &quote.QuoteFilters{QuoteIds: quoteIDs},
+		})
+		if qErr != nil {
+			log.Printf("ListSchedules: ListQuotes failed: %v", qErr)
+		} else if qResp.GetSuccess() {
+			for _, qt := range qResp.GetQuotes() {
+				quoteNameByID[qt.GetQuoteId()] = qt.GetName()
+			}
+		}
+	}
+
 	out := make([]gin.H, 0, len(resp.Schedules))
 	for _, s := range resp.Schedules {
 		out = append(out, gin.H{
@@ -200,6 +227,7 @@ func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient) {
 			"start_month":     s.StartMonth,
 			"duration_months": s.DurationMonths,
 			"quote_id":        s.QuoteId,
+			"quote_name":      quoteNameByID[s.QuoteId],
 		})
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "schedules": out, "total": resp.Total})
@@ -263,7 +291,14 @@ func CreateSchedule(c *gin.Context, client schedule.ScheduleServiceClient, quote
 	c.JSON(http.StatusCreated, gin.H{"success": true, "schedule_id": resp.ScheduleId})
 }
 
-func GetSchedule(c *gin.Context, client schedule.ScheduleServiceClient) {
+type scheduleLineEnrichment struct {
+	Name         string
+	DataKind     string
+	Position     int32
+	ParentLineID string
+}
+
+func GetSchedule(c *gin.Context, client schedule.ScheduleServiceClient, quoteClient quote.QuoteServiceClient) {
 	startedAt := time.Now()
 	grpcCode := int32(0)
 	success := false
@@ -288,14 +323,59 @@ func GetSchedule(c *gin.Context, client schedule.ScheduleServiceClient) {
 	grpcCode = resp.Code
 	success = true
 	s := resp.Schedule
-	lines := make([]gin.H, 0, len(s.Lines))
+
+	// Enrich lines with name/kind/position from the quote service.
+	lineInfoMap := map[string]scheduleLineEnrichment{}
+	qResp, qErr := quoteClient.ListQuoteLines(c.Request.Context(), &quote.ListQuoteLinesRequest{
+		QuoteId: s.QuoteId,
+		UserId:  userIDFromCtx(c),
+	})
+	if qErr != nil {
+		log.Printf("GetSchedule: ListQuoteLines failed for quote %s: %v", s.QuoteId, qErr)
+	} else if qResp.GetSuccess() {
+		for _, ql := range qResp.GetLines() {
+			d := parseLineData(ql.GetData())
+			lineInfoMap[ql.GetLineId()] = scheduleLineEnrichment{
+				Name:         ql.GetName(),
+				DataKind:     d.Kind,
+				Position:     ql.GetPosition(),
+				ParentLineID: d.ParentLineID,
+			}
+		}
+	}
+
+	scheduledIDs := make(map[string]struct{}, len(s.Lines))
+	lines := make([]gin.H, 0, len(s.Lines)+4)
 	for _, l := range s.Lines {
+		scheduledIDs[l.QuoteLineId] = struct{}{}
+		info := lineInfoMap[l.QuoteLineId]
 		lines = append(lines, gin.H{
 			"quote_line_id":  l.QuoteLineId,
 			"planned_cents":  l.PlannedCents,
 			"expected_cents": l.ExpectedCents,
+			"name":           info.Name,
+			"data_kind":      info.DataKind,
+			"position":       info.Position,
+			"parent_line_id": info.ParentLineID,
 		})
 	}
+	// Inject group header lines (non-billable, absent from schedule_cells).
+	for lineID, info := range lineInfoMap {
+		if info.DataKind == "group" {
+			if _, present := scheduledIDs[lineID]; !present {
+				lines = append(lines, gin.H{
+					"quote_line_id":  lineID,
+					"planned_cents":  int64(0),
+					"expected_cents": int64(0),
+					"name":           info.Name,
+					"data_kind":      "group",
+					"position":       info.Position,
+					"parent_line_id": info.ParentLineID,
+				})
+			}
+		}
+	}
+
 	cols := make([]gin.H, 0, len(s.ColumnTotals))
 	for _, ct := range s.ColumnTotals {
 		cols = append(cols, gin.H{
