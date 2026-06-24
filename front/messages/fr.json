@@ -53,7 +53,11 @@
     "subscriptions": "Abonnements",
     "analytics": "Analytiques",
     "logs": "Journal d'activité",
-    "test": "Test"
+    "test": "Test",
+    "modeToggle": {
+      "inactive": "Vue prestataire",
+      "active": "Vue client"
+    }
   },
   "breadcrumb": {},
   "dashboard": {

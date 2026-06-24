@@ -91,6 +91,20 @@ Les points suivants sont identifies et assumes temporairement:
 - Service template absent du compose production.
 - Incoherences ponctuelles de code d'erreur HTTP sur certains handlers auth.
 
+## Mode customer (vue client)
+
+Le frontend expose deux modes d'interface pilotes par `ModeProvider`
+(`front/lib/mode-context.tsx`) :
+
+- **provider** (defaut) : acces complet aux outils de gestion.
+- **customer** : vue allégée, lecture seule, sidebar reduite au seul menu Devis.
+
+Le mode est persiste dans le cookie `user-mode` (SameSite=Lax, 1 an). Un bouton
+`data-slot="mode-toggle"` dans le footer de la sidebar permet la bascule. Aucun
+changement d'authentification n'est requis.
+
+Voir ADR 0005 pour les details de l'implementation et les limitations connues.
+
 ## Conventions d'API
 
 - Reponse standard: `success`, `message`, `code` (selon endpoint)

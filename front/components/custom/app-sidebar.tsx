@@ -16,6 +16,7 @@ import {
   CoinsIcon,
   ReceiptEuroIcon,
   FolderIcon,
+  BuildingIcon,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "../ui/button";
@@ -34,6 +35,7 @@ import UserMenu from "../user/user-menu";
 import { useMode, type UserMode } from "@/lib/mode-context";
 import { apiFetch } from "@/lib/api";
 import { isSuperAdmin, type AuthContext } from "@/lib/access";
+import { cn } from "@/lib/utils";
 
 type NavKey =
   | "project"
@@ -167,7 +169,7 @@ const items: SidebarItem[] = [
 ];
 
 export default function AppSidebar() {
-  const { mode } = useMode();
+  const { mode, setMode, isCustomer } = useMode();
   const t = useTranslations("nav");
   const [isAdmin, setIsAdmin] = useState(false);
   const [sidebarView, setSidebarView] = useState<SidebarView>("user");
@@ -263,6 +265,23 @@ export default function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="bg-primary-foreground text-primary">
+        <div className="px-2 pb-1">
+          <button
+            type="button"
+            data-slot="mode-toggle"
+            data-active={isCustomer ? "true" : undefined}
+            onClick={() => setMode(isCustomer ? "provider" : "customer")}
+            className={cn(
+              "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+              isCustomer
+                ? "bg-primary text-primary-foreground"
+                : "hover:bg-muted",
+            )}
+          >
+            <BuildingIcon className="h-4 w-4" />
+            <span>{isCustomer ? t("modeToggle.active") : t("modeToggle.inactive")}</span>
+          </button>
+        </div>
         <UserMenu />
       </SidebarFooter>
     </Sidebar>

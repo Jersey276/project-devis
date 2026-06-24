@@ -1,9 +1,6 @@
 import { line, quote } from "../support/fixtures";
 
-// Customer mode is temporarily disabled at the UI level: ModeProvider hard-codes
-// "provider" and the sidebar toggle is hidden. Re-enable this suite (drop .skip)
-// when the toggle is restored.
-describe.skip("Quote — customer mode", () => {
+describe("Quote — customer mode", () => {
   describe("Sidebar", () => {
     it("hides provider-only entries when in customer mode", () => {
       cy.login();
