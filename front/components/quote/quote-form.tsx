@@ -26,8 +26,10 @@ import QuoteStepSummary from "@/components/quote/steps/quote-step-summary";
 import {
   createLine,
   createQuote,
+  getMyQuote,
   getQuote,
   negociateQuote,
+  updateMyQuoteAddress,
   updateQuote,
 } from "@/lib/services/quotes";
 import { exportQuotePdf } from "@/lib/services/export";
@@ -121,7 +123,8 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   useEffect(() => {
     if (!quoteId) return;
     let cancelled = false;
-    getQuote(quoteId).then(({ ok, body }) => {
+    const fetch = isCustomer ? getMyQuote(quoteId) : getQuote(quoteId);
+    fetch.then(({ ok, body }) => {
       if (cancelled) return;
       if (!ok || !body.success) {
         setNotFound(true);
@@ -140,6 +143,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       setLoading(false);
     });
     return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quoteId, t]);
 
   useEffect(() => {
@@ -155,6 +159,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const {
     clients,
     userId,
+    myClientId,
     userAddresses,
     addresses,
     availableTaxes,
@@ -321,7 +326,16 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     (value: number | null) => {
       setAddressId(value);
       setErrors((prev) => ({ ...prev, address_id: [] }));
-      if (!quoteId || isReadonly || value == null) return;
+      if (!quoteId || value == null) return;
+      if (isCustomer) {
+        void updateMyQuoteAddress(quoteId, value, myClientId || undefined).then(({ ok, body }) => {
+          if (!ok || !body.success) {
+            toast.error((body.message as string) ?? t("errors.addressSaveFailedToast"));
+          }
+        });
+        return;
+      }
+      if (isReadonly) return;
       const name = projectNameRef.current.trim();
       if (name.length === 0) return;
       const wasNegociation = quoteState === "negociation";
@@ -333,7 +347,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         }
       });
     },
-    [isReadonly, quoteId, t],
+    [handleRevertedToDraft, isCustomer, isReadonly, myClientId, quoteId, quoteState, t],
   );
 
   const handleUserAddressIdChange = useCallback(
@@ -485,6 +499,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             addressId={addressId}
             userAddressId={userAddressId}
             isReadonly={isReadonly}
+            customerAddressEditable={isCustomer}
             clients={clients}
             addresses={addresses}
             userAddresses={userAddresses}

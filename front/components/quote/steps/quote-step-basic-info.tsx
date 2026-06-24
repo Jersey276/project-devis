@@ -39,6 +39,8 @@ type QuoteStepBasicInfoProps = {
   addressId: number | null;
   userAddressId: number | null;
   isReadonly: boolean;
+  /** When true, the client address selector remains editable even in readonly mode. */
+  customerAddressEditable?: boolean;
   clients: BackendClient[];
   addresses: BackendAddress[];
   userAddresses: BackendAddress[];
@@ -62,6 +64,7 @@ export default function QuoteStepBasicInfo({
   addressId,
   userAddressId,
   isReadonly,
+  customerAddressEditable = false,
   clients,
   addresses,
   userAddresses,
@@ -276,11 +279,11 @@ export default function QuoteStepBasicInfo({
             id="address-picker"
             name="address_id"
             placeholder={addressPlaceholder}
-            disabled={isReadonly || !clientId}
+            disabled={(isReadonly && !customerAddressEditable) || !clientId}
             aria-invalid={hasAddressError}
           />
           <ComboboxContent>
-            {!isReadonly && !!clientId && (
+            {(!isReadonly || customerAddressEditable) && !!clientId && (
               <>
                 <div className="p-1">
                   <button

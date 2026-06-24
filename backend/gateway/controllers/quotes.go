@@ -92,6 +92,11 @@ func QuotesRoutes(r *gin.RouterGroup, emailNotifier gatewaySvc.EmailNotifier) {
 	r.GET("", func(c *gin.Context) { ListQuotes(c, client, usersClient) })
 	r.POST("", func(c *gin.Context) { CreateQuote(c, client) })
 
+	// Customer-facing routes — must be registered before /:id to avoid wildcard clash.
+	r.GET("/me", func(c *gin.Context) { ListMyQuotes(c, client, usersClient) })
+	r.GET("/me/:id", func(c *gin.Context) { GetMyQuote(c, client, usersClient) })
+	r.PUT("/me/:id", func(c *gin.Context) { UpdateMyQuoteAddress(c, client, usersClient) })
+
 	archive := r.Group("/archive")
 	archive.DELETE("/trash", func(c *gin.Context) { TrashQuotes(c, client) })
 
@@ -346,6 +351,174 @@ func computeQuoteTotals(lines []*quote.QuoteLine, taxes []*users.Tax) map[string
 	}
 	_ = byID
 	return totals
+}
+
+// ─── Customer /quotes/me routes ──────────────────────────────────────────────
+
+// ListMyQuotes returns quotes for the authenticated customer, scoped to their
+// linked client_id and the provider's user_id.
+func ListMyQuotes(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
+	linked := resolveMyClient(c, usersClient)
+	if linked == nil {
+		return
+	}
+
+	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 32)
+	pageSize, _ := strconv.ParseInt(c.DefaultQuery("page_size", "20"), 10, 32)
+
+	var states []string
+	if raw := c.Query("states"); raw != "" {
+		states = strings.Split(raw, ",")
+	}
+
+	var (
+		quotesResp *quote.ListQuotesResponse
+		linesResp  *quote.ListUserQuoteLinesResponse
+	)
+
+	g, gctx := errgroup.WithContext(c.Request.Context())
+	g.Go(func() error {
+		resp, err := client.ListQuotes(gctx, &quote.ListQuotesRequest{
+			UserId:          linked.UserId,
+			IncludeArchived: c.Query("archived") == "true",
+			Page:            int32(page),
+			PageSize:        int32(pageSize),
+			Filters: &quote.QuoteFilters{
+				Search:   c.Query("search"),
+				States:   states,
+				ClientId: linked.ClientId,
+			},
+			SortBy:        c.DefaultQuery("sort_by", "created_at"),
+			SortDirection: c.DefaultQuery("sort_direction", "desc"),
+		})
+		if err != nil {
+			return err
+		}
+		quotesResp = resp
+		return nil
+	})
+	g.Go(func() error {
+		resp, err := client.ListUserQuoteLines(gctx, &quote.ListUserQuoteLinesRequest{
+			UserId:          linked.UserId,
+			IncludeArchived: c.Query("archived") == "true",
+		})
+		if err != nil {
+			return err
+		}
+		linesResp = resp
+		return nil
+	})
+	if err := g.Wait(); err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !quotesResp.Success {
+		quoteErrors.reply(c, quotesResp.Code)
+		return
+	}
+
+	taxesResp, err := usersClient.ListTaxesForUser(c.Request.Context(), &users.ListTaxesForUserRequest{
+		UserId:     linked.UserId,
+		IncludeIds: distinctTaxIds(linesResp.Lines),
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+
+	totals := computeQuoteTotals(linesResp.Lines, taxesResp.Taxes)
+
+	out := make([]gin.H, 0, len(quotesResp.Quotes))
+	for _, q := range quotesResp.Quotes {
+		m := marshalQuote(q)
+		m["total_ttc"] = totals[q.QuoteId].principal
+		m["option_total_ttc"] = totals[q.QuoteId].option
+		out = append(out, m)
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "quotes": out, "total": quotesResp.Total})
+}
+
+// GetMyQuote returns a single quote for the authenticated customer, scoped to
+// their linked client_id.
+func GetMyQuote(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
+	linked := resolveMyClient(c, usersClient)
+	if linked == nil {
+		return
+	}
+
+	resp, err := client.GetQuote(c.Request.Context(), &quote.GetQuoteRequest{
+		QuoteId: c.Param("id"),
+		UserId:  linked.UserId,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	// Ensure the quote belongs to this customer's client record.
+	if resp.Quote != nil && resp.Quote.ClientId != linked.ClientId {
+		quoteErrors.reply(c, QuoteCodeNotFound)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"quote":   marshalQuote(resp.Quote),
+		"lines":   marshalLines(resp.Lines),
+	})
+}
+
+// UpdateMyQuoteAddress allows a customer to update only the client address on
+// one of their quotes. All other fields are ignored.
+func UpdateMyQuoteAddress(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
+	linked := resolveMyClient(c, usersClient)
+	if linked == nil {
+		return
+	}
+
+	var input struct {
+		AddressID int32 `json:"address_id" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+
+	// Verify the quote belongs to this customer before updating.
+	getResp, err := client.GetQuote(c.Request.Context(), &quote.GetQuoteRequest{
+		QuoteId: c.Param("id"),
+		UserId:  linked.UserId,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !getResp.Success {
+		quoteErrors.reply(c, getResp.Code)
+		return
+	}
+	if getResp.Quote == nil || getResp.Quote.ClientId != linked.ClientId {
+		quoteErrors.reply(c, QuoteCodeNotFound)
+		return
+	}
+
+	resp, err := client.UpdateQuote(c.Request.Context(), &quote.UpdateQuoteRequest{
+		QuoteId:   c.Param("id"),
+		UserId:    linked.UserId,
+		Name:      getResp.Quote.Name,
+		AddressId: input.AddressID,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
 func CreateQuote(c *gin.Context, client quote.QuoteServiceClient) {

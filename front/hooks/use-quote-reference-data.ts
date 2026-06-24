@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api";
-import { listClients } from "@/lib/services/clients";
+import { listClients, getMyClientProfiles, getMyClientAddresses } from "@/lib/services/clients";
 import { listAddresses } from "@/lib/services/addresses";
 import { listAvailableTaxesForUser } from "@/lib/services/taxes";
 import type { BackendAddress, BackendClient, BackendTax } from "@/types/backend";
@@ -25,23 +25,35 @@ export function useQuoteReferenceData({
 }: UseQuoteReferenceDataParams) {
   const [clients, setClients] = useState<BackendClient[]>([]);
   const [userId, setUserId] = useState("");
+  const [myClientId, setMyClientId] = useState("");
   const [userAddresses, setUserAddresses] = useState<BackendAddress[]>([]);
   const [addresses, setAddresses] = useState<BackendAddress[]>([]);
   const [availableTaxes, setAvailableTaxes] = useState<BackendTax[]>([]);
 
-  // Load clients
+  // Load clients (provider mode) or customer profile (customer mode)
   useEffect(() => {
     let cancelled = false;
-    listClients().then(({ ok, body }) => {
-      if (cancelled) return;
-      if (ok && Array.isArray(body.clients)) {
-        setClients(body.clients as BackendClient[]);
-      }
-    });
+    if (isCustomer) {
+      getMyClientProfiles().then(({ ok, body }) => {
+        if (cancelled) return;
+        if (ok && Array.isArray(body.clients) && body.clients.length > 0) {
+          const linked = body.clients as BackendClient[];
+          setClients(linked);
+          setMyClientId(linked[0].client_id);
+        }
+      });
+    } else {
+      listClients().then(({ ok, body }) => {
+        if (cancelled) return;
+        if (ok && Array.isArray(body.clients)) {
+          setClients(body.clients as BackendClient[]);
+        }
+      });
+    }
     return () => { cancelled = true; };
-  }, []);
+  }, [isCustomer]);
 
-  // Load current user id + their addresses
+  // Load current user id + their addresses (provider only)
   useEffect(() => {
     if (isCustomer) return;
     let cancelled = false;
@@ -59,14 +71,22 @@ export function useQuoteReferenceData({
 
   // Load addresses for selected client
   useEffect(() => {
-    if (!clientId) return;
     let cancelled = false;
-    listAddresses({ type: "client", clientId }).then(({ ok, body }) => {
-      if (cancelled) return;
-      setAddresses(ok && Array.isArray(body.addresses) ? (body.addresses as BackendAddress[]) : []);
-    });
+    if (isCustomer) {
+      if (!myClientId) return;
+      getMyClientAddresses(myClientId).then(({ ok, body }) => {
+        if (cancelled) return;
+        setAddresses(ok && Array.isArray(body.addresses) ? (body.addresses as BackendAddress[]) : []);
+      });
+    } else {
+      if (!clientId) return;
+      listAddresses({ type: "client", clientId }).then(({ ok, body }) => {
+        if (cancelled) return;
+        setAddresses(ok && Array.isArray(body.addresses) ? (body.addresses as BackendAddress[]) : []);
+      });
+    }
     return () => { cancelled = true; };
-  }, [clientId]);
+  }, [clientId, isCustomer, myClientId]);
 
   const clientAddresses = useMemo(() => (clientId ? addresses : []), [clientId, addresses]);
 
@@ -110,9 +130,14 @@ export function useQuoteReferenceData({
   );
 
   const refreshClients = useCallback(async () => {
-    const { ok, body } = await listClients();
-    if (ok && Array.isArray(body.clients)) setClients(body.clients as BackendClient[]);
-  }, []);
+    if (isCustomer) {
+      const { ok, body } = await getMyClientProfiles();
+      if (ok && Array.isArray(body.clients)) setClients(body.clients as BackendClient[]);
+    } else {
+      const { ok, body } = await listClients();
+      if (ok && Array.isArray(body.clients)) setClients(body.clients as BackendClient[]);
+    }
+  }, [isCustomer]);
 
   const refreshUserAddresses = useCallback(async () => {
     if (!userId) return;
@@ -121,14 +146,21 @@ export function useQuoteReferenceData({
   }, [userId]);
 
   const refreshClientAddresses = useCallback(async () => {
-    if (!clientId) return;
-    const { ok, body } = await listAddresses({ type: "client", clientId });
-    if (ok && Array.isArray(body.addresses)) setAddresses(body.addresses as BackendAddress[]);
-  }, [clientId]);
+    if (isCustomer) {
+      if (!myClientId) return;
+      const { ok, body } = await getMyClientAddresses(myClientId);
+      if (ok && Array.isArray(body.addresses)) setAddresses(body.addresses as BackendAddress[]);
+    } else {
+      if (!clientId) return;
+      const { ok, body } = await listAddresses({ type: "client", clientId });
+      if (ok && Array.isArray(body.addresses)) setAddresses(body.addresses as BackendAddress[]);
+    }
+  }, [clientId, isCustomer, myClientId]);
 
   return {
     clients,
     userId,
+    myClientId,
     userAddresses,
     addresses: clientAddresses,
     availableTaxes,
