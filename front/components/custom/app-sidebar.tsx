@@ -44,6 +44,7 @@ type NavKey =
   | "invoices"
   | "creditNotes"
   | "clients"
+  | "clientProfile"
   | "fees"
   | "users"
   | "countries"
@@ -102,6 +103,12 @@ const items: SidebarItem[] = [
     url: "/clients",
     icon: QuoteIcon,
     modes: ["provider"],
+  },
+  {
+    key: "clientProfile",
+    url: "/client-profile",
+    icon: UserIcon,
+    modes: ["customer"],
   },
   {
     key: "users",

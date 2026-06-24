@@ -144,6 +144,7 @@ export type BackendClient = {
   vat: string;
   archived: boolean;
   client_type: ClientType;
+  linked_user_id?: string;
 };
 
 export type BackendAddressOwnerType = "user" | "client";

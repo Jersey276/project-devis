@@ -18,6 +18,9 @@ const (
 	CodeOAuthEmailNotVerified    int32 = 1013
 	CodeOAuthIdentityTaken       int32 = 1014
 	CodeLastLoginMethod          int32 = 1015
+	CodeInvalidInvitationToken   int32 = 1016
+	CodeExpiredInvitationToken   int32 = 1017
+	CodeClientAlreadyLinked      int32 = 1018
 	CodeUserServiceError         int32 = 2001
 	CodeInternalError            int32 = 2002
 	CodeNotImplemented           int32 = 2003

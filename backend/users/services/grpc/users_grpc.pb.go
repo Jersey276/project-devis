@@ -34,6 +34,8 @@ const (
 	UserService_ListClients_FullMethodName              = "/users.UserService/ListClients"
 	UserService_UpdateClient_FullMethodName             = "/users.UserService/UpdateClient"
 	UserService_ArchiveClient_FullMethodName            = "/users.UserService/ArchiveClient"
+	UserService_LinkClientUser_FullMethodName           = "/users.UserService/LinkClientUser"
+	UserService_GetClientsByLinkedUser_FullMethodName   = "/users.UserService/GetClientsByLinkedUser"
 	UserService_CreateAddress_FullMethodName            = "/users.UserService/CreateAddress"
 	UserService_GetAddress_FullMethodName               = "/users.UserService/GetAddress"
 	UserService_ListAddresses_FullMethodName            = "/users.UserService/ListAddresses"
@@ -81,6 +83,8 @@ type UserServiceClient interface {
 	ListClients(ctx context.Context, in *ListClientsRequest, opts ...grpc.CallOption) (*ListClientsResponse, error)
 	UpdateClient(ctx context.Context, in *UpdateClientRequest, opts ...grpc.CallOption) (*UpdateClientResponse, error)
 	ArchiveClient(ctx context.Context, in *ArchiveClientRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	LinkClientUser(ctx context.Context, in *LinkClientUserRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	GetClientsByLinkedUser(ctx context.Context, in *GetClientByLinkedUserRequest, opts ...grpc.CallOption) (*ListClientsResponse, error)
 	// Address
 	CreateAddress(ctx context.Context, in *CreateAddressRequest, opts ...grpc.CallOption) (*CreateAddressResponse, error)
 	GetAddress(ctx context.Context, in *GetAddressRequest, opts ...grpc.CallOption) (*GetAddressResponse, error)
@@ -263,6 +267,26 @@ func (c *userServiceClient) ArchiveClient(ctx context.Context, in *ArchiveClient
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GenericResponse)
 	err := c.cc.Invoke(ctx, UserService_ArchiveClient_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) LinkClientUser(ctx context.Context, in *LinkClientUserRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, UserService_LinkClientUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetClientsByLinkedUser(ctx context.Context, in *GetClientByLinkedUserRequest, opts ...grpc.CallOption) (*ListClientsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListClientsResponse)
+	err := c.cc.Invoke(ctx, UserService_GetClientsByLinkedUser_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -530,6 +554,8 @@ type UserServiceServer interface {
 	ListClients(context.Context, *ListClientsRequest) (*ListClientsResponse, error)
 	UpdateClient(context.Context, *UpdateClientRequest) (*UpdateClientResponse, error)
 	ArchiveClient(context.Context, *ArchiveClientRequest) (*GenericResponse, error)
+	LinkClientUser(context.Context, *LinkClientUserRequest) (*GenericResponse, error)
+	GetClientsByLinkedUser(context.Context, *GetClientByLinkedUserRequest) (*ListClientsResponse, error)
 	// Address
 	CreateAddress(context.Context, *CreateAddressRequest) (*CreateAddressResponse, error)
 	GetAddress(context.Context, *GetAddressRequest) (*GetAddressResponse, error)
@@ -612,6 +638,12 @@ func (UnimplementedUserServiceServer) UpdateClient(context.Context, *UpdateClien
 }
 func (UnimplementedUserServiceServer) ArchiveClient(context.Context, *ArchiveClientRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ArchiveClient not implemented")
+}
+func (UnimplementedUserServiceServer) LinkClientUser(context.Context, *LinkClientUserRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method LinkClientUser not implemented")
+}
+func (UnimplementedUserServiceServer) GetClientsByLinkedUser(context.Context, *GetClientByLinkedUserRequest) (*ListClientsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetClientsByLinkedUser not implemented")
 }
 func (UnimplementedUserServiceServer) CreateAddress(context.Context, *CreateAddressRequest) (*CreateAddressResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateAddress not implemented")
@@ -972,6 +1004,42 @@ func _UserService_ArchiveClient_Handler(srv interface{}, ctx context.Context, de
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).ArchiveClient(ctx, req.(*ArchiveClientRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_LinkClientUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LinkClientUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).LinkClientUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_LinkClientUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).LinkClientUser(ctx, req.(*LinkClientUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetClientsByLinkedUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetClientByLinkedUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetClientsByLinkedUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetClientsByLinkedUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetClientsByLinkedUser(ctx, req.(*GetClientByLinkedUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1474,6 +1542,14 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ArchiveClient",
 			Handler:    _UserService_ArchiveClient_Handler,
+		},
+		{
+			MethodName: "LinkClientUser",
+			Handler:    _UserService_LinkClientUser_Handler,
+		},
+		{
+			MethodName: "GetClientsByLinkedUser",
+			Handler:    _UserService_GetClientsByLinkedUser_Handler,
 		},
 		{
 			MethodName: "CreateAddress",

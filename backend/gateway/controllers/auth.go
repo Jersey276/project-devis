@@ -89,6 +89,9 @@ var authErrors = &serviceErrors{
 		CodeOAuthEmailNotVerified:    {http.StatusUnprocessableEntity, "Votre adresse email n'est pas vérifiée par le fournisseur."},
 		CodeOAuthIdentityTaken:       {http.StatusConflict, "Ce compte fournisseur est déjà lié à un autre utilisateur."},
 		CodeLastLoginMethod:          {http.StatusConflict, "Impossible de retirer votre seule méthode de connexion."},
+		int32(1016):                  {http.StatusBadRequest, "Le lien d'invitation est invalide ou déjà utilisé."},
+		int32(1017):                  {http.StatusGone, "Le lien d'invitation a expiré."},
+		int32(1018):                  {http.StatusConflict, "Ce client est déjà lié à un compte."},
 	},
 	unavailableMessage: "Service d'authentification indisponible.",
 }

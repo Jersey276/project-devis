@@ -36,6 +36,7 @@ func setupRouter(auditLogger *middleware.AuditLogger, auditClient audit.AuditSer
 	audited := r.Group("/api")
 	audited.Use(auditLogger.Middleware())
 	controllers.AuthRoutes(audited.Group("/auth"))
+	controllers.InviteRoutes(audited.Group("/auth/invite"), controllers.NewInviteAuthClient(), controllers.NewInviteUsersClient())
 
 	users := audited.Group("/users")
 	users.Use(middleware.AuthRequired())

@@ -76,6 +76,14 @@ func (s *Server) ArchiveClient(ctx context.Context, req *usersGrpc.ArchiveClient
 	return client.Archive(ctx, s.db, req)
 }
 
+func (s *Server) LinkClientUser(ctx context.Context, req *usersGrpc.LinkClientUserRequest) (*usersGrpc.GenericResponse, error) {
+	return client.LinkUser(ctx, s.db, req)
+}
+
+func (s *Server) GetClientsByLinkedUser(ctx context.Context, req *usersGrpc.GetClientByLinkedUserRequest) (*usersGrpc.ListClientsResponse, error) {
+	return client.GetByLinkedUser(ctx, s.db, req)
+}
+
 // ─── Address ─────────────────────────────────────────────────────────────────
 
 func (s *Server) CreateAddress(ctx context.Context, req *usersGrpc.CreateAddressRequest) (*usersGrpc.CreateAddressResponse, error) {

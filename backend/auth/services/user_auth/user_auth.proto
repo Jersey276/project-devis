@@ -18,6 +18,10 @@ service UserService {
     rpc GetUserAccessInfo(GetUserAccessInfoRequest) returns (GetUserAccessInfoResponse);
     // TouchUserLastLogin stores the timestamp of the latest successful login.
     rpc TouchUserLastLogin(TouchUserLastLoginRequest) returns (GenericResponse);
+    // LinkClientUser links an auth user account to a client record.
+    rpc LinkClientUser(LinkClientUserRequest) returns (GenericResponse);
+    // GetClientsByLinkedUser returns all clients linked to a given auth user (one per provider).
+    rpc GetClientsByLinkedUser(GetClientByLinkedUserRequest) returns (GetClientsResponse);
 }
 
 message CreateUserRequest {
@@ -59,4 +63,42 @@ message TouchUserLastLoginRequest {
 message GenericResponse {
     bool success = 1;
     int32 code = 2;
+}
+
+message LinkClientUserRequest {
+    string client_id      = 1;
+    string provider_id    = 2;
+    string linked_user_id = 3;
+}
+
+message GetClientByLinkedUserRequest {
+    string linked_user_id = 1;
+}
+
+message ClientStub {
+    string client_id      = 1;
+    string user_id        = 2;
+    string first_name     = 3;
+    string last_name      = 4;
+    string email          = 5;
+    string phone          = 6;
+    string company        = 7;
+    string siren          = 8;
+    string vat            = 9;
+    bool   archived       = 10;
+    int32  client_type    = 11;
+    string siret          = 12;
+    string linked_user_id = 13;
+}
+
+message GetClientResponse {
+    bool        success = 1;
+    int32       code    = 2;
+    ClientStub  client  = 3;
+}
+
+message GetClientsResponse {
+    bool              success = 1;
+    int32             code    = 2;
+    repeated ClientStub clients = 3;
 }

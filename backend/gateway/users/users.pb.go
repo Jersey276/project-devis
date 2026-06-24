@@ -1437,6 +1437,7 @@ type Client struct {
 	Archived      bool                   `protobuf:"varint,10,opt,name=archived,proto3" json:"archived,omitempty"`
 	ClientType    ClientType             `protobuf:"varint,11,opt,name=client_type,json=clientType,proto3,enum=users.ClientType" json:"client_type,omitempty"`
 	Siret         string                 `protobuf:"bytes,12,opt,name=siret,proto3" json:"siret,omitempty"`
+	LinkedUserId  string                 `protobuf:"bytes,13,opt,name=linked_user_id,json=linkedUserId,proto3" json:"linked_user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1551,6 +1552,13 @@ func (x *Client) GetClientType() ClientType {
 func (x *Client) GetSiret() string {
 	if x != nil {
 		return x.Siret
+	}
+	return ""
+}
+
+func (x *Client) GetLinkedUserId() string {
+	if x != nil {
+		return x.LinkedUserId
 	}
 	return ""
 }
@@ -5045,6 +5053,110 @@ func (x *DeleteTaxRequest) GetTaxId() int32 {
 	return 0
 }
 
+type LinkClientUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	ProviderId    string                 `protobuf:"bytes,2,opt,name=provider_id,json=providerId,proto3" json:"provider_id,omitempty"`
+	LinkedUserId  string                 `protobuf:"bytes,3,opt,name=linked_user_id,json=linkedUserId,proto3" json:"linked_user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LinkClientUserRequest) Reset() {
+	*x = LinkClientUserRequest{}
+	mi := &file_users_proto_msgTypes[74]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LinkClientUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LinkClientUserRequest) ProtoMessage() {}
+
+func (x *LinkClientUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_users_proto_msgTypes[74]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LinkClientUserRequest.ProtoReflect.Descriptor instead.
+func (*LinkClientUserRequest) Descriptor() ([]byte, []int) {
+	return file_users_proto_rawDescGZIP(), []int{74}
+}
+
+func (x *LinkClientUserRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *LinkClientUserRequest) GetProviderId() string {
+	if x != nil {
+		return x.ProviderId
+	}
+	return ""
+}
+
+func (x *LinkClientUserRequest) GetLinkedUserId() string {
+	if x != nil {
+		return x.LinkedUserId
+	}
+	return ""
+}
+
+type GetClientByLinkedUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LinkedUserId  string                 `protobuf:"bytes,1,opt,name=linked_user_id,json=linkedUserId,proto3" json:"linked_user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetClientByLinkedUserRequest) Reset() {
+	*x = GetClientByLinkedUserRequest{}
+	mi := &file_users_proto_msgTypes[75]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetClientByLinkedUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetClientByLinkedUserRequest) ProtoMessage() {}
+
+func (x *GetClientByLinkedUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_users_proto_msgTypes[75]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetClientByLinkedUserRequest.ProtoReflect.Descriptor instead.
+func (*GetClientByLinkedUserRequest) Descriptor() ([]byte, []int) {
+	return file_users_proto_rawDescGZIP(), []int{75}
+}
+
+func (x *GetClientByLinkedUserRequest) GetLinkedUserId() string {
+	if x != nil {
+		return x.LinkedUserId
+	}
+	return ""
+}
+
 var File_users_proto protoreflect.FileDescriptor
 
 const file_users_proto_rawDesc = "" +
@@ -5128,8 +5240,11 @@ const file_users_proto_rawDesc = "" +
 	"\acompany\x18\n" +
 	" \x01(\tR\acompany\x12\x14\n" +
 	"\x05siren\x18\v \x01(\tR\x05siren\x12\x10\n" +
-	"\x03vat\x18\f \x01(\tR\x03vat\"\x1a\n" +
-	"\x18ListAdminAccountsRequest\"z\n" +
+	"\x03vat\x18\f \x01(\tR\x03vat\"d\n" +
+	"\x18ListAdminAccountsRequest\x12\x16\n" +
+	"\x06search\x18\x01 \x01(\tR\x06search\x12\x14\n" +
+	"\x05roles\x18\x02 \x03(\tR\x05roles\x12\x1a\n" +
+	"\bstatuses\x18\x03 \x03(\tR\bstatuses\"z\n" +
 	"\x19ListAdminAccountsResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12/\n" +
@@ -5150,7 +5265,7 @@ const file_users_proto_rawDesc = "" +
 	"\x1aSuspendAdminAccountRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\"4\n" +
 	"\x19TouchUserLastLoginRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"\xce\x02\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"\xf4\x02\n" +
 	"\x06Client\x12\x1b\n" +
 	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1d\n" +
@@ -5166,7 +5281,8 @@ const file_users_proto_rawDesc = "" +
 	" \x01(\bR\barchived\x122\n" +
 	"\vclient_type\x18\v \x01(\x0e2\x11.users.ClientTypeR\n" +
 	"clientType\x12\x14\n" +
-	"\x05siret\x18\f \x01(\tR\x05siret\"\xa2\x02\n" +
+	"\x05siret\x18\f \x01(\tR\x05siret\x12$\n" +
+	"\x0elinked_user_id\x18\r \x01(\tR\flinkedUserId\"\xa2\x02\n" +
 	"\x13CreateClientRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1d\n" +
 	"\n" +
@@ -5455,7 +5571,14 @@ const file_users_proto_rawDesc = "" +
 	"\x06tax_id\x18\x03 \x01(\x05R\x05taxId\x12C\n" +
 	"\x11validation_errors\x18\x04 \x03(\v2\x16.users.ValidationErrorR\x10validationErrors\")\n" +
 	"\x10DeleteTaxRequest\x12\x15\n" +
-	"\x06tax_id\x18\x01 \x01(\x05R\x05taxId*_\n" +
+	"\x06tax_id\x18\x01 \x01(\x05R\x05taxId\"{\n" +
+	"\x15LinkClientUserRequest\x12\x1b\n" +
+	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x1f\n" +
+	"\vprovider_id\x18\x02 \x01(\tR\n" +
+	"providerId\x12$\n" +
+	"\x0elinked_user_id\x18\x03 \x01(\tR\flinkedUserId\"D\n" +
+	"\x1cGetClientByLinkedUserRequest\x12$\n" +
+	"\x0elinked_user_id\x18\x01 \x01(\tR\flinkedUserId*_\n" +
 	"\n" +
 	"ClientType\x12\x1b\n" +
 	"\x17CLIENT_TYPE_UNSPECIFIED\x10\x00\x12\x1a\n" +
@@ -5464,7 +5587,7 @@ const file_users_proto_rawDesc = "" +
 	"\tOwnerType\x12\x1a\n" +
 	"\x16OWNER_TYPE_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fOWNER_TYPE_USER\x10\x01\x12\x15\n" +
-	"\x11OWNER_TYPE_CLIENT\x10\x022\xe2\x16\n" +
+	"\x11OWNER_TYPE_CLIENT\x10\x022\x85\x18\n" +
 	"\vUserService\x12A\n" +
 	"\n" +
 	"CreateUser\x12\x18.users.CreateUserRequest\x1a\x19.users.CreateUserResponse\x128\n" +
@@ -5483,7 +5606,9 @@ const file_users_proto_rawDesc = "" +
 	"\tGetClient\x12\x17.users.GetClientRequest\x1a\x18.users.GetClientResponse\x12D\n" +
 	"\vListClients\x12\x19.users.ListClientsRequest\x1a\x1a.users.ListClientsResponse\x12G\n" +
 	"\fUpdateClient\x12\x1a.users.UpdateClientRequest\x1a\x1b.users.UpdateClientResponse\x12D\n" +
-	"\rArchiveClient\x12\x1b.users.ArchiveClientRequest\x1a\x16.users.GenericResponse\x12J\n" +
+	"\rArchiveClient\x12\x1b.users.ArchiveClientRequest\x1a\x16.users.GenericResponse\x12F\n" +
+	"\x0eLinkClientUser\x12\x1c.users.LinkClientUserRequest\x1a\x16.users.GenericResponse\x12Y\n" +
+	"\x16GetClientsByLinkedUser\x12#.users.GetClientByLinkedUserRequest\x1a\x1a.users.ListClientsResponse\x12J\n" +
 	"\rCreateAddress\x12\x1b.users.CreateAddressRequest\x1a\x1c.users.CreateAddressResponse\x12A\n" +
 	"\n" +
 	"GetAddress\x12\x18.users.GetAddressRequest\x1a\x19.users.GetAddressResponse\x12J\n" +
@@ -5524,7 +5649,7 @@ func file_users_proto_rawDescGZIP() []byte {
 }
 
 var file_users_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_users_proto_msgTypes = make([]protoimpl.MessageInfo, 74)
+var file_users_proto_msgTypes = make([]protoimpl.MessageInfo, 76)
 var file_users_proto_goTypes = []any{
 	(ClientType)(0),                         // 0: users.ClientType
 	(OwnerType)(0),                          // 1: users.OwnerType
@@ -5602,6 +5727,8 @@ var file_users_proto_goTypes = []any{
 	(*UpdateTaxRequest)(nil),                // 73: users.UpdateTaxRequest
 	(*UpdateTaxResponse)(nil),               // 74: users.UpdateTaxResponse
 	(*DeleteTaxRequest)(nil),                // 75: users.DeleteTaxRequest
+	(*LinkClientUserRequest)(nil),           // 76: users.LinkClientUserRequest
+	(*GetClientByLinkedUserRequest)(nil),    // 77: users.GetClientByLinkedUserRequest
 }
 var file_users_proto_depIdxs = []int32{
 	3,  // 0: users.CreateUserResponse.validation_errors:type_name -> users.ValidationError
@@ -5655,71 +5782,75 @@ var file_users_proto_depIdxs = []int32{
 	27, // 48: users.UserService.ListClients:input_type -> users.ListClientsRequest
 	29, // 49: users.UserService.UpdateClient:input_type -> users.UpdateClientRequest
 	31, // 50: users.UserService.ArchiveClient:input_type -> users.ArchiveClientRequest
-	33, // 51: users.UserService.CreateAddress:input_type -> users.CreateAddressRequest
-	35, // 52: users.UserService.GetAddress:input_type -> users.GetAddressRequest
-	37, // 53: users.UserService.ListAddresses:input_type -> users.ListAddressesRequest
-	39, // 54: users.UserService.UpdateAddress:input_type -> users.UpdateAddressRequest
-	41, // 55: users.UserService.ArchiveAddress:input_type -> users.ArchiveAddressRequest
-	43, // 56: users.UserService.CreateCountry:input_type -> users.CreateCountryRequest
-	45, // 57: users.UserService.GetCountry:input_type -> users.GetCountryRequest
-	47, // 58: users.UserService.ListCountries:input_type -> users.ListCountriesRequest
-	49, // 59: users.UserService.UpdateCountry:input_type -> users.UpdateCountryRequest
-	51, // 60: users.UserService.DeleteCountry:input_type -> users.DeleteCountryRequest
-	53, // 61: users.UserService.CreateCountryGroup:input_type -> users.CreateCountryGroupRequest
-	55, // 62: users.UserService.GetCountryGroup:input_type -> users.GetCountryGroupRequest
-	57, // 63: users.UserService.ListCountryGroups:input_type -> users.ListCountryGroupsRequest
-	59, // 64: users.UserService.UpdateCountryGroup:input_type -> users.UpdateCountryGroupRequest
-	61, // 65: users.UserService.DeleteCountryGroup:input_type -> users.DeleteCountryGroupRequest
-	62, // 66: users.UserService.AttachCountry:input_type -> users.AttachCountryRequest
-	63, // 67: users.UserService.DetachCountry:input_type -> users.DetachCountryRequest
-	65, // 68: users.UserService.CreateTax:input_type -> users.CreateTaxRequest
-	67, // 69: users.UserService.GetTax:input_type -> users.GetTaxRequest
-	69, // 70: users.UserService.ListTaxes:input_type -> users.ListTaxesRequest
-	70, // 71: users.UserService.ListTaxesForUser:input_type -> users.ListTaxesForUserRequest
-	71, // 72: users.UserService.ListTaxesForCountry:input_type -> users.ListTaxesForCountryRequest
-	73, // 73: users.UserService.UpdateTax:input_type -> users.UpdateTaxRequest
-	75, // 74: users.UserService.DeleteTax:input_type -> users.DeleteTaxRequest
-	6,  // 75: users.UserService.CreateUser:output_type -> users.CreateUserResponse
-	8,  // 76: users.UserService.GetUser:output_type -> users.GetUserResponse
-	10, // 77: users.UserService.UpdateUser:output_type -> users.UpdateUserResponse
-	2,  // 78: users.UserService.DeleteUser:output_type -> users.GenericResponse
-	14, // 79: users.UserService.GetUserAccessInfo:output_type -> users.GetUserAccessInfoResponse
-	14, // 80: users.UserService.GetUserAccessInfoByEmail:output_type -> users.GetUserAccessInfoResponse
-	17, // 81: users.UserService.ListAdminAccounts:output_type -> users.ListAdminAccountsResponse
-	2,  // 82: users.UserService.UpdateAdminAccount:output_type -> users.GenericResponse
-	2,  // 83: users.UserService.SuspendAdminAccount:output_type -> users.GenericResponse
-	2,  // 84: users.UserService.TouchUserLastLogin:output_type -> users.GenericResponse
-	23, // 85: users.UserService.CreateClient:output_type -> users.CreateClientResponse
-	25, // 86: users.UserService.GetClient:output_type -> users.GetClientResponse
-	28, // 87: users.UserService.ListClients:output_type -> users.ListClientsResponse
-	30, // 88: users.UserService.UpdateClient:output_type -> users.UpdateClientResponse
-	2,  // 89: users.UserService.ArchiveClient:output_type -> users.GenericResponse
-	34, // 90: users.UserService.CreateAddress:output_type -> users.CreateAddressResponse
-	36, // 91: users.UserService.GetAddress:output_type -> users.GetAddressResponse
-	38, // 92: users.UserService.ListAddresses:output_type -> users.ListAddressesResponse
-	40, // 93: users.UserService.UpdateAddress:output_type -> users.UpdateAddressResponse
-	2,  // 94: users.UserService.ArchiveAddress:output_type -> users.GenericResponse
-	44, // 95: users.UserService.CreateCountry:output_type -> users.CreateCountryResponse
-	46, // 96: users.UserService.GetCountry:output_type -> users.GetCountryResponse
-	48, // 97: users.UserService.ListCountries:output_type -> users.ListCountriesResponse
-	50, // 98: users.UserService.UpdateCountry:output_type -> users.UpdateCountryResponse
-	2,  // 99: users.UserService.DeleteCountry:output_type -> users.GenericResponse
-	54, // 100: users.UserService.CreateCountryGroup:output_type -> users.CreateCountryGroupResponse
-	56, // 101: users.UserService.GetCountryGroup:output_type -> users.GetCountryGroupResponse
-	58, // 102: users.UserService.ListCountryGroups:output_type -> users.ListCountryGroupsResponse
-	60, // 103: users.UserService.UpdateCountryGroup:output_type -> users.UpdateCountryGroupResponse
-	2,  // 104: users.UserService.DeleteCountryGroup:output_type -> users.GenericResponse
-	2,  // 105: users.UserService.AttachCountry:output_type -> users.GenericResponse
-	2,  // 106: users.UserService.DetachCountry:output_type -> users.GenericResponse
-	66, // 107: users.UserService.CreateTax:output_type -> users.CreateTaxResponse
-	68, // 108: users.UserService.GetTax:output_type -> users.GetTaxResponse
-	72, // 109: users.UserService.ListTaxes:output_type -> users.ListTaxesResponse
-	72, // 110: users.UserService.ListTaxesForUser:output_type -> users.ListTaxesResponse
-	72, // 111: users.UserService.ListTaxesForCountry:output_type -> users.ListTaxesResponse
-	74, // 112: users.UserService.UpdateTax:output_type -> users.UpdateTaxResponse
-	2,  // 113: users.UserService.DeleteTax:output_type -> users.GenericResponse
-	75, // [75:114] is the sub-list for method output_type
-	36, // [36:75] is the sub-list for method input_type
+	76, // 51: users.UserService.LinkClientUser:input_type -> users.LinkClientUserRequest
+	77, // 52: users.UserService.GetClientsByLinkedUser:input_type -> users.GetClientByLinkedUserRequest
+	33, // 53: users.UserService.CreateAddress:input_type -> users.CreateAddressRequest
+	35, // 54: users.UserService.GetAddress:input_type -> users.GetAddressRequest
+	37, // 55: users.UserService.ListAddresses:input_type -> users.ListAddressesRequest
+	39, // 56: users.UserService.UpdateAddress:input_type -> users.UpdateAddressRequest
+	41, // 57: users.UserService.ArchiveAddress:input_type -> users.ArchiveAddressRequest
+	43, // 58: users.UserService.CreateCountry:input_type -> users.CreateCountryRequest
+	45, // 59: users.UserService.GetCountry:input_type -> users.GetCountryRequest
+	47, // 60: users.UserService.ListCountries:input_type -> users.ListCountriesRequest
+	49, // 61: users.UserService.UpdateCountry:input_type -> users.UpdateCountryRequest
+	51, // 62: users.UserService.DeleteCountry:input_type -> users.DeleteCountryRequest
+	53, // 63: users.UserService.CreateCountryGroup:input_type -> users.CreateCountryGroupRequest
+	55, // 64: users.UserService.GetCountryGroup:input_type -> users.GetCountryGroupRequest
+	57, // 65: users.UserService.ListCountryGroups:input_type -> users.ListCountryGroupsRequest
+	59, // 66: users.UserService.UpdateCountryGroup:input_type -> users.UpdateCountryGroupRequest
+	61, // 67: users.UserService.DeleteCountryGroup:input_type -> users.DeleteCountryGroupRequest
+	62, // 68: users.UserService.AttachCountry:input_type -> users.AttachCountryRequest
+	63, // 69: users.UserService.DetachCountry:input_type -> users.DetachCountryRequest
+	65, // 70: users.UserService.CreateTax:input_type -> users.CreateTaxRequest
+	67, // 71: users.UserService.GetTax:input_type -> users.GetTaxRequest
+	69, // 72: users.UserService.ListTaxes:input_type -> users.ListTaxesRequest
+	70, // 73: users.UserService.ListTaxesForUser:input_type -> users.ListTaxesForUserRequest
+	71, // 74: users.UserService.ListTaxesForCountry:input_type -> users.ListTaxesForCountryRequest
+	73, // 75: users.UserService.UpdateTax:input_type -> users.UpdateTaxRequest
+	75, // 76: users.UserService.DeleteTax:input_type -> users.DeleteTaxRequest
+	6,  // 77: users.UserService.CreateUser:output_type -> users.CreateUserResponse
+	8,  // 78: users.UserService.GetUser:output_type -> users.GetUserResponse
+	10, // 79: users.UserService.UpdateUser:output_type -> users.UpdateUserResponse
+	2,  // 80: users.UserService.DeleteUser:output_type -> users.GenericResponse
+	14, // 81: users.UserService.GetUserAccessInfo:output_type -> users.GetUserAccessInfoResponse
+	14, // 82: users.UserService.GetUserAccessInfoByEmail:output_type -> users.GetUserAccessInfoResponse
+	17, // 83: users.UserService.ListAdminAccounts:output_type -> users.ListAdminAccountsResponse
+	2,  // 84: users.UserService.UpdateAdminAccount:output_type -> users.GenericResponse
+	2,  // 85: users.UserService.SuspendAdminAccount:output_type -> users.GenericResponse
+	2,  // 86: users.UserService.TouchUserLastLogin:output_type -> users.GenericResponse
+	23, // 87: users.UserService.CreateClient:output_type -> users.CreateClientResponse
+	25, // 88: users.UserService.GetClient:output_type -> users.GetClientResponse
+	28, // 89: users.UserService.ListClients:output_type -> users.ListClientsResponse
+	30, // 90: users.UserService.UpdateClient:output_type -> users.UpdateClientResponse
+	2,  // 91: users.UserService.ArchiveClient:output_type -> users.GenericResponse
+	2,  // 92: users.UserService.LinkClientUser:output_type -> users.GenericResponse
+	28, // 93: users.UserService.GetClientsByLinkedUser:output_type -> users.ListClientsResponse
+	34, // 94: users.UserService.CreateAddress:output_type -> users.CreateAddressResponse
+	36, // 95: users.UserService.GetAddress:output_type -> users.GetAddressResponse
+	38, // 96: users.UserService.ListAddresses:output_type -> users.ListAddressesResponse
+	40, // 97: users.UserService.UpdateAddress:output_type -> users.UpdateAddressResponse
+	2,  // 98: users.UserService.ArchiveAddress:output_type -> users.GenericResponse
+	44, // 99: users.UserService.CreateCountry:output_type -> users.CreateCountryResponse
+	46, // 100: users.UserService.GetCountry:output_type -> users.GetCountryResponse
+	48, // 101: users.UserService.ListCountries:output_type -> users.ListCountriesResponse
+	50, // 102: users.UserService.UpdateCountry:output_type -> users.UpdateCountryResponse
+	2,  // 103: users.UserService.DeleteCountry:output_type -> users.GenericResponse
+	54, // 104: users.UserService.CreateCountryGroup:output_type -> users.CreateCountryGroupResponse
+	56, // 105: users.UserService.GetCountryGroup:output_type -> users.GetCountryGroupResponse
+	58, // 106: users.UserService.ListCountryGroups:output_type -> users.ListCountryGroupsResponse
+	60, // 107: users.UserService.UpdateCountryGroup:output_type -> users.UpdateCountryGroupResponse
+	2,  // 108: users.UserService.DeleteCountryGroup:output_type -> users.GenericResponse
+	2,  // 109: users.UserService.AttachCountry:output_type -> users.GenericResponse
+	2,  // 110: users.UserService.DetachCountry:output_type -> users.GenericResponse
+	66, // 111: users.UserService.CreateTax:output_type -> users.CreateTaxResponse
+	68, // 112: users.UserService.GetTax:output_type -> users.GetTaxResponse
+	72, // 113: users.UserService.ListTaxes:output_type -> users.ListTaxesResponse
+	72, // 114: users.UserService.ListTaxesForUser:output_type -> users.ListTaxesResponse
+	72, // 115: users.UserService.ListTaxesForCountry:output_type -> users.ListTaxesResponse
+	74, // 116: users.UserService.UpdateTax:output_type -> users.UpdateTaxResponse
+	2,  // 117: users.UserService.DeleteTax:output_type -> users.GenericResponse
+	77, // [77:118] is the sub-list for method output_type
+	36, // [36:77] is the sub-list for method input_type
 	36, // [36:36] is the sub-list for extension type_name
 	36, // [36:36] is the sub-list for extension extendee
 	0,  // [0:36] is the sub-list for field type_name
@@ -5736,7 +5867,7 @@ func file_users_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_users_proto_rawDesc), len(file_users_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   74,
+			NumMessages:   76,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { PlusIcon } from "lucide-react";
+import { LinkIcon, MailIcon, PlusIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Combobox,
   ComboboxContent,
@@ -14,10 +16,22 @@ import {
   ComboboxList,
   ComboboxSeparator,
 } from "@/components/ui/combobox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toErrorProps } from "@/lib/api";
 import type { BackendAddress, BackendClient } from "@/types/backend";
 import AddressDialog from "@/components/address/address-dialog";
 import ClientDialog from "@/components/user/client/client-dialog";
+import { sendClientInvitation } from "@/lib/services/clients";
+import { toast } from "sonner";
 
 type QuoteStepBasicInfoProps = {
   projectName: string;
@@ -65,9 +79,13 @@ export default function QuoteStepBasicInfo({
   onClientAddressCreated,
 }: QuoteStepBasicInfoProps) {
   const t = useTranslations("quote.steps.basicInfo");
+  const tInvite = useTranslations("auth.invite");
+  const tCommon = useTranslations("common");
   const [addUserAddressOpen, setAddUserAddressOpen] = useState(false);
   const [addClientOpen, setAddClientOpen] = useState(false);
   const [addClientAddressOpen, setAddClientAddressOpen] = useState(false);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [inviting, setInviting] = useState(false);
 
   const hasNameError = !!nameErrors?.length;
   const hasClientError = !!clientErrors?.length;
@@ -212,14 +230,34 @@ export default function QuoteStepBasicInfo({
             <ComboboxList>
               {(client: BackendClient) => (
                 <ComboboxItem key={client.client_id} value={client}>
-                  {client.first_name} {client.last_name}
-                  {client.company ? ` — ${client.company}` : ""}
+                  <span className="flex items-center gap-2">
+                    {client.first_name} {client.last_name}
+                    {client.company ? ` — ${client.company}` : ""}
+                    {client.linked_user_id && (
+                      <Badge variant="secondary" className="gap-1 text-xs">
+                        <LinkIcon className="size-3" />
+                        {tInvite("alreadyLinkedBadge")}
+                      </Badge>
+                    )}
+                  </span>
                 </ComboboxItem>
               )}
             </ComboboxList>
           </ComboboxContent>
         </Combobox>
         <FieldError errors={toErrorProps(clientErrors)} />
+        {!isReadonly && selectedClient?.email && !selectedClient.linked_user_id && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-1 w-fit"
+            onClick={() => setInviteDialogOpen(true)}
+          >
+            <MailIcon className="size-3.5" />
+            {tInvite("sendButton")}
+          </Button>
+        )}
       </Field>
 
       <Field data-invalid={hasAddressError}>
@@ -275,6 +313,44 @@ export default function QuoteStepBasicInfo({
         </Combobox>
         <FieldError errors={toErrorProps(addressErrors)} />
       </Field>
+
+      <AlertDialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tInvite("sendConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {tInvite("sendConfirmDescription", { email: selectedClient?.email ?? "" })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={inviting}>
+              {tCommon("actions.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={inviting}
+              onClick={async () => {
+                if (!selectedClient) return;
+                setInviting(true);
+                try {
+                  const { ok, body } = await sendClientInvitation(selectedClient.client_id);
+                  if (ok && body.success) {
+                    toast.success(tInvite("sendSuccess"));
+                  } else {
+                    toast.error((body.message as string) ?? tInvite("sendError"));
+                  }
+                } catch {
+                  toast.error(tInvite("sendError"));
+                } finally {
+                  setInviting(false);
+                  setInviteDialogOpen(false);
+                }
+              }}
+            >
+              {inviting ? tCommon("actions.saving") : tInvite("sendConfirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AddressDialog
         ownerType="user"
