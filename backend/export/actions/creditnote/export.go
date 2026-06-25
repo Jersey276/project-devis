@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"unicode"
 
 	"project-devis-export/actions/codes"
 	"project-devis-export/actions/invoice/facturx"
+	"project-devis-export/internal/slug"
 	"project-devis-export/services/facturxpdf"
 	exportGrpc "project-devis-export/services/grpc"
 	invoicepb "project-devis-export/services/invoice"
@@ -79,35 +79,9 @@ func renderFacturx(ctx context.Context, gt pdfConverter, cn *invoicepb.CreditNot
 
 func buildFilename(cn *invoicepb.CreditNoteDetails) string {
 	if num := strings.TrimSpace(cn.GetCreditNoteNumber()); num != "" {
-		return fmt.Sprintf("avoir-%s.pdf", slugify(num))
+		return fmt.Sprintf("avoir-%s.pdf", slug.Slugify(num))
 	}
 	return fmt.Sprintf("avoir-%s.pdf", cn.GetCreditNoteId())
-}
-
-func slugify(s string) string {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return ""
-	}
-	var b strings.Builder
-	prevDash := false
-	for _, r := range s {
-		switch {
-		case unicode.IsLetter(r) || unicode.IsDigit(r):
-			b.WriteRune(r)
-			prevDash = false
-		case unicode.IsSpace(r) || r == '_' || r == '-':
-			if !prevDash && b.Len() > 0 {
-				b.WriteByte('-')
-				prevDash = true
-			}
-		}
-	}
-	out := b.String()
-	for len(out) > 0 && out[len(out)-1] == '-' {
-		out = out[:len(out)-1]
-	}
-	return out
 }
 
 func fail(code int32) *exportGrpc.ExportQuoteResponse {
