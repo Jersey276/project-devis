@@ -2,9 +2,7 @@ package services
 
 import (
 	"context"
-	"crypto/rand"
 	"database/sql"
-	"encoding/base64"
 	"errors"
 	"time"
 )
@@ -17,16 +15,8 @@ var (
 	ErrClientInvitationTokenUsed     = errors.New("client invitation token already used")
 )
 
-func generateClientInvitationToken() (string, error) {
-	buf := make([]byte, 32)
-	if _, err := rand.Read(buf); err != nil {
-		return "", err
-	}
-	return base64.RawURLEncoding.EncodeToString(buf), nil
-}
-
 func GenerateClientInvitationToken(ctx context.Context, db *sql.DB, clientID, providerID string) (string, error) {
-	rawToken, err := generateClientInvitationToken()
+	rawToken, err := generateRawToken()
 	if err != nil {
 		return "", err
 	}
