@@ -106,6 +106,31 @@ func InvoicesRoutes(r *gin.RouterGroup, usersClient users.UserServiceClient, quo
 	one.POST("/deposit", customerOnly, func(c *gin.Context) { DepositInvoice(c, client) })
 }
 
+// resolveCustomerQuotes resolves the linked provider and fetches the client's
+// quote IDs via the quote service. Returns (providerUserID, quoteIDs, true) on
+// success, or ("", nil, false) after writing an error response to c.
+// Must only be called when X-Client-Mode == "customer".
+func resolveCustomerQuotes(c *gin.Context, usersClient users.UserServiceClient, quoteClient quote.QuoteServiceClient) (string, []string, bool) {
+	linked := resolveMyClient(c, usersClient)
+	if linked == nil {
+		return "", nil, false
+	}
+	qResp, qErr := quoteClient.ListQuotes(c.Request.Context(), &quote.ListQuotesRequest{
+		UserId:   linked.UserId,
+		PageSize: 1000,
+		Filters:  &quote.QuoteFilters{ClientId: linked.ClientId},
+	})
+	if qErr != nil || !qResp.Success {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"success": false, "message": "Service devis indisponible."})
+		return "", nil, false
+	}
+	ids := make([]string, 0, len(qResp.Quotes))
+	for _, q := range qResp.Quotes {
+		ids = append(ids, q.QuoteId)
+	}
+	return linked.UserId, ids, true
+}
+
 // DenyCustomer returns a middleware that rejects requests made in customer mode.
 func DenyCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -140,23 +165,9 @@ func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient, usersClie
 	// database, so passing client_id directly as a filter would break (cross-DB subquery).
 	var customerQuoteIDs []string
 	if c.GetHeader("X-Client-Mode") == "customer" {
-		linked := resolveMyClient(c, usersClient)
-		if linked == nil {
+		var ok bool
+		if userID, customerQuoteIDs, ok = resolveCustomerQuotes(c, usersClient, quoteClient); !ok {
 			return
-		}
-		userID = linked.UserId
-		qResp, qErr := quoteClient.ListQuotes(c.Request.Context(), &quote.ListQuotesRequest{
-			UserId:   linked.UserId,
-			PageSize: 1000,
-			Filters:  &quote.QuoteFilters{ClientId: linked.ClientId},
-		})
-		if qErr != nil || !qResp.Success {
-			c.JSON(http.StatusServiceUnavailable, gin.H{"success": false, "message": "Service devis indisponible."})
-			return
-		}
-		customerQuoteIDs = make([]string, 0, len(qResp.Quotes))
-		for _, q := range qResp.Quotes {
-			customerQuoteIDs = append(customerQuoteIDs, q.QuoteId)
 		}
 		clientID = "" // ne pas passer client_id dans les filtres invoice
 	}
@@ -263,26 +274,17 @@ func GetInvoice(c *gin.Context, client invoice.InvoiceServiceClient, usersClient
 
 	// In customer mode, resolve the linked provider and prefetch the client's
 	// quote_ids. The invoice service has no access to the quotes database, so
-	// the old JOIN-based client_id check would fail cross-DB. Instead we fetch
-	// the invoice without a client_id restriction and verify ownership here.
+	// the old JOIN-based client_id check would fail cross-DB. Instead we verify
+	// ownership in the gateway after fetching the invoice.
 	if c.GetHeader("X-Client-Mode") == "customer" {
-		linked := resolveMyClient(c, usersClient)
-		if linked == nil {
+		var quoteIDs []string
+		var ok bool
+		if userID, quoteIDs, ok = resolveCustomerQuotes(c, usersClient, quoteClient); !ok {
 			return
 		}
-		userID = linked.UserId
-		qResp, qErr := quoteClient.ListQuotes(c.Request.Context(), &quote.ListQuotesRequest{
-			UserId:   linked.UserId,
-			PageSize: 1000,
-			Filters:  &quote.QuoteFilters{ClientId: linked.ClientId},
-		})
-		if qErr != nil || !qResp.Success {
-			c.JSON(http.StatusServiceUnavailable, gin.H{"success": false, "message": "Service devis indisponible."})
-			return
-		}
-		allowedQuoteIDs = make(map[string]struct{}, len(qResp.Quotes))
-		for _, q := range qResp.Quotes {
-			allowedQuoteIDs[q.QuoteId] = struct{}{}
+		allowedQuoteIDs = make(map[string]struct{}, len(quoteIDs))
+		for _, id := range quoteIDs {
+			allowedQuoteIDs[id] = struct{}{}
 		}
 	}
 

@@ -136,7 +136,7 @@ export async function fetchWithRefresh(
   return res;
 }
 
-function readUserModeCookie(): string | undefined {
+export function readUserModeCookie(): string | undefined {
   if (typeof document === "undefined") return undefined;
   const match = document.cookie.split("; ").find((c) => c.startsWith("user-mode="));
   return match?.split("=")[1];
