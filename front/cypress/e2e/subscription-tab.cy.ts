@@ -125,7 +125,7 @@ describe("Profile — Subscription tab", () => {
       statusCode: 200,
       body: {
         success: true,
-        client_secret: "pi_test_xxx_secret",
+        client_secret: "pi_test_abc123_secret_def456xyz",
         stripe_subscription_id: "sub_test_123",
       },
     }).as("createIntent");

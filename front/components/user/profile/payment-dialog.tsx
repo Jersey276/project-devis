@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Component, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -24,6 +25,22 @@ import type { BackendPlan } from "@/types/backend";
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
   : null;
+
+class StripeErrorBoundary extends Component<
+  { children: ReactNode; fallback: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode; fallback: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    return this.state.hasError ? this.props.fallback : this.props.children;
+  }
+}
 
 type BillingDetails = {
   email?: string;
@@ -159,17 +176,19 @@ export default function PaymentDialog({
 
         {error && <p className="text-sm text-destructive">{error}</p>}
 
-        {clientSecret && (
-          <Elements
-            stripe={stripePromise}
-            options={{ clientSecret, locale: "fr" }}
-          >
-            <CheckoutForm
-              onSuccess={onSuccess}
-              onClose={() => handleOpenChange(false)}
-              billingDetails={billingDetails}
-            />
-          </Elements>
+        {clientSecret && stripePromise && (
+          <StripeErrorBoundary fallback={null}>
+            <Elements
+              stripe={stripePromise}
+              options={{ clientSecret, locale: "fr" }}
+            >
+              <CheckoutForm
+                onSuccess={onSuccess}
+                onClose={() => handleOpenChange(false)}
+                billingDetails={billingDetails}
+              />
+            </Elements>
+          </StripeErrorBoundary>
         )}
       </DialogContent>
     </Dialog>

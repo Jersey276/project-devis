@@ -220,11 +220,12 @@ describe("Quote — customer mode", () => {
       });
     });
 
-    it("le bouton Commentaires est visible en mode client", () => {
+    it("le bouton Commentaires par ligne est visible en mode client", () => {
       cy.visitAs("customer", "/quote/q-1");
       cy.wait("@getQuote");
 
-      cy.contains("button", "Commentaires").should("be.visible");
+      cy.get("[data-step-tab='1']").click();
+      cy.get("[aria-label='Commentaires de la ligne']").should("be.visible");
     });
 
     it("ouvre la sidebar de commentaires depuis une ligne en mode client", () => {

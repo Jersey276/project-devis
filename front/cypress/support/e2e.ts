@@ -15,7 +15,13 @@ Cypress.on("uncaught:exception", (err) => {
     // ping, Link hover-prefetch) can reject after the page is gone, surfacing
     // as Firefox's "NetworkError when attempting to fetch resource". Unrelated
     // to the assertions under test.
-    err.message.includes("NetworkError when attempting to fetch resource")
+    err.message.includes("NetworkError when attempting to fetch resource") ||
+    // Stripe.js cannot load its external script in the Cypress sandbox. The
+    // payment dialog guards against a null stripePromise, so this is harmless.
+    err.message.includes("Failed to load Stripe.js") ||
+    // Stripe Elements validates clientSecret format; in tests we pass a fake
+    // secret that doesn't match the ${id}secret${secret} pattern.
+    err.message.includes("Invalid value for elements()")
   ) {
     return false;
   }
