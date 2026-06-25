@@ -5,39 +5,28 @@ import (
 	"database/sql"
 
 	"project-devis-template/actions/codes"
+	"project-devis-template/actions/sqlutil"
 	templateGrpc "project-devis-template/services/grpc"
 
 	"github.com/google/uuid"
 )
 
-const (
-	TypeQuoteDocument  = "quote_document"
-	TypeQuoteLine      = "quote_line"
-	TypeDocumentDesign = "document_design"
-)
-
-var validTypes = map[string]bool{
-	TypeQuoteDocument:  true,
-	TypeQuoteLine:      true,
-	TypeDocumentDesign: true,
-}
-
 func Create(ctx context.Context, db *sql.DB, req *templateGrpc.CreateTemplateRequest) (*templateGrpc.CreateTemplateResponse, error) {
 	var fieldErrors []*templateGrpc.ValidationError
 
 	if req.UserId == "" {
-		fieldErrors = append(fieldErrors, &templateGrpc.ValidationError{Field: "user_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("user_id"))
 	}
 	if req.Name == "" {
-		fieldErrors = append(fieldErrors, &templateGrpc.ValidationError{Field: "name", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("name"))
 	}
-	if !validTypes[req.TemplateType] {
-		fieldErrors = append(fieldErrors, &templateGrpc.ValidationError{Field: "template_type", Message: "Type de template invalide."})
+	if !sqlutil.ValidateTemplateType(req.TemplateType) {
+		fieldErrors = append(fieldErrors, sqlutil.Invalid("template_type", "Type de template invalide."))
 	}
 
 	if len(fieldErrors) > 0 {
 		code := codes.InvalidInput
-		if !validTypes[req.TemplateType] && req.UserId != "" && req.Name != "" {
+		if !sqlutil.ValidateTemplateType(req.TemplateType) && req.UserId != "" && req.Name != "" {
 			code = codes.InvalidTemplateType
 		}
 		return &templateGrpc.CreateTemplateResponse{Success: false, Code: code, ValidationErrors: fieldErrors}, nil

@@ -3,33 +3,10 @@ package actions
 import (
 	"context"
 	"database/sql"
-	"net/mail"
 	"strings"
 
 	authGrpc "project-devis-auth/services/grpc"
 )
-
-// validateOAuthIdentity normalizes and validates an OAuth identity payload
-// shared by OAuthLogin and LinkOAuthIdentity. It returns the canonical
-// provider, provider_user_id and email, plus a response code: CodeSuccess when
-// valid, CodeInvalidInput for a bad provider/sub/email, or
-// CodeOAuthEmailNotVerified when the provider did not attest the email.
-func validateOAuthIdentity(rawProvider, rawProviderUserID, rawEmail string, emailVerified bool) (provider, providerUserID, email string, code int32) {
-	provider = strings.ToLower(strings.TrimSpace(rawProvider))
-	providerUserID = strings.TrimSpace(rawProviderUserID)
-	email = strings.ToLower(strings.TrimSpace(rawEmail))
-
-	if !allowedOAuthProviders[provider] || providerUserID == "" {
-		return provider, providerUserID, email, CodeInvalidInput
-	}
-	if _, err := mail.ParseAddress(email); err != nil {
-		return provider, providerUserID, email, CodeInvalidInput
-	}
-	if !emailVerified {
-		return provider, providerUserID, email, CodeOAuthEmailNotVerified
-	}
-	return provider, providerUserID, email, CodeSuccess
-}
 
 // LinkOAuthIdentity attaches a verified OAuth identity to an already
 // authenticated account. Unlike OAuthLogin it never provisions a user and never

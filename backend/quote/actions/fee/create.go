@@ -11,12 +11,12 @@ import (
 )
 
 func Create(ctx context.Context, db *sql.DB, req *quoteGrpc.CreateFeeRequest) (*quoteGrpc.CreateFeeResponse, error) {
-	fieldErrors := validateInput(req.Category, req.Name)
+	fieldErrors := sqlutil.ValidateFeeInput(req.Category, req.Name)
 	if req.UserId == "" {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "user_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("user_id"))
 	}
 	if req.UnitPrice < 0 {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "unit_price", Message: "Doit être positif ou nul."})
+		fieldErrors = append(fieldErrors, sqlutil.NonNegative("unit_price"))
 	}
 	if len(fieldErrors) > 0 {
 		return &quoteGrpc.CreateFeeResponse{Success: false, Code: codes.InvalidInput, ValidationErrors: fieldErrors}, nil

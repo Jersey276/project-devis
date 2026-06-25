@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-)
 
-const (
-	TypeSimple   = "simple"
-	TypeMultiple = "multiple"
+	"project-devis-quote/actions/sqlutil"
 )
 
 type lineDataPayload struct {
@@ -25,9 +22,9 @@ type lineDataPayload struct {
 // Returns the canonical JSON (defaulting Simple to "{}") if valid.
 func ValidateData(lineType, data string) (string, error) {
 	switch lineType {
-	case TypeSimple:
+	case sqlutil.TypeSimple:
 		return validateSimple(data)
-	case TypeMultiple:
+	case sqlutil.TypeMultiple:
 		return validateMultiple(data)
 	default:
 		return "", fmt.Errorf("unknown line type %q", lineType)

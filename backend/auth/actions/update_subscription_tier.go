@@ -6,12 +6,6 @@ import (
 	authGrpc "project-devis-auth/services/grpc"
 )
 
-var validTiers = map[string]bool{
-	"free":       true,
-	"pro":        true,
-	"enterprise": true,
-}
-
 func (s *Server) UpdateSubscriptionTier(ctx context.Context, req *authGrpc.UpdateSubscriptionTierRequest) (*authGrpc.GenericResponse, error) {
 	if !validTiers[req.GetTier()] {
 		return &authGrpc.GenericResponse{Success: false, Code: CodeInvalidInput}, nil

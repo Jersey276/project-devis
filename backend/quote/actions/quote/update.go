@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"project-devis-quote/actions/codes"
+	"project-devis-quote/actions/sqlutil"
 	quoteGrpc "project-devis-quote/services/grpc"
 )
 
@@ -12,13 +13,13 @@ func Update(ctx context.Context, db *sql.DB, req *quoteGrpc.UpdateQuoteRequest) 
 	var fieldErrors []*quoteGrpc.ValidationError
 
 	if req.QuoteId == "" {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "quote_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("quote_id"))
 	}
 	if req.UserId == "" {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "user_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("user_id"))
 	}
 	if req.Name == "" {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "name", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("name"))
 	}
 
 	if len(fieldErrors) > 0 {

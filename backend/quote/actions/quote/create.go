@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"project-devis-quote/actions/codes"
+	"project-devis-quote/actions/sqlutil"
 	quoteGrpc "project-devis-quote/services/grpc"
 )
 
@@ -13,19 +14,19 @@ func Create(ctx context.Context, db *sql.DB, req *quoteGrpc.CreateQuoteRequest) 
 	var fieldErrors []*quoteGrpc.ValidationError
 
 	if req.UserId == "" {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "user_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("user_id"))
 	}
 	if req.Name == "" {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "name", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("name"))
 	}
 	if req.ClientId == "" {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "client_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("client_id"))
 	}
 	if req.AddressId == 0 {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "address_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("address_id"))
 	}
 	if req.UserAddressId == 0 {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "user_address_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("user_address_id"))
 	}
 
 	if len(fieldErrors) > 0 {

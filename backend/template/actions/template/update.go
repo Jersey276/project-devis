@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"project-devis-template/actions/codes"
+	"project-devis-template/actions/sqlutil"
 	templateGrpc "project-devis-template/services/grpc"
 )
 
@@ -16,7 +17,7 @@ func Update(ctx context.Context, db *sql.DB, req *templateGrpc.UpdateTemplateReq
 		        payload_version=CASE WHEN $4 > 0 THEN $4 ELSE payload_version END,
 		        updated_at=now()
 		 WHERE template_id=$5 AND user_id=$6 AND archived_at IS NULL`,
-		req.Name, req.TargetResource, nullableStr(req.Payload), req.PayloadVersion,
+		req.Name, req.TargetResource, sqlutil.NullableStr(req.Payload), req.PayloadVersion,
 		req.TemplateId, req.UserId,
 	)
 	if err != nil {
@@ -30,9 +31,3 @@ func Update(ctx context.Context, db *sql.DB, req *templateGrpc.UpdateTemplateReq
 	return &templateGrpc.UpdateTemplateResponse{Success: true, Code: codes.Success}, nil
 }
 
-func nullableStr(s string) interface{} {
-	if s == "" {
-		return nil
-	}
-	return s
-}
