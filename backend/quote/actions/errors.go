@@ -9,6 +9,7 @@ const (
 	CodeInvalidInput    = codes.InvalidInput
 	CodeInvalidLineType = codes.InvalidLineType
 	CodeInvalidLineData = codes.InvalidLineData
-	CodeQuoteFinalized  = codes.QuoteFinalized
-	CodeInternalError   = codes.InternalError
+	CodeQuoteFinalized   = codes.QuoteFinalized
+	CodeCommentForbidden = codes.CommentForbidden
+	CodeInternalError    = codes.InternalError
 )

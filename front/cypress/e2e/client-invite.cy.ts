@@ -103,6 +103,32 @@ describe("Client invitation", () => {
       cy.wait("@acceptNew");
       cy.location("pathname").should("eq", "/client-profile");
     });
+
+    it("se connecte et lie via l'onglet 'J'ai déjà un compte'", () => {
+      cy.intercept("POST", "/api/auth/invite/accept", {
+        statusCode: 200,
+        body: { success: true, token: "new-token", refresh_token: "refresh" },
+      }).as("acceptLogin");
+      cy.intercept("GET", "/api/users/clients/me", {
+        statusCode: 200,
+        body: { success: true, clients: [clientLinked] },
+      }).as("getMyClient");
+      cy.intercept("GET", /^\/api\/users\/addresses(\?.*)?$/, {
+        statusCode: 200,
+        body: { success: true, addresses: [] },
+      });
+
+      cy.visit("/accept-invitation?token=abc123");
+      cy.wait("@authMe");
+
+      cy.contains("J'ai déjà un compte").click();
+      cy.get("#login-email").type("existing@example.com");
+      cy.get("#login-password").type("Password1!");
+      cy.contains("button", "Se connecter et lier").click();
+
+      cy.wait("@acceptLogin");
+      cy.location("pathname").should("eq", "/client-profile");
+    });
   });
 
   describe("/accept-invitation — authenticated user", () => {
@@ -189,6 +215,132 @@ describe("Client invitation", () => {
       cy.visitAs("customer", "/client-profile");
       cy.wait("@getMyClientNotFound");
       cy.contains("Votre compte n'est pas encore lié").should("be.visible");
+    });
+
+    it("affiche les erreurs de validation 422 lors de la sauvegarde", () => {
+      cy.intercept("PUT", "/api/users/clients/me", {
+        statusCode: 422,
+        body: {
+          success: false,
+          fields: [
+            { field: "first_name", message: "Prénom requis." },
+          ],
+        },
+      }).as("updateMyClientError");
+
+      cy.visitAs("customer", "/client-profile");
+      cy.wait("@getMyClient");
+      cy.contains("button", "Enregistrer").click();
+      cy.wait("@updateMyClientError");
+
+      cy.contains("Prénom requis.").should("be.visible");
+    });
+  });
+
+  describe("/client-profile — onglet Adresses", () => {
+    const address = {
+      id: 5,
+      owner_type: "client",
+      owner_id: clientLinked.client_id,
+      name: "Bureau",
+      street: "5 avenue Foch",
+      additional_street: "",
+      city: "Lyon",
+      zip_code: "69001",
+      country_id: 1,
+      email: "",
+      phone: "",
+      archived: false,
+    };
+
+    beforeEach(() => {
+      cy.login();
+      cy.intercept("GET", "/api/users/clients/me", {
+        statusCode: 200,
+        body: { success: true, clients: [clientLinked] },
+      }).as("getMyClient");
+      cy.intercept("GET", /^\/api\/users\/addresses(\?.*)?$/, {
+        statusCode: 200,
+        body: { success: true, addresses: [address] },
+      }).as("listAddresses");
+      cy.intercept("GET", "/api/users/countries**", {
+        statusCode: 200,
+        body: { success: true, countries: [{ id: 1, code: "FR", name: "France" }] },
+      });
+    });
+
+    it("affiche la liste des adresses dans l'onglet Adresses", () => {
+      cy.visitAs("customer", "/client-profile");
+      cy.wait("@getMyClient");
+
+      cy.contains("Adresses").click();
+      cy.wait("@listAddresses");
+
+      cy.contains("5 avenue Foch").should("be.visible");
+    });
+
+    it("ouvre la dialog d'ajout d'adresse", () => {
+      cy.visitAs("customer", "/client-profile");
+      cy.wait("@getMyClient");
+
+      cy.contains("Adresses").click();
+      cy.wait("@listAddresses");
+
+      cy.contains("button", "Ajouter une adresse").click();
+      cy.contains("Nouvelle adresse").should("be.visible");
+    });
+
+    it("ajoute une adresse et rafraîchit la liste", () => {
+      const newAddress = { ...address, id: 6, name: "Domicile", street: "12 rue Molière" };
+      cy.intercept("POST", /\/api\/users\/addresses/, {
+        statusCode: 201,
+        body: { success: true, address: newAddress },
+      }).as("createAddress");
+      cy.intercept("GET", /^\/api\/users\/addresses(\?.*)?$/, {
+        statusCode: 200,
+        body: { success: true, addresses: [address, newAddress] },
+      }).as("listAddressesAfter");
+
+      cy.visitAs("customer", "/client-profile");
+      cy.wait("@getMyClient");
+
+      cy.contains("Adresses").click();
+      cy.wait("@listAddresses");
+
+      cy.contains("button", "Ajouter une adresse").click();
+      cy.get("input[name='name']").type("Domicile");
+      cy.get("input[name='street']").type("12 rue Molière");
+      cy.get("input[name='city']").type("Paris");
+      cy.get("input[name='zip_code']").type("75001");
+      cy.contains("button", "Enregistrer").click();
+
+      cy.wait("@createAddress");
+      cy.contains("Adresse ajoutée.").should("be.visible");
+    });
+
+    it("supprime une adresse après confirmation", () => {
+      cy.intercept("PUT", /\/api\/users\/addresses\/5\/archive/, {
+        statusCode: 200,
+        body: { success: true },
+      }).as("deleteAddress");
+
+      cy.visitAs("customer", "/client-profile");
+      cy.wait("@getMyClient");
+
+      cy.contains("Adresses").click();
+      cy.wait("@listAddresses");
+
+      cy.contains("tr", "5 avenue Foch").within(() => {
+        cy.get("button[aria-label='Actions']").click();
+      });
+      cy.contains("Supprimer").click();
+      cy.contains("Supprimer cette adresse ?").should("be.visible");
+      cy.get("[role='alertdialog']").within(() => {
+        cy.contains("button", "Supprimer").click();
+      });
+
+      cy.wait("@deleteAddress");
+      cy.contains("Adresse supprimée.").should("be.visible");
     });
   });
 });

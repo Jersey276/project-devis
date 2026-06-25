@@ -49,9 +49,21 @@ Cypress.Commands.add("login", (token = "fake-token") => {
     statusCode: 200,
     body: { success: true, quotes: [] },
   });
+  cy.intercept("GET", "/api/users/taxes/available**", {
+    statusCode: 200,
+    body: { success: true, taxes: [] },
+  });
   cy.intercept("GET", /^\/api\/users\/clients(\?.*)?$/, {
     statusCode: 200,
     body: { success: true, clients: [] },
+  });
+  cy.intercept("GET", "/api/users/clients/me", {
+    statusCode: 200,
+    body: { success: true, clients: [] },
+  });
+  cy.intercept("GET", /\/api\/users\/clients\/me\/addresses/, {
+    statusCode: 200,
+    body: { success: true, addresses: [] },
   });
   cy.intercept("GET", /^\/api\/users\/addresses(\?.*)?$/, {
     statusCode: 200,

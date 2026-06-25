@@ -18,11 +18,11 @@ func TestListSchedules_ByQuote_Success(t *testing.T) {
 		WithArgs("user-1", "quote-1").
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(2))
 
-	mock.ExpectQuery(`SELECT schedule_id, quote_id, status, name, start_month, duration_months\s+FROM schedules WHERE user_id = \$1 AND quote_id = \$2 ORDER BY created_at DESC LIMIT \$3 OFFSET \$4`).
+	mock.ExpectQuery(`SELECT schedule_id, quote_id, status, name, start_month, duration_months, COALESCE\(client_id, ''\)\s+FROM schedules WHERE user_id = \$1 AND quote_id = \$2 ORDER BY created_at DESC LIMIT \$3 OFFSET \$4`).
 		WithArgs("user-1", "quote-1", int32(20), int32(0)).
-		WillReturnRows(sqlmock.NewRows([]string{"schedule_id", "quote_id", "status", "name", "start_month", "duration_months"}).
-			AddRow("schedule-2", "quote-1", actions.StatusNegotiate, "Plan B", time.Date(2026, time.July, 1, 0, 0, 0, 0, time.UTC), int32(4)).
-			AddRow("schedule-1", "quote-1", actions.StatusDraft, "Plan A", time.Date(2026, time.June, 1, 0, 0, 0, 0, time.UTC), int32(3)))
+		WillReturnRows(sqlmock.NewRows([]string{"schedule_id", "quote_id", "status", "name", "start_month", "duration_months", "client_id"}).
+			AddRow("schedule-2", "quote-1", actions.StatusNegotiate, "Plan B", time.Date(2026, time.July, 1, 0, 0, 0, 0, time.UTC), int32(4), "").
+			AddRow("schedule-1", "quote-1", actions.StatusDraft, "Plan A", time.Date(2026, time.June, 1, 0, 0, 0, 0, time.UTC), int32(3), ""))
 
 	resp, err := srv.ListSchedules(context.Background(), &scheduleGrpc.ListSchedulesRequest{
 		UserId:  "user-1",
@@ -58,10 +58,10 @@ func TestListSchedules_ByUser_Success(t *testing.T) {
 		WithArgs("user-1").
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
-	mock.ExpectQuery(`SELECT schedule_id, quote_id, status, name, start_month, duration_months\s+FROM schedules WHERE user_id = \$1 ORDER BY created_at DESC LIMIT \$2 OFFSET \$3`).
+	mock.ExpectQuery(`SELECT schedule_id, quote_id, status, name, start_month, duration_months, COALESCE\(client_id, ''\)\s+FROM schedules WHERE user_id = \$1 ORDER BY created_at DESC LIMIT \$2 OFFSET \$3`).
 		WithArgs("user-1", int32(20), int32(0)).
-		WillReturnRows(sqlmock.NewRows([]string{"schedule_id", "quote_id", "status", "name", "start_month", "duration_months"}).
-			AddRow("schedule-9", "quote-9", actions.StatusValid, "Plan valide", time.Date(2026, time.September, 1, 0, 0, 0, 0, time.UTC), int32(2)))
+		WillReturnRows(sqlmock.NewRows([]string{"schedule_id", "quote_id", "status", "name", "start_month", "duration_months", "client_id"}).
+			AddRow("schedule-9", "quote-9", actions.StatusValid, "Plan valide", time.Date(2026, time.September, 1, 0, 0, 0, 0, time.UTC), int32(2), ""))
 
 	resp, err := srv.ListSchedules(context.Background(), &scheduleGrpc.ListSchedulesRequest{UserId: "user-1"})
 	if err != nil {
