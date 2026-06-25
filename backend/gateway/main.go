@@ -8,6 +8,7 @@ import (
 	"gateway/controllers"
 	"gateway/middleware"
 	"gateway/services"
+	quote "gateway/quote"
 	users "gateway/users"
 
 	"github.com/gin-gonic/gin"
@@ -66,7 +67,7 @@ func setupRouter(auditLogger *middleware.AuditLogger, auditClient audit.AuditSer
 
 	exportGrp := audited.Group("/export")
 	exportGrp.Use(middleware.AuthRequired())
-	controllers.ExportRoutes(exportGrp)
+	controllers.ExportRoutes(exportGrp, usersClient)
 
 	templates := audited.Group("/templates")
 	templates.Use(middleware.AuthRequired())
@@ -88,10 +89,20 @@ func setupRouter(auditLogger *middleware.AuditLogger, auditClient audit.AuditSer
 	projects.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionSchedules))
 	controllers.ProjectsRoutes(projects)
 
+	quoteAddress := os.Getenv("QUOTE_SERVICE_ADDRESS")
+	if quoteAddress == "" {
+		quoteAddress = "localhost:50053"
+	}
+	quoteConn, err := grpc.NewClient(quoteAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic("failed to connect to quote gRPC server: " + err.Error())
+	}
+	quoteClient := quote.NewQuoteServiceClient(quoteConn)
+
 	invoices := audited.Group("/invoices")
 	invoices.Use(middleware.AuthRequired())
 	invoices.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionInvoices))
-	controllers.InvoicesRoutes(invoices, usersClient)
+	controllers.InvoicesRoutes(invoices, usersClient, quoteClient)
 
 	creditNotes := audited.Group("/credit-notes")
 	creditNotes.Use(middleware.AuthRequired())

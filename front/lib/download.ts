@@ -1,12 +1,25 @@
 import { fetchWithRefresh } from "./api";
 
+function readUserModeCookie(): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  const match = document.cookie.split("; ").find((c) => c.startsWith("user-mode="));
+  return match?.split("=")[1];
+}
+
 export async function downloadBlob(
   path: string,
   fallbackFilename: string,
   accept = "application/pdf",
 ): Promise<void> {
+  const clientMode = readUserModeCookie() === "customer";
   const res = await fetchWithRefresh(() =>
-    fetch(path, { credentials: "include", headers: { Accept: accept } }),
+    fetch(path, {
+      credentials: "include",
+      headers: {
+        Accept: accept,
+        ...(clientMode ? { "X-Client-Mode": "customer" } : {}),
+      },
+    }),
   );
   if (!res) return;
   if (!res.ok) throw new Error(`HTTP ${res.status}`);

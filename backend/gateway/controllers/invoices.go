@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	invoice "gateway/invoice"
+	quote "gateway/quote"
 	users "gateway/users"
 
 	"github.com/gin-gonic/gin"
@@ -72,7 +73,7 @@ var invoiceErrors = &serviceErrors{
 }
 
 // InvoicesRoutes wires the /invoices API group against the invoice gRPC service.
-func InvoicesRoutes(r *gin.RouterGroup, usersClient users.UserServiceClient) {
+func InvoicesRoutes(r *gin.RouterGroup, usersClient users.UserServiceClient, quoteClient quote.QuoteServiceClient) {
 	address := os.Getenv("INVOICE_SERVICE_ADDRESS")
 	if address == "" {
 		address = "localhost:50059"
@@ -85,7 +86,7 @@ func InvoicesRoutes(r *gin.RouterGroup, usersClient users.UserServiceClient) {
 
 	customerOnly := DenyCustomer()
 
-	r.GET("", func(c *gin.Context) { ListInvoices(c, client, usersClient) })
+	r.GET("", func(c *gin.Context) { ListInvoices(c, client, usersClient, quoteClient) })
 	r.GET("/verify-chain", customerOnly, func(c *gin.Context) { VerifyChain(c, client) })
 	r.GET("/oss-status", customerOnly, func(c *gin.Context) { GetOSSThresholdStatus(c, client) })
 	// E-reporting (B5/C5): period aggregates, not tied to one invoice.
@@ -95,7 +96,7 @@ func InvoicesRoutes(r *gin.RouterGroup, usersClient users.UserServiceClient) {
 	r.POST("/from-quote", customerOnly, func(c *gin.Context) { CreateInvoiceFromQuote(c, client) })
 
 	one := r.Group("/:id")
-	one.GET("", func(c *gin.Context) { GetInvoice(c, client, usersClient) })
+	one.GET("", func(c *gin.Context) { GetInvoice(c, client, usersClient, quoteClient) })
 	one.DELETE("", customerOnly, func(c *gin.Context) { DeleteDraftInvoice(c, client) })
 	one.POST("/issue", customerOnly, func(c *gin.Context) { IssueInvoice(c, client) })
 	one.POST("/paid", customerOnly, func(c *gin.Context) { MarkInvoicePaid(c, client) })
@@ -119,7 +120,7 @@ func DenyCustomer() gin.HandlerFunc {
 	}
 }
 
-func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient, usersClient users.UserServiceClient) {
+func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient, usersClient users.UserServiceClient, quoteClient quote.QuoteServiceClient) {
 	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 32)
 	pageSize, _ := strconv.ParseInt(c.DefaultQuery("page_size", "20"), 10, 32)
 
@@ -131,17 +132,33 @@ func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient, usersClie
 		lifecycleStatuses = strings.Split(raw, ",")
 	}
 
-	// In customer mode, resolve the linked provider and force client_id so the
-	// frontend cannot list another client's invoices by manipulating query params.
 	userID := userIDFromCtx(c)
 	clientID := c.Query("client_id")
+
+	// In customer mode, resolve the linked provider and fetch quote_ids for that
+	// client via the quote service. The invoice service has no access to the quotes
+	// database, so passing client_id directly as a filter would break (cross-DB subquery).
+	var customerQuoteIDs []string
 	if c.GetHeader("X-Client-Mode") == "customer" {
 		linked := resolveMyClient(c, usersClient)
 		if linked == nil {
 			return
 		}
 		userID = linked.UserId
-		clientID = linked.ClientId
+		qResp, qErr := quoteClient.ListQuotes(c.Request.Context(), &quote.ListQuotesRequest{
+			UserId:   linked.UserId,
+			PageSize: 1000,
+			Filters:  &quote.QuoteFilters{ClientId: linked.ClientId},
+		})
+		if qErr != nil || !qResp.Success {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"success": false, "message": "Service devis indisponible."})
+			return
+		}
+		customerQuoteIDs = make([]string, 0, len(qResp.Quotes))
+		for _, q := range qResp.Quotes {
+			customerQuoteIDs = append(customerQuoteIDs, q.QuoteId)
+		}
+		clientID = "" // ne pas passer client_id dans les filtres invoice
 	}
 
 	resp, err := client.ListInvoices(c.Request.Context(), &invoice.ListInvoicesRequest{
@@ -160,6 +177,7 @@ func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient, usersClie
 			DueTo:             c.Query("due_to"),
 			ClientId:          clientID,
 			QuoteIdFilter:     c.Query("quote_id_filter"),
+			QuoteIds:          customerQuoteIDs,
 		},
 	})
 	if err != nil {
@@ -239,24 +257,38 @@ func IssueInvoice(c *gin.Context, client invoice.InvoiceServiceClient) {
 	replyCreate(c, resp, err)
 }
 
-func GetInvoice(c *gin.Context, client invoice.InvoiceServiceClient, usersClient users.UserServiceClient) {
-	// In customer mode, resolve the linked provider and pass client_id so the
-	// service can verify the invoice belongs to that client.
+func GetInvoice(c *gin.Context, client invoice.InvoiceServiceClient, usersClient users.UserServiceClient, quoteClient quote.QuoteServiceClient) {
 	userID := userIDFromCtx(c)
-	clientID := ""
+	var allowedQuoteIDs map[string]struct{}
+
+	// In customer mode, resolve the linked provider and prefetch the client's
+	// quote_ids. The invoice service has no access to the quotes database, so
+	// the old JOIN-based client_id check would fail cross-DB. Instead we fetch
+	// the invoice without a client_id restriction and verify ownership here.
 	if c.GetHeader("X-Client-Mode") == "customer" {
 		linked := resolveMyClient(c, usersClient)
 		if linked == nil {
 			return
 		}
 		userID = linked.UserId
-		clientID = linked.ClientId
+		qResp, qErr := quoteClient.ListQuotes(c.Request.Context(), &quote.ListQuotesRequest{
+			UserId:   linked.UserId,
+			PageSize: 1000,
+			Filters:  &quote.QuoteFilters{ClientId: linked.ClientId},
+		})
+		if qErr != nil || !qResp.Success {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"success": false, "message": "Service devis indisponible."})
+			return
+		}
+		allowedQuoteIDs = make(map[string]struct{}, len(qResp.Quotes))
+		for _, q := range qResp.Quotes {
+			allowedQuoteIDs[q.QuoteId] = struct{}{}
+		}
 	}
 
 	resp, err := client.GetInvoice(c.Request.Context(), &invoice.GetInvoiceRequest{
 		InvoiceId: c.Param("id"),
 		UserId:    userID,
-		ClientId:  clientID,
 	})
 	if err != nil {
 		invoiceErrors.unavailable(c)
@@ -265,6 +297,13 @@ func GetInvoice(c *gin.Context, client invoice.InvoiceServiceClient, usersClient
 	if !resp.Success {
 		invoiceErrors.reply(c, resp.Code)
 		return
+	}
+	// Customer ownership check: verify the invoice's quote belongs to the client.
+	if allowedQuoteIDs != nil {
+		if _, ok := allowedQuoteIDs[resp.Invoice.GetQuoteId()]; !ok {
+			invoiceErrors.reply(c, InvoiceCodeNotFound)
+			return
+		}
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "invoice": invoiceDetailsToJSON(resp.Invoice)})
 }

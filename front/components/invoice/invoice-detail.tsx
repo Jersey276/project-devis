@@ -310,54 +310,60 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
           <LinkedCreditNotes invoiceId={invoiceId} refreshKey={creditRefresh} />
         ) : null}
 
-        {isIssued ? (
+        {isIssued && !isCustomer ? (
           <LifecycleTimeline invoiceId={invoiceId} refreshKey={lifecycleRefresh} />
         ) : null}
       </CardContent>
 
-      <CreateCreditNoteDialog
-        open={creditDialogOpen}
-        onOpenChange={setCreditDialogOpen}
-        invoice={invoice}
-        onCreated={() => {
-          setCreditRefresh((n) => n + 1);
-          void load();
-        }}
-      />
+      {!isCustomer ? (
+        <CreateCreditNoteDialog
+          open={creditDialogOpen}
+          onOpenChange={setCreditDialogOpen}
+          invoice={invoice}
+          onCreated={() => {
+            setCreditRefresh((n) => n + 1);
+            void load();
+          }}
+        />
+      ) : null}
 
-      <AdvanceLifecycleDialog
-        open={lifecycleDialogOpen}
-        onOpenChange={setLifecycleDialogOpen}
-        invoiceId={invoiceId}
-        current={invoice.lifecycle_status}
-        onApplied={() => {
-          setLifecycleRefresh((n) => n + 1);
-          void load();
-        }}
-      />
+      {!isCustomer ? (
+        <AdvanceLifecycleDialog
+          open={lifecycleDialogOpen}
+          onOpenChange={setLifecycleDialogOpen}
+          invoiceId={invoiceId}
+          current={invoice.lifecycle_status}
+          onApplied={() => {
+            setLifecycleRefresh((n) => n + 1);
+            void load();
+          }}
+        />
+      ) : null}
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("deleteConfirmTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("deleteConfirmBody")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={busy}>
-              {t("deleteCancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={onConfirmDelete}
-              disabled={busy}
-            >
-              {t("deleteConfirmAction")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {!isCustomer ? (
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("deleteConfirmTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("deleteConfirmBody")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={busy}>
+                {t("deleteCancel")}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                onClick={onConfirmDelete}
+                disabled={busy}
+              >
+                {t("deleteConfirmAction")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
     </Card>
   );
 }
