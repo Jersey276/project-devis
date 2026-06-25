@@ -300,8 +300,13 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           router.replace(`/quote/${newId}?step=2`);
           return;
         }
-        if (status === 422 && Array.isArray(body.field_errors)) {
-          setErrors(fieldErrorsFromBody(body));
+        if (status === 422) {
+          const parsed = fieldErrorsFromBody(body);
+          if (Object.keys(parsed).length > 0) {
+            setErrors(parsed);
+          } else {
+            toast.error((body.message as string) ?? tCommon("errors.generic"));
+          }
         } else {
           toast.error((body.message as string) ?? tCommon("errors.generic"));
         }

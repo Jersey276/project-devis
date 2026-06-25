@@ -34,14 +34,14 @@ function toLinePayload(draft: LineDraft) {
   };
 }
 
-export async function listQuotes(queryString?: string): Promise<ApiResult> {
+export async function listQuotes(queryString?: string, signal?: AbortSignal): Promise<ApiResult> {
   const url = queryString ? `/api/quotes?${queryString}` : "/api/quotes";
-  return apiFetch(url);
+  return apiFetch(url, { signal });
 }
 
-export async function listMyQuotes(queryString?: string): Promise<ApiResult> {
+export async function listMyQuotes(queryString?: string, signal?: AbortSignal): Promise<ApiResult> {
   const url = queryString ? `/api/quotes/me?${queryString}` : "/api/quotes/me";
-  return apiFetch(url);
+  return apiFetch(url, { signal });
 }
 
 export async function getMyQuote(quoteId: string, clientId?: string): Promise<ApiResult> {

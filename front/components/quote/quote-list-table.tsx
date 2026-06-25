@@ -117,7 +117,7 @@ function QuoteListTableInner() {
     });
   }, [isCustomer]);
 
-  const fetchQuotes = useCallback(async () => {
+  const fetchQuotes = useCallback(async (signal: AbortSignal) => {
     const params = new URLSearchParams({ page: String(page), page_size: String(PAGE_SIZE) });
     params.set("sort_by", sortBy);
     params.set("sort_direction", sortDirection);
@@ -125,7 +125,8 @@ function QuoteListTableInner() {
     if (isCustomer) {
       if (!myClientId) return;
       params.set("client_id", myClientId);
-      const { ok, body } = await listMyQuotes(params.toString());
+      const { ok, body } = await listMyQuotes(params.toString(), signal);
+      if (signal.aborted) return;
       if (ok && Array.isArray(body.quotes)) {
         const quotes = body.quotes as BackendQuote[];
         setItems(quotes.map((q) => ({
@@ -143,7 +144,8 @@ function QuoteListTableInner() {
     if (states.length > 0) params.set("states", states.join(","));
     if (clientId) params.set("client_id", clientId);
 
-    const { ok, body } = await listQuotes(params.toString());
+    const { ok, body } = await listQuotes(params.toString(), signal);
+    if (signal.aborted) return;
     if (ok && Array.isArray(body.quotes)) {
       const quotes = body.quotes as BackendQuote[];
       setItems(quotes.map((q) => ({
@@ -157,7 +159,11 @@ function QuoteListTableInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, isCustomer, myClientId]);
 
-  useEffect(() => { void fetchQuotes(); }, [fetchQuotes]);
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchQuotes(controller.signal);
+    return () => controller.abort();
+  }, [fetchQuotes]);
 
   const saveTemplateDefaultName = useMemo(
     () => saveTemplateQuoteId != null ? (items.find((i) => i.id === saveTemplateQuoteId)?.projectName ?? "") : "",

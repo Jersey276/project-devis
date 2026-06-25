@@ -1,6 +1,6 @@
-import { apiFetch } from "@/lib/api";
+import { apiFetch, type ApiResult } from "@/lib/api";
 
-export function listAdminUsers(params?: string) {
+export async function listAdminUsers(params?: string): Promise<ApiResult> {
   const url = params
     ? `/api/users/admin/accounts?${params}`
     : "/api/users/admin/accounts";
@@ -19,17 +19,17 @@ type UpdateAdminUserPayload = {
   vat?: string;
 };
 
-export function updateAdminUser(
+export async function updateAdminUser(
   userId: string,
   payload: UpdateAdminUserPayload,
-) {
+): Promise<ApiResult> {
   return apiFetch(`/api/users/admin/accounts/${encodeURIComponent(userId)}`, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
 }
 
-export function suspendAdminUser(userId: string) {
+export async function suspendAdminUser(userId: string): Promise<ApiResult> {
   return apiFetch(
     `/api/users/admin/accounts/${encodeURIComponent(userId)}/suspend`,
     {
