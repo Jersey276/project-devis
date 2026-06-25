@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { apiFetch } from "@/lib/api";
 import { canUsePaidFeatures, type AuthContext } from "@/lib/access";
+import { useMode } from "@/lib/mode-context";
 
 type SubscriptionGuardProps = {
   children: React.ReactNode;
@@ -13,10 +14,13 @@ export default function SubscriptionGuard({
   children,
 }: SubscriptionGuardProps) {
   const t = useTranslations("subscription.guard");
+  const { isCustomer } = useMode();
   const [loading, setLoading] = useState(true);
   const [allowed, setAllowed] = useState(false);
 
   useEffect(() => {
+    if (isCustomer) return;
+
     let cancelled = false;
 
     apiFetch("/api/auth/me").then(({ ok, body }) => {
@@ -29,7 +33,9 @@ export default function SubscriptionGuard({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isCustomer]);
+
+  if (isCustomer) return <>{children}</>;
 
   if (loading) {
     return <p className="text-sm text-muted-foreground">{t("loading")}</p>;

@@ -5,5 +5,6 @@ const (
 	NotFound      int32 = 1001
 	AlreadyExists int32 = 1002
 	InvalidInput  int32 = 1003
+	AlreadyLinked int32 = 1004
 	InternalError int32 = 2001
 )

@@ -37,7 +37,7 @@ func List(ctx context.Context, db *sql.DB, req *usersGrpc.ListClientsRequest) (*
 	n := len(args)
 	query := fmt.Sprintf(
 		`SELECT client_id, user_id, first_name, last_name, email, phone, company, siren, vat, siret, client_type,
-		        (archived_at IS NOT NULL)
+		        (archived_at IS NOT NULL), linked_user_id
 		 FROM clients%s ORDER BY id LIMIT $%d OFFSET $%d`,
 		where, n-1, n,
 	)
@@ -51,8 +51,8 @@ func List(ctx context.Context, db *sql.DB, req *usersGrpc.ListClientsRequest) (*
 	var clients []*usersGrpc.Client
 	for rows.Next() {
 		var c usersGrpc.Client
-		var email, phone, company, siren, vat, siret, clientType sql.NullString
-		if err := rows.Scan(&c.ClientId, &c.UserId, &c.FirstName, &c.LastName, &email, &phone, &company, &siren, &vat, &siret, &clientType, &c.Archived); err != nil {
+		var email, phone, company, siren, vat, siret, clientType, linkedUserID sql.NullString
+		if err := rows.Scan(&c.ClientId, &c.UserId, &c.FirstName, &c.LastName, &email, &phone, &company, &siren, &vat, &siret, &clientType, &c.Archived, &linkedUserID); err != nil {
 			return &usersGrpc.ListClientsResponse{Success: false, Code: codes.InternalError}, err
 		}
 		c.Email = email.String
@@ -62,6 +62,7 @@ func List(ctx context.Context, db *sql.DB, req *usersGrpc.ListClientsRequest) (*
 		c.Vat = vat.String
 		c.Siret = siret.String
 		c.ClientType = sqlutil.ClientTypeFromDBString(clientType.String)
+		c.LinkedUserId = linkedUserID.String
 		clients = append(clients, &c)
 	}
 	if err := rows.Err(); err != nil {

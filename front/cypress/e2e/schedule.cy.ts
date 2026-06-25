@@ -465,7 +465,7 @@ describe("Schedule", () => {
       cy.visit("/schedule/sch-1");
       cy.wait("@getSchedule");
 
-      cy.contains("Échéancier sch-1").should("be.visible");
+      cy.contains("Échéancier Echeancier principal").should("be.visible");
       cy.contains("Nom:").should("be.visible");
       cy.contains("Statut:").should("be.visible");
       cy.contains("Brouillon").should("be.visible");

@@ -4,6 +4,13 @@ import { createContext, useCallback, useContext, useState } from "react";
 
 export type UserMode = "provider" | "customer";
 
+const MODE_COOKIE = "user-mode";
+
+
+function writeModeCookie(mode: UserMode) {
+  document.cookie = `${MODE_COOKIE}=${mode}; path=/; max-age=31536000; SameSite=Lax`;
+}
+
 type ModeContextValue = {
   mode: UserMode;
   setMode: (mode: UserMode) => void;
@@ -13,15 +20,21 @@ type ModeContextValue = {
 
 const ModeContext = createContext<ModeContextValue | null>(null);
 
-// Customer mode is currently disabled at the UI level: the sidebar toggle is
-// removed and the provider always reports "provider". The full API (setMode,
-// isCustomer) stays in place so re-enabling later is just a matter of
-// restoring the toggle and the cookie reconciliation.
-export function ModeProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setModeState] = useState<UserMode>("provider");
+export function ModeProvider({
+  initialMode,
+  children,
+}: {
+  initialMode?: UserMode;
+  children: React.ReactNode;
+}) {
+  const [mode, setModeState] = useState<UserMode>(initialMode ?? "provider");
 
   const setMode = useCallback((next: UserMode) => {
-    setModeState((current) => (current === next ? current : next));
+    setModeState((current) => {
+      if (current === next) return current;
+      writeModeCookie(next);
+      return next;
+    });
   }, []);
 
   return (

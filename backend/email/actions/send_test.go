@@ -5,14 +5,16 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	emailGrpc "project-devis-email/services/grpc"
+
+	"github.com/DATA-DOG/go-sqlmock"
 )
 
 // mockEmailSender is a test double for services.EmailSender.
 type mockEmailSender struct {
 	sendQuoteFn    func(toEmail, toName, quoteName string, pdf []byte) (string, error)
 	sendScheduleFn func(toEmail, toName, quoteName, status string) (string, error)
+	sendGenericFn  func(toEmail, toName, subject, body string) (string, error)
 }
 
 func (m *mockEmailSender) SendQuoteEmail(toEmail, toName, quoteName string, pdf []byte) (string, error) {
@@ -27,6 +29,13 @@ func (m *mockEmailSender) SendScheduleEmail(toEmail, toName, quoteName, status s
 		return m.sendScheduleFn(toEmail, toName, quoteName, status)
 	}
 	return "resend-id-456", nil
+}
+
+func (m *mockEmailSender) SendGenericEmail(toEmail, toName, subject, body string) (string, error) {
+	if m.sendGenericFn != nil {
+		return m.sendGenericFn(toEmail, toName, subject, body)
+	}
+	return "resend-id-789", nil
 }
 
 func newTestServer(t *testing.T) (*Server, sqlmock.Sqlmock) {

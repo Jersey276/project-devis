@@ -73,9 +73,14 @@ func (s *Server) createScheduleWithEligibleLines(ctx context.Context, req *sched
 	defer tx.Rollback()
 
 	scheduleID := uuid.New().String()
+	var clientID *string
+	if strings.TrimSpace(req.ClientId) != "" {
+		v := strings.TrimSpace(req.ClientId)
+		clientID = &v
+	}
 	_, err = tx.ExecContext(ctx,
-		`INSERT INTO schedules (schedule_id, quote_id, user_id, name, status, start_month, duration_months) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		scheduleID, req.QuoteId, req.UserId, req.Name, StatusDraft, startMonthDate, req.DurationMonths,
+		`INSERT INTO schedules (schedule_id, quote_id, user_id, name, status, start_month, duration_months, client_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+		scheduleID, req.QuoteId, req.UserId, req.Name, StatusDraft, startMonthDate, req.DurationMonths, clientID,
 	)
 	if err != nil {
 		return &scheduleGrpc.CreateScheduleResponse{Success: false, Code: CodeInternalError}, err

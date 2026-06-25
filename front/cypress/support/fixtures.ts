@@ -82,6 +82,7 @@ export type ClientFixture = {
   vat: string;
   client_type: "individual" | "business";
   archived: boolean;
+  linked_user_id?: string;
 };
 
 export function client(over: Partial<ClientFixture> = {}): ClientFixture {

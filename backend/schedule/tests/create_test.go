@@ -25,7 +25,7 @@ func TestCreateSchedule_Success(t *testing.T) {
 
 	mock.ExpectBegin()
 	mock.ExpectExec(`INSERT INTO schedules`).
-		WithArgs(sqlmock.AnyArg(), "quote-1", "user-1", "Echeancier principal", actions.StatusDraft, time.Date(2026, time.June, 1, 0, 0, 0, 0, time.UTC), int32(3)).
+		WithArgs(sqlmock.AnyArg(), "quote-1", "user-1", "Echeancier principal", actions.StatusDraft, time.Date(2026, time.June, 1, 0, 0, 0, 0, time.UTC), int32(3), nil).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	for _, lineID := range lineIDs {
 		for monthIndex := 1; monthIndex <= int(req.DurationMonths); monthIndex++ {
@@ -111,7 +111,7 @@ func TestCreateSchedule_RollsBackOnCellInsertError(t *testing.T) {
 
 	mock.ExpectBegin()
 	mock.ExpectExec(`INSERT INTO schedules`).
-		WithArgs(sqlmock.AnyArg(), "quote-1", "user-1", "Echeancier principal", actions.StatusDraft, time.Date(2026, time.June, 1, 0, 0, 0, 0, time.UTC), int32(2)).
+		WithArgs(sqlmock.AnyArg(), "quote-1", "user-1", "Echeancier principal", actions.StatusDraft, time.Date(2026, time.June, 1, 0, 0, 0, 0, time.UTC), int32(2), nil).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec(`INSERT INTO schedule_cells`).
 		WithArgs(sqlmock.AnyArg(), "line-1", 1, int64(0)).

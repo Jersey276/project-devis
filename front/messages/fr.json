@@ -53,7 +53,12 @@
     "subscriptions": "Abonnements",
     "analytics": "Analytiques",
     "logs": "Journal d'activité",
-    "test": "Test"
+    "test": "Test",
+    "clientProfile": "Mon profil",
+    "modeToggle": {
+      "inactive": "Vue prestataire",
+      "active": "Vue client"
+    }
   },
   "breadcrumb": {},
   "dashboard": {
@@ -153,7 +158,47 @@
       "backToLoginPrompt": "Retour à la connexion :",
       "backToLoginLink": "Se connecter"
     },
-    "invite": {}
+    "invite": {
+      "sendButton": "Inviter",
+      "sendConfirmTitle": "Envoyer une invitation",
+      "sendConfirmDescription": "Un email d'invitation sera envoyé à {email}.",
+      "sendConfirm": "Envoyer",
+      "sendSuccess": "Invitation envoyée.",
+      "sendError": "Erreur lors de l'envoi de l'invitation.",
+      "noEmail": "Ce client n'a pas d'adresse email.",
+      "acceptTitle": "Rejoindre votre espace client",
+      "acceptLoginTab": "J'ai déjà un compte",
+      "acceptRegisterTab": "Créer un compte",
+      "acceptLoginSubmit": "Se connecter et lier",
+      "acceptRegisterSubmit": "Créer mon compte",
+      "acceptSuccess": "Votre compte a été lié avec succès.",
+      "linkButton": "Lier ce compte",
+      "alreadyLinked": "Ce lien a déjà été utilisé.",
+      "expiredLink": "Ce lien d'invitation a expiré.",
+      "invalidLink": "Ce lien d'invitation est invalide.",
+      "invalidLinkTitle": "Lien invalide",
+      "invalidLinkDescription": "Le lien d'invitation est manquant ou mal formé.",
+      "loginLabel": "Email",
+      "passwordLabel": "Mot de passe",
+      "emailLabel": "Email",
+      "newPasswordLabel": "Mot de passe",
+      "newPasswordHint": "12+ caractères avec majuscule, minuscule, chiffre et caractère spécial.",
+      "rateLimited": "Trop de tentatives. Veuillez réessayer plus tard.",
+      "alreadyLinkedBadge": "Compte lié"
+    }
+  },
+  "clientProfile": {
+    "title": "Mon profil client",
+    "noLink": "Votre compte n'est pas encore lié à un profil client.",
+    "saveSuccess": "Profil mis à jour.",
+    "saveError": "Erreur lors de la mise à jour.",
+    "loadError": "Impossible de charger votre profil client.",
+    "providerLabel": "Prestataire",
+    "providerPlaceholder": "Sélectionner un prestataire",
+    "tabs": {
+      "information": "Informations",
+      "addresses": "Adresses"
+    }
   },
   "project": {
     "list": {
@@ -290,6 +335,7 @@
       "next": "Suivant",
       "creating": "Création…",
       "finish": "Terminer",
+      "commentsButton": "Commentaires",
       "errors": {
         "requiredField": "Ce champ est requis.",
         "selectClient": "Veuillez sélectionner un client.",
@@ -377,7 +423,8 @@
         "taxEmpty": "Aucune taxe disponible.",
         "taxSupersededSuffix": "version archivée",
         "totalHt": "Montant total HT",
-        "totalTtc": "Total TTC"
+        "totalTtc": "Total TTC",
+        "commentsAria": "Commentaires de la ligne"
       },
       "summary": {
         "label": "Résumé"
@@ -387,6 +434,20 @@
       "list": "Devis",
       "create": "Nouveau devis",
       "detail": "Détail du devis"
+    },
+    "comments": {
+      "sidebarTitle": "Commentaires — {lineName}",
+      "send": "Envoyer",
+      "edit": "Modifier",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "delete": "Supprimer",
+      "deleteConfirmTitle": "Supprimer ce commentaire ?",
+      "deleteConfirmDescription": "Cette action est irréversible.",
+      "deleteConfirm": "Supprimer",
+      "placeholder": "Écrire un commentaire…",
+      "emptyState": "Aucun commentaire pour cette ligne.",
+      "loadError": "Impossible de charger les commentaires."
     }
   },
   "status": {
@@ -410,8 +471,11 @@
         "actions": "Actions"
       },
       "actions": {
-        "view": "Voir"
+        "view": "Voir",
+        "invite": "Inviter"
       },
+      "linked": "Lié",
+      "linkedTooltip": "Ce client a lié son compte. Ses informations ne peuvent être modifiées que par lui.",
       "loadFailedToast": "Impossible de charger les clients.",
       "deleteSuccessToast": "Client supprimé.",
       "deleteFailedToast": "Impossible de supprimer le client.",
@@ -471,12 +535,14 @@
       "description": "Mettez à jour les informations principales du client.",
       "successToast": "Client mis à jour.",
       "failedToast": "Impossible de mettre à jour le client.",
-      "notFoundToast": "Client introuvable."
+      "notFoundToast": "Client introuvable.",
+      "linkedNotice": "Ce client a lié son compte. Seul le client peut modifier ses informations depuis son espace."
     },
     "detail": {
       "title": "Profil client",
       "idLabel": "ID:",
       "badge": "Client",
+      "linkedBadge": "Compte lié",
       "deleteDialog": {
         "title": "Supprimer ce client ?",
         "description": "Cette action est irréversible. Les adresses associées resteront dans la base."

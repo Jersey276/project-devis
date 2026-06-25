@@ -144,6 +144,7 @@ export type BackendClient = {
   vat: string;
   archived: boolean;
   client_type: ClientType;
+  linked_user_id?: string;
 };
 
 export type BackendAddressOwnerType = "user" | "client";
@@ -168,6 +169,7 @@ export type BackendScheduleStatus = "DRAFT" | "NEGOCIATE" | "DENIED" | "VALID";
 export type BackendScheduleSummary = {
   schedule_id: string;
   quote_id: string;
+  quote_name?: string;
   status: BackendScheduleStatus;
   name: string;
   start_month: string;
@@ -178,6 +180,10 @@ export type BackendScheduleLineSummary = {
   quote_line_id: string;
   planned_cents: number;
   expected_cents: number;
+  name?: string;
+  data_kind?: QuoteLineKind;
+  position?: number;
+  parent_line_id?: string;
 };
 
 export type BackendScheduleColumnTotal = {
@@ -421,4 +427,15 @@ export type AdminStats = {
   total_revenue_cents: number;
   plan_distribution: PlanDistributionEntry[];
   monthly_revenue: MonthlyRevenueEntry[];
+};
+
+export type BackendComment = {
+  comment_id: string;
+  line_id: string;
+  quote_id: string;
+  author_id: string;
+  author_name: string;
+  body: string;
+  created_at: string;
+  updated_at: string;
 };

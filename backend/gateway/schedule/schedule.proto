@@ -29,6 +29,7 @@ message CreateScheduleRequest {
     string name             = 3;
     string start_month      = 4;
     int32  duration_months  = 5;
+    string client_id        = 6;
 }
 
 message CreateScheduleResponse {
@@ -112,12 +113,14 @@ message ScheduleSummary {
     string start_month      = 4;
     int32  duration_months  = 5;
     string quote_id         = 6;
+    string client_id        = 7;
 }
 
 message ScheduleFilters {
     repeated string statuses   = 1;
     string          start_from = 2;
     string          start_to   = 3;
+    string          client_id  = 4;
 }
 
 message ListSchedulesRequest {

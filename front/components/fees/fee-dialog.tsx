@@ -163,12 +163,11 @@ export default function FeeDialog({
               <Input
                 id="fee_price"
                 name="unit_price"
-                type="number"
-                step="0.01"
-                min="0"
+                type="text"
+                inputMode="decimal"
                 placeholder={t("pricePlaceholder")}
                 value={priceEuros}
-                onChange={(e) => setPriceEuros(e.target.value)}
+                onChange={(e) => setPriceEuros(e.target.value.replace(",", "."))}
                 aria-invalid={!!fieldErrors.unit_price?.length}
               />
               <FieldError errors={toErrorProps(fieldErrors.unit_price)} />

@@ -2941,6 +2941,518 @@ func (x *ArchiveFeeRequest) GetUserId() string {
 	return ""
 }
 
+type QuoteLineComment struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CommentId     string                 `protobuf:"bytes,1,opt,name=comment_id,json=commentId,proto3" json:"comment_id,omitempty"`
+	LineId        string                 `protobuf:"bytes,2,opt,name=line_id,json=lineId,proto3" json:"line_id,omitempty"`
+	QuoteId       string                 `protobuf:"bytes,3,opt,name=quote_id,json=quoteId,proto3" json:"quote_id,omitempty"`
+	AuthorId      string                 `protobuf:"bytes,4,opt,name=author_id,json=authorId,proto3" json:"author_id,omitempty"`
+	AuthorName    string                 `protobuf:"bytes,5,opt,name=author_name,json=authorName,proto3" json:"author_name,omitempty"`
+	Body          string                 `protobuf:"bytes,6,opt,name=body,proto3" json:"body,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     string                 `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuoteLineComment) Reset() {
+	*x = QuoteLineComment{}
+	mi := &file_quote_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuoteLineComment) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuoteLineComment) ProtoMessage() {}
+
+func (x *QuoteLineComment) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[43]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuoteLineComment.ProtoReflect.Descriptor instead.
+func (*QuoteLineComment) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{43}
+}
+
+func (x *QuoteLineComment) GetCommentId() string {
+	if x != nil {
+		return x.CommentId
+	}
+	return ""
+}
+
+func (x *QuoteLineComment) GetLineId() string {
+	if x != nil {
+		return x.LineId
+	}
+	return ""
+}
+
+func (x *QuoteLineComment) GetQuoteId() string {
+	if x != nil {
+		return x.QuoteId
+	}
+	return ""
+}
+
+func (x *QuoteLineComment) GetAuthorId() string {
+	if x != nil {
+		return x.AuthorId
+	}
+	return ""
+}
+
+func (x *QuoteLineComment) GetAuthorName() string {
+	if x != nil {
+		return x.AuthorName
+	}
+	return ""
+}
+
+func (x *QuoteLineComment) GetBody() string {
+	if x != nil {
+		return x.Body
+	}
+	return ""
+}
+
+func (x *QuoteLineComment) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+func (x *QuoteLineComment) GetUpdatedAt() string {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return ""
+}
+
+type CreateCommentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LineId        string                 `protobuf:"bytes,1,opt,name=line_id,json=lineId,proto3" json:"line_id,omitempty"`
+	QuoteId       string                 `protobuf:"bytes,2,opt,name=quote_id,json=quoteId,proto3" json:"quote_id,omitempty"`
+	AuthorId      string                 `protobuf:"bytes,3,opt,name=author_id,json=authorId,proto3" json:"author_id,omitempty"`
+	AuthorName    string                 `protobuf:"bytes,4,opt,name=author_name,json=authorName,proto3" json:"author_name,omitempty"`
+	Body          string                 `protobuf:"bytes,5,opt,name=body,proto3" json:"body,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateCommentRequest) Reset() {
+	*x = CreateCommentRequest{}
+	mi := &file_quote_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateCommentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateCommentRequest) ProtoMessage() {}
+
+func (x *CreateCommentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateCommentRequest.ProtoReflect.Descriptor instead.
+func (*CreateCommentRequest) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *CreateCommentRequest) GetLineId() string {
+	if x != nil {
+		return x.LineId
+	}
+	return ""
+}
+
+func (x *CreateCommentRequest) GetQuoteId() string {
+	if x != nil {
+		return x.QuoteId
+	}
+	return ""
+}
+
+func (x *CreateCommentRequest) GetAuthorId() string {
+	if x != nil {
+		return x.AuthorId
+	}
+	return ""
+}
+
+func (x *CreateCommentRequest) GetAuthorName() string {
+	if x != nil {
+		return x.AuthorName
+	}
+	return ""
+}
+
+func (x *CreateCommentRequest) GetBody() string {
+	if x != nil {
+		return x.Body
+	}
+	return ""
+}
+
+type CreateCommentResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	Comment       *QuoteLineComment      `protobuf:"bytes,3,opt,name=comment,proto3" json:"comment,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateCommentResponse) Reset() {
+	*x = CreateCommentResponse{}
+	mi := &file_quote_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateCommentResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateCommentResponse) ProtoMessage() {}
+
+func (x *CreateCommentResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateCommentResponse.ProtoReflect.Descriptor instead.
+func (*CreateCommentResponse) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{45}
+}
+
+func (x *CreateCommentResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *CreateCommentResponse) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *CreateCommentResponse) GetComment() *QuoteLineComment {
+	if x != nil {
+		return x.Comment
+	}
+	return nil
+}
+
+type ListCommentsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LineId        string                 `protobuf:"bytes,1,opt,name=line_id,json=lineId,proto3" json:"line_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCommentsRequest) Reset() {
+	*x = ListCommentsRequest{}
+	mi := &file_quote_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCommentsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCommentsRequest) ProtoMessage() {}
+
+func (x *ListCommentsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCommentsRequest.ProtoReflect.Descriptor instead.
+func (*ListCommentsRequest) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{46}
+}
+
+func (x *ListCommentsRequest) GetLineId() string {
+	if x != nil {
+		return x.LineId
+	}
+	return ""
+}
+
+type ListCommentsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	Comments      []*QuoteLineComment    `protobuf:"bytes,3,rep,name=comments,proto3" json:"comments,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCommentsResponse) Reset() {
+	*x = ListCommentsResponse{}
+	mi := &file_quote_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCommentsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCommentsResponse) ProtoMessage() {}
+
+func (x *ListCommentsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCommentsResponse.ProtoReflect.Descriptor instead.
+func (*ListCommentsResponse) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{47}
+}
+
+func (x *ListCommentsResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ListCommentsResponse) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *ListCommentsResponse) GetComments() []*QuoteLineComment {
+	if x != nil {
+		return x.Comments
+	}
+	return nil
+}
+
+type UpdateCommentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CommentId     string                 `protobuf:"bytes,1,opt,name=comment_id,json=commentId,proto3" json:"comment_id,omitempty"`
+	AuthorId      string                 `protobuf:"bytes,2,opt,name=author_id,json=authorId,proto3" json:"author_id,omitempty"`
+	Body          string                 `protobuf:"bytes,3,opt,name=body,proto3" json:"body,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateCommentRequest) Reset() {
+	*x = UpdateCommentRequest{}
+	mi := &file_quote_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateCommentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateCommentRequest) ProtoMessage() {}
+
+func (x *UpdateCommentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[48]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateCommentRequest.ProtoReflect.Descriptor instead.
+func (*UpdateCommentRequest) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{48}
+}
+
+func (x *UpdateCommentRequest) GetCommentId() string {
+	if x != nil {
+		return x.CommentId
+	}
+	return ""
+}
+
+func (x *UpdateCommentRequest) GetAuthorId() string {
+	if x != nil {
+		return x.AuthorId
+	}
+	return ""
+}
+
+func (x *UpdateCommentRequest) GetBody() string {
+	if x != nil {
+		return x.Body
+	}
+	return ""
+}
+
+type UpdateCommentResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	Comment       *QuoteLineComment      `protobuf:"bytes,3,opt,name=comment,proto3" json:"comment,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateCommentResponse) Reset() {
+	*x = UpdateCommentResponse{}
+	mi := &file_quote_proto_msgTypes[49]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateCommentResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateCommentResponse) ProtoMessage() {}
+
+func (x *UpdateCommentResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[49]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateCommentResponse.ProtoReflect.Descriptor instead.
+func (*UpdateCommentResponse) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{49}
+}
+
+func (x *UpdateCommentResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *UpdateCommentResponse) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *UpdateCommentResponse) GetComment() *QuoteLineComment {
+	if x != nil {
+		return x.Comment
+	}
+	return nil
+}
+
+type DeleteCommentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CommentId     string                 `protobuf:"bytes,1,opt,name=comment_id,json=commentId,proto3" json:"comment_id,omitempty"`
+	AuthorId      string                 `protobuf:"bytes,2,opt,name=author_id,json=authorId,proto3" json:"author_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteCommentRequest) Reset() {
+	*x = DeleteCommentRequest{}
+	mi := &file_quote_proto_msgTypes[50]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteCommentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteCommentRequest) ProtoMessage() {}
+
+func (x *DeleteCommentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_quote_proto_msgTypes[50]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteCommentRequest.ProtoReflect.Descriptor instead.
+func (*DeleteCommentRequest) Descriptor() ([]byte, []int) {
+	return file_quote_proto_rawDescGZIP(), []int{50}
+}
+
+func (x *DeleteCommentRequest) GetCommentId() string {
+	if x != nil {
+		return x.CommentId
+	}
+	return ""
+}
+
+func (x *DeleteCommentRequest) GetAuthorId() string {
+	if x != nil {
+		return x.AuthorId
+	}
+	return ""
+}
+
 var File_quote_proto protoreflect.FileDescriptor
 
 const file_quote_proto_rawDesc = "" +
@@ -3166,7 +3678,50 @@ const file_quote_proto_rawDesc = "" +
 	"\x11validation_errors\x18\x03 \x03(\v2\x16.quote.ValidationErrorR\x10validationErrors\"C\n" +
 	"\x11ArchiveFeeRequest\x12\x15\n" +
 	"\x06fee_id\x18\x01 \x01(\tR\x05feeId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId*\xa4\x01\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xf5\x01\n" +
+	"\x10QuoteLineComment\x12\x1d\n" +
+	"\n" +
+	"comment_id\x18\x01 \x01(\tR\tcommentId\x12\x17\n" +
+	"\aline_id\x18\x02 \x01(\tR\x06lineId\x12\x19\n" +
+	"\bquote_id\x18\x03 \x01(\tR\aquoteId\x12\x1b\n" +
+	"\tauthor_id\x18\x04 \x01(\tR\bauthorId\x12\x1f\n" +
+	"\vauthor_name\x18\x05 \x01(\tR\n" +
+	"authorName\x12\x12\n" +
+	"\x04body\x18\x06 \x01(\tR\x04body\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\a \x01(\tR\tcreatedAt\x12\x1d\n" +
+	"\n" +
+	"updated_at\x18\b \x01(\tR\tupdatedAt\"\x9c\x01\n" +
+	"\x14CreateCommentRequest\x12\x17\n" +
+	"\aline_id\x18\x01 \x01(\tR\x06lineId\x12\x19\n" +
+	"\bquote_id\x18\x02 \x01(\tR\aquoteId\x12\x1b\n" +
+	"\tauthor_id\x18\x03 \x01(\tR\bauthorId\x12\x1f\n" +
+	"\vauthor_name\x18\x04 \x01(\tR\n" +
+	"authorName\x12\x12\n" +
+	"\x04body\x18\x05 \x01(\tR\x04body\"x\n" +
+	"\x15CreateCommentResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x121\n" +
+	"\acomment\x18\x03 \x01(\v2\x17.quote.QuoteLineCommentR\acomment\".\n" +
+	"\x13ListCommentsRequest\x12\x17\n" +
+	"\aline_id\x18\x01 \x01(\tR\x06lineId\"y\n" +
+	"\x14ListCommentsResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x123\n" +
+	"\bcomments\x18\x03 \x03(\v2\x17.quote.QuoteLineCommentR\bcomments\"f\n" +
+	"\x14UpdateCommentRequest\x12\x1d\n" +
+	"\n" +
+	"comment_id\x18\x01 \x01(\tR\tcommentId\x12\x1b\n" +
+	"\tauthor_id\x18\x02 \x01(\tR\bauthorId\x12\x12\n" +
+	"\x04body\x18\x03 \x01(\tR\x04body\"x\n" +
+	"\x15UpdateCommentResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x121\n" +
+	"\acomment\x18\x03 \x01(\v2\x17.quote.QuoteLineCommentR\acomment\"R\n" +
+	"\x14DeleteCommentRequest\x12\x1d\n" +
+	"\n" +
+	"comment_id\x18\x01 \x01(\tR\tcommentId\x12\x1b\n" +
+	"\tauthor_id\x18\x02 \x01(\tR\bauthorId*\xa4\x01\n" +
 	"\n" +
 	"QuoteState\x12\x1b\n" +
 	"\x17QUOTE_STATE_UNSPECIFIED\x10\x00\x12\x15\n" +
@@ -3174,7 +3729,7 @@ const file_quote_proto_rawDesc = "" +
 	"\x10QUOTE_STATE_SENT\x10\x02\x12\x19\n" +
 	"\x15QUOTE_STATE_VALIDATED\x10\x03\x12\x14\n" +
 	"\x10QUOTE_STATE_DROP\x10\x04\x12\x1b\n" +
-	"\x17QUOTE_STATE_NEGOCIATION\x10\x052\xd4\f\n" +
+	"\x17QUOTE_STATE_NEGOCIATION\x10\x052\xfb\x0e\n" +
 	"\fQuoteService\x12D\n" +
 	"\vCreateQuote\x12\x19.quote.CreateQuoteRequest\x1a\x1a.quote.CreateQuoteResponse\x12;\n" +
 	"\bGetQuote\x12\x16.quote.GetQuoteRequest\x1a\x17.quote.GetQuoteResponse\x12A\n" +
@@ -3200,7 +3755,11 @@ const file_quote_proto_rawDesc = "" +
 	"\bListFees\x12\x16.quote.ListFeesRequest\x1a\x17.quote.ListFeesResponse\x12>\n" +
 	"\tUpdateFee\x12\x17.quote.UpdateFeeRequest\x1a\x18.quote.UpdateFeeResponse\x12>\n" +
 	"\n" +
-	"ArchiveFee\x12\x18.quote.ArchiveFeeRequest\x1a\x16.quote.GenericResponseB\x0fZ\rgateway/quoteb\x06proto3"
+	"ArchiveFee\x12\x18.quote.ArchiveFeeRequest\x1a\x16.quote.GenericResponse\x12J\n" +
+	"\rCreateComment\x12\x1b.quote.CreateCommentRequest\x1a\x1c.quote.CreateCommentResponse\x12G\n" +
+	"\fListComments\x12\x1a.quote.ListCommentsRequest\x1a\x1b.quote.ListCommentsResponse\x12J\n" +
+	"\rUpdateComment\x12\x1b.quote.UpdateCommentRequest\x1a\x1c.quote.UpdateCommentResponse\x12D\n" +
+	"\rDeleteComment\x12\x1b.quote.DeleteCommentRequest\x1a\x16.quote.GenericResponseB\x0fZ\rgateway/quoteb\x06proto3"
 
 var (
 	file_quote_proto_rawDescOnce sync.Once
@@ -3215,7 +3774,7 @@ func file_quote_proto_rawDescGZIP() []byte {
 }
 
 var file_quote_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_quote_proto_msgTypes = make([]protoimpl.MessageInfo, 43)
+var file_quote_proto_msgTypes = make([]protoimpl.MessageInfo, 51)
 var file_quote_proto_goTypes = []any{
 	(QuoteState)(0),                    // 0: quote.QuoteState
 	(*GenericResponse)(nil),            // 1: quote.GenericResponse
@@ -3261,6 +3820,14 @@ var file_quote_proto_goTypes = []any{
 	(*UpdateFeeRequest)(nil),           // 41: quote.UpdateFeeRequest
 	(*UpdateFeeResponse)(nil),          // 42: quote.UpdateFeeResponse
 	(*ArchiveFeeRequest)(nil),          // 43: quote.ArchiveFeeRequest
+	(*QuoteLineComment)(nil),           // 44: quote.QuoteLineComment
+	(*CreateCommentRequest)(nil),       // 45: quote.CreateCommentRequest
+	(*CreateCommentResponse)(nil),      // 46: quote.CreateCommentResponse
+	(*ListCommentsRequest)(nil),        // 47: quote.ListCommentsRequest
+	(*ListCommentsResponse)(nil),       // 48: quote.ListCommentsResponse
+	(*UpdateCommentRequest)(nil),       // 49: quote.UpdateCommentRequest
+	(*UpdateCommentResponse)(nil),      // 50: quote.UpdateCommentResponse
+	(*DeleteCommentRequest)(nil),       // 51: quote.DeleteCommentRequest
 }
 var file_quote_proto_depIdxs = []int32{
 	0,  // 0: quote.Quote.state:type_name -> quote.QuoteState
@@ -3279,57 +3846,68 @@ var file_quote_proto_depIdxs = []int32{
 	34, // 13: quote.GetFeeResponse.fee:type_name -> quote.Fee
 	34, // 14: quote.ListFeesResponse.fees:type_name -> quote.Fee
 	2,  // 15: quote.UpdateFeeResponse.validation_errors:type_name -> quote.ValidationError
-	4,  // 16: quote.QuoteService.CreateQuote:input_type -> quote.CreateQuoteRequest
-	6,  // 17: quote.QuoteService.GetQuote:input_type -> quote.GetQuoteRequest
-	9,  // 18: quote.QuoteService.ListQuotes:input_type -> quote.ListQuotesRequest
-	11, // 19: quote.QuoteService.UpdateQuote:input_type -> quote.UpdateQuoteRequest
-	13, // 20: quote.QuoteService.DeleteQuote:input_type -> quote.DeleteQuoteRequest
-	14, // 21: quote.QuoteService.ArchiveQuote:input_type -> quote.ArchiveQuoteRequest
-	15, // 22: quote.QuoteService.RestoreQuote:input_type -> quote.RestoreQuoteRequest
-	16, // 23: quote.QuoteService.TrashQuotes:input_type -> quote.TrashQuotesRequest
-	17, // 24: quote.QuoteService.DropQuote:input_type -> quote.DropQuoteRequest
-	18, // 25: quote.QuoteService.ContinueQuote:input_type -> quote.ContinueQuoteRequest
-	19, // 26: quote.QuoteService.ValidateQuote:input_type -> quote.ValidateQuoteRequest
-	20, // 27: quote.QuoteService.NegociateQuote:input_type -> quote.NegociateQuoteRequest
-	23, // 28: quote.QuoteService.CreateQuoteLine:input_type -> quote.CreateQuoteLineRequest
-	25, // 29: quote.QuoteService.GetQuoteLine:input_type -> quote.GetQuoteLineRequest
-	27, // 30: quote.QuoteService.ListQuoteLines:input_type -> quote.ListQuoteLinesRequest
-	29, // 31: quote.QuoteService.ListUserQuoteLines:input_type -> quote.ListUserQuoteLinesRequest
-	31, // 32: quote.QuoteService.UpdateQuoteLine:input_type -> quote.UpdateQuoteLineRequest
-	33, // 33: quote.QuoteService.DeleteQuoteLine:input_type -> quote.DeleteQuoteLineRequest
-	35, // 34: quote.QuoteService.CreateFee:input_type -> quote.CreateFeeRequest
-	37, // 35: quote.QuoteService.GetFee:input_type -> quote.GetFeeRequest
-	39, // 36: quote.QuoteService.ListFees:input_type -> quote.ListFeesRequest
-	41, // 37: quote.QuoteService.UpdateFee:input_type -> quote.UpdateFeeRequest
-	43, // 38: quote.QuoteService.ArchiveFee:input_type -> quote.ArchiveFeeRequest
-	5,  // 39: quote.QuoteService.CreateQuote:output_type -> quote.CreateQuoteResponse
-	7,  // 40: quote.QuoteService.GetQuote:output_type -> quote.GetQuoteResponse
-	10, // 41: quote.QuoteService.ListQuotes:output_type -> quote.ListQuotesResponse
-	12, // 42: quote.QuoteService.UpdateQuote:output_type -> quote.UpdateQuoteResponse
-	1,  // 43: quote.QuoteService.DeleteQuote:output_type -> quote.GenericResponse
-	1,  // 44: quote.QuoteService.ArchiveQuote:output_type -> quote.GenericResponse
-	1,  // 45: quote.QuoteService.RestoreQuote:output_type -> quote.GenericResponse
-	1,  // 46: quote.QuoteService.TrashQuotes:output_type -> quote.GenericResponse
-	1,  // 47: quote.QuoteService.DropQuote:output_type -> quote.GenericResponse
-	1,  // 48: quote.QuoteService.ContinueQuote:output_type -> quote.GenericResponse
-	1,  // 49: quote.QuoteService.ValidateQuote:output_type -> quote.GenericResponse
-	21, // 50: quote.QuoteService.NegociateQuote:output_type -> quote.NegociateQuoteResponse
-	24, // 51: quote.QuoteService.CreateQuoteLine:output_type -> quote.CreateQuoteLineResponse
-	26, // 52: quote.QuoteService.GetQuoteLine:output_type -> quote.GetQuoteLineResponse
-	28, // 53: quote.QuoteService.ListQuoteLines:output_type -> quote.ListQuoteLinesResponse
-	30, // 54: quote.QuoteService.ListUserQuoteLines:output_type -> quote.ListUserQuoteLinesResponse
-	32, // 55: quote.QuoteService.UpdateQuoteLine:output_type -> quote.UpdateQuoteLineResponse
-	1,  // 56: quote.QuoteService.DeleteQuoteLine:output_type -> quote.GenericResponse
-	36, // 57: quote.QuoteService.CreateFee:output_type -> quote.CreateFeeResponse
-	38, // 58: quote.QuoteService.GetFee:output_type -> quote.GetFeeResponse
-	40, // 59: quote.QuoteService.ListFees:output_type -> quote.ListFeesResponse
-	42, // 60: quote.QuoteService.UpdateFee:output_type -> quote.UpdateFeeResponse
-	1,  // 61: quote.QuoteService.ArchiveFee:output_type -> quote.GenericResponse
-	39, // [39:62] is the sub-list for method output_type
-	16, // [16:39] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	44, // 16: quote.CreateCommentResponse.comment:type_name -> quote.QuoteLineComment
+	44, // 17: quote.ListCommentsResponse.comments:type_name -> quote.QuoteLineComment
+	44, // 18: quote.UpdateCommentResponse.comment:type_name -> quote.QuoteLineComment
+	4,  // 19: quote.QuoteService.CreateQuote:input_type -> quote.CreateQuoteRequest
+	6,  // 20: quote.QuoteService.GetQuote:input_type -> quote.GetQuoteRequest
+	9,  // 21: quote.QuoteService.ListQuotes:input_type -> quote.ListQuotesRequest
+	11, // 22: quote.QuoteService.UpdateQuote:input_type -> quote.UpdateQuoteRequest
+	13, // 23: quote.QuoteService.DeleteQuote:input_type -> quote.DeleteQuoteRequest
+	14, // 24: quote.QuoteService.ArchiveQuote:input_type -> quote.ArchiveQuoteRequest
+	15, // 25: quote.QuoteService.RestoreQuote:input_type -> quote.RestoreQuoteRequest
+	16, // 26: quote.QuoteService.TrashQuotes:input_type -> quote.TrashQuotesRequest
+	17, // 27: quote.QuoteService.DropQuote:input_type -> quote.DropQuoteRequest
+	18, // 28: quote.QuoteService.ContinueQuote:input_type -> quote.ContinueQuoteRequest
+	19, // 29: quote.QuoteService.ValidateQuote:input_type -> quote.ValidateQuoteRequest
+	20, // 30: quote.QuoteService.NegociateQuote:input_type -> quote.NegociateQuoteRequest
+	23, // 31: quote.QuoteService.CreateQuoteLine:input_type -> quote.CreateQuoteLineRequest
+	25, // 32: quote.QuoteService.GetQuoteLine:input_type -> quote.GetQuoteLineRequest
+	27, // 33: quote.QuoteService.ListQuoteLines:input_type -> quote.ListQuoteLinesRequest
+	29, // 34: quote.QuoteService.ListUserQuoteLines:input_type -> quote.ListUserQuoteLinesRequest
+	31, // 35: quote.QuoteService.UpdateQuoteLine:input_type -> quote.UpdateQuoteLineRequest
+	33, // 36: quote.QuoteService.DeleteQuoteLine:input_type -> quote.DeleteQuoteLineRequest
+	35, // 37: quote.QuoteService.CreateFee:input_type -> quote.CreateFeeRequest
+	37, // 38: quote.QuoteService.GetFee:input_type -> quote.GetFeeRequest
+	39, // 39: quote.QuoteService.ListFees:input_type -> quote.ListFeesRequest
+	41, // 40: quote.QuoteService.UpdateFee:input_type -> quote.UpdateFeeRequest
+	43, // 41: quote.QuoteService.ArchiveFee:input_type -> quote.ArchiveFeeRequest
+	45, // 42: quote.QuoteService.CreateComment:input_type -> quote.CreateCommentRequest
+	47, // 43: quote.QuoteService.ListComments:input_type -> quote.ListCommentsRequest
+	49, // 44: quote.QuoteService.UpdateComment:input_type -> quote.UpdateCommentRequest
+	51, // 45: quote.QuoteService.DeleteComment:input_type -> quote.DeleteCommentRequest
+	5,  // 46: quote.QuoteService.CreateQuote:output_type -> quote.CreateQuoteResponse
+	7,  // 47: quote.QuoteService.GetQuote:output_type -> quote.GetQuoteResponse
+	10, // 48: quote.QuoteService.ListQuotes:output_type -> quote.ListQuotesResponse
+	12, // 49: quote.QuoteService.UpdateQuote:output_type -> quote.UpdateQuoteResponse
+	1,  // 50: quote.QuoteService.DeleteQuote:output_type -> quote.GenericResponse
+	1,  // 51: quote.QuoteService.ArchiveQuote:output_type -> quote.GenericResponse
+	1,  // 52: quote.QuoteService.RestoreQuote:output_type -> quote.GenericResponse
+	1,  // 53: quote.QuoteService.TrashQuotes:output_type -> quote.GenericResponse
+	1,  // 54: quote.QuoteService.DropQuote:output_type -> quote.GenericResponse
+	1,  // 55: quote.QuoteService.ContinueQuote:output_type -> quote.GenericResponse
+	1,  // 56: quote.QuoteService.ValidateQuote:output_type -> quote.GenericResponse
+	21, // 57: quote.QuoteService.NegociateQuote:output_type -> quote.NegociateQuoteResponse
+	24, // 58: quote.QuoteService.CreateQuoteLine:output_type -> quote.CreateQuoteLineResponse
+	26, // 59: quote.QuoteService.GetQuoteLine:output_type -> quote.GetQuoteLineResponse
+	28, // 60: quote.QuoteService.ListQuoteLines:output_type -> quote.ListQuoteLinesResponse
+	30, // 61: quote.QuoteService.ListUserQuoteLines:output_type -> quote.ListUserQuoteLinesResponse
+	32, // 62: quote.QuoteService.UpdateQuoteLine:output_type -> quote.UpdateQuoteLineResponse
+	1,  // 63: quote.QuoteService.DeleteQuoteLine:output_type -> quote.GenericResponse
+	36, // 64: quote.QuoteService.CreateFee:output_type -> quote.CreateFeeResponse
+	38, // 65: quote.QuoteService.GetFee:output_type -> quote.GetFeeResponse
+	40, // 66: quote.QuoteService.ListFees:output_type -> quote.ListFeesResponse
+	42, // 67: quote.QuoteService.UpdateFee:output_type -> quote.UpdateFeeResponse
+	1,  // 68: quote.QuoteService.ArchiveFee:output_type -> quote.GenericResponse
+	46, // 69: quote.QuoteService.CreateComment:output_type -> quote.CreateCommentResponse
+	48, // 70: quote.QuoteService.ListComments:output_type -> quote.ListCommentsResponse
+	50, // 71: quote.QuoteService.UpdateComment:output_type -> quote.UpdateCommentResponse
+	1,  // 72: quote.QuoteService.DeleteComment:output_type -> quote.GenericResponse
+	46, // [46:73] is the sub-list for method output_type
+	19, // [19:46] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_quote_proto_init() }
@@ -3343,7 +3921,7 @@ func file_quote_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_quote_proto_rawDesc), len(file_quote_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   43,
+			NumMessages:   51,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

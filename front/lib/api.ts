@@ -38,6 +38,7 @@ const REFRESH_SKIP_PATHS = new Set([
   "/api/auth/refresh",
   "/api/auth/login",
   "/api/auth/logout",
+  "/api/auth/me",
   "/api/auth/password/update",
   "/api/auth/password/reset",
   "/api/auth/password/confirm-reset",
@@ -136,10 +137,17 @@ export async function fetchWithRefresh(
   return res;
 }
 
+export function readUserModeCookie(): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  const match = document.cookie.split("; ").find((c) => c.startsWith("user-mode="));
+  return match?.split("=")[1];
+}
+
 export async function apiFetch(
   path: string,
   init?: RequestInit,
 ): Promise<ApiResult> {
+  const clientMode = readUserModeCookie() === "customer";
   const doFetch = () =>
     fetch(path, {
       ...init,
@@ -147,6 +155,7 @@ export async function apiFetch(
       headers: {
         Accept: "application/json",
         ...(init?.body ? { "Content-Type": "application/json" } : {}),
+        ...(clientMode ? { "X-Client-Mode": "customer" } : {}),
         ...(init?.headers ?? {}),
       },
     });

@@ -19,22 +19,25 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_Register_FullMethodName                = "/auth.AuthService/Register"
-	AuthService_Login_FullMethodName                   = "/auth.AuthService/Login"
-	AuthService_ResetPassword_FullMethodName           = "/auth.AuthService/ResetPassword"
-	AuthService_ConfirmResetPassword_FullMethodName    = "/auth.AuthService/ConfirmResetPassword"
-	AuthService_UpdatePassword_FullMethodName          = "/auth.AuthService/UpdatePassword"
-	AuthService_VerifyEmail_FullMethodName             = "/auth.AuthService/VerifyEmail"
-	AuthService_RefreshToken_FullMethodName            = "/auth.AuthService/RefreshToken"
-	AuthService_OAuthLogin_FullMethodName              = "/auth.AuthService/OAuthLogin"
-	AuthService_LinkOAuthIdentity_FullMethodName       = "/auth.AuthService/LinkOAuthIdentity"
-	AuthService_UnlinkOAuthIdentity_FullMethodName     = "/auth.AuthService/UnlinkOAuthIdentity"
-	AuthService_ListOAuthIdentities_FullMethodName     = "/auth.AuthService/ListOAuthIdentities"
-	AuthService_Logout_FullMethodName                  = "/auth.AuthService/Logout"
-	AuthService_IntrospectToken_FullMethodName         = "/auth.AuthService/IntrospectToken"
-	AuthService_UpdateSubscriptionTier_FullMethodName  = "/auth.AuthService/UpdateSubscriptionTier"
-	AuthService_ResendEmailVerification_FullMethodName = "/auth.AuthService/ResendEmailVerification"
-	AuthService_UpdateRole_FullMethodName              = "/auth.AuthService/UpdateRole"
+	AuthService_Register_FullMethodName                     = "/auth.AuthService/Register"
+	AuthService_Login_FullMethodName                        = "/auth.AuthService/Login"
+	AuthService_ResetPassword_FullMethodName                = "/auth.AuthService/ResetPassword"
+	AuthService_ConfirmResetPassword_FullMethodName         = "/auth.AuthService/ConfirmResetPassword"
+	AuthService_UpdatePassword_FullMethodName               = "/auth.AuthService/UpdatePassword"
+	AuthService_VerifyEmail_FullMethodName                  = "/auth.AuthService/VerifyEmail"
+	AuthService_RefreshToken_FullMethodName                 = "/auth.AuthService/RefreshToken"
+	AuthService_OAuthLogin_FullMethodName                   = "/auth.AuthService/OAuthLogin"
+	AuthService_LinkOAuthIdentity_FullMethodName            = "/auth.AuthService/LinkOAuthIdentity"
+	AuthService_UnlinkOAuthIdentity_FullMethodName          = "/auth.AuthService/UnlinkOAuthIdentity"
+	AuthService_ListOAuthIdentities_FullMethodName          = "/auth.AuthService/ListOAuthIdentities"
+	AuthService_Logout_FullMethodName                       = "/auth.AuthService/Logout"
+	AuthService_IntrospectToken_FullMethodName              = "/auth.AuthService/IntrospectToken"
+	AuthService_UpdateSubscriptionTier_FullMethodName       = "/auth.AuthService/UpdateSubscriptionTier"
+	AuthService_ResendEmailVerification_FullMethodName      = "/auth.AuthService/ResendEmailVerification"
+	AuthService_UpdateRole_FullMethodName                   = "/auth.AuthService/UpdateRole"
+	AuthService_SendClientInvitation_FullMethodName         = "/auth.AuthService/SendClientInvitation"
+	AuthService_AcceptClientInvitationNew_FullMethodName    = "/auth.AuthService/AcceptClientInvitationNew"
+	AuthService_AcceptClientInvitationLinked_FullMethodName = "/auth.AuthService/AcceptClientInvitationLinked"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -75,6 +78,12 @@ type AuthServiceClient interface {
 	ResendEmailVerification(ctx context.Context, in *ResendEmailVerificationRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	// UpdateRole updates a user's role and invalidates existing tokens.
 	UpdateRole(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// SendClientInvitation generates an invitation token and sends it by email to a client.
+	SendClientInvitation(ctx context.Context, in *SendClientInvitationRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// AcceptClientInvitationNew creates a new account and links it to the client.
+	AcceptClientInvitationNew(ctx context.Context, in *AcceptClientInvitationNewRequest, opts ...grpc.CallOption) (*AcceptClientInvitationResponse, error)
+	// AcceptClientInvitationLinked links an existing authenticated account to the client.
+	AcceptClientInvitationLinked(ctx context.Context, in *AcceptClientInvitationLinkedRequest, opts ...grpc.CallOption) (*AcceptClientInvitationResponse, error)
 }
 
 type authServiceClient struct {
@@ -245,6 +254,36 @@ func (c *authServiceClient) UpdateRole(ctx context.Context, in *UpdateRoleReques
 	return out, nil
 }
 
+func (c *authServiceClient) SendClientInvitation(ctx context.Context, in *SendClientInvitationRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, AuthService_SendClientInvitation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) AcceptClientInvitationNew(ctx context.Context, in *AcceptClientInvitationNewRequest, opts ...grpc.CallOption) (*AcceptClientInvitationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AcceptClientInvitationResponse)
+	err := c.cc.Invoke(ctx, AuthService_AcceptClientInvitationNew_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) AcceptClientInvitationLinked(ctx context.Context, in *AcceptClientInvitationLinkedRequest, opts ...grpc.CallOption) (*AcceptClientInvitationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AcceptClientInvitationResponse)
+	err := c.cc.Invoke(ctx, AuthService_AcceptClientInvitationLinked_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -283,6 +322,12 @@ type AuthServiceServer interface {
 	ResendEmailVerification(context.Context, *ResendEmailVerificationRequest) (*GenericResponse, error)
 	// UpdateRole updates a user's role and invalidates existing tokens.
 	UpdateRole(context.Context, *UpdateRoleRequest) (*GenericResponse, error)
+	// SendClientInvitation generates an invitation token and sends it by email to a client.
+	SendClientInvitation(context.Context, *SendClientInvitationRequest) (*GenericResponse, error)
+	// AcceptClientInvitationNew creates a new account and links it to the client.
+	AcceptClientInvitationNew(context.Context, *AcceptClientInvitationNewRequest) (*AcceptClientInvitationResponse, error)
+	// AcceptClientInvitationLinked links an existing authenticated account to the client.
+	AcceptClientInvitationLinked(context.Context, *AcceptClientInvitationLinkedRequest) (*AcceptClientInvitationResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -340,6 +385,15 @@ func (UnimplementedAuthServiceServer) ResendEmailVerification(context.Context, *
 }
 func (UnimplementedAuthServiceServer) UpdateRole(context.Context, *UpdateRoleRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateRole not implemented")
+}
+func (UnimplementedAuthServiceServer) SendClientInvitation(context.Context, *SendClientInvitationRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SendClientInvitation not implemented")
+}
+func (UnimplementedAuthServiceServer) AcceptClientInvitationNew(context.Context, *AcceptClientInvitationNewRequest) (*AcceptClientInvitationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AcceptClientInvitationNew not implemented")
+}
+func (UnimplementedAuthServiceServer) AcceptClientInvitationLinked(context.Context, *AcceptClientInvitationLinkedRequest) (*AcceptClientInvitationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AcceptClientInvitationLinked not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -650,6 +704,60 @@ func _AuthService_UpdateRole_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_SendClientInvitation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendClientInvitationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).SendClientInvitation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_SendClientInvitation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).SendClientInvitation(ctx, req.(*SendClientInvitationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_AcceptClientInvitationNew_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AcceptClientInvitationNewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).AcceptClientInvitationNew(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_AcceptClientInvitationNew_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).AcceptClientInvitationNew(ctx, req.(*AcceptClientInvitationNewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_AcceptClientInvitationLinked_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AcceptClientInvitationLinkedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).AcceptClientInvitationLinked(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_AcceptClientInvitationLinked_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).AcceptClientInvitationLinked(ctx, req.(*AcceptClientInvitationLinkedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -720,6 +828,18 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateRole",
 			Handler:    _AuthService_UpdateRole_Handler,
+		},
+		{
+			MethodName: "SendClientInvitation",
+			Handler:    _AuthService_SendClientInvitation_Handler,
+		},
+		{
+			MethodName: "AcceptClientInvitationNew",
+			Handler:    _AuthService_AcceptClientInvitationNew_Handler,
+		},
+		{
+			MethodName: "AcceptClientInvitationLinked",
+			Handler:    _AuthService_AcceptClientInvitationLinked_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

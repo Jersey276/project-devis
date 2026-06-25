@@ -39,6 +39,24 @@ export async function listQuotes(queryString?: string): Promise<ApiResult> {
   return apiFetch(url);
 }
 
+export async function listMyQuotes(queryString?: string): Promise<ApiResult> {
+  const url = queryString ? `/api/quotes/me?${queryString}` : "/api/quotes/me";
+  return apiFetch(url);
+}
+
+export async function getMyQuote(quoteId: string, clientId?: string): Promise<ApiResult> {
+  const qs = clientId ? `?client_id=${encodeURIComponent(clientId)}` : "";
+  return apiFetch(`/api/quotes/me/${encodeURIComponent(quoteId)}${qs}`);
+}
+
+export async function updateMyQuoteAddress(quoteId: string, addressId: number, clientId?: string): Promise<ApiResult> {
+  const qs = clientId ? `?client_id=${encodeURIComponent(clientId)}` : "";
+  return apiFetch(`/api/quotes/me/${encodeURIComponent(quoteId)}${qs}`, {
+    method: "PUT",
+    body: JSON.stringify({ address_id: addressId }),
+  });
+}
+
 export type CreateQuotePayload = {
   name: string;
   clientId: string;

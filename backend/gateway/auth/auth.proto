@@ -22,6 +22,9 @@ service AuthService {
     rpc ResendEmailVerification(ResendEmailVerificationRequest) returns (GenericResponse);
     // UpdateRole updates a user's role and invalidates existing tokens.
     rpc UpdateRole(UpdateRoleRequest) returns (GenericResponse);
+    rpc SendClientInvitation(SendClientInvitationRequest) returns (GenericResponse);
+    rpc AcceptClientInvitationNew(AcceptClientInvitationNewRequest) returns (AcceptClientInvitationResponse);
+    rpc AcceptClientInvitationLinked(AcceptClientInvitationLinkedRequest) returns (AcceptClientInvitationResponse);
 }
 
 message RegisterRequest {
@@ -156,4 +159,30 @@ message ResendEmailVerificationRequest {
 message UpdateRoleRequest {
     string user_id = 1;
     string role    = 2;
+}
+
+message SendClientInvitationRequest {
+    string provider_user_id = 1;
+    string client_id        = 2;
+    string client_email     = 3;
+    string client_name      = 4;
+}
+
+message AcceptClientInvitationNewRequest {
+    string token    = 1;
+    string email    = 2;
+    string password = 3;
+}
+
+message AcceptClientInvitationLinkedRequest {
+    string token   = 1;
+    string user_id = 2;
+}
+
+message AcceptClientInvitationResponse {
+    bool   success        = 1;
+    int32  code           = 2;
+    string token          = 3;
+    string refresh_token  = 4;
+    bool   is_new_account = 5;
 }

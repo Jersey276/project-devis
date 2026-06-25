@@ -42,6 +42,10 @@ const (
 	QuoteService_ListFees_FullMethodName           = "/quote.QuoteService/ListFees"
 	QuoteService_UpdateFee_FullMethodName          = "/quote.QuoteService/UpdateFee"
 	QuoteService_ArchiveFee_FullMethodName         = "/quote.QuoteService/ArchiveFee"
+	QuoteService_CreateComment_FullMethodName      = "/quote.QuoteService/CreateComment"
+	QuoteService_ListComments_FullMethodName       = "/quote.QuoteService/ListComments"
+	QuoteService_UpdateComment_FullMethodName      = "/quote.QuoteService/UpdateComment"
+	QuoteService_DeleteComment_FullMethodName      = "/quote.QuoteService/DeleteComment"
 )
 
 // QuoteServiceClient is the client API for QuoteService service.
@@ -74,6 +78,11 @@ type QuoteServiceClient interface {
 	ListFees(ctx context.Context, in *ListFeesRequest, opts ...grpc.CallOption) (*ListFeesResponse, error)
 	UpdateFee(ctx context.Context, in *UpdateFeeRequest, opts ...grpc.CallOption) (*UpdateFeeResponse, error)
 	ArchiveFee(ctx context.Context, in *ArchiveFeeRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// Comment
+	CreateComment(ctx context.Context, in *CreateCommentRequest, opts ...grpc.CallOption) (*CreateCommentResponse, error)
+	ListComments(ctx context.Context, in *ListCommentsRequest, opts ...grpc.CallOption) (*ListCommentsResponse, error)
+	UpdateComment(ctx context.Context, in *UpdateCommentRequest, opts ...grpc.CallOption) (*UpdateCommentResponse, error)
+	DeleteComment(ctx context.Context, in *DeleteCommentRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 }
 
 type quoteServiceClient struct {
@@ -314,6 +323,46 @@ func (c *quoteServiceClient) ArchiveFee(ctx context.Context, in *ArchiveFeeReque
 	return out, nil
 }
 
+func (c *quoteServiceClient) CreateComment(ctx context.Context, in *CreateCommentRequest, opts ...grpc.CallOption) (*CreateCommentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateCommentResponse)
+	err := c.cc.Invoke(ctx, QuoteService_CreateComment_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *quoteServiceClient) ListComments(ctx context.Context, in *ListCommentsRequest, opts ...grpc.CallOption) (*ListCommentsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListCommentsResponse)
+	err := c.cc.Invoke(ctx, QuoteService_ListComments_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *quoteServiceClient) UpdateComment(ctx context.Context, in *UpdateCommentRequest, opts ...grpc.CallOption) (*UpdateCommentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateCommentResponse)
+	err := c.cc.Invoke(ctx, QuoteService_UpdateComment_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *quoteServiceClient) DeleteComment(ctx context.Context, in *DeleteCommentRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, QuoteService_DeleteComment_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QuoteServiceServer is the server API for QuoteService service.
 // All implementations must embed UnimplementedQuoteServiceServer
 // for forward compatibility.
@@ -344,6 +393,11 @@ type QuoteServiceServer interface {
 	ListFees(context.Context, *ListFeesRequest) (*ListFeesResponse, error)
 	UpdateFee(context.Context, *UpdateFeeRequest) (*UpdateFeeResponse, error)
 	ArchiveFee(context.Context, *ArchiveFeeRequest) (*GenericResponse, error)
+	// Comment
+	CreateComment(context.Context, *CreateCommentRequest) (*CreateCommentResponse, error)
+	ListComments(context.Context, *ListCommentsRequest) (*ListCommentsResponse, error)
+	UpdateComment(context.Context, *UpdateCommentRequest) (*UpdateCommentResponse, error)
+	DeleteComment(context.Context, *DeleteCommentRequest) (*GenericResponse, error)
 	mustEmbedUnimplementedQuoteServiceServer()
 }
 
@@ -422,6 +476,18 @@ func (UnimplementedQuoteServiceServer) UpdateFee(context.Context, *UpdateFeeRequ
 }
 func (UnimplementedQuoteServiceServer) ArchiveFee(context.Context, *ArchiveFeeRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ArchiveFee not implemented")
+}
+func (UnimplementedQuoteServiceServer) CreateComment(context.Context, *CreateCommentRequest) (*CreateCommentResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateComment not implemented")
+}
+func (UnimplementedQuoteServiceServer) ListComments(context.Context, *ListCommentsRequest) (*ListCommentsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListComments not implemented")
+}
+func (UnimplementedQuoteServiceServer) UpdateComment(context.Context, *UpdateCommentRequest) (*UpdateCommentResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateComment not implemented")
+}
+func (UnimplementedQuoteServiceServer) DeleteComment(context.Context, *DeleteCommentRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteComment not implemented")
 }
 func (UnimplementedQuoteServiceServer) mustEmbedUnimplementedQuoteServiceServer() {}
 func (UnimplementedQuoteServiceServer) testEmbeddedByValue()                      {}
@@ -858,6 +924,78 @@ func _QuoteService_ArchiveFee_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _QuoteService_CreateComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateCommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuoteServiceServer).CreateComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QuoteService_CreateComment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuoteServiceServer).CreateComment(ctx, req.(*CreateCommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _QuoteService_ListComments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCommentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuoteServiceServer).ListComments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QuoteService_ListComments_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuoteServiceServer).ListComments(ctx, req.(*ListCommentsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _QuoteService_UpdateComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateCommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuoteServiceServer).UpdateComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QuoteService_UpdateComment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuoteServiceServer).UpdateComment(ctx, req.(*UpdateCommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _QuoteService_DeleteComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteCommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuoteServiceServer).DeleteComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QuoteService_DeleteComment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuoteServiceServer).DeleteComment(ctx, req.(*DeleteCommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // QuoteService_ServiceDesc is the grpc.ServiceDesc for QuoteService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -956,6 +1094,22 @@ var QuoteService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ArchiveFee",
 			Handler:    _QuoteService_ArchiveFee_Handler,
+		},
+		{
+			MethodName: "CreateComment",
+			Handler:    _QuoteService_CreateComment_Handler,
+		},
+		{
+			MethodName: "ListComments",
+			Handler:    _QuoteService_ListComments_Handler,
+		},
+		{
+			MethodName: "UpdateComment",
+			Handler:    _QuoteService_UpdateComment_Handler,
+		},
+		{
+			MethodName: "DeleteComment",
+			Handler:    _QuoteService_DeleteComment_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

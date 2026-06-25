@@ -27,6 +27,7 @@ import LifecycleTimeline from "@/components/invoice/lifecycle-timeline";
 import CreateCreditNoteDialog from "@/components/invoice/create-credit-note-dialog";
 import LinkedCreditNotes from "@/components/invoice/linked-credit-notes";
 import { allowedNextLifecycleStatuses } from "@/lib/invoice-lifecycle";
+import { useMode } from "@/lib/mode-context";
 import {
   deleteDraftInvoice,
   depositInvoice,
@@ -59,6 +60,7 @@ function partyLines(p: BackendInvoiceParty | undefined): string[] {
 export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
   const t = useTranslations("invoice.detail");
   const tLifecycle = useTranslations("invoice.lifecycle");
+  const { isCustomer } = useMode();
   const router = useRouter();
   const [invoice, setInvoice] = useState<BackendInvoiceDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -173,12 +175,12 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
           <Button type="button" variant="outline" onClick={onDownload}>
             {t("downloadPdf")}
           </Button>
-          {invoice.status !== "DRAFT" ? (
+          {!isCustomer && invoice.status !== "DRAFT" ? (
             <Button type="button" variant="outline" onClick={onDownloadFacturx}>
               {t("downloadFacturx")}
             </Button>
           ) : null}
-          {invoice.status === "DRAFT" ? (
+          {!isCustomer && invoice.status === "DRAFT" ? (
             <Button
               type="button"
               variant="destructive"
@@ -188,12 +190,12 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
               {t("deleteDraft")}
             </Button>
           ) : null}
-          {invoice.status === "ISSUED" ? (
+          {!isCustomer && invoice.status === "ISSUED" ? (
             <Button type="button" variant="outline" onClick={onMarkPaid} disabled={busy}>
               {t("markPaid")}
             </Button>
           ) : null}
-          {isIssued ? (
+          {!isCustomer && isIssued ? (
             <Button
               type="button"
               variant="outline"
@@ -203,12 +205,12 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
               {t("createCreditNote")}
             </Button>
           ) : null}
-          {canDeposit ? (
+          {!isCustomer && canDeposit ? (
             <Button type="button" variant="outline" onClick={onDeposit} disabled={busy}>
               {tLifecycle("deposit.action")}
             </Button>
           ) : null}
-          {canAdvanceLifecycle ? (
+          {!isCustomer && canAdvanceLifecycle ? (
             <Button
               type="button"
               variant="outline"
@@ -308,54 +310,58 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
           <LinkedCreditNotes invoiceId={invoiceId} refreshKey={creditRefresh} />
         ) : null}
 
-        {isIssued ? (
+        {isIssued && !isCustomer ? (
           <LifecycleTimeline invoiceId={invoiceId} refreshKey={lifecycleRefresh} />
         ) : null}
       </CardContent>
 
-      <CreateCreditNoteDialog
-        open={creditDialogOpen}
-        onOpenChange={setCreditDialogOpen}
-        invoice={invoice}
-        onCreated={() => {
-          setCreditRefresh((n) => n + 1);
-          void load();
-        }}
-      />
+      {!isCustomer && (
+        <>
+          <CreateCreditNoteDialog
+            open={creditDialogOpen}
+            onOpenChange={setCreditDialogOpen}
+            invoice={invoice}
+            onCreated={() => {
+              setCreditRefresh((n) => n + 1);
+              void load();
+            }}
+          />
 
-      <AdvanceLifecycleDialog
-        open={lifecycleDialogOpen}
-        onOpenChange={setLifecycleDialogOpen}
-        invoiceId={invoiceId}
-        current={invoice.lifecycle_status}
-        onApplied={() => {
-          setLifecycleRefresh((n) => n + 1);
-          void load();
-        }}
-      />
+          <AdvanceLifecycleDialog
+            open={lifecycleDialogOpen}
+            onOpenChange={setLifecycleDialogOpen}
+            invoiceId={invoiceId}
+            current={invoice.lifecycle_status}
+            onApplied={() => {
+              setLifecycleRefresh((n) => n + 1);
+              void load();
+            }}
+          />
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("deleteConfirmTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("deleteConfirmBody")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={busy}>
-              {t("deleteCancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={onConfirmDelete}
-              disabled={busy}
-            >
-              {t("deleteConfirmAction")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("deleteConfirmTitle")}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {t("deleteConfirmBody")}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={busy}>
+                  {t("deleteCancel")}
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={onConfirmDelete}
+                  disabled={busy}
+                >
+                  {t("deleteConfirmAction")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      )}
     </Card>
   );
 }

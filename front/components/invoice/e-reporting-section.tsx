@@ -29,6 +29,7 @@ import type {
   BackendInvoiceReportSummary,
   BackendReportKind,
 } from "@/types/backend";
+import { useMode } from "@/lib/mode-context";
 
 const KINDS: BackendReportKind[] = ["TRANSACTION", "CROSS_BORDER_B2C"];
 
@@ -37,6 +38,7 @@ const KINDS: BackendReportKind[] = ["TRANSACTION", "CROSS_BORDER_B2C"];
 // until a PA is contracted, so submitting just records the period locally for now.
 export default function EReportingSection() {
   const t = useTranslations("invoice.reporting");
+  const { isCustomer } = useMode();
   const now = new Date();
   const [kind, setKind] = useState<BackendReportKind>("TRANSACTION");
   const [year, setYear] = useState(now.getFullYear());
@@ -47,15 +49,18 @@ export default function EReportingSection() {
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
+    if (isCustomer) return;
     listInvoiceReports().then(({ ok, body }) => {
       if (!ok || !body.success) return;
       setReports(readInvoiceReportsFromBody(body));
     });
-  }, []);
+  }, [isCustomer]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  if (isCustomer) return null;
 
   async function onSubmit() {
     setBusy(true);

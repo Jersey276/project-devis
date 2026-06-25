@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	invoice "gateway/invoice"
+	quote "gateway/quote"
+	users "gateway/users"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -71,7 +73,7 @@ var invoiceErrors = &serviceErrors{
 }
 
 // InvoicesRoutes wires the /invoices API group against the invoice gRPC service.
-func InvoicesRoutes(r *gin.RouterGroup) {
+func InvoicesRoutes(r *gin.RouterGroup, usersClient users.UserServiceClient, quoteClient quote.QuoteServiceClient) {
 	address := os.Getenv("INVOICE_SERVICE_ADDRESS")
 	if address == "" {
 		address = "localhost:50059"
@@ -82,27 +84,68 @@ func InvoicesRoutes(r *gin.RouterGroup) {
 	}
 	client := invoice.NewInvoiceServiceClient(conn)
 
-	r.GET("", func(c *gin.Context) { ListInvoices(c, client) })
-	r.GET("/verify-chain", func(c *gin.Context) { VerifyChain(c, client) })
-	r.GET("/oss-status", func(c *gin.Context) { GetOSSThresholdStatus(c, client) })
+	customerOnly := DenyCustomer()
+
+	r.GET("", func(c *gin.Context) { ListInvoices(c, client, usersClient, quoteClient) })
+	r.GET("/verify-chain", customerOnly, func(c *gin.Context) { VerifyChain(c, client) })
+	r.GET("/oss-status", customerOnly, func(c *gin.Context) { GetOSSThresholdStatus(c, client) })
 	// E-reporting (B5/C5): period aggregates, not tied to one invoice.
-	r.GET("/reports", func(c *gin.Context) { ListInvoiceReports(c, client) })
-	r.POST("/reports", func(c *gin.Context) { SubmitInvoiceReport(c, client) })
-	r.POST("/from-schedule", func(c *gin.Context) { CreateInvoiceFromSchedule(c, client) })
-	r.POST("/from-quote", func(c *gin.Context) { CreateInvoiceFromQuote(c, client) })
+	r.GET("/reports", customerOnly, func(c *gin.Context) { ListInvoiceReports(c, client) })
+	r.POST("/reports", customerOnly, func(c *gin.Context) { SubmitInvoiceReport(c, client) })
+	r.POST("/from-schedule", customerOnly, func(c *gin.Context) { CreateInvoiceFromSchedule(c, client) })
+	r.POST("/from-quote", customerOnly, func(c *gin.Context) { CreateInvoiceFromQuote(c, client) })
 
 	one := r.Group("/:id")
-	one.GET("", func(c *gin.Context) { GetInvoice(c, client) })
-	one.DELETE("", func(c *gin.Context) { DeleteDraftInvoice(c, client) })
-	one.POST("/issue", func(c *gin.Context) { IssueInvoice(c, client) })
-	one.POST("/paid", func(c *gin.Context) { MarkInvoicePaid(c, client) })
-	one.POST("/credit-notes", func(c *gin.Context) { CreateCreditNote(c, client) })
-	one.POST("/lifecycle", func(c *gin.Context) { SetInvoiceLifecycleStatus(c, client) })
-	one.GET("/lifecycle-events", func(c *gin.Context) { ListInvoiceLifecycleEvents(c, client) })
-	one.POST("/deposit", func(c *gin.Context) { DepositInvoice(c, client) })
+	one.GET("", func(c *gin.Context) { GetInvoice(c, client, usersClient, quoteClient) })
+	one.DELETE("", customerOnly, func(c *gin.Context) { DeleteDraftInvoice(c, client) })
+	one.POST("/issue", customerOnly, func(c *gin.Context) { IssueInvoice(c, client) })
+	one.POST("/paid", customerOnly, func(c *gin.Context) { MarkInvoicePaid(c, client) })
+	one.POST("/credit-notes", customerOnly, func(c *gin.Context) { CreateCreditNote(c, client) })
+	one.POST("/lifecycle", customerOnly, func(c *gin.Context) { SetInvoiceLifecycleStatus(c, client) })
+	one.GET("/lifecycle-events", customerOnly, func(c *gin.Context) { ListInvoiceLifecycleEvents(c, client) })
+	one.POST("/deposit", customerOnly, func(c *gin.Context) { DepositInvoice(c, client) })
 }
 
-func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient) {
+// resolveCustomerQuotes resolves the linked provider and fetches the client's
+// quote IDs via the quote service. Returns (providerUserID, quoteIDs, true) on
+// success, or ("", nil, false) after writing an error response to c.
+// Must only be called when X-Client-Mode == "customer".
+func resolveCustomerQuotes(c *gin.Context, usersClient users.UserServiceClient, quoteClient quote.QuoteServiceClient) (string, []string, bool) {
+	linked := resolveMyClient(c, usersClient)
+	if linked == nil {
+		return "", nil, false
+	}
+	qResp, qErr := quoteClient.ListQuotes(c.Request.Context(), &quote.ListQuotesRequest{
+		UserId:   linked.UserId,
+		PageSize: 1000,
+		Filters:  &quote.QuoteFilters{ClientId: linked.ClientId},
+	})
+	if qErr != nil || !qResp.Success {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"success": false, "message": "Service devis indisponible."})
+		return "", nil, false
+	}
+	ids := make([]string, 0, len(qResp.Quotes))
+	for _, q := range qResp.Quotes {
+		ids = append(ids, q.QuoteId)
+	}
+	return linked.UserId, ids, true
+}
+
+// DenyCustomer returns a middleware that rejects requests made in customer mode.
+func DenyCustomer() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.GetHeader("X-Client-Mode") == "customer" {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "Action non autorisée en mode client.",
+			})
+			return
+		}
+		c.Next()
+	}
+}
+
+func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient, usersClient users.UserServiceClient, quoteClient quote.QuoteServiceClient) {
 	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 32)
 	pageSize, _ := strconv.ParseInt(c.DefaultQuery("page_size", "20"), 10, 32)
 
@@ -114,8 +157,23 @@ func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient) {
 		lifecycleStatuses = strings.Split(raw, ",")
 	}
 
+	userID := userIDFromCtx(c)
+	clientID := c.Query("client_id")
+
+	// In customer mode, resolve the linked provider and fetch quote_ids for that
+	// client via the quote service. The invoice service has no access to the quotes
+	// database, so passing client_id directly as a filter would break (cross-DB subquery).
+	var customerQuoteIDs []string
+	if c.GetHeader("X-Client-Mode") == "customer" {
+		var ok bool
+		if userID, customerQuoteIDs, ok = resolveCustomerQuotes(c, usersClient, quoteClient); !ok {
+			return
+		}
+		clientID = "" // ne pas passer client_id dans les filtres invoice
+	}
+
 	resp, err := client.ListInvoices(c.Request.Context(), &invoice.ListInvoicesRequest{
-		UserId:        userIDFromCtx(c),
+		UserId:        userID,
 		QuoteId:       c.Query("quote_id"),
 		Page:          int32(page),
 		PageSize:      int32(pageSize),
@@ -128,8 +186,9 @@ func ListInvoices(c *gin.Context, client invoice.InvoiceServiceClient) {
 			IssuedTo:          c.Query("issued_to"),
 			DueFrom:           c.Query("due_from"),
 			DueTo:             c.Query("due_to"),
-			ClientId:          c.Query("client_id"),
+			ClientId:          clientID,
 			QuoteIdFilter:     c.Query("quote_id_filter"),
+			QuoteIds:          customerQuoteIDs,
 		},
 	})
 	if err != nil {
@@ -209,10 +268,29 @@ func IssueInvoice(c *gin.Context, client invoice.InvoiceServiceClient) {
 	replyCreate(c, resp, err)
 }
 
-func GetInvoice(c *gin.Context, client invoice.InvoiceServiceClient) {
+func GetInvoice(c *gin.Context, client invoice.InvoiceServiceClient, usersClient users.UserServiceClient, quoteClient quote.QuoteServiceClient) {
+	userID := userIDFromCtx(c)
+	var allowedQuoteIDs map[string]struct{}
+
+	// In customer mode, resolve the linked provider and prefetch the client's
+	// quote_ids. The invoice service has no access to the quotes database, so
+	// the old JOIN-based client_id check would fail cross-DB. Instead we verify
+	// ownership in the gateway after fetching the invoice.
+	if c.GetHeader("X-Client-Mode") == "customer" {
+		var quoteIDs []string
+		var ok bool
+		if userID, quoteIDs, ok = resolveCustomerQuotes(c, usersClient, quoteClient); !ok {
+			return
+		}
+		allowedQuoteIDs = make(map[string]struct{}, len(quoteIDs))
+		for _, id := range quoteIDs {
+			allowedQuoteIDs[id] = struct{}{}
+		}
+	}
+
 	resp, err := client.GetInvoice(c.Request.Context(), &invoice.GetInvoiceRequest{
 		InvoiceId: c.Param("id"),
-		UserId:    userIDFromCtx(c),
+		UserId:    userID,
 	})
 	if err != nil {
 		invoiceErrors.unavailable(c)
@@ -221,6 +299,13 @@ func GetInvoice(c *gin.Context, client invoice.InvoiceServiceClient) {
 	if !resp.Success {
 		invoiceErrors.reply(c, resp.Code)
 		return
+	}
+	// Customer ownership check: verify the invoice's quote belongs to the client.
+	if allowedQuoteIDs != nil {
+		if _, ok := allowedQuoteIDs[resp.Invoice.GetQuoteId()]; !ok {
+			invoiceErrors.reply(c, InvoiceCodeNotFound)
+			return
+		}
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "invoice": invoiceDetailsToJSON(resp.Invoice)})
 }

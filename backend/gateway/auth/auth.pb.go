@@ -1381,6 +1381,262 @@ func (x *UpdateRoleRequest) GetRole() string {
 	return ""
 }
 
+type SendClientInvitationRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ProviderUserId string                 `protobuf:"bytes,1,opt,name=provider_user_id,json=providerUserId,proto3" json:"provider_user_id,omitempty"`
+	ClientId       string                 `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	ClientEmail    string                 `protobuf:"bytes,3,opt,name=client_email,json=clientEmail,proto3" json:"client_email,omitempty"`
+	ClientName     string                 `protobuf:"bytes,4,opt,name=client_name,json=clientName,proto3" json:"client_name,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *SendClientInvitationRequest) Reset() {
+	*x = SendClientInvitationRequest{}
+	mi := &file_auth_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendClientInvitationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendClientInvitationRequest) ProtoMessage() {}
+
+func (x *SendClientInvitationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendClientInvitationRequest.ProtoReflect.Descriptor instead.
+func (*SendClientInvitationRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *SendClientInvitationRequest) GetProviderUserId() string {
+	if x != nil {
+		return x.ProviderUserId
+	}
+	return ""
+}
+
+func (x *SendClientInvitationRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *SendClientInvitationRequest) GetClientEmail() string {
+	if x != nil {
+		return x.ClientEmail
+	}
+	return ""
+}
+
+func (x *SendClientInvitationRequest) GetClientName() string {
+	if x != nil {
+		return x.ClientName
+	}
+	return ""
+}
+
+type AcceptClientInvitationNewRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AcceptClientInvitationNewRequest) Reset() {
+	*x = AcceptClientInvitationNewRequest{}
+	mi := &file_auth_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AcceptClientInvitationNewRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AcceptClientInvitationNewRequest) ProtoMessage() {}
+
+func (x *AcceptClientInvitationNewRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AcceptClientInvitationNewRequest.ProtoReflect.Descriptor instead.
+func (*AcceptClientInvitationNewRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *AcceptClientInvitationNewRequest) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *AcceptClientInvitationNewRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *AcceptClientInvitationNewRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+type AcceptClientInvitationLinkedRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AcceptClientInvitationLinkedRequest) Reset() {
+	*x = AcceptClientInvitationLinkedRequest{}
+	mi := &file_auth_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AcceptClientInvitationLinkedRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AcceptClientInvitationLinkedRequest) ProtoMessage() {}
+
+func (x *AcceptClientInvitationLinkedRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AcceptClientInvitationLinkedRequest.ProtoReflect.Descriptor instead.
+func (*AcceptClientInvitationLinkedRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *AcceptClientInvitationLinkedRequest) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *AcceptClientInvitationLinkedRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type AcceptClientInvitationResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	Token         string                 `protobuf:"bytes,3,opt,name=token,proto3" json:"token,omitempty"`
+	RefreshToken  string                 `protobuf:"bytes,4,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
+	IsNewAccount  bool                   `protobuf:"varint,5,opt,name=is_new_account,json=isNewAccount,proto3" json:"is_new_account,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AcceptClientInvitationResponse) Reset() {
+	*x = AcceptClientInvitationResponse{}
+	mi := &file_auth_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AcceptClientInvitationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AcceptClientInvitationResponse) ProtoMessage() {}
+
+func (x *AcceptClientInvitationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AcceptClientInvitationResponse.ProtoReflect.Descriptor instead.
+func (*AcceptClientInvitationResponse) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *AcceptClientInvitationResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *AcceptClientInvitationResponse) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *AcceptClientInvitationResponse) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *AcceptClientInvitationResponse) GetRefreshToken() string {
+	if x != nil {
+		return x.RefreshToken
+	}
+	return ""
+}
+
+func (x *AcceptClientInvitationResponse) GetIsNewAccount() bool {
+	if x != nil {
+		return x.IsNewAccount
+	}
+	return false
+}
+
 var File_auth_proto protoreflect.FileDescriptor
 
 const file_auth_proto_rawDesc = "" +
@@ -1482,7 +1738,26 @@ const file_auth_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\"@\n" +
 	"\x11UpdateRoleRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
-	"\x04role\x18\x02 \x01(\tR\x04role2\xff\b\n" +
+	"\x04role\x18\x02 \x01(\tR\x04role\"\xa8\x01\n" +
+	"\x1bSendClientInvitationRequest\x12(\n" +
+	"\x10provider_user_id\x18\x01 \x01(\tR\x0eproviderUserId\x12\x1b\n" +
+	"\tclient_id\x18\x02 \x01(\tR\bclientId\x12!\n" +
+	"\fclient_email\x18\x03 \x01(\tR\vclientEmail\x12\x1f\n" +
+	"\vclient_name\x18\x04 \x01(\tR\n" +
+	"clientName\"j\n" +
+	" AcceptClientInvitationNewRequest\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\x12\x14\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1a\n" +
+	"\bpassword\x18\x03 \x01(\tR\bpassword\"T\n" +
+	"#AcceptClientInvitationLinkedRequest\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xaf\x01\n" +
+	"\x1eAcceptClientInvitationResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x14\n" +
+	"\x05token\x18\x03 \x01(\tR\x05token\x12#\n" +
+	"\rrefresh_token\x18\x04 \x01(\tR\frefreshToken\x12$\n" +
+	"\x0eis_new_account\x18\x05 \x01(\bR\fisNewAccount2\xad\v\n" +
 	"\vAuthService\x12<\n" +
 	"\bRegister\x12\x15.auth.RegisterRequest\x1a\x19.auth.FormGenericResponse\x120\n" +
 	"\x05Login\x12\x12.auth.LoginRequest\x1a\x13.auth.LoginResponse\x12B\n" +
@@ -1501,7 +1776,10 @@ const file_auth_proto_rawDesc = "" +
 	"\x16UpdateSubscriptionTier\x12#.auth.UpdateSubscriptionTierRequest\x1a\x15.auth.GenericResponse\x12V\n" +
 	"\x17ResendEmailVerification\x12$.auth.ResendEmailVerificationRequest\x1a\x15.auth.GenericResponse\x12<\n" +
 	"\n" +
-	"UpdateRole\x12\x17.auth.UpdateRoleRequest\x1a\x15.auth.GenericResponseB\x0eZ\fgateway/authb\x06proto3"
+	"UpdateRole\x12\x17.auth.UpdateRoleRequest\x1a\x15.auth.GenericResponse\x12P\n" +
+	"\x14SendClientInvitation\x12!.auth.SendClientInvitationRequest\x1a\x15.auth.GenericResponse\x12i\n" +
+	"\x19AcceptClientInvitationNew\x12&.auth.AcceptClientInvitationNewRequest\x1a$.auth.AcceptClientInvitationResponse\x12o\n" +
+	"\x1cAcceptClientInvitationLinked\x12).auth.AcceptClientInvitationLinkedRequest\x1a$.auth.AcceptClientInvitationResponseB\x0eZ\fgateway/authb\x06proto3"
 
 var (
 	file_auth_proto_rawDescOnce sync.Once
@@ -1515,32 +1793,36 @@ func file_auth_proto_rawDescGZIP() []byte {
 	return file_auth_proto_rawDescData
 }
 
-var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_auth_proto_goTypes = []any{
-	(*RegisterRequest)(nil),                // 0: auth.RegisterRequest
-	(*LoginRequest)(nil),                   // 1: auth.LoginRequest
-	(*LoginResponse)(nil),                  // 2: auth.LoginResponse
-	(*OAuthLoginRequest)(nil),              // 3: auth.OAuthLoginRequest
-	(*LinkOAuthIdentityRequest)(nil),       // 4: auth.LinkOAuthIdentityRequest
-	(*UnlinkOAuthIdentityRequest)(nil),     // 5: auth.UnlinkOAuthIdentityRequest
-	(*ListOAuthIdentitiesRequest)(nil),     // 6: auth.ListOAuthIdentitiesRequest
-	(*OAuthIdentity)(nil),                  // 7: auth.OAuthIdentity
-	(*ListOAuthIdentitiesResponse)(nil),    // 8: auth.ListOAuthIdentitiesResponse
-	(*UpdatePasswordRequest)(nil),          // 9: auth.UpdatePasswordRequest
-	(*GenericResponse)(nil),                // 10: auth.GenericResponse
-	(*ResetPasswordRequest)(nil),           // 11: auth.ResetPasswordRequest
-	(*ConfirmResetPasswordRequest)(nil),    // 12: auth.ConfirmResetPasswordRequest
-	(*VerifyEmailRequest)(nil),             // 13: auth.VerifyEmailRequest
-	(*RefreshTokenRequest)(nil),            // 14: auth.RefreshTokenRequest
-	(*LogoutRequest)(nil),                  // 15: auth.LogoutRequest
-	(*FormGenericResponse)(nil),            // 16: auth.FormGenericResponse
-	(*FormFieldError)(nil),                 // 17: auth.FormFieldError
-	(*IntrospectTokenRequest)(nil),         // 18: auth.IntrospectTokenRequest
-	(*AccessContext)(nil),                  // 19: auth.AccessContext
-	(*IntrospectTokenResponse)(nil),        // 20: auth.IntrospectTokenResponse
-	(*UpdateSubscriptionTierRequest)(nil),  // 21: auth.UpdateSubscriptionTierRequest
-	(*ResendEmailVerificationRequest)(nil), // 22: auth.ResendEmailVerificationRequest
-	(*UpdateRoleRequest)(nil),              // 23: auth.UpdateRoleRequest
+	(*RegisterRequest)(nil),                     // 0: auth.RegisterRequest
+	(*LoginRequest)(nil),                        // 1: auth.LoginRequest
+	(*LoginResponse)(nil),                       // 2: auth.LoginResponse
+	(*OAuthLoginRequest)(nil),                   // 3: auth.OAuthLoginRequest
+	(*LinkOAuthIdentityRequest)(nil),            // 4: auth.LinkOAuthIdentityRequest
+	(*UnlinkOAuthIdentityRequest)(nil),          // 5: auth.UnlinkOAuthIdentityRequest
+	(*ListOAuthIdentitiesRequest)(nil),          // 6: auth.ListOAuthIdentitiesRequest
+	(*OAuthIdentity)(nil),                       // 7: auth.OAuthIdentity
+	(*ListOAuthIdentitiesResponse)(nil),         // 8: auth.ListOAuthIdentitiesResponse
+	(*UpdatePasswordRequest)(nil),               // 9: auth.UpdatePasswordRequest
+	(*GenericResponse)(nil),                     // 10: auth.GenericResponse
+	(*ResetPasswordRequest)(nil),                // 11: auth.ResetPasswordRequest
+	(*ConfirmResetPasswordRequest)(nil),         // 12: auth.ConfirmResetPasswordRequest
+	(*VerifyEmailRequest)(nil),                  // 13: auth.VerifyEmailRequest
+	(*RefreshTokenRequest)(nil),                 // 14: auth.RefreshTokenRequest
+	(*LogoutRequest)(nil),                       // 15: auth.LogoutRequest
+	(*FormGenericResponse)(nil),                 // 16: auth.FormGenericResponse
+	(*FormFieldError)(nil),                      // 17: auth.FormFieldError
+	(*IntrospectTokenRequest)(nil),              // 18: auth.IntrospectTokenRequest
+	(*AccessContext)(nil),                       // 19: auth.AccessContext
+	(*IntrospectTokenResponse)(nil),             // 20: auth.IntrospectTokenResponse
+	(*UpdateSubscriptionTierRequest)(nil),       // 21: auth.UpdateSubscriptionTierRequest
+	(*ResendEmailVerificationRequest)(nil),      // 22: auth.ResendEmailVerificationRequest
+	(*UpdateRoleRequest)(nil),                   // 23: auth.UpdateRoleRequest
+	(*SendClientInvitationRequest)(nil),         // 24: auth.SendClientInvitationRequest
+	(*AcceptClientInvitationNewRequest)(nil),    // 25: auth.AcceptClientInvitationNewRequest
+	(*AcceptClientInvitationLinkedRequest)(nil), // 26: auth.AcceptClientInvitationLinkedRequest
+	(*AcceptClientInvitationResponse)(nil),      // 27: auth.AcceptClientInvitationResponse
 }
 var file_auth_proto_depIdxs = []int32{
 	7,  // 0: auth.ListOAuthIdentitiesResponse.identities:type_name -> auth.OAuthIdentity
@@ -1562,24 +1844,30 @@ var file_auth_proto_depIdxs = []int32{
 	21, // 16: auth.AuthService.UpdateSubscriptionTier:input_type -> auth.UpdateSubscriptionTierRequest
 	22, // 17: auth.AuthService.ResendEmailVerification:input_type -> auth.ResendEmailVerificationRequest
 	23, // 18: auth.AuthService.UpdateRole:input_type -> auth.UpdateRoleRequest
-	16, // 19: auth.AuthService.Register:output_type -> auth.FormGenericResponse
-	2,  // 20: auth.AuthService.Login:output_type -> auth.LoginResponse
-	10, // 21: auth.AuthService.ResetPassword:output_type -> auth.GenericResponse
-	10, // 22: auth.AuthService.ConfirmResetPassword:output_type -> auth.GenericResponse
-	10, // 23: auth.AuthService.UpdatePassword:output_type -> auth.GenericResponse
-	10, // 24: auth.AuthService.VerifyEmail:output_type -> auth.GenericResponse
-	2,  // 25: auth.AuthService.RefreshToken:output_type -> auth.LoginResponse
-	2,  // 26: auth.AuthService.OAuthLogin:output_type -> auth.LoginResponse
-	10, // 27: auth.AuthService.LinkOAuthIdentity:output_type -> auth.GenericResponse
-	10, // 28: auth.AuthService.UnlinkOAuthIdentity:output_type -> auth.GenericResponse
-	8,  // 29: auth.AuthService.ListOAuthIdentities:output_type -> auth.ListOAuthIdentitiesResponse
-	10, // 30: auth.AuthService.Logout:output_type -> auth.GenericResponse
-	20, // 31: auth.AuthService.IntrospectToken:output_type -> auth.IntrospectTokenResponse
-	10, // 32: auth.AuthService.UpdateSubscriptionTier:output_type -> auth.GenericResponse
-	10, // 33: auth.AuthService.ResendEmailVerification:output_type -> auth.GenericResponse
-	10, // 34: auth.AuthService.UpdateRole:output_type -> auth.GenericResponse
-	19, // [19:35] is the sub-list for method output_type
-	3,  // [3:19] is the sub-list for method input_type
+	24, // 19: auth.AuthService.SendClientInvitation:input_type -> auth.SendClientInvitationRequest
+	25, // 20: auth.AuthService.AcceptClientInvitationNew:input_type -> auth.AcceptClientInvitationNewRequest
+	26, // 21: auth.AuthService.AcceptClientInvitationLinked:input_type -> auth.AcceptClientInvitationLinkedRequest
+	16, // 22: auth.AuthService.Register:output_type -> auth.FormGenericResponse
+	2,  // 23: auth.AuthService.Login:output_type -> auth.LoginResponse
+	10, // 24: auth.AuthService.ResetPassword:output_type -> auth.GenericResponse
+	10, // 25: auth.AuthService.ConfirmResetPassword:output_type -> auth.GenericResponse
+	10, // 26: auth.AuthService.UpdatePassword:output_type -> auth.GenericResponse
+	10, // 27: auth.AuthService.VerifyEmail:output_type -> auth.GenericResponse
+	2,  // 28: auth.AuthService.RefreshToken:output_type -> auth.LoginResponse
+	2,  // 29: auth.AuthService.OAuthLogin:output_type -> auth.LoginResponse
+	10, // 30: auth.AuthService.LinkOAuthIdentity:output_type -> auth.GenericResponse
+	10, // 31: auth.AuthService.UnlinkOAuthIdentity:output_type -> auth.GenericResponse
+	8,  // 32: auth.AuthService.ListOAuthIdentities:output_type -> auth.ListOAuthIdentitiesResponse
+	10, // 33: auth.AuthService.Logout:output_type -> auth.GenericResponse
+	20, // 34: auth.AuthService.IntrospectToken:output_type -> auth.IntrospectTokenResponse
+	10, // 35: auth.AuthService.UpdateSubscriptionTier:output_type -> auth.GenericResponse
+	10, // 36: auth.AuthService.ResendEmailVerification:output_type -> auth.GenericResponse
+	10, // 37: auth.AuthService.UpdateRole:output_type -> auth.GenericResponse
+	10, // 38: auth.AuthService.SendClientInvitation:output_type -> auth.GenericResponse
+	27, // 39: auth.AuthService.AcceptClientInvitationNew:output_type -> auth.AcceptClientInvitationResponse
+	27, // 40: auth.AuthService.AcceptClientInvitationLinked:output_type -> auth.AcceptClientInvitationResponse
+	22, // [22:41] is the sub-list for method output_type
+	3,  // [3:22] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
 	3,  // [3:3] is the sub-list for extension extendee
 	0,  // [0:3] is the sub-list for field type_name
@@ -1597,7 +1885,7 @@ func file_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_proto_rawDesc), len(file_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   24,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -74,6 +74,10 @@ describe("Admin Subscriptions page", () => {
       statusCode: 200,
       body: { success: true, plans: PLANS },
     }).as("getPlans");
+    cy.intercept("GET", "/api/plans?include_inactive=true", {
+      statusCode: 200,
+      body: { success: true, plans: PLANS },
+    }).as("getAllPlans");
   }
 
   it("renders the subscriptions table with user rows", () => {
@@ -112,6 +116,10 @@ describe("Admin Subscriptions page", () => {
       statusCode: 200,
       body: { success: true, plans: PLANS },
     }).as("getPlans");
+    cy.intercept("GET", "/api/plans?include_inactive=true", {
+      statusCode: 200,
+      body: { success: true, plans: PLANS },
+    });
 
     cy.visit("/subscriptions");
     cy.wait("@getSubscriptionsEmpty");

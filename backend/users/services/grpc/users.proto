@@ -23,6 +23,8 @@ service UserService {
     rpc ListClients(ListClientsRequest) returns (ListClientsResponse);
     rpc UpdateClient(UpdateClientRequest) returns (UpdateClientResponse);
     rpc ArchiveClient(ArchiveClientRequest) returns (GenericResponse);
+    rpc LinkClientUser(LinkClientUserRequest) returns (GenericResponse);
+    rpc GetClientsByLinkedUser(GetClientByLinkedUserRequest) returns (ListClientsResponse);
 
     // Address
     rpc CreateAddress(CreateAddressRequest) returns (CreateAddressResponse);
@@ -224,6 +226,8 @@ message Client {
     ClientType client_type = 11;
     // siret: 14-digit establishment id (SIREN + NIC), recipient routing key.
     string siret = 12;
+    // linked_user_id: auth user_id of the customer who accepted the invitation.
+    string linked_user_id = 13;
 }
 
 message CreateClientRequest {
@@ -300,6 +304,16 @@ message UpdateClientResponse {
 message ArchiveClientRequest {
     string client_id = 1;
     string user_id = 2;
+}
+
+message LinkClientUserRequest {
+    string client_id      = 1;
+    string provider_id    = 2;
+    string linked_user_id = 3;
+}
+
+message GetClientByLinkedUserRequest {
+    string linked_user_id = 1;
 }
 
 // ─── Address ─────────────────────────────────────────────────────────────────

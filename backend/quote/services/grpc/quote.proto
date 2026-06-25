@@ -33,6 +33,12 @@ service QuoteService {
     rpc ListFees(ListFeesRequest) returns (ListFeesResponse);
     rpc UpdateFee(UpdateFeeRequest) returns (UpdateFeeResponse);
     rpc ArchiveFee(ArchiveFeeRequest) returns (GenericResponse);
+
+    // Comment
+    rpc CreateComment(CreateCommentRequest) returns (CreateCommentResponse);
+    rpc ListComments(ListCommentsRequest)   returns (ListCommentsResponse);
+    rpc UpdateComment(UpdateCommentRequest) returns (UpdateCommentResponse);
+    rpc DeleteComment(DeleteCommentRequest) returns (GenericResponse);
 }
 
 message GenericResponse {
@@ -343,4 +349,58 @@ message UpdateFeeResponse {
 message ArchiveFeeRequest {
     string fee_id = 1;
     string user_id = 2;
+}
+
+// ─── Comment ──────────────────────────────────────────────────────────────────
+
+message QuoteLineComment {
+    string comment_id  = 1;
+    string line_id     = 2;
+    string quote_id    = 3;
+    string author_id   = 4;
+    string author_name = 5;
+    string body        = 6;
+    string created_at  = 7;
+    string updated_at  = 8;
+}
+
+message CreateCommentRequest {
+    string line_id     = 1;
+    string quote_id    = 2;
+    string author_id   = 3;
+    string author_name = 4;
+    string body        = 5;
+}
+
+message CreateCommentResponse {
+    bool              success    = 1;
+    int32             code       = 2;
+    QuoteLineComment  comment    = 3;
+}
+
+message ListCommentsRequest {
+    string line_id = 1;
+}
+
+message ListCommentsResponse {
+    bool                     success  = 1;
+    int32                    code     = 2;
+    repeated QuoteLineComment comments = 3;
+}
+
+message UpdateCommentRequest {
+    string comment_id = 1;
+    string author_id  = 2;
+    string body       = 3;
+}
+
+message UpdateCommentResponse {
+    bool             success = 1;
+    int32            code    = 2;
+    QuoteLineComment comment = 3;
+}
+
+message DeleteCommentRequest {
+    string comment_id = 1;
+    string author_id  = 2;
 }

@@ -41,13 +41,29 @@ func (s *Server) GetInvoice(ctx context.Context, req *invoiceGrpc.GetInvoiceRequ
 		vatExempt  bool
 		lifecycle  string
 	)
-	err = s.db.QueryRowContext(ctx,
-		`SELECT quote_id, schedule_id, billed_month_indexes, status, invoice_number,
-		        issued_at, sale_date, due_date, total_ht_cents, total_vat_cents, total_ttc_cents, vat_exempt,
-		        lifecycle_status
-		 FROM invoices WHERE invoice_id=$1 AND user_id=$2`,
-		req.InvoiceId, req.UserId,
-	).Scan(&quoteID, &scheduleID, &months, &status, &invoiceNum,
+	var query string
+	var queryArgs []interface{}
+	if strings.TrimSpace(req.ClientId) != "" {
+		// Customer-facing read: verify the invoice belongs to the given client via
+		// its quote (invoices don't store client_id directly).
+		query = `SELECT i.quote_id, i.schedule_id, i.billed_month_indexes, i.status,
+		                i.invoice_number, i.issued_at, i.sale_date, i.due_date,
+		                i.total_ht_cents, i.total_vat_cents, i.total_ttc_cents,
+		                i.vat_exempt, i.lifecycle_status
+		         FROM invoices i
+		         JOIN quotes q ON q.quote_id = i.quote_id
+		         WHERE i.invoice_id=$1 AND i.user_id=$2 AND q.client_id=$3`
+		queryArgs = []interface{}{req.InvoiceId, req.UserId, req.ClientId}
+	} else {
+		query = `SELECT quote_id, schedule_id, billed_month_indexes, status, invoice_number,
+		                issued_at, sale_date, due_date, total_ht_cents, total_vat_cents, total_ttc_cents,
+		                vat_exempt, lifecycle_status
+		         FROM invoices WHERE invoice_id=$1 AND user_id=$2`
+		queryArgs = []interface{}{req.InvoiceId, req.UserId}
+	}
+
+	err = s.db.QueryRowContext(ctx, query, queryArgs...).Scan(
+		&quoteID, &scheduleID, &months, &status, &invoiceNum,
 		&issuedAt, &saleDate, &dueDate, &totalHT, &totalVAT, &totalTTC, &vatExempt, &lifecycle)
 	if err == sql.ErrNoRows {
 		return &invoiceGrpc.GetInvoiceResponse{Success: false, Code: codes.NotFound}, nil

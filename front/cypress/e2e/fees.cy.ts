@@ -124,8 +124,8 @@ describe("Fees page", () => {
       cy.get("[data-slot='dialog-content'] [data-slot='select-trigger']").click();
       cy.contains("[data-slot='select-item']", "Prestation").click();
 
-      cy.get("input[name='name']").type("Frais de dossier");
-      cy.get("input[name='unit_price']").type("12.50");
+      cy.get("input[name='name']").click().type("Frais de dossier");
+      cy.get("input[name='unit_price']").type("12,50");
       cy.get("input[name='unit']").type("forfait");
 
       cy.contains("[data-slot='dialog-content'] button", "Enregistrer").click();

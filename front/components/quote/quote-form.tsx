@@ -26,15 +26,17 @@ import QuoteStepSummary from "@/components/quote/steps/quote-step-summary";
 import {
   createLine,
   createQuote,
+  getMyQuote,
   getQuote,
   negociateQuote,
+  updateMyQuoteAddress,
   updateQuote,
 } from "@/lib/services/quotes";
 import { exportQuotePdf } from "@/lib/services/export";
 import GenerateInvoiceFromQuoteButton from "@/components/invoice/generate-invoice-from-quote-button";
 import QuoteStateDropdown from "@/components/quote/quote-state-dropdown";
 import { listTemplateLines } from "@/lib/services/templates";
-import { fieldErrorsFromBody, type FieldErrors } from "@/lib/api";
+import { apiFetch, fieldErrorsFromBody, type FieldErrors } from "@/lib/api";
 import { useMode } from "@/lib/mode-context";
 import {
   type BackendQuote,
@@ -51,6 +53,7 @@ import {
 import { useQuoteReferenceData } from "@/hooks/use-quote-reference-data";
 import SaveTemplateDialog from "@/components/template/save-template-dialog";
 import CreateScheduleDialog from "@/components/schedule/create-schedule-dialog";
+import QuoteLineCommentsSidebar from "@/components/quote/quote-line-comments-sidebar";
 
 type QuoteFormProps = {
   quoteId?: string;
@@ -109,6 +112,11 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [createScheduleOpen, setCreateScheduleOpen] = useState(false);
+  const [commentSidebarOpen, setCommentSidebarOpen] = useState(false);
+  const [commentLineId, setCommentLineId] = useState("");
+  const [commentLineName, setCommentLineName] = useState("");
+  const [currentUserName, setCurrentUserName] = useState("");
+  const [customerUserId, setCustomerUserId] = useState("");
 
   const isReadonly =
     isCustomer || quoteState === "validated" || quoteState === "drop";
@@ -121,7 +129,8 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   useEffect(() => {
     if (!quoteId) return;
     let cancelled = false;
-    getQuote(quoteId).then(({ ok, body }) => {
+    const fetch = isCustomer ? getMyQuote(quoteId) : getQuote(quoteId);
+    fetch.then(({ ok, body }) => {
       if (cancelled) return;
       if (!ok || !body.success) {
         setNotFound(true);
@@ -140,11 +149,41 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       setLoading(false);
     });
     return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quoteId, t]);
 
   useEffect(() => {
     if (notFound) router.replace("/quote");
   }, [notFound, router]);
+
+  // Fetch current user display name for comment authorship.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (isCustomer) {
+        const [clientsRes, meRes] = await Promise.all([
+          apiFetch("/api/users/clients/me"),
+          apiFetch("/api/auth/me"),
+        ]);
+        if (cancelled) return;
+        if (clientsRes.ok && Array.isArray(clientsRes.body.clients) && clientsRes.body.clients.length > 0) {
+          const cl = clientsRes.body.clients[0] as { first_name: string; last_name: string };
+          setCurrentUserName(`${cl.first_name} ${cl.last_name}`.trim());
+        }
+        if (meRes.ok && meRes.body.auth) {
+          setCustomerUserId((meRes.body.auth as { user_id: string }).user_id);
+        }
+      } else {
+        const { ok, body } = await apiFetch("/api/users/me");
+        if (cancelled) return;
+        if (ok && body.success && body.user) {
+          const u = body.user as { company?: string; email?: string };
+          setCurrentUserName(u.company || u.email || "");
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isCustomer]);
 
   useEffect(() => {
     return () => {
@@ -155,6 +194,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const {
     clients,
     userId,
+    myClientId,
     userAddresses,
     addresses,
     availableTaxes,
@@ -321,7 +361,16 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     (value: number | null) => {
       setAddressId(value);
       setErrors((prev) => ({ ...prev, address_id: [] }));
-      if (!quoteId || isReadonly || value == null) return;
+      if (!quoteId || value == null) return;
+      if (isCustomer) {
+        void updateMyQuoteAddress(quoteId, value, myClientId || undefined).then(({ ok, body }) => {
+          if (!ok || !body.success) {
+            toast.error((body.message as string) ?? t("errors.addressSaveFailedToast"));
+          }
+        });
+        return;
+      }
+      if (isReadonly) return;
       const name = projectNameRef.current.trim();
       if (name.length === 0) return;
       const wasNegociation = quoteState === "negociation";
@@ -333,7 +382,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         }
       });
     },
-    [isReadonly, quoteId, t],
+    [handleRevertedToDraft, isCustomer, isReadonly, myClientId, quoteId, quoteState, t],
   );
 
   const handleUserAddressIdChange = useCallback(
@@ -485,6 +534,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             addressId={addressId}
             userAddressId={userAddressId}
             isReadonly={isReadonly}
+            customerAddressEditable={isCustomer}
             clients={clients}
             addresses={addresses}
             userAddresses={userAddresses}
@@ -527,6 +577,11 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             onSublineRemove={!isCreate && !isReadonly ? handleSublineRemove : undefined}
             onSaveLineAsTemplate={!isCreate && !isReadonly ? handleSaveLineAsTemplate : undefined}
             onAddItemFromTemplate={!isCreate && !isReadonly ? handleAddItemFromTemplate : undefined}
+            onOpenComments={!isCreate && quoteId ? (lineId, lineName) => {
+              setCommentLineId(lineId);
+              setCommentLineName(lineName);
+              setCommentSidebarOpen(true);
+            } : undefined}
           />
         )}
 
@@ -584,6 +639,18 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         initialQuoteId={quoteId}
         lockQuote
       />
+
+      {quoteId && (
+        <QuoteLineCommentsSidebar
+          open={commentSidebarOpen}
+          onOpenChange={setCommentSidebarOpen}
+          quoteId={quoteId}
+          lineId={commentLineId}
+          lineName={commentLineName}
+          currentUserId={isCustomer ? customerUserId : userId}
+          currentUserName={currentUserName}
+        />
+      )}
     </Card>
   );
 }

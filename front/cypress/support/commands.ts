@@ -10,9 +10,6 @@ declare global {
   namespace Cypress {
     interface Chainable {
       login(token?: string): Chainable<void>;
-      // Mode is currently inert: ModeProvider hard-codes "provider" while
-      // customer mode is disabled at the UI level. The signature is kept so
-      // call sites stay stable when the toggle is restored.
       visitAs(mode: UserMode, url: string): Chainable<void>;
       fillLoginForm(email: string, password: string): Chainable<void>;
     }
@@ -52,9 +49,21 @@ Cypress.Commands.add("login", (token = "fake-token") => {
     statusCode: 200,
     body: { success: true, quotes: [] },
   });
+  cy.intercept("GET", "/api/users/taxes/available**", {
+    statusCode: 200,
+    body: { success: true, taxes: [] },
+  });
   cy.intercept("GET", /^\/api\/users\/clients(\?.*)?$/, {
     statusCode: 200,
     body: { success: true, clients: [] },
+  });
+  cy.intercept("GET", "/api/users/clients/me", {
+    statusCode: 200,
+    body: { success: true, clients: [] },
+  });
+  cy.intercept("GET", /\/api\/users\/clients\/me\/addresses/, {
+    statusCode: 200,
+    body: { success: true, addresses: [] },
   });
   cy.intercept("GET", /^\/api\/users\/addresses(\?.*)?$/, {
     statusCode: 200,
@@ -62,7 +71,8 @@ Cypress.Commands.add("login", (token = "fake-token") => {
   });
 });
 
-Cypress.Commands.add("visitAs", (_mode: UserMode, url: string) => {
+Cypress.Commands.add("visitAs", (mode: UserMode, url: string) => {
+  cy.setCookie("user-mode", mode, { domain: "localhost" });
   cy.visit(url);
 });
 

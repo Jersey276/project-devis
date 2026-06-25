@@ -1,13 +1,19 @@
 package main
 
 import (
+	"os"
+
 	"gateway/audit"
 	"gateway/authz"
 	"gateway/controllers"
 	"gateway/middleware"
 	"gateway/services"
+	quote "gateway/quote"
+	users "gateway/users"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var authorizer = authz.NewFromEnv()
@@ -23,10 +29,23 @@ func main() {
 	r.Run(":8080")
 }
 
+func newUsersClient() users.UserServiceClient {
+	address := os.Getenv("USER_SERVICE_ADDRESS")
+	if address == "" {
+		address = "localhost:50052"
+	}
+	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic("failed to connect to users gRPC server: " + err.Error())
+	}
+	return users.NewUserServiceClient(conn)
+}
+
 func setupRouter(auditLogger *middleware.AuditLogger, auditClient audit.AuditServiceClient) *gin.Engine {
 	r := gin.Default()
 
 	emailNotifier := services.NewEmailNotifier()
+	usersClient := newUsersClient()
 
 	// Webhooks — no auth, raw body, registered before auth groups
 	webhooks := r.Group("/api/webhooks")
@@ -36,10 +55,11 @@ func setupRouter(auditLogger *middleware.AuditLogger, auditClient audit.AuditSer
 	audited := r.Group("/api")
 	audited.Use(auditLogger.Middleware())
 	controllers.AuthRoutes(audited.Group("/auth"))
+	controllers.InviteRoutes(audited.Group("/auth/invite"), controllers.NewInviteAuthClient(), controllers.NewInviteUsersClient())
 
-	users := audited.Group("/users")
-	users.Use(middleware.AuthRequired())
-	controllers.UserRoutes(users)
+	usersGroup := audited.Group("/users")
+	usersGroup.Use(middleware.AuthRequired())
+	controllers.UserRoutes(usersGroup)
 
 	quotes := audited.Group("/quotes")
 	quotes.Use(middleware.AuthRequired())
@@ -47,7 +67,7 @@ func setupRouter(auditLogger *middleware.AuditLogger, auditClient audit.AuditSer
 
 	exportGrp := audited.Group("/export")
 	exportGrp.Use(middleware.AuthRequired())
-	controllers.ExportRoutes(exportGrp)
+	controllers.ExportRoutes(exportGrp, usersClient)
 
 	templates := audited.Group("/templates")
 	templates.Use(middleware.AuthRequired())
@@ -69,14 +89,25 @@ func setupRouter(auditLogger *middleware.AuditLogger, auditClient audit.AuditSer
 	projects.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionSchedules))
 	controllers.ProjectsRoutes(projects)
 
+	quoteAddress := os.Getenv("QUOTE_SERVICE_ADDRESS")
+	if quoteAddress == "" {
+		quoteAddress = "localhost:50053"
+	}
+	quoteConn, err := grpc.NewClient(quoteAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic("failed to connect to quote gRPC server: " + err.Error())
+	}
+	quoteClient := quote.NewQuoteServiceClient(quoteConn)
+
 	invoices := audited.Group("/invoices")
 	invoices.Use(middleware.AuthRequired())
 	invoices.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionInvoices))
-	controllers.InvoicesRoutes(invoices)
+	controllers.InvoicesRoutes(invoices, usersClient, quoteClient)
 
 	creditNotes := audited.Group("/credit-notes")
 	creditNotes.Use(middleware.AuthRequired())
 	creditNotes.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionInvoices))
+	creditNotes.Use(controllers.DenyCustomer())
 	controllers.CreditNotesRoutes(creditNotes)
 
 	plans := audited.Group("/plans")

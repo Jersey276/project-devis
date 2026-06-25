@@ -36,8 +36,9 @@ import {
   markInvoicePaid,
   readInvoicesFromBody,
 } from "@/lib/services/invoices";
-import { listClients } from "@/lib/services/clients";
+import { listClients, getMyClientProfiles } from "@/lib/services/clients";
 import { listQuotes } from "@/lib/services/quotes";
+import { useMode } from "@/lib/mode-context";
 import { exportInvoicePdf } from "@/lib/services/export";
 import { formatEurosFromCents } from "@/lib/utils";
 import type {
@@ -92,6 +93,7 @@ function InvoiceListTableInner() {
   const t = useTranslations("invoice.list");
   const tFilters = useTranslations("invoice.list.filters");
   const tCommon = useTranslations("common.filterSidebar");
+  const { isCustomer } = useMode();
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -116,6 +118,16 @@ function InvoiceListTableInner() {
   const [error, setError] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [myClientId, setMyClientId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isCustomer) return;
+    getMyClientProfiles().then(({ ok, body }) => {
+      if (ok && Array.isArray(body.clients) && body.clients.length > 0) {
+        setMyClientId((body.clients[0] as { client_id: string }).client_id);
+      }
+    });
+  }, [isCustomer]);
 
   function pushParams(p: {
     statuses?: string[];
@@ -157,13 +169,14 @@ function InvoiceListTableInner() {
   }
 
   useEffect(() => {
+    if (isCustomer) return;
     listClients().then(({ ok, body }) => {
       if (ok && Array.isArray(body.clients)) setClients(body.clients as BackendClient[]);
     });
     listQuotes().then(({ ok, body }) => {
       if (ok && Array.isArray(body.quotes)) setQuotes(body.quotes as BackendQuote[]);
     });
-  }, []);
+  }, [isCustomer]);
 
   const fetchInvoices = useCallback(async (signal?: AbortSignal) => {
     const params = new URLSearchParams({ page: String(page), page_size: String(PAGE_SIZE) });
@@ -173,8 +186,9 @@ function InvoiceListTableInner() {
     if (issuedTo) params.set("issued_to", issuedTo);
     if (dueFrom) params.set("due_from", dueFrom);
     if (dueTo) params.set("due_to", dueTo);
-    if (clientId) params.set("client_id", clientId);
-    if (quoteIdFilter) params.set("quote_id_filter", quoteIdFilter);
+    const effectiveClientId = isCustomer ? (myClientId ?? "") : clientId;
+    if (effectiveClientId) params.set("client_id", effectiveClientId);
+    if (!isCustomer && quoteIdFilter) params.set("quote_id_filter", quoteIdFilter);
     params.set("sort_by", sortBy);
     params.set("sort_direction", sortDirection);
 
@@ -188,7 +202,7 @@ function InvoiceListTableInner() {
     setItems(toRows(readInvoicesFromBody(body)));
     setTotal((body.total ?? 0) as number);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, myClientId]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -223,30 +237,34 @@ function InvoiceListTableInner() {
           );
         },
       },
-      {
-        type: "callback",
-        label: t("actions.markPaid"),
-        callback: (row) => {
-          const r = row as InvoiceRow;
-          if (r.status !== "ISSUED") return;
-          void markInvoicePaid(r.id).then(({ ok, body }) => {
-            if (!ok || !body.success)
-              setError((body.message as string) ?? t("actionError"));
-            else void fetchInvoices();
-          });
-        },
-      },
-      {
-        type: "callback",
-        label: t("actions.deleteDraft"),
-        callback: (row) => {
-          const r = row as InvoiceRow;
-          if (r.status !== "DRAFT") return;
-          setPendingDeleteId(r.id);
-        },
-      },
+      ...(!isCustomer
+        ? [
+            {
+              type: "callback" as const,
+              label: t("actions.markPaid"),
+              callback: (row: object) => {
+                const r = row as InvoiceRow;
+                if (r.status !== "ISSUED") return;
+                void markInvoicePaid(r.id).then(({ ok, body }) => {
+                  if (!ok || !body.success)
+                    setError((body.message as string) ?? t("actionError"));
+                  else void fetchInvoices();
+                });
+              },
+            },
+            {
+              type: "callback" as const,
+              label: t("actions.deleteDraft"),
+              callback: (row: object) => {
+                const r = row as InvoiceRow;
+                if (r.status !== "DRAFT") return;
+                setPendingDeleteId(r.id);
+              },
+            },
+          ]
+        : []),
     ],
-    [t, fetchInvoices],
+    [t, fetchInvoices, isCustomer],
   );
 
   async function onConfirmDelete() {
@@ -314,25 +332,29 @@ function InvoiceListTableInner() {
             />
           </FilterSidebarSection>
 
-          <FilterSidebarSection label={tFilters("clientLabel")}>
-            <SelectCombobox
-              items={clientItems}
-              value={clientId}
-              onValueChange={(v) => pushParams({ clientId: v, page: 1 })}
-              placeholder={tFilters("clientPlaceholder")}
-              emptyLabel={tFilters("clientEmpty")}
-            />
-          </FilterSidebarSection>
+          {!isCustomer && (
+            <FilterSidebarSection label={tFilters("clientLabel")}>
+              <SelectCombobox
+                items={clientItems}
+                value={clientId}
+                onValueChange={(v) => pushParams({ clientId: v, page: 1 })}
+                placeholder={tFilters("clientPlaceholder")}
+                emptyLabel={tFilters("clientEmpty")}
+              />
+            </FilterSidebarSection>
+          )}
 
-          <FilterSidebarSection label={tFilters("quoteLabel")}>
-            <SelectCombobox
-              items={quoteItems}
-              value={quoteIdFilter}
-              onValueChange={(v) => pushParams({ quoteIdFilter: v, page: 1 })}
-              placeholder={tFilters("quotePlaceholder")}
-              emptyLabel={tFilters("quoteEmpty")}
-            />
-          </FilterSidebarSection>
+          {!isCustomer && (
+            <FilterSidebarSection label={tFilters("quoteLabel")}>
+              <SelectCombobox
+                items={quoteItems}
+                value={quoteIdFilter}
+                onValueChange={(v) => pushParams({ quoteIdFilter: v, page: 1 })}
+                placeholder={tFilters("quotePlaceholder")}
+                emptyLabel={tFilters("quoteEmpty")}
+              />
+            </FilterSidebarSection>
+          )}
         </FilterSidebar>
 
         <div className="flex-1 min-w-0">

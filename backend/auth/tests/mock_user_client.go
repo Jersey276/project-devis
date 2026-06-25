@@ -16,6 +16,8 @@ type MockUserClient struct {
 	GetUserAccessInfoFn        func(ctx context.Context, req *userGrpc.GetUserAccessInfoRequest) (*userGrpc.GetUserAccessInfoResponse, error)
 	GetUserAccessInfoByEmailFn func(ctx context.Context, req *userGrpc.GetUserAccessInfoByEmailRequest) (*userGrpc.GetUserAccessInfoResponse, error)
 	TouchUserLastLoginFn       func(ctx context.Context, req *userGrpc.TouchUserLastLoginRequest) (*userGrpc.GenericResponse, error)
+	LinkClientUserFn           func(ctx context.Context, req *userGrpc.LinkClientUserRequest) (*userGrpc.GenericResponse, error)
+	GetClientsByLinkedUserFn   func(ctx context.Context, req *userGrpc.GetClientByLinkedUserRequest) (*userGrpc.GetClientsResponse, error)
 }
 
 func (m *MockUserClient) CreateUser(ctx context.Context, in *userGrpc.CreateUserRequest, opts ...grpc.CallOption) (*userGrpc.CreateUserResponse, error) {
@@ -51,4 +53,18 @@ func (m *MockUserClient) TouchUserLastLogin(ctx context.Context, in *userGrpc.To
 		return m.TouchUserLastLoginFn(ctx, in)
 	}
 	return &userGrpc.GenericResponse{Success: true, Code: 0}, nil
+}
+
+func (m *MockUserClient) LinkClientUser(ctx context.Context, in *userGrpc.LinkClientUserRequest, opts ...grpc.CallOption) (*userGrpc.GenericResponse, error) {
+	if m.LinkClientUserFn != nil {
+		return m.LinkClientUserFn(ctx, in)
+	}
+	return &userGrpc.GenericResponse{Success: true, Code: 0}, nil
+}
+
+func (m *MockUserClient) GetClientsByLinkedUser(ctx context.Context, in *userGrpc.GetClientByLinkedUserRequest, opts ...grpc.CallOption) (*userGrpc.GetClientsResponse, error) {
+	if m.GetClientsByLinkedUserFn != nil {
+		return m.GetClientsByLinkedUserFn(ctx, in)
+	}
+	return &userGrpc.GetClientsResponse{Success: true, Code: 0}, nil
 }
