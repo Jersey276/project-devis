@@ -133,6 +133,7 @@ type User struct {
 	Siren         string                 `protobuf:"bytes,5,opt,name=siren,proto3" json:"siren,omitempty"`
 	Vat           string                 `protobuf:"bytes,6,opt,name=vat,proto3" json:"vat,omitempty"`
 	LogoUrl       string                 `protobuf:"bytes,7,opt,name=logo_url,json=logoUrl,proto3" json:"logo_url,omitempty"`
+	Siret         string                 `protobuf:"bytes,12,opt,name=siret,proto3" json:"siret,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -212,6 +213,13 @@ func (x *User) GetVat() string {
 func (x *User) GetLogoUrl() string {
 	if x != nil {
 		return x.LogoUrl
+	}
+	return ""
+}
+
+func (x *User) GetSiret() string {
+	if x != nil {
+		return x.Siret
 	}
 	return ""
 }
@@ -3674,12 +3682,10 @@ func (x *ListTaxesRequest) GetCountryGroupId() int32 {
 }
 
 type ListTaxesForUserRequest struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	UserId     string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	IncludeIds []int32                `protobuf:"varint,2,rep,packed,name=include_ids,json=includeIds,proto3" json:"include_ids,omitempty"`
-	// When non-zero, resolves the country group from this user-owned address
-	// instead of the user's first address (MIN(id)).
-	AddressId     int32 `protobuf:"varint,3,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	IncludeIds    []int32                `protobuf:"varint,2,rep,packed,name=include_ids,json=includeIds,proto3" json:"include_ids,omitempty"`
+	AddressId     int32                  `protobuf:"varint,3,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3974,7 +3980,7 @@ const file_users_proto_rawDesc = "" +
 	"\vusers.proto\x12\x05users\"?\n" +
 	"\x0fGenericResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\x05R\x04code\"\xa8\x01\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\"\xbe\x01\n" +
 	"\x04User\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x14\n" +
@@ -3982,7 +3988,8 @@ const file_users_proto_rawDesc = "" +
 	"\acompany\x18\x04 \x01(\tR\acompany\x12\x14\n" +
 	"\x05siren\x18\x05 \x01(\tR\x05siren\x12\x10\n" +
 	"\x03vat\x18\x06 \x01(\tR\x03vat\x12\x19\n" +
-	"\blogo_url\x18\a \x01(\tR\alogoUrl\")\n" +
+	"\blogo_url\x18\a \x01(\tR\alogoUrl\x12\x14\n" +
+	"\x05siret\x18\f \x01(\tR\x05siret\")\n" +
 	"\x11CreateUserRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\"[\n" +
 	"\x12CreateUserResponse\x12\x18\n" +

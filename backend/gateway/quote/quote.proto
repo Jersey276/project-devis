@@ -71,6 +71,9 @@ message Quote {
     string     client_id       = 6;
     int32      address_id      = 7;
     int32      user_address_id = 8;
+    string     issued_at       = 9;
+    string     valid_until     = 10;
+    string     payment_terms   = 11;
 }
 
 message CreateQuoteRequest {
@@ -131,6 +134,8 @@ message UpdateQuoteRequest {
     string client_id       = 4;
     int32  address_id      = 5;
     int32  user_address_id = 6;
+    string valid_until     = 7;
+    string payment_terms   = 8;
 }
 
 message UpdateQuoteResponse {

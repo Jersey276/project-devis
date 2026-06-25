@@ -13,6 +13,9 @@ export type BackendQuote = {
   client_id: string;
   address_id: number;
   user_address_id: number;
+  issued_at: string;
+  valid_until: string | null;
+  payment_terms: string | null;
   created_at: string;
   updated_at: string;
   // Present on GET /api/quotes only — TTC total in cents, aggregated by the gateway.

@@ -87,6 +87,8 @@ export type UpdateQuotePayload = {
   clientId?: string;
   addressId?: number;
   userAddressId?: number;
+  validUntil?: string;
+  paymentTerms?: string;
 };
 
 export async function updateQuote(
@@ -98,6 +100,8 @@ export async function updateQuote(
   if (payload.addressId !== undefined) body.address_id = payload.addressId;
   if (payload.userAddressId !== undefined)
     body.user_address_id = payload.userAddressId;
+  if (payload.validUntil !== undefined) body.valid_until = payload.validUntil;
+  if (payload.paymentTerms !== undefined) body.payment_terms = payload.paymentTerms;
   return apiFetch(`/api/quotes/${encodeURIComponent(quoteId)}`, {
     method: "PUT",
     body: JSON.stringify(body),

@@ -588,6 +588,8 @@ func UpdateQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		ClientID      string `json:"client_id"`
 		AddressID     int32  `json:"address_id"`
 		UserAddressID int32  `json:"user_address_id"`
+		ValidUntil    string `json:"valid_until"`
+		PaymentTerms  string `json:"payment_terms"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
@@ -600,6 +602,8 @@ func UpdateQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		ClientId:      input.ClientID,
 		AddressId:     input.AddressID,
 		UserAddressId: input.UserAddressID,
+		ValidUntil:    input.ValidUntil,
+		PaymentTerms:  input.PaymentTerms,
 	})
 	if err != nil {
 		quoteErrors.unavailable(c)
@@ -931,6 +935,9 @@ func marshalQuote(q *quote.Quote) gin.H {
 		"client_id":       q.ClientId,
 		"address_id":      q.AddressId,
 		"user_address_id": q.UserAddressId,
+		"issued_at":       q.IssuedAt,
+		"valid_until":     q.ValidUntil,
+		"payment_terms":   q.PaymentTerms,
 	}
 }
 

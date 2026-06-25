@@ -38,6 +38,8 @@ type QuoteStepBasicInfoProps = {
   clientId: string;
   addressId: number | null;
   userAddressId: number | null;
+  validUntil: string;
+  paymentTerms: string;
   isReadonly: boolean;
   /** When true, the client address selector remains editable even in readonly mode. */
   customerAddressEditable?: boolean;
@@ -53,6 +55,8 @@ type QuoteStepBasicInfoProps = {
   onClientIdChange: (value: string) => void;
   onAddressIdChange: (value: number | null) => void;
   onUserAddressIdChange: (value: number | null) => void;
+  onValidUntilChange: (value: string) => void;
+  onPaymentTermsChange: (value: string) => void;
   onClientCreated: () => void;
   onUserAddressCreated: () => void;
   onClientAddressCreated: () => void;
@@ -63,6 +67,8 @@ export default function QuoteStepBasicInfo({
   clientId,
   addressId,
   userAddressId,
+  validUntil,
+  paymentTerms,
   isReadonly,
   customerAddressEditable = false,
   clients,
@@ -77,6 +83,8 @@ export default function QuoteStepBasicInfo({
   onClientIdChange,
   onAddressIdChange,
   onUserAddressIdChange,
+  onValidUntilChange,
+  onPaymentTermsChange,
   onClientCreated,
   onUserAddressCreated,
   onClientAddressCreated,
@@ -315,6 +323,30 @@ export default function QuoteStepBasicInfo({
           </ComboboxContent>
         </Combobox>
         <FieldError errors={toErrorProps(addressErrors)} />
+      </Field>
+
+      <Field>
+        <FieldLabel htmlFor="valid-until">{t("validUntilLabel")}</FieldLabel>
+        <Input
+          id="valid-until"
+          name="valid_until"
+          type="date"
+          value={validUntil}
+          onChange={(e) => onValidUntilChange(e.target.value)}
+          disabled={isReadonly}
+        />
+      </Field>
+
+      <Field>
+        <FieldLabel htmlFor="payment-terms">{t("paymentTermsLabel")}</FieldLabel>
+        <Input
+          id="payment-terms"
+          name="payment_terms"
+          value={paymentTerms}
+          onChange={(e) => onPaymentTermsChange(e.target.value)}
+          placeholder={t("paymentTermsPlaceholder")}
+          disabled={isReadonly}
+        />
       </Field>
 
       <AlertDialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>

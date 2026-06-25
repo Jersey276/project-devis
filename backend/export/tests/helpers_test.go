@@ -28,6 +28,7 @@ type fakeUsers struct {
 	listAddresses func(context.Context, *users.ListAddressesRequest) (*users.ListAddressesResponse, error)
 	getClient     func(context.Context, *users.GetClientRequest) (*users.GetClientResponse, error)
 	getAddress    func(context.Context, *users.GetAddressRequest) (*users.GetAddressResponse, error)
+	getTax        func(context.Context, *users.GetTaxRequest) (*users.GetTaxResponse, error)
 }
 
 type fakeSchedule struct {
@@ -53,6 +54,13 @@ func (f *fakeUsers) GetClient(ctx context.Context, in *users.GetClientRequest, _
 
 func (f *fakeUsers) GetAddress(ctx context.Context, in *users.GetAddressRequest, _ ...grpc.CallOption) (*users.GetAddressResponse, error) {
 	return f.getAddress(ctx, in)
+}
+
+func (f *fakeUsers) GetTax(ctx context.Context, in *users.GetTaxRequest, _ ...grpc.CallOption) (*users.GetTaxResponse, error) {
+	if f.getTax != nil {
+		return f.getTax(ctx, in)
+	}
+	return &users.GetTaxResponse{Success: true}, nil
 }
 
 // fakeGotenberg satisfies the orchestrator's unexported pdfConverter interface
@@ -93,7 +101,7 @@ func happyFakes() (*fakeQuote, *fakeUsers, *fakeGotenberg) {
 					AddressId: 42,
 				},
 				Lines: []*quote.QuoteLine{
-					{LineId: "l1", Name: "Pose plan de travail", Quantity: "1", UnitPrice: 50000},
+					{LineId: "l1", Name: "Pose plan de travail", Quantity: "1", UnitPrice: 50000, TaxId: 1},
 				},
 			}, nil
 		},
@@ -121,6 +129,12 @@ func happyFakes() (*fakeQuote, *fakeUsers, *fakeGotenberg) {
 			return &users.GetAddressResponse{
 				Success: true,
 				Address: &users.Address{Id: req.AddressId, Street: "2 av Recipient", City: "Lyon", ZipCode: "69000"},
+			}, nil
+		},
+		getTax: func(_ context.Context, req *users.GetTaxRequest) (*users.GetTaxResponse, error) {
+			return &users.GetTaxResponse{
+				Success: true,
+				Tax:     &users.Tax{Id: req.TaxId, Name: "TVA 20%", Rate: "20.00"},
 			}, nil
 		},
 	}

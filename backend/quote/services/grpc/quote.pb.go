@@ -193,6 +193,9 @@ type Quote struct {
 	ClientId      string                 `protobuf:"bytes,6,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	AddressId     int32                  `protobuf:"varint,7,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
 	UserAddressId int32                  `protobuf:"varint,8,opt,name=user_address_id,json=userAddressId,proto3" json:"user_address_id,omitempty"`
+	IssuedAt      string                 `protobuf:"bytes,9,opt,name=issued_at,json=issuedAt,proto3" json:"issued_at,omitempty"`
+	ValidUntil    string                 `protobuf:"bytes,10,opt,name=valid_until,json=validUntil,proto3" json:"valid_until,omitempty"`
+	PaymentTerms  string                 `protobuf:"bytes,11,opt,name=payment_terms,json=paymentTerms,proto3" json:"payment_terms,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -281,6 +284,27 @@ func (x *Quote) GetUserAddressId() int32 {
 		return x.UserAddressId
 	}
 	return 0
+}
+
+func (x *Quote) GetIssuedAt() string {
+	if x != nil {
+		return x.IssuedAt
+	}
+	return ""
+}
+
+func (x *Quote) GetValidUntil() string {
+	if x != nil {
+		return x.ValidUntil
+	}
+	return ""
+}
+
+func (x *Quote) GetPaymentTerms() string {
+	if x != nil {
+		return x.PaymentTerms
+	}
+	return ""
 }
 
 type CreateQuoteRequest struct {
@@ -783,6 +807,8 @@ type UpdateQuoteRequest struct {
 	ClientId      string                 `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	AddressId     int32                  `protobuf:"varint,5,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
 	UserAddressId int32                  `protobuf:"varint,6,opt,name=user_address_id,json=userAddressId,proto3" json:"user_address_id,omitempty"`
+	ValidUntil    string                 `protobuf:"bytes,7,opt,name=valid_until,json=validUntil,proto3" json:"valid_until,omitempty"`
+	PaymentTerms  string                 `protobuf:"bytes,8,opt,name=payment_terms,json=paymentTerms,proto3" json:"payment_terms,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -857,6 +883,20 @@ func (x *UpdateQuoteRequest) GetUserAddressId() int32 {
 		return x.UserAddressId
 	}
 	return 0
+}
+
+func (x *UpdateQuoteRequest) GetValidUntil() string {
+	if x != nil {
+		return x.ValidUntil
+	}
+	return ""
+}
+
+func (x *UpdateQuoteRequest) GetPaymentTerms() string {
+	if x != nil {
+		return x.PaymentTerms
+	}
+	return ""
 }
 
 type UpdateQuoteResponse struct {
@@ -3463,7 +3503,7 @@ const file_quote_proto_rawDesc = "" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\"A\n" +
 	"\x0fValidationError\x12\x14\n" +
 	"\x05field\x18\x01 \x01(\tR\x05field\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\xf8\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xdb\x02\n" +
 	"\x05Quote\x12\x19\n" +
 	"\bquote_id\x18\x01 \x01(\tR\aquoteId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
@@ -3473,7 +3513,12 @@ const file_quote_proto_rawDesc = "" +
 	"\tclient_id\x18\x06 \x01(\tR\bclientId\x12\x1d\n" +
 	"\n" +
 	"address_id\x18\a \x01(\x05R\taddressId\x12&\n" +
-	"\x0fuser_address_id\x18\b \x01(\x05R\ruserAddressId\"\xa5\x01\n" +
+	"\x0fuser_address_id\x18\b \x01(\x05R\ruserAddressId\x12\x1b\n" +
+	"\tissued_at\x18\t \x01(\tR\bissuedAt\x12\x1f\n" +
+	"\vvalid_until\x18\n" +
+	" \x01(\tR\n" +
+	"validUntil\x12#\n" +
+	"\rpayment_terms\x18\v \x01(\tR\fpaymentTerms\"\xa5\x01\n" +
 	"\x12CreateQuoteRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1b\n" +
@@ -3511,7 +3556,7 @@ const file_quote_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12$\n" +
 	"\x06quotes\x18\x03 \x03(\v2\f.quote.QuoteR\x06quotes\x12\x14\n" +
-	"\x05total\x18\x04 \x01(\x03R\x05total\"\xc0\x01\n" +
+	"\x05total\x18\x04 \x01(\x03R\x05total\"\x86\x02\n" +
 	"\x12UpdateQuoteRequest\x12\x19\n" +
 	"\bquote_id\x18\x01 \x01(\tR\aquoteId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
@@ -3519,7 +3564,10 @@ const file_quote_proto_rawDesc = "" +
 	"\tclient_id\x18\x04 \x01(\tR\bclientId\x12\x1d\n" +
 	"\n" +
 	"address_id\x18\x05 \x01(\x05R\taddressId\x12&\n" +
-	"\x0fuser_address_id\x18\x06 \x01(\x05R\ruserAddressId\"\x88\x01\n" +
+	"\x0fuser_address_id\x18\x06 \x01(\x05R\ruserAddressId\x12\x1f\n" +
+	"\vvalid_until\x18\a \x01(\tR\n" +
+	"validUntil\x12#\n" +
+	"\rpayment_terms\x18\b \x01(\tR\fpaymentTerms\"\x88\x01\n" +
 	"\x13UpdateQuoteResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12C\n" +

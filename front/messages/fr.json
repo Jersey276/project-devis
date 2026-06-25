@@ -375,7 +375,10 @@
         "userAddressEmpty": "Aucune adresse trouvée.",
         "addClientButton": "Nouveau client",
         "addAddressButton": "Nouvelle adresse",
-        "addUserAddressButton": "Nouvelle adresse"
+        "addUserAddressButton": "Nouvelle adresse",
+        "validUntilLabel": "Valable jusqu'au",
+        "paymentTermsLabel": "Conditions de paiement",
+        "paymentTermsPlaceholder": "Ex : Paiement à 30 jours net"
       },
       "items": {
         "label": "Éléments du devis",

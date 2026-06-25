@@ -83,6 +83,8 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const [clientId, setClientId] = useState("");
   const [addressId, setAddressId] = useState<number | null>(null);
   const [userAddressId, setUserAddressId] = useState<number | null>(null);
+  const [validUntil, setValidUntil] = useState("");
+  const [paymentTerms, setPaymentTerms] = useState("");
   const [items, setItems] = useState<FormItem[]>([]);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [creating, setCreating] = useState(false);
@@ -122,6 +124,8 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       setClientId(fetchedQuote.client_id ?? "");
       setAddressId(fetchedQuote.address_id ?? null);
       setUserAddressId(fetchedQuote.user_address_id || null);
+      setValidUntil(fetchedQuote.valid_until ?? "");
+      setPaymentTerms(fetchedQuote.payment_terms ?? "");
       const sorted = [...fetchedLines].sort((a, b) => a.position - b.position);
       setItems(sorted.map(rowFromBackendLine));
       setLoading(false);
@@ -387,6 +391,36 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     [handleRevertedToDraft, isReadonly, quoteId, quoteState, t],
   );
 
+  const handleValidUntilChange = useCallback(
+    (value: string) => {
+      setValidUntil(value);
+      if (!quoteId || isReadonly) return;
+      const name = projectNameRef.current.trim();
+      if (name.length === 0) return;
+      void updateQuote(quoteId, { name, validUntil: value }).then(({ ok, body }) => {
+        if (!ok || !body.success) {
+          toast.error((body.message as string) ?? t("errors.nameSaveFailedToast"));
+        }
+      });
+    },
+    [isReadonly, quoteId, t],
+  );
+
+  const handlePaymentTermsChange = useCallback(
+    (value: string) => {
+      setPaymentTerms(value);
+      if (!quoteId || isReadonly) return;
+      const name = projectNameRef.current.trim();
+      if (name.length === 0) return;
+      void updateQuote(quoteId, { name, paymentTerms: value }).then(({ ok, body }) => {
+        if (!ok || !body.success) {
+          toast.error((body.message as string) ?? t("errors.nameSaveFailedToast"));
+        }
+      });
+    },
+    [isReadonly, quoteId, t],
+  );
+
   const handleExport = useCallback(async () => {
     if (!quoteId || isExporting) return;
     setIsExporting(true);
@@ -463,6 +497,8 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             clientId={clientId}
             addressId={addressId}
             userAddressId={userAddressId}
+            validUntil={validUntil}
+            paymentTerms={paymentTerms}
             isReadonly={isReadonly}
             customerAddressEditable={isCustomer}
             clients={clients}
@@ -477,6 +513,8 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             onClientIdChange={handleClientIdChange}
             onAddressIdChange={handleAddressIdChange}
             onUserAddressIdChange={handleUserAddressIdChange}
+            onValidUntilChange={handleValidUntilChange}
+            onPaymentTermsChange={handlePaymentTermsChange}
             onClientCreated={refreshClients}
             onUserAddressCreated={refreshUserAddresses}
             onClientAddressCreated={refreshClientAddresses}
