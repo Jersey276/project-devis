@@ -38,6 +38,7 @@ const REFRESH_SKIP_PATHS = new Set([
   "/api/auth/refresh",
   "/api/auth/login",
   "/api/auth/logout",
+  "/api/auth/me",
   "/api/auth/password/update",
   "/api/auth/password/reset",
   "/api/auth/password/confirm-reset",

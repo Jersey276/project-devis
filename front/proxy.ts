@@ -9,6 +9,7 @@ const PUBLIC_PATHS = new Set([
   "/register",
   "/forget-password",
   "/reset-password",
+  "/accept-invitation",
 ]);
 
 export async function proxy(request: NextRequest) {

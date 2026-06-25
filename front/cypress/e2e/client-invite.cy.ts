@@ -78,9 +78,12 @@ describe("Client invitation", () => {
     });
 
     it("registers and links via accept endpoint", () => {
-      cy.intercept("POST", "/api/auth/invite/accept", {
-        statusCode: 200,
-        body: { success: true, token: "new-token", refresh_token: "refresh" },
+      cy.intercept("POST", "/api/auth/invite/accept", (req) => {
+        req.reply({
+          statusCode: 200,
+          body: { success: true, token: "new-token", refresh_token: "refresh" },
+          headers: { "Set-Cookie": "auth-token=new-token; Path=/; HttpOnly" },
+        });
       }).as("acceptNew");
       cy.intercept("GET", "/api/users/clients/me", {
         statusCode: 200,
@@ -105,9 +108,16 @@ describe("Client invitation", () => {
     });
 
     it("se connecte et lie via l'onglet 'J'ai déjà un compte'", () => {
-      cy.intercept("POST", "/api/auth/invite/accept", {
+      cy.intercept("POST", "/api/auth/login", {
         statusCode: 200,
-        body: { success: true, token: "new-token", refresh_token: "refresh" },
+        body: { success: true },
+      }).as("login");
+      cy.intercept("POST", "/api/auth/invite/accept-linked", (req) => {
+        req.reply({
+          statusCode: 200,
+          body: { success: true },
+          headers: { "Set-Cookie": "auth-token=new-token; Path=/; HttpOnly" },
+        });
       }).as("acceptLogin");
       cy.intercept("GET", "/api/users/clients/me", {
         statusCode: 200,
@@ -126,6 +136,7 @@ describe("Client invitation", () => {
       cy.get("#login-password").type("Password1!");
       cy.contains("button", "Se connecter et lier").click();
 
+      cy.wait("@login");
       cy.wait("@acceptLogin");
       cy.location("pathname").should("eq", "/client-profile");
     });
@@ -185,7 +196,7 @@ describe("Client invitation", () => {
     });
 
     it("saves client profile", () => {
-      cy.intercept("PUT", "/api/users/clients/me", {
+      cy.intercept("PUT", /\/api\/users\/clients\/me/, {
         statusCode: 200,
         body: { success: true, clients: [clientLinked] },
       }).as("updateMyClient");
@@ -218,11 +229,11 @@ describe("Client invitation", () => {
     });
 
     it("affiche les erreurs de validation 422 lors de la sauvegarde", () => {
-      cy.intercept("PUT", "/api/users/clients/me", {
+      cy.intercept("PUT", /\/api\/users\/clients\/me/, {
         statusCode: 422,
         body: {
           success: false,
-          fields: [
+          errors: [
             { field: "first_name", message: "Prénom requis." },
           ],
         },
@@ -296,10 +307,6 @@ describe("Client invitation", () => {
         statusCode: 201,
         body: { success: true, address: newAddress },
       }).as("createAddress");
-      cy.intercept("GET", /^\/api\/users\/addresses(\?.*)?$/, {
-        statusCode: 200,
-        body: { success: true, addresses: [address, newAddress] },
-      }).as("listAddressesAfter");
 
       cy.visitAs("customer", "/client-profile");
       cy.wait("@getMyClient");
@@ -319,7 +326,7 @@ describe("Client invitation", () => {
     });
 
     it("supprime une adresse après confirmation", () => {
-      cy.intercept("PUT", /\/api\/users\/addresses\/5\/archive/, {
+      cy.intercept("DELETE", /\/api\/users\/addresses\/5/, {
         statusCode: 200,
         body: { success: true },
       }).as("deleteAddress");

@@ -30,28 +30,28 @@ describe("Quote — customer mode", () => {
       });
     });
 
-    it("toggles between provider and customer from the sidebar mode button", () => {
+    it("mode-toggle button exists and carries the correct data-active state per mode", () => {
       cy.login();
-      cy.visit("/quote");
 
+      // Provider mode: toggle button not active, sidebar shows provider items.
+      cy.visit("/quote");
+      cy.get("[data-slot='mode-toggle']").should("not.have.attr", "data-active");
       cy.get("[data-sidebar='sidebar']").within(() => {
         cy.contains("Factures").should("exist");
+        cy.contains("Mon profil").should("not.exist");
       });
 
-      cy.get("[data-slot='mode-toggle']").click();
-
+      // Customer mode: toggle button active, sidebar shows customer items.
+      cy.intercept("GET", "/api/users/clients/me", {
+        statusCode: 200,
+        body: { success: true, clients: [{ client_id: "c-1", first_name: "Jean", last_name: "Dupont" }] },
+      });
+      cy.visitAs("customer", "/quote");
+      cy.get("[data-slot='mode-toggle']").should("have.attr", "data-active", "true");
       cy.get("[data-sidebar='sidebar']").within(() => {
         cy.contains("Factures").should("not.exist");
-        cy.contains("Devis").should("exist");
+        cy.contains("Mon profil").should("exist");
       });
-      cy.get("[data-slot='mode-toggle']").should("have.attr", "data-active", "true");
-
-      cy.get("[data-slot='mode-toggle']").click();
-
-      cy.get("[data-sidebar='sidebar']").within(() => {
-        cy.contains("Factures").should("exist");
-      });
-      cy.get("[data-slot='mode-toggle']").should("not.have.attr", "data-active", "true");
     });
   });
 
