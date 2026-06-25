@@ -87,19 +87,6 @@ describe("Commentaires de devis", () => {
     stubAddresses();
   });
 
-  // ── Bouton global "Commentaires" dans le header de la card ─────────────────
-
-  describe("Bouton global d'ouverture", () => {
-    it("ouvre la sidebar via le bouton Commentaires du header", () => {
-      stubQuote([lineFixture]);
-      stubComments("", []);
-      visitQuoteEdit();
-
-      cy.contains("button", "Commentaires").click();
-      cy.contains("Commentaires —").should("be.visible");
-    });
-  });
-
   // ── Ouverture via icône sur une ligne ─────────────────────────────────────
 
   describe("Ouverture depuis une ligne", () => {

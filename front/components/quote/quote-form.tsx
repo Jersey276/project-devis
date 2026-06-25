@@ -19,7 +19,6 @@ import {
   BookmarkIcon,
   Loader2Icon,
   CalendarIcon,
-  MessageSquareIcon,
 } from "lucide-react";
 import QuoteStepBasicInfo from "@/components/quote/steps/quote-step-basic-info";
 import QuoteStepItems from "@/components/quote/steps/quote-step-items";
@@ -496,16 +495,6 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           >
             <CalendarIcon className="size-4" />
             Créer un échéancier
-          </Button>
-        )}
-        {!isCreate && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setCommentSidebarOpen(true)}
-          >
-            <MessageSquareIcon className="size-4" />
-            {t("commentsButton")}
           </Button>
         )}
         {!isCustomer && !isCreate && quoteId && (
