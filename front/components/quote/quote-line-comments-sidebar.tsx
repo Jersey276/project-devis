@@ -195,6 +195,7 @@ export default function QuoteLineCommentsSidebar({
                     <div className="flex gap-2">
                       <Button
                         size="sm"
+                        data-testid="comment-save"
                         onClick={() => handleEditSave(comment.comment_id)}
                         disabled={!editBody.trim()}
                       >
@@ -203,6 +204,7 @@ export default function QuoteLineCommentsSidebar({
                       <Button
                         size="sm"
                         variant="ghost"
+                        data-testid="comment-cancel"
                         onClick={() => setEditingId(null)}
                       >
                         {t("cancel")}

@@ -268,12 +268,12 @@ describe("Commentaires de devis", () => {
 
       cy.get(`[aria-label="Modifier"]`).click();
       cy.get("textarea").first().clear().type("Commentaire modifié");
-      cy.contains("button", "Enregistrer").click();
+      cy.get("[data-testid='comment-save']").click();
       cy.wait("@updateComment");
 
       cy.contains("Commentaire modifié").should("be.visible");
       // le mode édition est fermé
-      cy.contains("button", "Enregistrer").should("not.exist");
+      cy.get("[data-testid='comment-save']").should("not.exist");
     });
 
     it("annule l'édition au clic sur Annuler", () => {
@@ -287,10 +287,10 @@ describe("Commentaires de devis", () => {
 
       cy.get(`[aria-label="Modifier"]`).click();
       cy.get("textarea").first().clear().type("Modification annulée");
-      cy.contains("button", "Annuler").click();
+      cy.get("[data-testid='comment-cancel']").click();
 
       cy.contains("Premier commentaire").should("be.visible");
-      cy.contains("button", "Enregistrer").should("not.exist");
+      cy.get("[data-testid='comment-save']").should("not.exist");
     });
   });
 
