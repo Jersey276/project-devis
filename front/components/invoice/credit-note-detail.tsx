@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   getCreditNote,
   readCreditNoteFromBody,
@@ -83,7 +84,25 @@ export default function CreditNoteDetail({
     }
   }
 
-  if (loading) return <p>{t("loading")}</p>;
+  if (loading) return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <Skeleton className="h-6 w-48" />
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-28" />
+          <Skeleton className="h-9 w-28" />
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <Skeleton className="h-4 w-64" />
+        <div className="grid grid-cols-2 gap-6">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+        <Skeleton className="h-32 w-full" />
+      </CardContent>
+    </Card>
+  );
   if (error && !cn) return <p className="text-destructive">{error}</p>;
   if (!cn) return <p className="text-destructive">{t("notFound")}</p>;
 

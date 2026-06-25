@@ -16,6 +16,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { getAdminStats } from "@/lib/services/subscriptions";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { AdminStats } from "@/types/backend";
 
 const TIER_COLORS: Record<string, string> = {
@@ -72,7 +73,17 @@ export default function AnalyticsDashboard() {
   }, []);
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">{t("loading")}</p>;
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}
+        </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <Skeleton className="h-64 w-full rounded-lg" />
+          <Skeleton className="h-64 w-full rounded-lg" />
+        </div>
+      </div>
+    );
   }
 
   if (!stats) {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { apiFetch } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { AuthContext } from "@/lib/access";
 import { isSuperAdmin } from "@/lib/access";
 
@@ -31,7 +32,7 @@ export default function AdminGuard({ children }: AdminGuardProps) {
   }, []);
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">{t("loading")}</p>;
+    return <Skeleton className="h-4 w-32" />;
   }
 
   if (!allowed) {

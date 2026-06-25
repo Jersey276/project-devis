@@ -12,6 +12,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { apiFetch } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type RawStat = {
   date: string;
@@ -80,7 +81,7 @@ export default function LogsStatsChart() {
   ).sort();
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">{t("loading")}</p>;
+    return <Skeleton className="h-48 w-full rounded-lg" />;
   }
 
   if (data.length === 0) {

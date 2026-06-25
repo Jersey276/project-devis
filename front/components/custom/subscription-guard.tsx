@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { apiFetch } from "@/lib/api";
 import { canUsePaidFeatures, type AuthContext } from "@/lib/access";
 import { useMode } from "@/lib/mode-context";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type SubscriptionGuardProps = {
   children: React.ReactNode;
@@ -38,7 +39,7 @@ export default function SubscriptionGuard({
   if (isCustomer) return <>{children}</>;
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">{t("loading")}</p>;
+    return <Skeleton className="h-4 w-32" />;
   }
 
   if (!allowed) {

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { apiFetch } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 import LogsStatsChart from "./logs-stats-chart";
 import LogsTable from "./logs-table";
 import LogsFilters, { type LogFilters } from "./logs-filters";
@@ -105,7 +106,9 @@ export default function LogsDashboard() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{t("loading")}</p>
+        <div className="space-y-2">
+          {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+        </div>
       ) : logs.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("noData")}</p>
       ) : (
