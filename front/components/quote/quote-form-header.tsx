@@ -52,7 +52,7 @@ export default function QuoteFormHeader({
   onStateChanged,
 }: Props) {
   const t = useTranslations("quote.form");
-  const tStatus = useTranslations("quote.status");
+  const tStatus = useTranslations("status.quote");
 
   return (
     <CardHeader className="flex flex-row items-start justify-between gap-4">
