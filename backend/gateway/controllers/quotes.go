@@ -124,7 +124,7 @@ func QuotesRoutes(r *gin.RouterGroup, emailNotifier gatewaySvc.EmailNotifier) {
 
 	comments := lines.Group("/:lineId/comments")
 	comments.GET("", func(c *gin.Context) { ListQuoteLineComments(c, client) })
-	comments.POST("", func(c *gin.Context) { CreateQuoteLineComment(c, client, usersClient) })
+	comments.POST("", func(c *gin.Context) { CreateQuoteLineComment(c, client) })
 	comments.PUT("/:commentId", func(c *gin.Context) { UpdateQuoteLineComment(c, client) })
 	comments.DELETE("/:commentId", func(c *gin.Context) { DeleteQuoteLineComment(c, client) })
 }
@@ -1031,7 +1031,7 @@ func ListQuoteLineComments(c *gin.Context, client quote.QuoteServiceClient) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "comments": out})
 }
 
-func CreateQuoteLineComment(c *gin.Context, client quote.QuoteServiceClient, _ users.UserServiceClient) {
+func CreateQuoteLineComment(c *gin.Context, client quote.QuoteServiceClient) {
 	var input struct {
 		Body       string `json:"body" binding:"required"`
 		AuthorName string `json:"author_name"`

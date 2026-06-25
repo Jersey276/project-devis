@@ -171,8 +171,8 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           const cl = clientsRes.body.clients[0] as { first_name: string; last_name: string };
           setCurrentUserName(`${cl.first_name} ${cl.last_name}`.trim());
         }
-        if (meRes.ok && meRes.body.user_id) {
-          setCustomerUserId(meRes.body.user_id as string);
+        if (meRes.ok && meRes.body.auth) {
+          setCustomerUserId((meRes.body.auth as { user_id: string }).user_id);
         }
       } else {
         const { ok, body } = await apiFetch("/api/users/me");

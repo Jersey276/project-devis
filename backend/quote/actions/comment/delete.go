@@ -23,9 +23,7 @@ func Delete(ctx context.Context, db *sql.DB, req *quoteGrpc.DeleteCommentRequest
 
 	n, _ := res.RowsAffected()
 	if n == 0 {
-		var exists bool
-		_ = db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM quote_line_comments WHERE comment_id = $1)`, req.CommentId).Scan(&exists)
-		if exists {
+		if commentExists(ctx, db, req.CommentId) {
 			return &quoteGrpc.GenericResponse{Success: false, Code: codes.CommentForbidden}, nil
 		}
 		return &quoteGrpc.GenericResponse{Success: false, Code: codes.NotFound}, nil

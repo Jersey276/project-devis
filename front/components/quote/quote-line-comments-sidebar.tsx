@@ -42,33 +42,23 @@ type Props = {
   currentUserName: string;
 };
 
-function formatTime(iso: string): string {
-  try {
-    return new Date(iso).toLocaleTimeString("fr-FR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
-}
-
 function formatDate(iso: string): string {
   try {
     const d = new Date(iso);
-    const today = new Date();
+    const now = new Date();
+    const time = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
     if (
-      d.getDate() === today.getDate() &&
-      d.getMonth() === today.getMonth() &&
-      d.getFullYear() === today.getFullYear()
+      d.getDate() === now.getDate() &&
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear()
     ) {
-      return formatTime(iso);
+      return time;
     }
-    return d.toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }) + " " + formatTime(iso);
+    return (
+      d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" }) +
+      " " +
+      time
+    );
   } catch {
     return iso;
   }
@@ -93,6 +83,7 @@ export default function QuoteLineCommentsSidebar({
   const [editBody, setEditBody] = useState("");
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  const prevCommentCountRef = useRef(0);
 
   useEffect(() => {
     if (!open || !lineId) return;
@@ -108,9 +99,10 @@ export default function QuoteLineCommentsSidebar({
   }, [open, quoteId, lineId, t]);
 
   useEffect(() => {
-    if (comments.length > 0) {
+    if (comments.length > prevCommentCountRef.current) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
+    prevCommentCountRef.current = comments.length;
   }, [comments]);
 
   async function handleSend() {

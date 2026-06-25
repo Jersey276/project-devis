@@ -24,10 +24,7 @@ func Update(ctx context.Context, db *sql.DB, req *quoteGrpc.UpdateCommentRequest
 		req.Body, req.CommentId, req.AuthorId,
 	).Scan(&c.CommentId, &c.LineId, &c.QuoteId, &c.AuthorId, &c.AuthorName, &c.Body, &c.CreatedAt, &c.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
-		// Either not found or not owned by this author.
-		var exists bool
-		_ = db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM quote_line_comments WHERE comment_id = $1)`, req.CommentId).Scan(&exists)
-		if exists {
+		if commentExists(ctx, db, req.CommentId) {
 			return &quoteGrpc.UpdateCommentResponse{Success: false, Code: codes.CommentForbidden}, nil
 		}
 		return &quoteGrpc.UpdateCommentResponse{Success: false, Code: codes.NotFound}, nil

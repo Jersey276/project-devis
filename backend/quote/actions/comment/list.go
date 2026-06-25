@@ -26,7 +26,7 @@ func List(ctx context.Context, db *sql.DB, req *quoteGrpc.ListCommentsRequest) (
 	}
 	defer rows.Close()
 
-	var comments []*quoteGrpc.QuoteLineComment
+	comments := make([]*quoteGrpc.QuoteLineComment, 0)
 	for rows.Next() {
 		var c quoteGrpc.QuoteLineComment
 		if err := rows.Scan(&c.CommentId, &c.LineId, &c.QuoteId, &c.AuthorId, &c.AuthorName, &c.Body, &c.CreatedAt, &c.UpdatedAt); err != nil {
