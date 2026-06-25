@@ -428,3 +428,14 @@ export type AdminStats = {
   plan_distribution: PlanDistributionEntry[];
   monthly_revenue: MonthlyRevenueEntry[];
 };
+
+export type BackendComment = {
+  comment_id: string;
+  line_id: string;
+  quote_id: string;
+  author_id: string;
+  author_name: string;
+  body: string;
+  created_at: string;
+  updated_at: string;
+};

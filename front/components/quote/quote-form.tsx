@@ -19,6 +19,7 @@ import {
   BookmarkIcon,
   Loader2Icon,
   CalendarIcon,
+  MessageSquareIcon,
 } from "lucide-react";
 import QuoteStepBasicInfo from "@/components/quote/steps/quote-step-basic-info";
 import QuoteStepItems from "@/components/quote/steps/quote-step-items";
@@ -36,7 +37,7 @@ import { exportQuotePdf } from "@/lib/services/export";
 import GenerateInvoiceFromQuoteButton from "@/components/invoice/generate-invoice-from-quote-button";
 import QuoteStateDropdown from "@/components/quote/quote-state-dropdown";
 import { listTemplateLines } from "@/lib/services/templates";
-import { fieldErrorsFromBody, type FieldErrors } from "@/lib/api";
+import { apiFetch, fieldErrorsFromBody, type FieldErrors } from "@/lib/api";
 import { useMode } from "@/lib/mode-context";
 import {
   type BackendQuote,
@@ -53,6 +54,7 @@ import {
 import { useQuoteReferenceData } from "@/hooks/use-quote-reference-data";
 import SaveTemplateDialog from "@/components/template/save-template-dialog";
 import CreateScheduleDialog from "@/components/schedule/create-schedule-dialog";
+import QuoteLineCommentsSidebar from "@/components/quote/quote-line-comments-sidebar";
 
 type QuoteFormProps = {
   quoteId?: string;
@@ -111,6 +113,11 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [createScheduleOpen, setCreateScheduleOpen] = useState(false);
+  const [commentSidebarOpen, setCommentSidebarOpen] = useState(false);
+  const [commentLineId, setCommentLineId] = useState("");
+  const [commentLineName, setCommentLineName] = useState("");
+  const [currentUserName, setCurrentUserName] = useState("");
+  const [customerUserId, setCustomerUserId] = useState("");
 
   const isReadonly =
     isCustomer || quoteState === "validated" || quoteState === "drop";
@@ -149,6 +156,35 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   useEffect(() => {
     if (notFound) router.replace("/quote");
   }, [notFound, router]);
+
+  // Fetch current user display name for comment authorship.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (isCustomer) {
+        const [clientsRes, meRes] = await Promise.all([
+          apiFetch("/api/users/clients/me"),
+          apiFetch("/api/auth/me"),
+        ]);
+        if (cancelled) return;
+        if (clientsRes.ok && Array.isArray(clientsRes.body.clients) && clientsRes.body.clients.length > 0) {
+          const cl = clientsRes.body.clients[0] as { first_name: string; last_name: string };
+          setCurrentUserName(`${cl.first_name} ${cl.last_name}`.trim());
+        }
+        if (meRes.ok && meRes.body.user_id) {
+          setCustomerUserId(meRes.body.user_id as string);
+        }
+      } else {
+        const { ok, body } = await apiFetch("/api/users/me");
+        if (cancelled) return;
+        if (ok && body.success && body.user) {
+          const u = body.user as { company?: string; email?: string };
+          setCurrentUserName(u.company || u.email || "");
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isCustomer]);
 
   useEffect(() => {
     return () => {
@@ -462,6 +498,16 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             Créer un échéancier
           </Button>
         )}
+        {!isCreate && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setCommentSidebarOpen(true)}
+          >
+            <MessageSquareIcon className="size-4" />
+            {t("commentsButton")}
+          </Button>
+        )}
         {!isCustomer && !isCreate && quoteId && (
           <QuoteStateDropdown
             quoteId={quoteId}
@@ -542,6 +588,11 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             onSublineRemove={!isCreate && !isReadonly ? handleSublineRemove : undefined}
             onSaveLineAsTemplate={!isCreate && !isReadonly ? handleSaveLineAsTemplate : undefined}
             onAddItemFromTemplate={!isCreate && !isReadonly ? handleAddItemFromTemplate : undefined}
+            onOpenComments={!isCreate && quoteId ? (lineId, lineName) => {
+              setCommentLineId(lineId);
+              setCommentLineName(lineName);
+              setCommentSidebarOpen(true);
+            } : undefined}
           />
         )}
 
@@ -599,6 +650,18 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         initialQuoteId={quoteId}
         lockQuote
       />
+
+      {quoteId && (
+        <QuoteLineCommentsSidebar
+          open={commentSidebarOpen}
+          onOpenChange={setCommentSidebarOpen}
+          quoteId={quoteId}
+          lineId={commentLineId}
+          lineName={commentLineName}
+          currentUserId={isCustomer ? customerUserId : userId}
+          currentUserName={currentUserName}
+        />
+      )}
     </Card>
   );
 }

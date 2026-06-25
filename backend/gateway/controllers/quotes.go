@@ -27,6 +27,7 @@ const (
 	QuoteCodeInvalidLineType int32 = 1004
 	QuoteCodeInvalidLineData int32 = 1005
 	QuoteCodeFinalized       int32 = 1006
+	QuoteCodeCommentForbidden int32 = 1007
 	QuoteCodeInternalError   int32 = 2001
 )
 
@@ -40,13 +41,14 @@ func quoteValidationErrors(errs []*quote.ValidationError) []FieldError {
 
 var quoteErrors = &serviceErrors{
 	codes: map[int32]codeMapping{
-		QuoteCodeNotFound:        {http.StatusNotFound, "Devis introuvable."},
-		QuoteCodeAlreadyExists:   {http.StatusConflict, "Cette ressource existe déjà."},
-		QuoteCodeInvalidInput:    {http.StatusBadRequest, "Données invalides."},
-		QuoteCodeInvalidLineType: {http.StatusBadRequest, "Type de ligne invalide."},
-		QuoteCodeInvalidLineData: {http.StatusBadRequest, "Données de ligne invalides."},
-		QuoteCodeFinalized:       {http.StatusConflict, "Ce devis est finalisé et ne peut plus être modifié."},
-		QuoteCodeInternalError:   {http.StatusInternalServerError, "Une erreur interne est survenue."},
+		QuoteCodeNotFound:         {http.StatusNotFound, "Devis introuvable."},
+		QuoteCodeAlreadyExists:    {http.StatusConflict, "Cette ressource existe déjà."},
+		QuoteCodeInvalidInput:     {http.StatusBadRequest, "Données invalides."},
+		QuoteCodeInvalidLineType:  {http.StatusBadRequest, "Type de ligne invalide."},
+		QuoteCodeInvalidLineData:  {http.StatusBadRequest, "Données de ligne invalides."},
+		QuoteCodeFinalized:        {http.StatusConflict, "Ce devis est finalisé et ne peut plus être modifié."},
+		QuoteCodeCommentForbidden: {http.StatusForbidden, "Vous ne pouvez pas modifier ce commentaire."},
+		QuoteCodeInternalError:    {http.StatusInternalServerError, "Une erreur interne est survenue."},
 	},
 	unavailableMessage: "Service devis indisponible.",
 }
@@ -119,6 +121,12 @@ func QuotesRoutes(r *gin.RouterGroup, emailNotifier gatewaySvc.EmailNotifier) {
 	lines.GET("/:lineId", func(c *gin.Context) { GetQuoteLine(c, client) })
 	lines.PUT("/:lineId", func(c *gin.Context) { UpdateQuoteLine(c, client) })
 	lines.DELETE("/:lineId", func(c *gin.Context) { DeleteQuoteLine(c, client) })
+
+	comments := lines.Group("/:lineId/comments")
+	comments.GET("", func(c *gin.Context) { ListQuoteLineComments(c, client) })
+	comments.POST("", func(c *gin.Context) { CreateQuoteLineComment(c, client, usersClient) })
+	comments.PUT("/:commentId", func(c *gin.Context) { UpdateQuoteLineComment(c, client) })
+	comments.DELETE("/:commentId", func(c *gin.Context) { DeleteQuoteLineComment(c, client) })
 }
 
 // ─── Quote handlers ──────────────────────────────────────────────────────────
@@ -983,5 +991,117 @@ func marshalLines(lines []*quote.QuoteLine) []gin.H {
 		out = append(out, marshalLine(l))
 	}
 	return out
+}
+
+// ─── Comment handlers ─────────────────────────────────────────────────────────
+
+func marshalComment(c *quote.QuoteLineComment) gin.H {
+	if c == nil {
+		return nil
+	}
+	return gin.H{
+		"comment_id":  c.CommentId,
+		"line_id":     c.LineId,
+		"quote_id":    c.QuoteId,
+		"author_id":   c.AuthorId,
+		"author_name": c.AuthorName,
+		"body":        c.Body,
+		"created_at":  c.CreatedAt,
+		"updated_at":  c.UpdatedAt,
+	}
+}
+
+func ListQuoteLineComments(c *gin.Context, client quote.QuoteServiceClient) {
+	resp, err := client.ListComments(c.Request.Context(), &quote.ListCommentsRequest{
+		LineId: c.Param("lineId"),
+	})
+	if err != nil {
+		log.Printf("ListComments gRPC error: %v", err)
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	out := make([]gin.H, 0, len(resp.Comments))
+	for _, cm := range resp.Comments {
+		out = append(out, marshalComment(cm))
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "comments": out})
+}
+
+func CreateQuoteLineComment(c *gin.Context, client quote.QuoteServiceClient, _ users.UserServiceClient) {
+	var input struct {
+		Body       string `json:"body" binding:"required"`
+		AuthorName string `json:"author_name"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+
+	authorName := strings.TrimSpace(input.AuthorName)
+	if authorName == "" {
+		authorName = "Inconnu"
+	}
+
+	resp, err := client.CreateComment(c.Request.Context(), &quote.CreateCommentRequest{
+		LineId:     c.Param("lineId"),
+		QuoteId:    c.Param("id"),
+		AuthorId:   userIDFromCtx(c),
+		AuthorName: authorName,
+		Body:       input.Body,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"success": true, "comment": marshalComment(resp.Comment)})
+}
+
+func UpdateQuoteLineComment(c *gin.Context, client quote.QuoteServiceClient) {
+	var input struct {
+		Body string `json:"body" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+
+	resp, err := client.UpdateComment(c.Request.Context(), &quote.UpdateCommentRequest{
+		CommentId: c.Param("commentId"),
+		AuthorId:  userIDFromCtx(c),
+		Body:      input.Body,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "comment": marshalComment(resp.Comment)})
+}
+
+func DeleteQuoteLineComment(c *gin.Context, client quote.QuoteServiceClient) {
+	resp, err := client.DeleteComment(c.Request.Context(), &quote.DeleteCommentRequest{
+		CommentId: c.Param("commentId"),
+		AuthorId:  userIDFromCtx(c),
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 

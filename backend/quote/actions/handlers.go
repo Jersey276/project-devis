@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 
+	"project-devis-quote/actions/comment"
 	"project-devis-quote/actions/fee"
 	"project-devis-quote/actions/line"
 	"project-devis-quote/actions/quote"
@@ -105,4 +106,22 @@ func (s *Server) UpdateFee(ctx context.Context, req *quoteGrpc.UpdateFeeRequest)
 
 func (s *Server) ArchiveFee(ctx context.Context, req *quoteGrpc.ArchiveFeeRequest) (*quoteGrpc.GenericResponse, error) {
 	return fee.Archive(ctx, s.db, req)
+}
+
+// ─── Comment ──────────────────────────────────────────────────────────────────
+
+func (s *Server) CreateComment(ctx context.Context, req *quoteGrpc.CreateCommentRequest) (*quoteGrpc.CreateCommentResponse, error) {
+	return comment.Create(ctx, s.db, req)
+}
+
+func (s *Server) ListComments(ctx context.Context, req *quoteGrpc.ListCommentsRequest) (*quoteGrpc.ListCommentsResponse, error) {
+	return comment.List(ctx, s.db, req)
+}
+
+func (s *Server) UpdateComment(ctx context.Context, req *quoteGrpc.UpdateCommentRequest) (*quoteGrpc.UpdateCommentResponse, error) {
+	return comment.Update(ctx, s.db, req)
+}
+
+func (s *Server) DeleteComment(ctx context.Context, req *quoteGrpc.DeleteCommentRequest) (*quoteGrpc.GenericResponse, error) {
+	return comment.Delete(ctx, s.db, req)
 }

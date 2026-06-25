@@ -38,6 +38,7 @@ import {
   EllipsisVerticalIcon,
   LayoutTemplateIcon,
   Loader2Icon,
+  MessageSquareIcon,
   PlusIcon,
   Trash2Icon,
   TriangleAlertIcon,
@@ -102,6 +103,7 @@ type QuoteStepItemsProps = {
   onSublineRemove?: (lineId: string, index: number) => void;
   onSaveLineAsTemplate?: (lineId: string, name: string) => Promise<boolean>;
   onAddItemFromTemplate?: (templateId: string) => Promise<void>;
+  onOpenComments?: (lineId: string, lineName: string) => void;
 };
 
 type IndicatorLabels = { saving: string; saved: string; error: string };
@@ -191,6 +193,7 @@ export default function QuoteStepItems({
   onSublineRemove,
   onSaveLineAsTemplate,
   onAddItemFromTemplate,
+  onOpenComments,
 }: QuoteStepItemsProps) {
   const tCommon = useTranslations("common");
   const selectableTaxes = availableTaxes.filter((tax) => !tax.superseded_at);
@@ -405,42 +408,55 @@ export default function QuoteStepItems({
             <SaveIndicator status={item.saveStatus} labels={indicatorLabels} />
           </TableCell>
           <TableCell>
-            {!isReadonly && (
-              <div className="flex items-center justify-end gap-1">
-                {onSaveLineAsTemplate && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label={t("action")}
-                      >
-                        <EllipsisVerticalIcon className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => openSaveLineDialog(item.lineId)}
-                      >
-                        <BookmarkIcon className="size-4" />
-                        {t("saveAsTemplate")}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
+            <div className="flex items-center justify-end gap-1">
+              {onOpenComments && (
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  aria-label={t("deleteAria")}
-                  disabled={!item.data.parent_line_id && topLevelCount <= 1}
-                  onClick={() => onRemoveItem(item.lineId)}
+                  aria-label={t("commentsAria")}
+                  onClick={() => onOpenComments(item.lineId, item.name)}
                 >
-                  <Trash2Icon className="size-4" />
+                  <MessageSquareIcon className="size-4" />
                 </Button>
-              </div>
-            )}
+              )}
+              {!isReadonly && (
+                <>
+                  {onSaveLineAsTemplate && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label={t("action")}
+                        >
+                          <EllipsisVerticalIcon className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => openSaveLineDialog(item.lineId)}
+                        >
+                          <BookmarkIcon className="size-4" />
+                          {t("saveAsTemplate")}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={t("deleteAria")}
+                    disabled={!item.data.parent_line_id && topLevelCount <= 1}
+                    onClick={() => onRemoveItem(item.lineId)}
+                  >
+                    <Trash2Icon className="size-4" />
+                  </Button>
+                </>
+              )}
+            </div>
           </TableCell>
         </TableRow>
 

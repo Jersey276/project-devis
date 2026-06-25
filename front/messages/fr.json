@@ -335,6 +335,7 @@
       "next": "Suivant",
       "creating": "Création…",
       "finish": "Terminer",
+      "commentsButton": "Commentaires",
       "errors": {
         "requiredField": "Ce champ est requis.",
         "selectClient": "Veuillez sélectionner un client.",
@@ -422,7 +423,8 @@
         "taxEmpty": "Aucune taxe disponible.",
         "taxSupersededSuffix": "version archivée",
         "totalHt": "Montant total HT",
-        "totalTtc": "Total TTC"
+        "totalTtc": "Total TTC",
+        "commentsAria": "Commentaires de la ligne"
       },
       "summary": {
         "label": "Résumé"
@@ -432,6 +434,20 @@
       "list": "Devis",
       "create": "Nouveau devis",
       "detail": "Détail du devis"
+    },
+    "comments": {
+      "sidebarTitle": "Commentaires — {lineName}",
+      "send": "Envoyer",
+      "edit": "Modifier",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "delete": "Supprimer",
+      "deleteConfirmTitle": "Supprimer ce commentaire ?",
+      "deleteConfirmDescription": "Cette action est irréversible.",
+      "deleteConfirm": "Supprimer",
+      "placeholder": "Écrire un commentaire…",
+      "emptyState": "Aucun commentaire pour cette ligne.",
+      "loadError": "Impossible de charger les commentaires."
     }
   },
   "status": {
