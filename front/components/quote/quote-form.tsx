@@ -7,19 +7,9 @@ import { toast } from "sonner";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  DownloadIcon,
-  BookmarkIcon,
-  Loader2Icon,
-  CalendarIcon,
-} from "lucide-react";
+import { Loader2Icon } from "lucide-react";
 import QuoteStepBasicInfo from "@/components/quote/steps/quote-step-basic-info";
 import QuoteStepItems from "@/components/quote/steps/quote-step-items";
 import QuoteStepSummary from "@/components/quote/steps/quote-step-summary";
@@ -33,8 +23,6 @@ import {
   updateQuote,
 } from "@/lib/services/quotes";
 import { exportQuotePdf } from "@/lib/services/export";
-import GenerateInvoiceFromQuoteButton from "@/components/invoice/generate-invoice-from-quote-button";
-import QuoteStateDropdown from "@/components/quote/quote-state-dropdown";
 import { listTemplateLines } from "@/lib/services/templates";
 import { apiFetch, fieldErrorsFromBody, type FieldErrors } from "@/lib/api";
 import { useMode } from "@/lib/mode-context";
@@ -51,9 +39,9 @@ import {
   useQuoteLines,
 } from "@/hooks/use-quote-lines";
 import { useQuoteReferenceData } from "@/hooks/use-quote-reference-data";
-import SaveTemplateDialog from "@/components/template/save-template-dialog";
-import CreateScheduleDialog from "@/components/schedule/create-schedule-dialog";
-import QuoteLineCommentsSidebar from "@/components/quote/quote-line-comments-sidebar";
+import QuoteFormDialogs from "@/components/quote/quote-form-dialogs";
+import QuoteFormFooter from "@/components/quote/quote-form-footer";
+import QuoteFormHeader from "@/components/quote/quote-form-header";
 
 type QuoteFormProps = {
   quoteId?: string;
@@ -61,16 +49,6 @@ type QuoteFormProps = {
 
 const STEP_KEYS = ["basicInfo", "items"] as const;
 const SAVE_DEBOUNCE_MS = 600;
-
-const STATE_BADGE_VARIANT: Record<
-  BackendQuoteState,
-  "default" | "secondary" | "destructive"
-> = {
-  draft: "secondary",
-  negociation: "default",
-  validated: "default",
-  drop: "destructive",
-};
 
 export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const router = useRouter();
@@ -440,72 +418,19 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
 
   return (
     <Card data-quote-state={quoteState}>
-      <CardHeader className="flex flex-row items-start justify-between gap-4">
-        <div className="space-y-1.5">
-          <CardTitle className="flex items-center gap-2">
-            {isCreate
-              ? t("createTitle")
-              : t("editTitlePlaceholder", { name: projectName || "…" })}
-            {!isCreate && (
-              <Badge
-                data-slot="quote-state-badge"
-                variant={STATE_BADGE_VARIANT[quoteState]}
-              >
-                {tStatus(quoteState)}
-              </Badge>
-            )}
-          </CardTitle>
-          <CardDescription>
-            {isCreate ? t("createDescription") : t("editDescription")}
-          </CardDescription>
-        </div>
-        {!isCreate && (
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isExporting}
-            onClick={handleExport}
-          >
-            <DownloadIcon className="size-4" />
-            {t("exportButton")}
-          </Button>
-        )}
-        {!isCreate && quoteId ? (
-          <GenerateInvoiceFromQuoteButton
-            quoteId={quoteId}
-            validated={quoteState === "validated"}
-            onError={(message) => toast.error(message)}
-          />
-        ) : null}
-        {!isCreate && !isReadonly && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setSaveTemplateOpen(true)}
-          >
-            <BookmarkIcon className="size-4" />
-            {t("saveAsTemplateButton")}
-          </Button>
-        )}
-        {!isCreate && !isCustomer && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setCreateScheduleOpen(true)}
-          >
-            <CalendarIcon className="size-4" />
-            Créer un échéancier
-          </Button>
-        )}
-        {!isCustomer && !isCreate && quoteId && (
-          <QuoteStateDropdown
-            quoteId={quoteId}
-            state={quoteState}
-            onChanged={(next) => setQuoteState(next)}
-            onError={(message) => toast.error(message)}
-          />
-        )}
-      </CardHeader>
+      <QuoteFormHeader
+        quoteId={quoteId}
+        projectName={projectName}
+        quoteState={quoteState}
+        isCreate={isCreate}
+        isReadonly={isReadonly}
+        isCustomer={isCustomer}
+        isExporting={isExporting}
+        onExport={handleExport}
+        onSaveTemplate={() => setSaveTemplateOpen(true)}
+        onCreateSchedule={() => setCreateScheduleOpen(true)}
+        onStateChanged={(next) => setQuoteState(next)}
+      />
 
       <CardContent className="space-y-6">
         <div className="grid gap-2 sm:grid-cols-3">
@@ -588,69 +513,32 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         {step === 2 && <QuoteStepSummary />}
       </CardContent>
 
-      <CardFooter className="justify-between border-t">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setStep((s) => Math.max(0, s - 1))}
-          disabled={step === 0}
-        >
-          {t("prev")}
-        </Button>
-
-        <div className="flex gap-2">
-          {step === 0 ? (
-            <Button
-              type="button"
-              onClick={handleNextFromStep1}
-              disabled={!canGoNextFromStep1}
-            >
-              {creating ? t("creating") : t("next")}
-            </Button>
-          ) : step < STEP_KEYS.length - 1 ? (
-            <Button
-              type="button"
-              onClick={() => setStep((s) => Math.min(STEP_KEYS.length - 1, s + 1))}
-            >
-              {t("next")}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push("/quote")}
-            >
-              {t("finish")}
-            </Button>
-          )}
-        </div>
-      </CardFooter>
-
-      <SaveTemplateDialog
-        open={saveTemplateOpen}
-        onOpenChange={setSaveTemplateOpen}
-        defaultName={projectName}
-        onSave={handleSaveQuoteAsTemplate}
+      <QuoteFormFooter
+        step={step}
+        stepCount={STEP_KEYS.length}
+        creating={creating}
+        canGoNextFromStep1={canGoNextFromStep1}
+        onPrev={() => setStep((s) => Math.max(0, s - 1))}
+        onNextFromStep1={handleNextFromStep1}
+        onNextStep={() => setStep((s) => Math.min(STEP_KEYS.length - 1, s + 1))}
+        onFinish={() => router.push("/quote")}
       />
 
-      <CreateScheduleDialog
-        open={createScheduleOpen}
-        onOpenChange={setCreateScheduleOpen}
-        initialQuoteId={quoteId}
-        lockQuote
+      <QuoteFormDialogs
+        quoteId={quoteId}
+        projectName={projectName}
+        saveTemplateOpen={saveTemplateOpen}
+        onSaveTemplateOpenChange={setSaveTemplateOpen}
+        onSaveQuoteAsTemplate={handleSaveQuoteAsTemplate}
+        createScheduleOpen={createScheduleOpen}
+        onCreateScheduleOpenChange={setCreateScheduleOpen}
+        commentSidebarOpen={commentSidebarOpen}
+        onCommentSidebarOpenChange={setCommentSidebarOpen}
+        commentLineId={commentLineId}
+        commentLineName={commentLineName}
+        currentUserId={isCustomer ? customerUserId : userId}
+        currentUserName={currentUserName}
       />
-
-      {quoteId && (
-        <QuoteLineCommentsSidebar
-          open={commentSidebarOpen}
-          onOpenChange={setCommentSidebarOpen}
-          quoteId={quoteId}
-          lineId={commentLineId}
-          lineName={commentLineName}
-          currentUserId={isCustomer ? customerUserId : userId}
-          currentUserName={currentUserName}
-        />
-      )}
     </Card>
   );
 }
