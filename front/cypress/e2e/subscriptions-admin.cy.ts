@@ -187,8 +187,8 @@ describe("Admin Subscriptions page", () => {
     cy.wait("@getAuthMe");
     cy.wait("@getAllPlans");
 
-    // Open actions menu on the Pro plan row
-    cy.contains("td", "Pro")
+    // Open actions menu on the Pro plan row (scoped to the plans table, first table on the page)
+    cy.get("table").first().contains("td", "Pro")
       .closest("tr")
       .within(() => {
         cy.get("button.h-8.w-8").click({ force: true });

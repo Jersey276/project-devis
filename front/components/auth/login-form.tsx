@@ -1,5 +1,5 @@
 "use client";
-import { FormEvent, useEffect } from "react";
+import { FormEvent, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import OAuthButtons from "@/components/auth/oauth-buttons";
@@ -66,6 +66,12 @@ export default function LoginForm({
   const next = safeNextPath(searchParams.get(NEXT_PARAM));
   const t = useTranslations("auth.login");
   const tOAuthErrors = useTranslations("auth.oauth.errors");
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    // Signal to Cypress that React has hydrated and onSubmit is attached.
+    formRef.current?.setAttribute("data-hydrated", "true");
+  }, []);
 
   // Surface OAuth callback failures redirected back here as ?oauth_error=<slug>.
   const oauthError = searchParams.get("oauth_error");
@@ -84,6 +90,8 @@ export default function LoginForm({
         </CardHeader>
         <CardContent>
           <form
+            ref={formRef}
+            method="post"
             onSubmit={submitLoginForm(router, next, {
               success: t("successToast"),
               failure: t("failureToast"),

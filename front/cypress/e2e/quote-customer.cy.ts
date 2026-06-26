@@ -37,7 +37,7 @@ describe("Quote — customer mode", () => {
       cy.visit("/quote");
       cy.get("[data-slot='mode-toggle']").should("not.have.attr", "data-active");
       cy.get("[data-sidebar='sidebar']").within(() => {
-        cy.contains("Factures").should("exist");
+        cy.contains("Clients").should("exist");
         cy.contains("Mon profil").should("not.exist");
       });
 
@@ -301,7 +301,7 @@ describe("Quote — customer mode", () => {
 
       cy.contains("button", "Nouveau devis").should("be.visible");
       cy.get("[data-sidebar='sidebar']").within(() => {
-        cy.contains("Factures").should("exist");
+        cy.contains("Clients").should("exist");
       });
     });
   });

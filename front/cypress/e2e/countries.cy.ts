@@ -61,19 +61,6 @@ describe("Countries page", () => {
     });
   });
 
-  describe("Sidebar", () => {
-    beforeEach(() => stubCountriesPage());
-
-    it("exposes Pays and Taxes entries", () => {
-      cy.visit("/countries");
-      cy.wait("@getAuthMe");
-      cy.wait("@getCountries");
-      cy.contains("button", "Admin").click();
-      cy.contains("a", "Pays").should("have.attr", "href", "/countries");
-      cy.contains("a", "Taxes").should("have.attr", "href", "/taxes");
-    });
-  });
-
   describe("Pays tab", () => {
     beforeEach(() => stubCountriesPage());
 

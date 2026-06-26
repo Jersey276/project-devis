@@ -109,7 +109,13 @@ function ScheduleListTableInner() {
     params.set("sort_direction", sortDirection);
     if (isCustomer && myClientId) params.set("client_id", myClientId);
 
-    const { ok, body } = await listSchedules(params.toString(), signal);
+    let ok: boolean, body: Awaited<ReturnType<typeof listSchedules>>["body"];
+    try {
+      ({ ok, body } = await listSchedules(params.toString(), signal));
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      throw err;
+    }
     if (signal.aborted) return;
     if (!ok || !body.success || !Array.isArray(body.schedules)) {
       setItems([]);
