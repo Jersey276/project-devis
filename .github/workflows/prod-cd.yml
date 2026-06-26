@@ -112,6 +112,11 @@ jobs:
             cd ${{ secrets.DEPLOY_PATH }}
             git fetch origin master
             git reset --hard ${{ github.sha }}
+            mkdir -p backend/secrets
+            echo "${{ secrets.DB_PASSWORD }}" > backend/secrets/postgres_pswd.txt
+            echo "${{ secrets.STRIPE_SECRET_KEY }}" > backend/secrets/stripe_secret_key.txt
+            echo "${{ secrets.STRIPE_WEBHOOK_SECRET }}" > backend/secrets/stripe_webhook_secret.txt
+            chmod 600 backend/secrets/*.txt
             echo "${{ secrets.GHCR_PULL_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_PULL_USER }}" --password-stdin
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
