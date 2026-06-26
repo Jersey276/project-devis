@@ -4,6 +4,13 @@ set -e
 DB_PASSWORD=$(cat /run/secrets/db_password)
 export PGPASSWORD="$DB_PASSWORD"
 
+# Wait until Postgres accepts connections (healthcheck passes but TCP auth
+# may not be ready yet on first boot).
+until psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "postgres" -c "SELECT 1" > /dev/null 2>&1; do
+    echo "postgres-init: waiting for postgres..."
+    sleep 2
+done
+
 create_user_and_db() {
     local user="$1"
     local db="$2"
