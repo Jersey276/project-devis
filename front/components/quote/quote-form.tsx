@@ -4,10 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2Icon } from "lucide-react";
 import QuoteStepBasicInfo from "@/components/quote/steps/quote-step-basic-info";
@@ -104,7 +101,9 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     isCustomer || quoteState === "validated" || quoteState === "drop";
 
   const projectNameRef = useRef(projectName);
-  useEffect(() => { projectNameRef.current = projectName; }, [projectName]);
+  useEffect(() => {
+    projectNameRef.current = projectName;
+  }, [projectName]);
   const nameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initial fetch (edit mode only)
@@ -132,8 +131,10 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       setItems(sorted.map(rowFromBackendLine));
       setLoading(false);
     });
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quoteId, t]);
 
   useEffect(() => {
@@ -150,8 +151,15 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           apiFetch("/api/auth/me"),
         ]);
         if (cancelled) return;
-        if (clientsRes.ok && Array.isArray(clientsRes.body.clients) && clientsRes.body.clients.length > 0) {
-          const cl = clientsRes.body.clients[0] as { first_name: string; last_name: string };
+        if (
+          clientsRes.ok &&
+          Array.isArray(clientsRes.body.clients) &&
+          clientsRes.body.clients.length > 0
+        ) {
+          const cl = clientsRes.body.clients[0] as {
+            first_name: string;
+            last_name: string;
+          };
           setCurrentUserName(`${cl.first_name} ${cl.last_name}`.trim());
         }
         if (meRes.ok && meRes.body.auth) {
@@ -166,7 +174,9 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         }
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [isCustomer]);
 
   useEffect(() => {
@@ -187,7 +197,13 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     refreshClients,
     refreshUserAddresses,
     refreshClientAddresses,
-  } = useQuoteReferenceData({ clientId, userAddressId, isCustomer, loading, items });
+  } = useQuoteReferenceData({
+    clientId,
+    userAddressId,
+    isCustomer,
+    loading,
+    items,
+  });
 
   const {
     adding,
@@ -228,7 +244,9 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             if (ok && body.success) {
               setQuoteState("negociation");
             } else {
-              toast.error((body.message as string) ?? t("errors.nameSaveFailedToast"));
+              toast.error(
+                (body.message as string) ?? t("errors.nameSaveFailedToast"),
+              );
             }
           });
         },
@@ -252,7 +270,9 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         const wasNegociation = quoteState === "negociation";
         const { ok, body } = await updateQuote(quoteId, { name: current });
         if (!ok || !body.success) {
-          toast.error((body.message as string) ?? t("errors.nameSaveFailedToast"));
+          toast.error(
+            (body.message as string) ?? t("errors.nameSaveFailedToast"),
+          );
         } else if (wasNegociation) {
           handleRevertedToDraft();
         }
@@ -267,8 +287,12 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     if (trimmed.length === 0) localErrors.name = [t("errors.requiredField")];
     if (!clientId) localErrors.client_id = [t("errors.selectClient")];
     if (!addressId) localErrors.address_id = [t("errors.selectAddress")];
-    if (!userAddressId) localErrors.user_address_id = [t("errors.selectUserAddress")];
-    if (Object.keys(localErrors).length > 0) { setErrors(localErrors); return; }
+    if (!userAddressId)
+      localErrors.user_address_id = [t("errors.selectUserAddress")];
+    if (Object.keys(localErrors).length > 0) {
+      setErrors(localErrors);
+      return;
+    }
 
     if (isCreate) {
       setCreating(true);
@@ -284,9 +308,9 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
           if (templateIdFromQuery) {
             const linesRes = await listTemplateLines(templateIdFromQuery);
             if (linesRes.ok && Array.isArray(linesRes.body.lines)) {
-              const sorted = (linesRes.body.lines as BackendTemplateLine[]).sort(
-                (a, b) => a.position - b.position,
-              );
+              const sorted = (
+                linesRes.body.lines as BackendTemplateLine[]
+              ).sort((a, b) => a.position - b.position);
               await Promise.all(
                 sorted.map((tl, idx) =>
                   createLine(newId, {
@@ -324,7 +348,17 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       return;
     }
     setStep(1);
-  }, [addressId, clientId, isCreate, projectName, router, t, tCommon, templateIdFromQuery, userAddressId]);
+  }, [
+    addressId,
+    clientId,
+    isCreate,
+    projectName,
+    router,
+    t,
+    tCommon,
+    templateIdFromQuery,
+    userAddressId,
+  ]);
 
   const handleClientIdChange = useCallback(
     (value: string) => {
@@ -335,13 +369,17 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       const name = projectNameRef.current.trim();
       if (name.length === 0) return;
       const wasNegociation = quoteState === "negociation";
-      void updateQuote(quoteId, { name, clientId: value }).then(({ ok, body }) => {
-        if (!ok || !body.success) {
-          toast.error((body.message as string) ?? t("errors.clientSaveFailedToast"));
-        } else if (wasNegociation) {
-          handleRevertedToDraft();
-        }
-      });
+      void updateQuote(quoteId, { name, clientId: value }).then(
+        ({ ok, body }) => {
+          if (!ok || !body.success) {
+            toast.error(
+              (body.message as string) ?? t("errors.clientSaveFailedToast"),
+            );
+          } else if (wasNegociation) {
+            handleRevertedToDraft();
+          }
+        },
+      );
     },
     [handleRevertedToDraft, isReadonly, quoteId, quoteState, t],
   );
@@ -352,26 +390,42 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       setErrors((prev) => ({ ...prev, address_id: [] }));
       if (!quoteId || value == null) return;
       if (isCustomer) {
-        void updateMyQuoteAddress(quoteId, value, myClientId || undefined).then(({ ok, body }) => {
-          if (!ok || !body.success) {
-            toast.error((body.message as string) ?? t("errors.addressSaveFailedToast"));
-          }
-        });
+        void updateMyQuoteAddress(quoteId, value, myClientId || undefined).then(
+          ({ ok, body }) => {
+            if (!ok || !body.success) {
+              toast.error(
+                (body.message as string) ?? t("errors.addressSaveFailedToast"),
+              );
+            }
+          },
+        );
         return;
       }
       if (isReadonly) return;
       const name = projectNameRef.current.trim();
       if (name.length === 0) return;
       const wasNegociation = quoteState === "negociation";
-      void updateQuote(quoteId, { name, addressId: value }).then(({ ok, body }) => {
-        if (!ok || !body.success) {
-          toast.error((body.message as string) ?? t("errors.addressSaveFailedToast"));
-        } else if (wasNegociation) {
-          handleRevertedToDraft();
-        }
-      });
+      void updateQuote(quoteId, { name, addressId: value }).then(
+        ({ ok, body }) => {
+          if (!ok || !body.success) {
+            toast.error(
+              (body.message as string) ?? t("errors.addressSaveFailedToast"),
+            );
+          } else if (wasNegociation) {
+            handleRevertedToDraft();
+          }
+        },
+      );
     },
-    [handleRevertedToDraft, isCustomer, isReadonly, myClientId, quoteId, quoteState, t],
+    [
+      handleRevertedToDraft,
+      isCustomer,
+      isReadonly,
+      myClientId,
+      quoteId,
+      quoteState,
+      t,
+    ],
   );
 
   const handleUserAddressIdChange = useCallback(
@@ -382,13 +436,18 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       const name = projectNameRef.current.trim();
       if (name.length === 0) return;
       const wasNegociation = quoteState === "negociation";
-      void updateQuote(quoteId, { name, userAddressId: value }).then(({ ok, body }) => {
-        if (!ok || !body.success) {
-          toast.error((body.message as string) ?? t("errors.userAddressSaveFailedToast"));
-        } else if (wasNegociation) {
-          handleRevertedToDraft();
-        }
-      });
+      void updateQuote(quoteId, { name, userAddressId: value }).then(
+        ({ ok, body }) => {
+          if (!ok || !body.success) {
+            toast.error(
+              (body.message as string) ??
+                t("errors.userAddressSaveFailedToast"),
+            );
+          } else if (wasNegociation) {
+            handleRevertedToDraft();
+          }
+        },
+      );
     },
     [handleRevertedToDraft, isReadonly, quoteId, quoteState, t],
   );
@@ -399,11 +458,15 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       if (!quoteId || isReadonly) return;
       const name = projectNameRef.current.trim();
       if (name.length === 0) return;
-      void updateQuote(quoteId, { name, validUntil: value }).then(({ ok, body }) => {
-        if (!ok || !body.success) {
-          toast.error((body.message as string) ?? t("errors.nameSaveFailedToast"));
-        }
-      });
+      void updateQuote(quoteId, { name, validUntil: value }).then(
+        ({ ok, body }) => {
+          if (!ok || !body.success) {
+            toast.error(
+              (body.message as string) ?? t("errors.nameSaveFailedToast"),
+            );
+          }
+        },
+      );
     },
     [isReadonly, quoteId, t],
   );
@@ -414,11 +477,15 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       if (!quoteId || isReadonly) return;
       const name = projectNameRef.current.trim();
       if (name.length === 0) return;
-      void updateQuote(quoteId, { name, paymentTerms: value }).then(({ ok, body }) => {
-        if (!ok || !body.success) {
-          toast.error((body.message as string) ?? t("errors.nameSaveFailedToast"));
-        }
-      });
+      void updateQuote(quoteId, { name, paymentTerms: value }).then(
+        ({ ok, body }) => {
+          if (!ok || !body.success) {
+            toast.error(
+              (body.message as string) ?? t("errors.nameSaveFailedToast"),
+            );
+          }
+        },
+      );
     },
     [isReadonly, quoteId, t],
   );
@@ -431,7 +498,9 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     } catch (err) {
       console.error("export quote pdf failed", err);
       toast.error(t("exportFailedToast"));
-    } finally { setIsExporting(false); }
+    } finally {
+      setIsExporting(false);
+    }
   }, [quoteId, isExporting, t]);
 
   const handleAccept = useCallback(async () => {
@@ -496,7 +565,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       />
 
       <CardContent className="space-y-6">
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-2">
           {STEP_KEYS.map((key, index) => (
             <Button
               key={key}
@@ -507,7 +576,9 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
               className={`justify-start rounded-md border px-3 py-2 text-sm font-normal ${
                 step === index ? "bg-muted" : ""
               }`}
-              onClick={() => { if (!isCreate) setStep(index); }}
+              onClick={() => {
+                if (!isCreate) setStep(index);
+              }}
               disabled={isCreate}
             >
               {t("stepLabel", { n: index + 1, label: tSteps(`${key}.label`) })}
@@ -562,18 +633,36 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
             onRemoveItem={handleRemoveItem}
             onAddItem={handleAddItem}
             onAddChildItem={handleAddChildItem}
-            onAddFeeItem={!isCreate && !isReadonly ? handleAddFeeItem : undefined}
-            onAddFeeSubline={!isCreate && !isReadonly ? handleAddFeeSubline : undefined}
-            onSublineAdd={!isCreate && !isReadonly ? handleSublineAdd : undefined}
-            onSublineChange={!isCreate && !isReadonly ? handleSublineChange : undefined}
-            onSublineRemove={!isCreate && !isReadonly ? handleSublineRemove : undefined}
-            onSaveLineAsTemplate={!isCreate && !isReadonly ? handleSaveLineAsTemplate : undefined}
-            onAddItemFromTemplate={!isCreate && !isReadonly ? handleAddItemFromTemplate : undefined}
-            onOpenComments={!isCreate && quoteId ? (lineId, lineName) => {
-              setCommentLineId(lineId);
-              setCommentLineName(lineName);
-              setCommentSidebarOpen(true);
-            } : undefined}
+            onAddFeeItem={
+              !isCreate && !isReadonly ? handleAddFeeItem : undefined
+            }
+            onAddFeeSubline={
+              !isCreate && !isReadonly ? handleAddFeeSubline : undefined
+            }
+            onSublineAdd={
+              !isCreate && !isReadonly ? handleSublineAdd : undefined
+            }
+            onSublineChange={
+              !isCreate && !isReadonly ? handleSublineChange : undefined
+            }
+            onSublineRemove={
+              !isCreate && !isReadonly ? handleSublineRemove : undefined
+            }
+            onSaveLineAsTemplate={
+              !isCreate && !isReadonly ? handleSaveLineAsTemplate : undefined
+            }
+            onAddItemFromTemplate={
+              !isCreate && !isReadonly ? handleAddItemFromTemplate : undefined
+            }
+            onOpenComments={
+              !isCreate && quoteId
+                ? (lineId, lineName) => {
+                    setCommentLineId(lineId);
+                    setCommentLineName(lineName);
+                    setCommentSidebarOpen(true);
+                  }
+                : undefined
+            }
           />
         )}
 

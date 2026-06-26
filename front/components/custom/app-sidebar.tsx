@@ -12,7 +12,6 @@ import {
   UsersIcon,
   WrenchIcon,
   CreditCardIcon,
-  BarChart2Icon,
   CoinsIcon,
   ReceiptEuroIcon,
   FolderIcon,
@@ -54,7 +53,6 @@ type NavKey =
   | "taxes"
   | "templates"
   | "subscriptions"
-  | "analytics"
   | "logs"
   | "test";
 
@@ -164,13 +162,6 @@ const items: SidebarItem[] = [
     key: "subscriptions",
     url: "/subscriptions",
     icon: CreditCardIcon,
-    modes: ["provider"],
-    adminOnly: true,
-  },
-  {
-    key: "analytics",
-    url: "/analytics",
-    icon: BarChart2Icon,
     modes: ["provider"],
     adminOnly: true,
   },
