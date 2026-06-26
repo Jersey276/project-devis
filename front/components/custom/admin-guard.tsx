@@ -1,10 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { apiFetch } from "@/lib/api";
-import { Skeleton } from "@/components/ui/skeleton";
-import type { AuthContext } from "@/lib/access";
+import { useAuth } from "@/lib/auth-context";
 import { isSuperAdmin } from "@/lib/access";
 
 type AdminGuardProps = {
@@ -13,27 +10,8 @@ type AdminGuardProps = {
 
 export default function AdminGuard({ children }: AdminGuardProps) {
   const t = useTranslations("admin.guard");
-  const [loading, setLoading] = useState(true);
-  const [allowed, setAllowed] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    apiFetch("/api/auth/me").then(({ ok, body }) => {
-      if (cancelled) return;
-      const auth = (body.auth ?? null) as AuthContext | null;
-      setAllowed(ok && body.success === true && isSuperAdmin(auth));
-      setLoading(false);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (loading) {
-    return <Skeleton className="h-4 w-32" />;
-  }
+  const { auth, ok } = useAuth();
+  const allowed = ok && isSuperAdmin(auth);
 
   if (!allowed) {
     return (

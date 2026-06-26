@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { apiFetch } from "@/lib/api";
-import { canUsePaidFeatures, type AuthContext } from "@/lib/access";
+import { canUsePaidFeatures } from "@/lib/access";
 import { useMode } from "@/lib/mode-context";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/lib/auth-context";
 
 type SubscriptionGuardProps = {
   children: React.ReactNode;
@@ -16,31 +14,11 @@ export default function SubscriptionGuard({
 }: SubscriptionGuardProps) {
   const t = useTranslations("subscription.guard");
   const { isCustomer } = useMode();
-  const [loading, setLoading] = useState(true);
-  const [allowed, setAllowed] = useState(false);
-
-  useEffect(() => {
-    if (isCustomer) return;
-
-    let cancelled = false;
-
-    apiFetch("/api/auth/me").then(({ ok, body }) => {
-      if (cancelled) return;
-      const auth = (body.auth ?? null) as AuthContext | null;
-      setAllowed(ok && body.success === true && canUsePaidFeatures(auth));
-      setLoading(false);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isCustomer]);
+  const { auth, ok } = useAuth();
 
   if (isCustomer) return <>{children}</>;
 
-  if (loading) {
-    return <Skeleton className="h-4 w-32" />;
-  }
+  const allowed = ok && canUsePaidFeatures(auth);
 
   if (!allowed) {
     return (

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"gateway/authz"
 	emailGrpc "gateway/email"
@@ -43,10 +44,21 @@ func GetEmailLogs(c *gin.Context, client emailGrpc.EmailServiceClient, authorize
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
+	statuses := splitFilter(c.Query("statuses"))
+	types := splitFilter(c.Query("types"))
+	dateFrom := c.Query("date_from")
+	dateTo := c.Query("date_to")
+	search := c.Query("search")
+
 	resp, err := client.GetEmailLogs(c.Request.Context(), &emailGrpc.GetEmailLogsRequest{
-		UserId: userID,
-		Limit:  int32(limit),
-		Offset: int32(offset),
+		UserId:   userID,
+		Limit:    int32(limit),
+		Offset:   int32(offset),
+		Statuses: statuses,
+		Types:    types,
+		DateFrom: dateFrom,
+		DateTo:   dateTo,
+		Search:   search,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Erreur lors de la récupération des logs."})
@@ -81,4 +93,19 @@ func GetEmailLogs(c *gin.Context, client emailGrpc.EmailServiceClient, authorize
 		"logs":    logs,
 		"total":   resp.Total,
 	})
+}
+
+// splitFilter splits a comma-separated query param and removes empty strings.
+func splitFilter(s string) []string {
+	if s == "" {
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	out := parts[:0]
+	for _, p := range parts {
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }

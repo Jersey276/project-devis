@@ -46,9 +46,14 @@ message SendEmailResponse {
 }
 
 message GetEmailLogsRequest {
-    string user_id = 1;
-    int32  limit   = 2;
-    int32  offset  = 3;
+    string          user_id   = 1;
+    int32           limit     = 2;
+    int32           offset    = 3;
+    repeated string statuses  = 4;
+    repeated string types     = 5;
+    string          date_from = 6;
+    string          date_to   = 7;
+    string          search    = 8;
 }
 
 message EmailLog {

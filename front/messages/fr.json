@@ -55,6 +55,7 @@
     "dashboard": "Tableau de bord",
     "adminDashboard": "Tableau de bord admin",
     "logs": "Journal d'activité",
+    "emailLogs": "Journaux d'email",
     "test": "Test",
     "clientProfile": "Mon profil",
     "modeToggle": {
@@ -1224,6 +1225,30 @@
         "createdAt": "Date",
         "reqBody": "Corps de la requête",
         "respBody": "Corps de la réponse"
+      }
+    },
+    "emailLogs": {
+      "title": "Journaux d'email",
+      "noData": "Aucun email envoyé.",
+      "filters": {
+        "searchPlaceholder": "Rechercher par destinataire ou référence…",
+        "statusLabel": "Statut",
+        "statusPlaceholder": "Tous les statuts",
+        "statusEmpty": "Aucun statut",
+        "typeLabel": "Type",
+        "typePlaceholder": "Tous les types",
+        "typeEmpty": "Aucun type",
+        "dateLabel": "Date d'envoi"
+      },
+      "table": {
+        "id": "ID",
+        "toEmail": "Destinataire",
+        "type": "Type",
+        "referenceName": "Référence",
+        "status": "Statut",
+        "opened": "Ouvert",
+        "clicked": "Cliqué",
+        "createdAt": "Envoyé le"
       }
     }
   },

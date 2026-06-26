@@ -17,6 +17,7 @@ import {
   FolderIcon,
   BuildingIcon,
   LayoutDashboardIcon,
+  MailIcon,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "../ui/button";
@@ -33,8 +34,8 @@ import {
 } from "../ui/sidebar";
 import UserMenu from "../user/user-menu";
 import { useMode, type UserMode } from "@/lib/mode-context";
-import { apiFetch } from "@/lib/api";
-import { canUsePaidFeatures, isSuperAdmin, type AuthContext } from "@/lib/access";
+import { useAuth } from "@/lib/auth-context";
+import { canUsePaidFeatures, isSuperAdmin } from "@/lib/access";
 import { cn } from "@/lib/utils";
 
 type NavKey =
@@ -54,6 +55,7 @@ type NavKey =
   | "templates"
   | "subscriptions"
   | "logs"
+  | "emailLogs"
   | "test";
 
 type SidebarItem = {
@@ -176,6 +178,13 @@ const items: SidebarItem[] = [
     modes: ["provider"],
     adminOnly: true,
   },
+  {
+    key: "emailLogs",
+    url: "/email-logs",
+    icon: MailIcon,
+    modes: ["provider"],
+    adminOnly: true,
+  },
   // {
   //   key: "test",
   //   url: "/test",
@@ -191,19 +200,12 @@ export default function AppSidebar() {
   const [isPremium, setIsPremium] = useState(false);
   const [sidebarView, setSidebarView] = useState<SidebarView>("user");
 
+  const { auth, ok } = useAuth();
+
   useEffect(() => {
-    let cancelled = false;
-    apiFetch("/api/auth/me").then(({ ok, body }) => {
-      if (cancelled) return;
-      const auth = (body.auth ?? null) as AuthContext | null;
-      const success = ok && body.success === true;
-      setIsAdmin(success && isSuperAdmin(auth));
-      setIsPremium(success && canUsePaidFeatures(auth));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    setIsAdmin(ok && isSuperAdmin(auth));
+    setIsPremium(ok && canUsePaidFeatures(auth));
+  }, [auth, ok]);
 
   const effectiveSidebarView: SidebarView = isAdmin ? sidebarView : "user";
 
