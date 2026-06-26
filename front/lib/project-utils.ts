@@ -1,4 +1,4 @@
-import type { BackendClient, ProjectStatus } from "@/types/backend";
+import type { BackendClient } from "@/types/backend";
 
 export const PROJECT_STATUS_ITEMS: { value: string; label: string }[] = [
   { value: "active", label: "Actif" },

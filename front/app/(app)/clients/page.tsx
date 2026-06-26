@@ -62,6 +62,7 @@ function ClientIndex() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch, setState called after await
   useEffect(() => { void fetchClients(); }, [fetchClients]);
 
   const reload = useCallback(() => { void fetchClients(); }, [fetchClients]);

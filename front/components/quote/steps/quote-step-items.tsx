@@ -15,7 +15,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Combobox,
   ComboboxContent,
@@ -35,10 +34,7 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   EllipsisVerticalIcon,
-  LayoutTemplateIcon,
-  Loader2Icon,
   MessageSquareIcon,
-  PlusIcon,
   Trash2Icon,
 } from "lucide-react";
 import type {
@@ -47,10 +43,7 @@ import type {
   BackendQuoteLineType,
   QuoteLineData,
 } from "@/types/backend";
-import { CoinsIcon } from "lucide-react";
 import SaveTemplateDialog from "@/components/template/save-template-dialog";
-import SelectLineTemplatePopover from "@/components/template/select-line-template-popover";
-import SelectFeePopover from "@/components/fees/select-fee-popover";
 import SaveIndicator, {
   type LineSaveStatus,
   type IndicatorLabels,
@@ -111,13 +104,6 @@ type QuoteStepItemsProps = {
   onAddItemFromTemplate?: (templateId: string) => Promise<void>;
   onOpenComments?: (lineId: string, lineName: string) => void;
 };
-
-const CREATABLE_KINDS: Array<QuoteLineData["kind"]> = [
-  "line",
-  "text",
-  "group",
-  "detailed",
-];
 
 export default function QuoteStepItems({
   items,
@@ -230,7 +216,6 @@ export default function QuoteStepItems({
   function renderItemRows(item: QuoteItemRow) {
     const kind = lineKind(item);
     const itemChildren = childrenByParentId.get(item.lineId) ?? [];
-    const sublines = item.data.sublines ?? [];
     const lineTotalValue = lineTotal(item);
     const selectedTax =
       item.taxId != null ? (taxById.get(item.taxId) ?? null) : null;

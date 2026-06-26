@@ -43,8 +43,8 @@ export function DateRangePicker({ from, to, onValueChange }: DateRangePickerProp
     to: isoToDate(to),
   });
 
-  // Sync external reset (e.g. when parent clears filters)
   React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync with parent-controlled props (filter reset)
     setRange({ from: isoToDate(from), to: isoToDate(to) });
   }, [from, to]);
 

@@ -87,6 +87,7 @@ export default function QuoteLineCommentsSidebar({
 
   useEffect(() => {
     if (!open || !lineId) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch, setState called after await
     setLoading(true);
     listComments(quoteId, lineId).then(({ ok, body }) => {
       setLoading(false);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
@@ -196,16 +196,12 @@ const items: SidebarItem[] = [
 export default function AppSidebar() {
   const { mode, setMode, isCustomer } = useMode();
   const t = useTranslations("nav");
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
   const [sidebarView, setSidebarView] = useState<SidebarView>("user");
 
   const { auth, ok } = useAuth();
 
-  useEffect(() => {
-    setIsAdmin(ok && isSuperAdmin(auth));
-    setIsPremium(ok && canUsePaidFeatures(auth));
-  }, [auth, ok]);
+  const isAdmin = useMemo(() => ok && isSuperAdmin(auth), [auth, ok]);
+  const isPremium = useMemo(() => ok && canUsePaidFeatures(auth), [auth, ok]);
 
   const effectiveSidebarView: SidebarView = isAdmin ? sidebarView : "user";
 
