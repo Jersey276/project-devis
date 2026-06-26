@@ -12,13 +12,13 @@ const (
 // crossIndustryInvoice is the document root. Namespaces are declared once here;
 // every child element is prefixed via its xml tag.
 type crossIndustryInvoice struct {
-	XMLName xml.Name `xml:"rsm:CrossIndustryInvoice"`
-	XMLNSrsm string  `xml:"xmlns:rsm,attr"`
-	XMLNSram string  `xml:"xmlns:ram,attr"`
-	XMLNSudt string  `xml:"xmlns:udt,attr"`
+	XMLName  xml.Name `xml:"rsm:CrossIndustryInvoice"`
+	XMLNSrsm string   `xml:"xmlns:rsm,attr"`
+	XMLNSram string   `xml:"xmlns:ram,attr"`
+	XMLNSudt string   `xml:"xmlns:udt,attr"`
 
-	Context     exchangedDocumentContext   `xml:"rsm:ExchangedDocumentContext"`
-	Document    exchangedDocument          `xml:"rsm:ExchangedDocument"`
+	Context     exchangedDocumentContext    `xml:"rsm:ExchangedDocumentContext"`
+	Document    exchangedDocument           `xml:"rsm:ExchangedDocument"`
 	Transaction supplyChainTradeTransaction `xml:"rsm:SupplyChainTradeTransaction"`
 }
 
@@ -31,8 +31,8 @@ type guidelineParameter struct {
 }
 
 type exchangedDocument struct {
-	ID          string       `xml:"ram:ID"`
-	TypeCode    string       `xml:"ram:TypeCode"`
+	ID            string       `xml:"ram:ID"`
+	TypeCode      string       `xml:"ram:TypeCode"`
 	IssueDateTime dateTimeWrap `xml:"ram:IssueDateTime"`
 }
 
@@ -48,20 +48,20 @@ type formattedDate struct {
 }
 
 type supplyChainTradeTransaction struct {
-	Lines      []lineItem               `xml:"ram:IncludedSupplyChainTradeLineItem"`
-	Agreement  headerTradeAgreement     `xml:"ram:ApplicableHeaderTradeAgreement"`
-	Delivery   headerTradeDelivery      `xml:"ram:ApplicableHeaderTradeDelivery"`
-	Settlement headerTradeSettlement    `xml:"ram:ApplicableHeaderTradeSettlement"`
+	Lines      []lineItem            `xml:"ram:IncludedSupplyChainTradeLineItem"`
+	Agreement  headerTradeAgreement  `xml:"ram:ApplicableHeaderTradeAgreement"`
+	Delivery   headerTradeDelivery   `xml:"ram:ApplicableHeaderTradeDelivery"`
+	Settlement headerTradeSettlement `xml:"ram:ApplicableHeaderTradeSettlement"`
 }
 
 // ─── Line items ──────────────────────────────────────────────────────────────
 
 type lineItem struct {
-	DocLine    lineDocument         `xml:"ram:AssociatedDocumentLineDocument"`
-	Product    tradeProduct         `xml:"ram:SpecifiedTradeProduct"`
-	Agreement  lineTradeAgreement   `xml:"ram:SpecifiedLineTradeAgreement"`
-	Delivery   lineTradeDelivery    `xml:"ram:SpecifiedLineTradeDelivery"`
-	Settlement lineTradeSettlement  `xml:"ram:SpecifiedLineTradeSettlement"`
+	DocLine    lineDocument        `xml:"ram:AssociatedDocumentLineDocument"`
+	Product    tradeProduct        `xml:"ram:SpecifiedTradeProduct"`
+	Agreement  lineTradeAgreement  `xml:"ram:SpecifiedLineTradeAgreement"`
+	Delivery   lineTradeDelivery   `xml:"ram:SpecifiedLineTradeDelivery"`
+	Settlement lineTradeSettlement `xml:"ram:SpecifiedLineTradeSettlement"`
 }
 
 type lineDocument struct {
@@ -90,8 +90,8 @@ type quantity struct {
 }
 
 type lineTradeSettlement struct {
-	Tax        tradeTax              `xml:"ram:ApplicableTradeTax"`
-	Summation  lineMonetarySummation `xml:"ram:SpecifiedTradeSettlementLineMonetarySummation"`
+	Tax       tradeTax              `xml:"ram:ApplicableTradeTax"`
+	Summation lineMonetarySummation `xml:"ram:SpecifiedTradeSettlementLineMonetarySummation"`
 }
 
 type lineMonetarySummation struct {
@@ -146,13 +146,13 @@ type supplyChainEvent struct {
 // ─── Header: settlement (taxes, payment, totals) ─────────────────────────────
 
 type headerTradeSettlement struct {
-	CurrencyCode string             `xml:"ram:InvoiceCurrencyCode"`
+	CurrencyCode string `xml:"ram:InvoiceCurrencyCode"`
 	// BG-16: must precede ApplicableTradeTax per the CII XSD sequence (field order
 	// is the marshalled order).
-	PaymentMeans []paymentMeans     `xml:"ram:SpecifiedTradeSettlementPaymentMeans,omitempty"`
-	Taxes        []tradeTax         `xml:"ram:ApplicableTradeTax"`
-	PaymentTerms *paymentTerms      `xml:"ram:SpecifiedTradePaymentTerms,omitempty"`
-	Summation    monetarySummation  `xml:"ram:SpecifiedTradeSettlementHeaderMonetarySummation"`
+	PaymentMeans []paymentMeans    `xml:"ram:SpecifiedTradeSettlementPaymentMeans,omitempty"`
+	Taxes        []tradeTax        `xml:"ram:ApplicableTradeTax"`
+	PaymentTerms *paymentTerms     `xml:"ram:SpecifiedTradePaymentTerms,omitempty"`
+	Summation    monetarySummation `xml:"ram:SpecifiedTradeSettlementHeaderMonetarySummation"`
 	// InvoiceReferenced carries BT-3 — the original invoice a credit note (381)
 	// rebills against. Absent on a plain invoice (380).
 	InvoiceReferenced *referencedDocument `xml:"ram:InvoiceReferencedDocument,omitempty"`
@@ -198,11 +198,11 @@ type financialInstitution struct {
 }
 
 type monetarySummation struct {
-	LineTotalAmount     string       `xml:"ram:LineTotalAmount"`
-	TaxBasisTotalAmount string       `xml:"ram:TaxBasisTotalAmount"`
+	LineTotalAmount     string         `xml:"ram:LineTotalAmount"`
+	TaxBasisTotalAmount string         `xml:"ram:TaxBasisTotalAmount"`
 	TaxTotalAmount      currencyAmount `xml:"ram:TaxTotalAmount"`
-	GrandTotalAmount    string       `xml:"ram:GrandTotalAmount"`
-	DuePayableAmount    string       `xml:"ram:DuePayableAmount"`
+	GrandTotalAmount    string         `xml:"ram:GrandTotalAmount"`
+	DuePayableAmount    string         `xml:"ram:DuePayableAmount"`
 }
 
 type currencyAmount struct {

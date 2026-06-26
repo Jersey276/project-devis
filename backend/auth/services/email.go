@@ -21,12 +21,12 @@ type EmailSender interface {
 // ─── Resend ──────────────────────────────────────────────────────────────────
 
 type resendEmailSender struct {
-	client          *resend.Client
-	from            string
-	resetBaseURL    string
-	verifyBaseURL   string
-	inviteBaseURL   string
-	emailChangeURL  string
+	client         *resend.Client
+	from           string
+	resetBaseURL   string
+	verifyBaseURL  string
+	inviteBaseURL  string
+	emailChangeURL string
 }
 
 func (s *resendEmailSender) SendPasswordReset(email, token string) error {
@@ -183,9 +183,9 @@ func (s *logEmailSender) SendEmailChange(email, token string) error {
 // ─── Factory ─────────────────────────────────────────────────────────────────
 
 func NewEmailSenderFromEnv() EmailSender {
-	resetBaseURL   := getResetPasswordBaseURL()
-	verifyBaseURL  := getVerifyEmailBaseURL()
-	inviteBaseURL  := getClientInviteBaseURL()
+	resetBaseURL := getResetPasswordBaseURL()
+	verifyBaseURL := getVerifyEmailBaseURL()
+	inviteBaseURL := getClientInviteBaseURL()
 	emailChangeURL := getEmailChangeBaseURL()
 
 	if apiKey := ResendAPIKey.GetValue(); apiKey != "" {

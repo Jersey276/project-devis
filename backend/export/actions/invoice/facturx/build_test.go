@@ -235,7 +235,7 @@ func TestBuild_PaymentMeans(t *testing.T) {
 	s := mustBuild(t, in)
 
 	mustContain(t, s, `<ram:SpecifiedTradeSettlementPaymentMeans>`)
-	mustContain(t, s, `<ram:TypeCode>30</ram:TypeCode>`) // BT-81 credit transfer
+	mustContain(t, s, `<ram:TypeCode>30</ram:TypeCode>`)                      // BT-81 credit transfer
 	mustContain(t, s, `<ram:IBANID>FR7630006000011234567890189</ram:IBANID>`) // BT-84
 	mustContain(t, s, `<ram:BICID>BNPAFRPP</ram:BICID>`)                      // BT-86
 

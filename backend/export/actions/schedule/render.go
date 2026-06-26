@@ -102,4 +102,3 @@ func monthLabel(startMonth string, monthIndex int32) string {
 	current := base.AddDate(0, int(monthIndex)-1, 0)
 	return strings.Title(strings.ToLower(current.Format("Jan 2006")))
 }
-

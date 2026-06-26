@@ -82,11 +82,11 @@ func List(ctx context.Context, db *sql.DB, req *quoteGrpc.ListQuotesRequest) (*q
 }
 
 var allowedQuoteSortColumns = map[string]string{
-	"id":         "quote_id",
+	"id":          "quote_id",
 	"projectName": "name",
-	"status":     "state",
-	"totalTtc":   "created_at", // pas de colonne total en DB, fallback
-	"created_at": "created_at",
+	"status":      "state",
+	"totalTtc":    "created_at", // pas de colonne total en DB, fallback
+	"created_at":  "created_at",
 }
 
 func buildQuoteOrderBy(sortBy, sortDirection string) string {

@@ -15,15 +15,15 @@ import (
 )
 
 type mockExportClient struct {
-	quoteResponse    *export.ExportQuoteResponse
-	quoteErr         error
-	lastQuoteReq     *export.ExportQuoteRequest
-	scheduleResponse *export.ExportQuoteResponse
-	scheduleErr      error
-	lastScheduleReq  *export.ExportScheduleRequest
-	invoiceResponse  *export.ExportQuoteResponse
-	invoiceErr       error
-	lastInvoiceReq   *export.ExportInvoiceRequest
+	quoteResponse      *export.ExportQuoteResponse
+	quoteErr           error
+	lastQuoteReq       *export.ExportQuoteRequest
+	scheduleResponse   *export.ExportQuoteResponse
+	scheduleErr        error
+	lastScheduleReq    *export.ExportScheduleRequest
+	invoiceResponse    *export.ExportQuoteResponse
+	invoiceErr         error
+	lastInvoiceReq     *export.ExportInvoiceRequest
 	creditNoteResponse *export.ExportQuoteResponse
 	creditNoteErr      error
 	lastCreditNoteReq  *export.ExportCreditNoteRequest

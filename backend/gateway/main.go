@@ -7,8 +7,8 @@ import (
 	"gateway/authz"
 	"gateway/controllers"
 	"gateway/middleware"
-	"gateway/services"
 	quote "gateway/quote"
+	"gateway/services"
 	users "gateway/users"
 
 	"github.com/gin-gonic/gin"

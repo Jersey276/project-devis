@@ -24,11 +24,11 @@ func (f *fakeQuote) GetQuote(ctx context.Context, in *quote.GetQuoteRequest, _ .
 
 type fakeUsers struct {
 	users.UserServiceClient
-	getUser           func(context.Context, *users.GetUserRequest) (*users.GetUserResponse, error)
-	listAddresses     func(context.Context, *users.ListAddressesRequest) (*users.ListAddressesResponse, error)
-	getClient         func(context.Context, *users.GetClientRequest) (*users.GetClientResponse, error)
-	getAddress        func(context.Context, *users.GetAddressRequest) (*users.GetAddressResponse, error)
-	listTaxesForUser  func(context.Context, *users.ListTaxesForUserRequest) (*users.ListTaxesResponse, error)
+	getUser          func(context.Context, *users.GetUserRequest) (*users.GetUserResponse, error)
+	listAddresses    func(context.Context, *users.ListAddressesRequest) (*users.ListAddressesResponse, error)
+	getClient        func(context.Context, *users.GetClientRequest) (*users.GetClientResponse, error)
+	getAddress       func(context.Context, *users.GetAddressRequest) (*users.GetAddressResponse, error)
+	listTaxesForUser func(context.Context, *users.ListTaxesForUserRequest) (*users.ListTaxesResponse, error)
 }
 
 type fakeSchedule struct {

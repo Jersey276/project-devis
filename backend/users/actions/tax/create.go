@@ -54,4 +54,3 @@ func Create(ctx context.Context, db *sql.DB, req *usersGrpc.CreateTaxRequest) (*
 
 	return &usersGrpc.CreateTaxResponse{Success: true, Code: codes.Success, TaxId: taxID}, nil
 }
-
