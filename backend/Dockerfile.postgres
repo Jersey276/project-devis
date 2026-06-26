@@ -1,7 +1,7 @@
 FROM postgres:18.2-alpine3.23
 
 RUN apk update && apk upgrade --no-cache \
-    && apk add --no-cache postgresql-contrib postgresql-client
+    && apk add --no-cache postgresql-contrib postgresql-client bash
 
 COPY postgres/init.sh /docker-entrypoint-initdb.d/init.sh
 RUN sed -i 's/\r$//' /docker-entrypoint-initdb.d/init.sh \
