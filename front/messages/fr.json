@@ -1148,7 +1148,12 @@
         "features": {
           "max_schedules": "Échéanciers max",
           "max_templates": "Templates max",
-          "unlimited": "Illimité"
+          "max_projects": "Projets max",
+          "max_linked_clients": "Clients liés max",
+          "fees_catalog": "Catalogue de frais",
+          "b2b_invoicing": "Facturation B2B",
+          "unlimited": "Illimité",
+          "enabled": "Activé"
         },
         "confirm": "Enregistrer",
         "successToast": "Plan mis à jour.",
@@ -1410,6 +1415,10 @@
       "features": {
         "max_schedules": "Échéanciers",
         "max_templates": "Templates",
+        "max_projects": "Projets",
+        "max_linked_clients": "Clients liés",
+        "fees_catalog": "Catalogue de frais",
+        "b2b_invoicing": "Facturation B2B",
         "unlimited": "Illimité"
       }
     },

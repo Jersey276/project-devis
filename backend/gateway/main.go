@@ -93,7 +93,7 @@ func setupRouter(auditLogger *middleware.AuditLogger, auditClient audit.AuditSer
 	projects := audited.Group("/projects")
 	projects.Use(middleware.AuthRequired())
 	projects.Use(middleware.RequireEmailVerified())
-	projects.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionSchedules))
+	projects.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionProjects))
 	controllers.ProjectsRoutes(projects)
 
 	quoteAddress := os.Getenv("QUOTE_SERVICE_ADDRESS")
