@@ -113,7 +113,7 @@ jobs:
             git fetch origin master
             git reset --hard ${{ github.sha }}
             mkdir -p backend/secrets
-            echo "${{ secrets.DB_PASSWORD }}" > backend/secrets/postgres_pswd.txt
+            echo "${{ secrets.POSTGRES_PASSWORD }}" > backend/secrets/postgres_pswd.txt
             echo "${{ secrets.STRIPE_SECRET_KEY }}" > backend/secrets/stripe_secret_key.txt
             echo "${{ secrets.STRIPE_WEBHOOK_SECRET }}" > backend/secrets/stripe_webhook_secret.txt
             chmod 600 backend/secrets/*.txt
