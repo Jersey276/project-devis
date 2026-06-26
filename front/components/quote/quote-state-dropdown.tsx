@@ -40,6 +40,8 @@ const TRANSITIONS: Record<BackendQuoteState, TransitionKey[]> = {
   negociation: ["validate", "drop"],
   validated: [],
   drop: ["continue"],
+  accepted: [],
+  refused: [],
 };
 
 // Transitions that require an explicit confirmation popup.

@@ -3,7 +3,6 @@ package quote
 import (
 	"context"
 	"fmt"
-	"sync"
 	"sync/atomic"
 
 	"golang.org/x/sync/errgroup"
@@ -177,10 +176,10 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 		return nil, err
 	}
 
-	// Phase 3: resolve distinct tax_ids from quote lines.
+	// Phase 3: resolve distinct tax_ids from quote lines in a single batch RPC.
 	taxes := make(map[int32]*users.Tax)
-	seen := map[int32]bool{}
 	var taxIDs []int32
+	seen := map[int32]bool{}
 	for _, l := range lines {
 		if l.TaxId != 0 && !seen[l.TaxId] {
 			seen[l.TaxId] = true
@@ -188,25 +187,15 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 		}
 	}
 	if len(taxIDs) > 0 {
-		var mu sync.Mutex
-		g3, g3ctx := errgroup.WithContext(ctx)
-		for _, id := range taxIDs {
-			id := id
-			g3.Go(func() error {
-				resp, err := uc.GetTax(g3ctx, &users.GetTaxRequest{TaxId: id})
-				if err != nil {
-					return err
-				}
-				if resp.Success && resp.Tax != nil {
-					mu.Lock()
-					taxes[id] = resp.Tax
-					mu.Unlock()
-				}
-				return nil
-			})
-		}
-		if err := g3.Wait(); err != nil {
+		taxResp, err := uc.ListTaxesForUser(ctx, &users.ListTaxesForUserRequest{
+			UserId:     req.UserId,
+			IncludeIds: taxIDs,
+		})
+		if err != nil {
 			return nil, err
+		}
+		for _, t := range taxResp.Taxes {
+			taxes[t.Id] = t
 		}
 	}
 

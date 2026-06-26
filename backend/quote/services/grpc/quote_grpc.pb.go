@@ -31,6 +31,8 @@ const (
 	QuoteService_ContinueQuote_FullMethodName      = "/quote.QuoteService/ContinueQuote"
 	QuoteService_ValidateQuote_FullMethodName      = "/quote.QuoteService/ValidateQuote"
 	QuoteService_NegociateQuote_FullMethodName     = "/quote.QuoteService/NegociateQuote"
+	QuoteService_AcceptQuote_FullMethodName        = "/quote.QuoteService/AcceptQuote"
+	QuoteService_RefuseQuote_FullMethodName        = "/quote.QuoteService/RefuseQuote"
 	QuoteService_CreateQuoteLine_FullMethodName    = "/quote.QuoteService/CreateQuoteLine"
 	QuoteService_GetQuoteLine_FullMethodName       = "/quote.QuoteService/GetQuoteLine"
 	QuoteService_ListQuoteLines_FullMethodName     = "/quote.QuoteService/ListQuoteLines"
@@ -65,6 +67,8 @@ type QuoteServiceClient interface {
 	ContinueQuote(ctx context.Context, in *ContinueQuoteRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	ValidateQuote(ctx context.Context, in *ValidateQuoteRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	NegociateQuote(ctx context.Context, in *NegociateQuoteRequest, opts ...grpc.CallOption) (*NegociateQuoteResponse, error)
+	AcceptQuote(ctx context.Context, in *AcceptQuoteRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	RefuseQuote(ctx context.Context, in *RefuseQuoteRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	// Line
 	CreateQuoteLine(ctx context.Context, in *CreateQuoteLineRequest, opts ...grpc.CallOption) (*CreateQuoteLineResponse, error)
 	GetQuoteLine(ctx context.Context, in *GetQuoteLineRequest, opts ...grpc.CallOption) (*GetQuoteLineResponse, error)
@@ -207,6 +211,26 @@ func (c *quoteServiceClient) NegociateQuote(ctx context.Context, in *NegociateQu
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(NegociateQuoteResponse)
 	err := c.cc.Invoke(ctx, QuoteService_NegociateQuote_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *quoteServiceClient) AcceptQuote(ctx context.Context, in *AcceptQuoteRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, QuoteService_AcceptQuote_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *quoteServiceClient) RefuseQuote(ctx context.Context, in *RefuseQuoteRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, QuoteService_RefuseQuote_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -380,6 +404,8 @@ type QuoteServiceServer interface {
 	ContinueQuote(context.Context, *ContinueQuoteRequest) (*GenericResponse, error)
 	ValidateQuote(context.Context, *ValidateQuoteRequest) (*GenericResponse, error)
 	NegociateQuote(context.Context, *NegociateQuoteRequest) (*NegociateQuoteResponse, error)
+	AcceptQuote(context.Context, *AcceptQuoteRequest) (*GenericResponse, error)
+	RefuseQuote(context.Context, *RefuseQuoteRequest) (*GenericResponse, error)
 	// Line
 	CreateQuoteLine(context.Context, *CreateQuoteLineRequest) (*CreateQuoteLineResponse, error)
 	GetQuoteLine(context.Context, *GetQuoteLineRequest) (*GetQuoteLineResponse, error)
@@ -443,6 +469,12 @@ func (UnimplementedQuoteServiceServer) ValidateQuote(context.Context, *ValidateQ
 }
 func (UnimplementedQuoteServiceServer) NegociateQuote(context.Context, *NegociateQuoteRequest) (*NegociateQuoteResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method NegociateQuote not implemented")
+}
+func (UnimplementedQuoteServiceServer) AcceptQuote(context.Context, *AcceptQuoteRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AcceptQuote not implemented")
+}
+func (UnimplementedQuoteServiceServer) RefuseQuote(context.Context, *RefuseQuoteRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RefuseQuote not implemented")
 }
 func (UnimplementedQuoteServiceServer) CreateQuoteLine(context.Context, *CreateQuoteLineRequest) (*CreateQuoteLineResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateQuoteLine not implemented")
@@ -722,6 +754,42 @@ func _QuoteService_NegociateQuote_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(QuoteServiceServer).NegociateQuote(ctx, req.(*NegociateQuoteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _QuoteService_AcceptQuote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AcceptQuoteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuoteServiceServer).AcceptQuote(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QuoteService_AcceptQuote_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuoteServiceServer).AcceptQuote(ctx, req.(*AcceptQuoteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _QuoteService_RefuseQuote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RefuseQuoteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuoteServiceServer).RefuseQuote(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QuoteService_RefuseQuote_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuoteServiceServer).RefuseQuote(ctx, req.(*RefuseQuoteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1050,6 +1118,14 @@ var QuoteService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "NegociateQuote",
 			Handler:    _QuoteService_NegociateQuote_Handler,
+		},
+		{
+			MethodName: "AcceptQuote",
+			Handler:    _QuoteService_AcceptQuote_Handler,
+		},
+		{
+			MethodName: "RefuseQuote",
+			Handler:    _QuoteService_RefuseQuote_Handler,
 		},
 		{
 			MethodName: "CreateQuoteLine",

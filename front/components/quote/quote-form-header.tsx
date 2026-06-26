@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BookmarkIcon, CalendarIcon, DownloadIcon } from "lucide-react";
+import { BookmarkIcon, CalendarIcon, CheckIcon, DownloadIcon, XIcon } from "lucide-react";
 import GenerateInvoiceFromQuoteButton from "@/components/invoice/generate-invoice-from-quote-button";
 import QuoteStateDropdown from "@/components/quote/quote-state-dropdown";
 import type { BackendQuoteState } from "@/types/backend";
@@ -22,6 +22,8 @@ const STATE_BADGE_VARIANT: Record<
   negociation: "default",
   validated: "default",
   drop: "destructive",
+  accepted: "default",
+  refused: "destructive",
 };
 
 type Props = {
@@ -36,6 +38,8 @@ type Props = {
   onSaveTemplate: () => void;
   onCreateSchedule: () => void;
   onStateChanged: (next: BackendQuoteState) => void;
+  onAccept?: () => void;
+  onRefuse?: () => void;
 };
 
 export default function QuoteFormHeader({
@@ -50,6 +54,8 @@ export default function QuoteFormHeader({
   onSaveTemplate,
   onCreateSchedule,
   onStateChanged,
+  onAccept,
+  onRefuse,
 }: Props) {
   const t = useTranslations("quote.form");
   const tStatus = useTranslations("status.quote");
@@ -111,6 +117,18 @@ export default function QuoteFormHeader({
           onChanged={onStateChanged}
           onError={(message) => toast.error(message)}
         />
+      )}
+      {isCustomer && !isCreate && quoteState === "negociation" && (
+        <>
+          <Button type="button" variant="outline" onClick={onRefuse}>
+            <XIcon className="size-4" />
+            {tStatus("refused")}
+          </Button>
+          <Button type="button" onClick={onAccept}>
+            <CheckIcon className="size-4" />
+            {tStatus("accepted")}
+          </Button>
+        </>
       )}
     </CardHeader>
   );

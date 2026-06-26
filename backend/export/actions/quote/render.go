@@ -120,7 +120,7 @@ func buildViewModel(in renderInput) viewModel {
 		vatCent int64
 	}
 	vatByRate := map[string]*vatAccum{}
-	rateOrder := []string{}
+	var rateOrder []string
 
 	totalHT := int64(0)
 	totalVAT := int64(0)
@@ -155,7 +155,35 @@ func buildViewModel(in renderInput) viewModel {
 	}
 
 	rows := make([]rowView, 0, len(in.Lines))
-	optionRows := make([]rowView, 0)
+	var optionRows []rowView
+
+	// appendLeaf handles both "line" and "subline" kinds — same logic, different Kind value.
+	appendLeaf := func(kind string, l *quote.QuoteLine, isOption bool) {
+		qty := parseQuantity(l.Quantity)
+		lineHT := int64(qty * float64(l.UnitPrice))
+		taxRateStr := taxRateFor(l)
+		taxRateDisplay := "--"
+		if taxRateStr != "" {
+			taxRateDisplay = format.Rate(taxRateStr)
+		}
+		rv := rowView{
+			Kind:      kind,
+			Name:      l.Name,
+			Quantity:  l.Quantity,
+			Unit:      l.Unit,
+			UnitPrice: format.Cents(l.UnitPrice),
+			TaxRate:   taxRateDisplay,
+			Total:     format.Cents(lineHT),
+		}
+		if isOption {
+			optionTotalHT += lineHT
+			optionRows = append(optionRows, rv)
+		} else {
+			totalHT += lineHT
+			accumulateVAT(lineHT, taxRateStr)
+			rows = append(rows, rv)
+		}
+	}
 
 	for _, l := range in.Lines {
 		d := parseLineData(l.Data)
@@ -172,30 +200,7 @@ func buildViewModel(in renderInput) viewModel {
 			rows = append(rows, rowView{Kind: "text", Name: l.Name})
 
 		case "subline":
-			qty := parseQuantity(l.Quantity)
-			lineHT := int64(qty * float64(l.UnitPrice))
-			taxRateStr := taxRateFor(l)
-			taxRateDisplay := "--"
-			if taxRateStr != "" {
-				taxRateDisplay = format.Rate(taxRateStr)
-			}
-			rv := rowView{
-				Kind:      "subline",
-				Name:      l.Name,
-				Quantity:  l.Quantity,
-				Unit:      l.Unit,
-				UnitPrice: format.Cents(l.UnitPrice),
-				TaxRate:   taxRateDisplay,
-				Total:     format.Cents(lineHT),
-			}
-			if d.Option {
-				optionTotalHT += lineHT
-				optionRows = append(optionRows, rv)
-			} else {
-				totalHT += lineHT
-				accumulateVAT(lineHT, taxRateStr)
-				rows = append(rows, rv)
-			}
+			appendLeaf("subline", l, d.Option)
 
 		case "detailed":
 			taxRateStr := taxRateFor(l)
@@ -226,30 +231,7 @@ func buildViewModel(in renderInput) viewModel {
 			})
 
 		default: // "line"
-			qty := parseQuantity(l.Quantity)
-			lineHT := int64(qty * float64(l.UnitPrice))
-			taxRateStr := taxRateFor(l)
-			taxRateDisplay := "--"
-			if taxRateStr != "" {
-				taxRateDisplay = format.Rate(taxRateStr)
-			}
-			rv := rowView{
-				Kind:      "line",
-				Name:      l.Name,
-				Quantity:  l.Quantity,
-				Unit:      l.Unit,
-				UnitPrice: format.Cents(l.UnitPrice),
-				TaxRate:   taxRateDisplay,
-				Total:     format.Cents(lineHT),
-			}
-			if d.Option {
-				optionTotalHT += lineHT
-				optionRows = append(optionRows, rv)
-			} else {
-				totalHT += lineHT
-				accumulateVAT(lineHT, taxRateStr)
-				rows = append(rows, rv)
-			}
+			appendLeaf("line", l, d.Option)
 		}
 	}
 

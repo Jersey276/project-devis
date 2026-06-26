@@ -14,11 +14,13 @@ import QuoteStepBasicInfo from "@/components/quote/steps/quote-step-basic-info";
 import QuoteStepItems from "@/components/quote/steps/quote-step-items";
 import QuoteStepSummary from "@/components/quote/steps/quote-step-summary";
 import {
+  acceptMyQuote,
   createLine,
   createQuote,
   getMyQuote,
   getQuote,
   negociateQuote,
+  refuseMyQuote,
   updateMyQuoteAddress,
   updateQuote,
 } from "@/lib/services/quotes";
@@ -432,6 +434,26 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     } finally { setIsExporting(false); }
   }, [quoteId, isExporting, t]);
 
+  const handleAccept = useCallback(async () => {
+    if (!quoteId) return;
+    const { ok, body } = await acceptMyQuote(quoteId, myClientId || undefined);
+    if (ok && body.success) {
+      setQuoteState("accepted");
+    } else {
+      toast.error((body.message as string) ?? tCommon("errors.generic"));
+    }
+  }, [quoteId, myClientId, tCommon]);
+
+  const handleRefuse = useCallback(async () => {
+    if (!quoteId) return;
+    const { ok, body } = await refuseMyQuote(quoteId, myClientId || undefined);
+    if (ok && body.success) {
+      setQuoteState("refused");
+    } else {
+      toast.error((body.message as string) ?? tCommon("errors.generic"));
+    }
+  }, [quoteId, myClientId, tCommon]);
+
   // ────────────────────────────────────────────────────────────
   // Render
 
@@ -469,6 +491,8 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         onSaveTemplate={() => setSaveTemplateOpen(true)}
         onCreateSchedule={() => setCreateScheduleOpen(true)}
         onStateChanged={(next) => setQuoteState(next)}
+        onAccept={handleAccept}
+        onRefuse={handleRefuse}
       />
 
       <CardContent className="space-y-6">

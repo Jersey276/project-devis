@@ -132,6 +132,20 @@ export async function negociateQuote(quoteId: string): Promise<ApiResult> {
   });
 }
 
+export async function acceptMyQuote(quoteId: string, clientId?: string): Promise<ApiResult> {
+  const qs = clientId ? `?client_id=${encodeURIComponent(clientId)}` : "";
+  return apiFetch(`/api/quotes/me/${encodeURIComponent(quoteId)}${qs}/accept`, {
+    method: "POST",
+  });
+}
+
+export async function refuseMyQuote(quoteId: string, clientId?: string): Promise<ApiResult> {
+  const qs = clientId ? `?client_id=${encodeURIComponent(clientId)}` : "";
+  return apiFetch(`/api/quotes/me/${encodeURIComponent(quoteId)}${qs}/refuse`, {
+    method: "POST",
+  });
+}
+
 export async function createLine(
   quoteId: string,
   draft: LineDraft,

@@ -2,7 +2,9 @@ export type BackendQuoteState =
   | "draft"
   | "negociation"
   | "validated"
-  | "drop";
+  | "drop"
+  | "accepted"
+  | "refused";
 
 export type BackendQuote = {
   quote_id: string;

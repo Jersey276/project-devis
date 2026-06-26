@@ -24,11 +24,11 @@ func (f *fakeQuote) GetQuote(ctx context.Context, in *quote.GetQuoteRequest, _ .
 
 type fakeUsers struct {
 	users.UserServiceClient
-	getUser       func(context.Context, *users.GetUserRequest) (*users.GetUserResponse, error)
-	listAddresses func(context.Context, *users.ListAddressesRequest) (*users.ListAddressesResponse, error)
-	getClient     func(context.Context, *users.GetClientRequest) (*users.GetClientResponse, error)
-	getAddress    func(context.Context, *users.GetAddressRequest) (*users.GetAddressResponse, error)
-	getTax        func(context.Context, *users.GetTaxRequest) (*users.GetTaxResponse, error)
+	getUser           func(context.Context, *users.GetUserRequest) (*users.GetUserResponse, error)
+	listAddresses     func(context.Context, *users.ListAddressesRequest) (*users.ListAddressesResponse, error)
+	getClient         func(context.Context, *users.GetClientRequest) (*users.GetClientResponse, error)
+	getAddress        func(context.Context, *users.GetAddressRequest) (*users.GetAddressResponse, error)
+	listTaxesForUser  func(context.Context, *users.ListTaxesForUserRequest) (*users.ListTaxesResponse, error)
 }
 
 type fakeSchedule struct {
@@ -56,11 +56,11 @@ func (f *fakeUsers) GetAddress(ctx context.Context, in *users.GetAddressRequest,
 	return f.getAddress(ctx, in)
 }
 
-func (f *fakeUsers) GetTax(ctx context.Context, in *users.GetTaxRequest, _ ...grpc.CallOption) (*users.GetTaxResponse, error) {
-	if f.getTax != nil {
-		return f.getTax(ctx, in)
+func (f *fakeUsers) ListTaxesForUser(ctx context.Context, in *users.ListTaxesForUserRequest, _ ...grpc.CallOption) (*users.ListTaxesResponse, error) {
+	if f.listTaxesForUser != nil {
+		return f.listTaxesForUser(ctx, in)
 	}
-	return &users.GetTaxResponse{Success: true}, nil
+	return &users.ListTaxesResponse{Success: true}, nil
 }
 
 // fakeGotenberg satisfies the orchestrator's unexported pdfConverter interface
@@ -131,11 +131,12 @@ func happyFakes() (*fakeQuote, *fakeUsers, *fakeGotenberg) {
 				Address: &users.Address{Id: req.AddressId, Street: "2 av Recipient", City: "Lyon", ZipCode: "69000"},
 			}, nil
 		},
-		getTax: func(_ context.Context, req *users.GetTaxRequest) (*users.GetTaxResponse, error) {
-			return &users.GetTaxResponse{
-				Success: true,
-				Tax:     &users.Tax{Id: req.TaxId, Name: "TVA 20%", Rate: "20.00"},
-			}, nil
+		listTaxesForUser: func(_ context.Context, req *users.ListTaxesForUserRequest) (*users.ListTaxesResponse, error) {
+			taxes := make([]*users.Tax, 0, len(req.IncludeIds))
+			for _, id := range req.IncludeIds {
+				taxes = append(taxes, &users.Tax{Id: id, Name: "TVA 20%", Rate: "20.00"})
+			}
+			return &users.ListTaxesResponse{Success: true, Taxes: taxes}, nil
 		},
 	}
 	gt := &fakeGotenberg{

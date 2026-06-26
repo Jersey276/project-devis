@@ -98,6 +98,8 @@ func QuotesRoutes(r *gin.RouterGroup, emailNotifier gatewaySvc.EmailNotifier) {
 	r.GET("/me", func(c *gin.Context) { ListMyQuotes(c, client, usersClient) })
 	r.GET("/me/:id", func(c *gin.Context) { GetMyQuote(c, client, usersClient) })
 	r.PUT("/me/:id", func(c *gin.Context) { UpdateMyQuoteAddress(c, client, usersClient) })
+	r.POST("/me/:id/accept", func(c *gin.Context) { AcceptMyQuote(c, client, usersClient) })
+	r.POST("/me/:id/refuse", func(c *gin.Context) { RefuseMyQuote(c, client, usersClient) })
 
 	archive := r.Group("/archive")
 	archive.DELETE("/trash", func(c *gin.Context) { TrashQuotes(c, client) })
@@ -478,14 +480,36 @@ func GetMyQuote(c *gin.Context, client quote.QuoteServiceClient, usersClient use
 	})
 }
 
+// resolveMyClientQuote resolves the linked client and verifies the quote belongs
+// to that client. Returns (linked, quoteResp, true) on success, or writes the
+// error response and returns (nil, nil, false).
+func resolveMyClientQuote(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) (*users.Client, *quote.GetQuoteResponse, bool) {
+	linked := resolveMyClient(c, usersClient)
+	if linked == nil {
+		return nil, nil, false
+	}
+	getResp, err := client.GetQuote(c.Request.Context(), &quote.GetQuoteRequest{
+		QuoteId: c.Param("id"),
+		UserId:  linked.UserId,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return nil, nil, false
+	}
+	if !getResp.Success {
+		quoteErrors.reply(c, getResp.Code)
+		return nil, nil, false
+	}
+	if getResp.Quote == nil || getResp.Quote.ClientId != linked.ClientId {
+		quoteErrors.reply(c, QuoteCodeNotFound)
+		return nil, nil, false
+	}
+	return linked, getResp, true
+}
+
 // UpdateMyQuoteAddress allows a customer to update only the client address on
 // one of their quotes. All other fields are ignored.
 func UpdateMyQuoteAddress(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
-	linked := resolveMyClient(c, usersClient)
-	if linked == nil {
-		return
-	}
-
 	var input struct {
 		AddressID int32 `json:"address_id" binding:"required"`
 	}
@@ -494,21 +518,8 @@ func UpdateMyQuoteAddress(c *gin.Context, client quote.QuoteServiceClient, users
 		return
 	}
 
-	// Verify the quote belongs to this customer before updating.
-	getResp, err := client.GetQuote(c.Request.Context(), &quote.GetQuoteRequest{
-		QuoteId: c.Param("id"),
-		UserId:  linked.UserId,
-	})
-	if err != nil {
-		quoteErrors.unavailable(c)
-		return
-	}
-	if !getResp.Success {
-		quoteErrors.reply(c, getResp.Code)
-		return
-	}
-	if getResp.Quote == nil || getResp.Quote.ClientId != linked.ClientId {
-		quoteErrors.reply(c, QuoteCodeNotFound)
+	linked, getResp, ok := resolveMyClientQuote(c, client, usersClient)
+	if !ok {
 		return
 	}
 
@@ -517,6 +528,48 @@ func UpdateMyQuoteAddress(c *gin.Context, client quote.QuoteServiceClient, users
 		UserId:    linked.UserId,
 		Name:      getResp.Quote.Name,
 		AddressId: input.AddressID,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// AcceptMyQuote allows a linked customer to accept a quote in 'negociation' state.
+func AcceptMyQuote(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
+	linked, _, ok := resolveMyClientQuote(c, client, usersClient)
+	if !ok {
+		return
+	}
+	resp, err := client.AcceptQuote(c.Request.Context(), &quote.AcceptQuoteRequest{
+		QuoteId: c.Param("id"),
+		UserId:  linked.UserId,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// RefuseMyQuote allows a linked customer to refuse a quote in 'negociation' state.
+func RefuseMyQuote(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
+	linked, _, ok := resolveMyClientQuote(c, client, usersClient)
+	if !ok {
+		return
+	}
+	resp, err := client.RefuseQuote(c.Request.Context(), &quote.RefuseQuoteRequest{
+		QuoteId: c.Param("id"),
+		UserId:  linked.UserId,
 	})
 	if err != nil {
 		quoteErrors.unavailable(c)
@@ -953,6 +1006,10 @@ func stateToLower(s quote.QuoteState) string {
 		return "validated"
 	case quote.QuoteState_QUOTE_STATE_DROP:
 		return "drop"
+	case quote.QuoteState_QUOTE_STATE_ACCEPTED:
+		return "accepted"
+	case quote.QuoteState_QUOTE_STATE_REFUSED:
+		return "refused"
 	default:
 		return "draft"
 	}

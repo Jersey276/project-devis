@@ -459,6 +459,8 @@
       "negociation": "En négociation",
       "validated": "Validé",
       "drop": "Abandonné",
+      "accepted": "Accepté",
+      "refused": "Refusé",
       "archived": "Archivé"
     }
   },
