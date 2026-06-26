@@ -34,7 +34,7 @@ import {
 import UserMenu from "../user/user-menu";
 import { useMode, type UserMode } from "@/lib/mode-context";
 import { apiFetch } from "@/lib/api";
-import { isSuperAdmin, type AuthContext } from "@/lib/access";
+import { canUsePaidFeatures, isSuperAdmin, type AuthContext } from "@/lib/access";
 import { cn } from "@/lib/utils";
 
 type NavKey =
@@ -60,11 +60,10 @@ type SidebarItem = {
   key: NavKey;
   url: string;
   icon: LucideIcon;
-  // Modes in which this entry is visible. Omit to show in every mode.
   modes?: UserMode[];
-  // Marker for entries that will be gated by the upcoming roles/permissions system.
   temp?: boolean;
   adminOnly?: boolean;
+  premium?: boolean;
 };
 
 type SidebarView = "user" | "admin";
@@ -90,18 +89,21 @@ const items: SidebarItem[] = [
     url: "/schedule",
     icon: QuoteIcon,
     modes: ["provider"],
+    premium: true,
   },
   {
     key: "invoices",
     url: "/invoice",
     icon: ReceiptEuroIcon,
     modes: ["provider"],
+    premium: true,
   },
   {
     key: "creditNotes",
     url: "/credit-note",
     icon: ReceiptEuroIcon,
     modes: ["provider"],
+    premium: true,
   },
   {
     key: "clients",
@@ -151,12 +153,14 @@ const items: SidebarItem[] = [
     url: "/fees",
     icon: CoinsIcon,
     modes: ["provider"],
+    premium: true,
   },
   {
     key: "templates",
     url: "/templates",
     icon: WrenchIcon,
     modes: ["provider"],
+    premium: true,
   },
   {
     key: "subscriptions",
@@ -184,6 +188,7 @@ export default function AppSidebar() {
   const { mode, setMode, isCustomer } = useMode();
   const t = useTranslations("nav");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
   const [sidebarView, setSidebarView] = useState<SidebarView>("user");
 
   useEffect(() => {
@@ -191,7 +196,9 @@ export default function AppSidebar() {
     apiFetch("/api/auth/me").then(({ ok, body }) => {
       if (cancelled) return;
       const auth = (body.auth ?? null) as AuthContext | null;
-      setIsAdmin(ok && body.success === true && isSuperAdmin(auth));
+      const success = ok && body.success === true;
+      setIsAdmin(success && isSuperAdmin(auth));
+      setIsPremium(success && canUsePaidFeatures(auth));
     });
     return () => {
       cancelled = true;
@@ -205,9 +212,10 @@ export default function AppSidebar() {
       items.filter(
         (item) =>
           (!item.modes || item.modes.includes(mode)) &&
-          (!item.adminOnly || isAdmin),
+          (!item.adminOnly || isAdmin) &&
+          (!item.premium || isPremium),
       ),
-    [mode, isAdmin],
+    [mode, isAdmin, isPremium],
   );
 
   const userItems = useMemo(
