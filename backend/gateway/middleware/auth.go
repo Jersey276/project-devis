@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"gateway/auth"
+	auth "gateway/auth"
 	"gateway/authcookie"
 	"gateway/authz"
 
