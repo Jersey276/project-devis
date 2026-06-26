@@ -260,7 +260,7 @@ describe("Countries page", () => {
       cy.contains("Modifier").click();
 
       cy.get("input[name='name']").should("have.value", "Union européenne");
-      cy.get("input[name='name']").type("{selectall}UE");
+      cy.get("input[name='name']").clear().type("UE");
       cy.contains("[data-slot='dialog-content'] button", "Enregistrer").click();
 
       cy.wait("@updateGroup").then((interception) => {
