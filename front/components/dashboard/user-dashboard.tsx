@@ -60,7 +60,7 @@ export default function UserDashboard() {
         setDetails(
           detailResults
             .filter((r) => r.ok && r.body.success)
-            .map((r) => r.body as BackendProjectDetail),
+            .map((r) => r.body as unknown as BackendProjectDetail),
         );
       }
 
