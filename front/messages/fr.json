@@ -53,6 +53,7 @@
     "templates": "Templates",
     "subscriptions": "Abonnements",
     "dashboard": "Tableau de bord",
+    "adminDashboard": "Tableau de bord admin",
     "analytics": "Analytiques",
     "logs": "Journal d'activité",
     "test": "Test",

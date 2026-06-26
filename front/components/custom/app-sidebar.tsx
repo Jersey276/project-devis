@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils";
 
 type NavKey =
   | "dashboard"
+  | "adminDashboard"
   | "project"
   | "quote"
   | "schedule"
@@ -115,6 +116,13 @@ const items: SidebarItem[] = [
     url: "/client-profile",
     icon: UserIcon,
     modes: ["customer"],
+  },
+  {
+    key: "adminDashboard",
+    url: "/admin/dashboard",
+    icon: LayoutDashboardIcon,
+    modes: ["provider"],
+    adminOnly: true,
   },
   {
     key: "users",
