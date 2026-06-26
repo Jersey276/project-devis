@@ -9,6 +9,11 @@ import { ModeProvider, type UserMode } from "@/lib/mode-context";
 import { AUTH_TOKEN_COOKIE } from "@/lib/auth-constants";
 import { redirect } from "next/navigation";
 
+const gatewayUrl =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:8080"
+    : "http://devis-gateway:8080";
+
 export default async function AppLayout({
   children,
 }: Readonly<{
@@ -18,6 +23,26 @@ export default async function AppLayout({
   if (!cookieStore.get(AUTH_TOKEN_COOKIE)) {
     redirect("/login");
   }
+
+  try {
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
+    const meRes = await fetch(`${gatewayUrl}/api/auth/me`, {
+      headers: { Cookie: cookieHeader },
+      cache: "no-store",
+    });
+    if (meRes.ok) {
+      const data = await meRes.json();
+      if (data.auth?.email_verified === false) {
+        redirect("/verify-email");
+      }
+    }
+  } catch {
+    // Gateway indisponible : fail open pour ne pas bloquer l'accès.
+  }
+
   const rawMode = cookieStore.get("user-mode")?.value;
   const initialMode: UserMode = rawMode === "customer" ? "customer" : "provider";
   return (

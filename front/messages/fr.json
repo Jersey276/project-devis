@@ -217,6 +217,22 @@
       "newPasswordHint": "12+ caractères avec majuscule, minuscule, chiffre et caractère spécial.",
       "rateLimited": "Trop de tentatives. Veuillez réessayer plus tard.",
       "alreadyLinkedBadge": "Compte lié"
+    },
+    "verifyEmail": {
+      "title": "Vérifiez votre adresse email",
+      "description": "Un lien de vérification a été envoyé à votre adresse email.",
+      "resendButton": "Renvoyer l'email de vérification",
+      "resendLoading": "Envoi…",
+      "resendSuccess": "Email de vérification renvoyé.",
+      "resendError": "Impossible de renvoyer l'email.",
+      "resendRateLimited": "Trop de demandes. Veuillez réessayer plus tard.",
+      "verifySuccess": "Adresse email vérifiée. Bienvenue !",
+      "verifyInvalidToken": "Le lien est invalide ou déjà utilisé.",
+      "verifyExpiredToken": "Le lien a expiré. Demandez-en un nouveau.",
+      "verifyAlreadyVerified": "Votre adresse email est déjà vérifiée.",
+      "backToApp": "Accéder à l'application",
+      "invalidLinkTitle": "Lien invalide",
+      "invalidLinkDescription": "Le lien est manquant ou mal formé."
     }
   },
   "clientProfile": {

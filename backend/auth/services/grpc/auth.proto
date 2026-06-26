@@ -165,6 +165,7 @@ message AccessContext {
     string account_status = 4;
     string subscription_tier = 5;
     int32 session_version = 6;
+    bool email_verified = 7;
 }
 
 message IntrospectTokenResponse {

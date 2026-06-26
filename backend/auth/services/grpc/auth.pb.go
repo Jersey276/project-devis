@@ -1104,6 +1104,7 @@ type AccessContext struct {
 	AccountStatus    string                 `protobuf:"bytes,4,opt,name=account_status,json=accountStatus,proto3" json:"account_status,omitempty"`
 	SubscriptionTier string                 `protobuf:"bytes,5,opt,name=subscription_tier,json=subscriptionTier,proto3" json:"subscription_tier,omitempty"`
 	SessionVersion   int32                  `protobuf:"varint,6,opt,name=session_version,json=sessionVersion,proto3" json:"session_version,omitempty"`
+	EmailVerified    bool                   `protobuf:"varint,7,opt,name=email_verified,json=emailVerified,proto3" json:"email_verified,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -1178,6 +1179,13 @@ func (x *AccessContext) GetSessionVersion() int32 {
 		return x.SessionVersion
 	}
 	return 0
+}
+
+func (x *AccessContext) GetEmailVerified() bool {
+	if x != nil {
+		return x.EmailVerified
+	}
+	return false
 }
 
 type IntrospectTokenResponse struct {
@@ -1726,14 +1734,15 @@ const file_auth_proto_rawDesc = "" +
 	"\n" +
 	"error_code\x18\x02 \x03(\x05R\terrorCode\".\n" +
 	"\x16IntrospectTokenRequest\x12\x14\n" +
-	"\x05token\x18\x01 \x01(\tR\x05token\"\xcf\x01\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\"\xf6\x01\n" +
 	"\rAccessContext\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
 	"\x04role\x18\x03 \x01(\tR\x04role\x12%\n" +
 	"\x0eaccount_status\x18\x04 \x01(\tR\raccountStatus\x12+\n" +
 	"\x11subscription_tier\x18\x05 \x01(\tR\x10subscriptionTier\x12'\n" +
-	"\x0fsession_version\x18\x06 \x01(\x05R\x0esessionVersion\"v\n" +
+	"\x0fsession_version\x18\x06 \x01(\x05R\x0esessionVersion\x12%\n" +
+	"\x0eemail_verified\x18\a \x01(\bR\remailVerified\"v\n" +
 	"\x17IntrospectTokenResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12-\n" +

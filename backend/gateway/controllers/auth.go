@@ -157,6 +157,7 @@ func AuthContextMe(c *gin.Context) {
 	role, _ := c.Get(middleware.CtxRole)
 	status, _ := c.Get(middleware.CtxAccountStatus)
 	tier, _ := c.Get(middleware.CtxSubscriptionTier)
+	emailVerified, _ := c.Get(middleware.CtxEmailVerified)
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
@@ -166,6 +167,7 @@ func AuthContextMe(c *gin.Context) {
 			"role":              role,
 			"account_status":    status,
 			"subscription_tier": tier,
+			"email_verified":    emailVerified,
 		},
 	})
 }
