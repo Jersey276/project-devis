@@ -60,6 +60,14 @@ func (s *Server) NegociateQuote(ctx context.Context, req *quoteGrpc.NegociateQuo
 	return quote.Negociate(ctx, s.db, req)
 }
 
+func (s *Server) AcceptQuote(ctx context.Context, req *quoteGrpc.AcceptQuoteRequest) (*quoteGrpc.GenericResponse, error) {
+	return quote.Accept(ctx, s.db, req)
+}
+
+func (s *Server) RefuseQuote(ctx context.Context, req *quoteGrpc.RefuseQuoteRequest) (*quoteGrpc.GenericResponse, error) {
+	return quote.Refuse(ctx, s.db, req)
+}
+
 // ─── Line ────────────────────────────────────────────────────────────────────
 
 func (s *Server) CreateQuoteLine(ctx context.Context, req *quoteGrpc.CreateQuoteLineRequest) (*quoteGrpc.CreateQuoteLineResponse, error) {

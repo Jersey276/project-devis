@@ -21,3 +21,7 @@ export function isPro(auth: AuthContext | null): boolean {
 export function canUsePaidFeatures(auth: AuthContext | null): boolean {
   return isPro(auth) || isEnterprise(auth) || isSuperAdmin(auth);
 }
+
+export const canUseB2BInvoicing = canUsePaidFeatures;
+export const canUseFeaturesCatalog = canUsePaidFeatures;
+export const canUseProjects = canUsePaidFeatures;

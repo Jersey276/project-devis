@@ -135,10 +135,10 @@ func TestCreateQuote_MissingUserAddress(t *testing.T) {
 func TestGetQuote_Success(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at, state, client_id, address_id, COALESCE\(user_address_id, 0\) FROM quotes`).
+	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at, state, client_id, address_id, COALESCE\(user_address_id, 0\), issued_at, valid_until, payment_terms FROM quotes`).
 		WithArgs("q-1", "user-1").
-		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at", "state", "client_id", "address_id", "user_address_id"}).
-			AddRow("q-1", "user-1", "Devis", nil, "draft", "client-1", int32(3), int32(5)))
+		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at", "state", "client_id", "address_id", "user_address_id", "issued_at", "valid_until", "payment_terms"}).
+			AddRow("q-1", "user-1", "Devis", nil, "draft", "client-1", int32(3), int32(5), time.Now(), nil, nil))
 
 	mock.ExpectQuery(`SELECT line_id, quote_id, type, name`).
 		WithArgs("q-1").
@@ -169,10 +169,10 @@ func TestGetQuote_Success(t *testing.T) {
 func TestGetQuote_Archived(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at, state, client_id, address_id, COALESCE\(user_address_id, 0\) FROM quotes`).
+	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at, state, client_id, address_id, COALESCE\(user_address_id, 0\), issued_at, valid_until, payment_terms FROM quotes`).
 		WithArgs("q-1", "user-1").
-		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at", "state", "client_id", "address_id", "user_address_id"}).
-			AddRow("q-1", "user-1", "Devis", time.Now(), "draft", "client-1", int32(3), int32(5)))
+		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at", "state", "client_id", "address_id", "user_address_id", "issued_at", "valid_until", "payment_terms"}).
+			AddRow("q-1", "user-1", "Devis", time.Now(), "draft", "client-1", int32(3), int32(5), time.Now(), nil, nil))
 
 	mock.ExpectQuery(`SELECT line_id, quote_id, type, name`).
 		WithArgs("q-1").
@@ -196,9 +196,9 @@ func TestGetQuote_Archived(t *testing.T) {
 func TestGetQuote_NotFound(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at, state, client_id, address_id, COALESCE\(user_address_id, 0\) FROM quotes`).
+	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at, state, client_id, address_id, COALESCE\(user_address_id, 0\), issued_at, valid_until, payment_terms FROM quotes`).
 		WithArgs("ghost", "user-1").
-		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at", "state", "client_id", "address_id", "user_address_id"}))
+		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at", "state", "client_id", "address_id", "user_address_id", "issued_at", "valid_until", "payment_terms"}))
 
 	resp, err := srv.GetQuote(context.Background(), &quoteGrpc.GetQuoteRequest{
 		QuoteId: "ghost",
@@ -280,9 +280,9 @@ func TestUpdateQuote_Success(t *testing.T) {
 
 	expectEditableCheck(mock, "q-1", "user-1", "draft")
 	// Name-only PUT: empty ClientId / zero AddressId / zero UserAddressId are
-	// the "preserve" sentinels.
+	// the "preserve" sentinels. Empty valid_until / payment_terms also preserve.
 	mock.ExpectExec(`UPDATE quotes SET\s+name`).
-		WithArgs("q-1", "user-1", "New name", "", int32(0), int32(0)).
+		WithArgs("q-1", "user-1", "New name", "", int32(0), int32(0), "", "").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	resp, err := srv.UpdateQuote(context.Background(), &quoteGrpc.UpdateQuoteRequest{
@@ -309,7 +309,7 @@ func TestUpdateQuote_ChangesPickers(t *testing.T) {
 
 	expectEditableCheck(mock, "q-1", "user-1", "draft")
 	mock.ExpectExec(`UPDATE quotes SET\s+name`).
-		WithArgs("q-1", "user-1", "Renamed", "c-7", int32(42), int32(99)).
+		WithArgs("q-1", "user-1", "Renamed", "c-7", int32(42), int32(99), "", "").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	resp, err := srv.UpdateQuote(context.Background(), &quoteGrpc.UpdateQuoteRequest{
@@ -396,7 +396,7 @@ func TestUpdateQuote_AllowedWhenSent(t *testing.T) {
 
 	expectEditableCheck(mock, "q-1", "user-1", "sent")
 	mock.ExpectExec(`UPDATE quotes SET\s+name`).
-		WithArgs("q-1", "user-1", "Updated", "", int32(0), int32(0)).
+		WithArgs("q-1", "user-1", "Updated", "", int32(0), int32(0), "", "").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	resp, err := srv.UpdateQuote(context.Background(), &quoteGrpc.UpdateQuoteRequest{

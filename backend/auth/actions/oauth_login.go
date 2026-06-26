@@ -9,14 +9,6 @@ import (
 	userGrpc "project-devis-auth/services/user_auth"
 )
 
-// allowedOAuthProviders is the set of providers the auth service accepts. The
-// gateway already restricts to configured providers; this is defense in depth.
-var allowedOAuthProviders = map[string]bool{
-	"google":    true,
-	"github":    true,
-	"microsoft": true,
-}
-
 // OAuthLogin authenticates or provisions a user from a verified OAuth identity.
 // Resolution order: (1) existing identity → login; (2) existing account with the
 // same email → link the identity and login; (3) otherwise provision a new

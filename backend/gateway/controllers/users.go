@@ -10,7 +10,10 @@ import (
 
 	authpb "gateway/auth"
 	"gateway/authz"
+	invoice "gateway/invoice"
 	"gateway/middleware"
+	quote "gateway/quote"
+	schedule "gateway/schedule"
 	users "gateway/users"
 
 	"github.com/gin-gonic/gin"
@@ -59,11 +62,45 @@ func UserRoutes(r *gin.RouterGroup) {
 	me.PUT("", func(c *gin.Context) { UpdateMe(c, client) })
 	me.DELETE("", func(c *gin.Context) { DeleteMe(c, client) })
 
+	quoteAddress := os.Getenv("QUOTE_SERVICE_ADDRESS")
+	if quoteAddress == "" {
+		quoteAddress = "localhost:50053"
+	}
+	quoteConn, err := grpc.NewClient(quoteAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Failed to connect to quote gRPC server: %v", err)
+	}
+	quoteClient := quote.NewQuoteServiceClient(quoteConn)
+
+	scheduleAddress := os.Getenv("SCHEDULE_SERVICE_ADDRESS")
+	if scheduleAddress == "" {
+		scheduleAddress = "localhost:50056"
+	}
+	scheduleConn, err := grpc.NewClient(scheduleAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Failed to connect to schedule gRPC server: %v", err)
+	}
+	scheduleClient := schedule.NewScheduleServiceClient(scheduleConn)
+
+	invoiceAddress := os.Getenv("INVOICE_SERVICE_ADDRESS")
+	if invoiceAddress == "" {
+		invoiceAddress = "localhost:50059"
+	}
+	invoiceConn, err := grpc.NewClient(invoiceAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Failed to connect to invoice gRPC server: %v", err)
+	}
+	invoiceClient := invoice.NewInvoiceServiceClient(invoiceConn)
+
 	admin := r.Group("/admin/accounts")
 	admin.Use(middleware.AdminRequired())
 	admin.GET("", func(c *gin.Context) { ListAdminAccounts(c, client) })
+	admin.GET("/:userId", func(c *gin.Context) { GetAdminAccount(c, client) })
 	admin.PUT("/:userId", func(c *gin.Context) { UpdateAdminAccount(c, client) })
 	admin.POST("/:userId/suspend", func(c *gin.Context) { SuspendAdminAccount(c, client) })
+	admin.GET("/:userId/quotes", func(c *gin.Context) { ListAdminUserQuotes(c, quoteClient) })
+	admin.GET("/:userId/schedules", func(c *gin.Context) { ListAdminUserSchedules(c, scheduleClient, quoteClient) })
+	admin.GET("/:userId/invoices", func(c *gin.Context) { ListAdminUserInvoices(c, invoiceClient) })
 
 	clients := r.Group("/clients")
 	clients.GET("", func(c *gin.Context) { ListClients(c, client) })
@@ -176,6 +213,8 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	var input struct {
+		FirstName  string `json:"first_name"`
+		LastName   string `json:"last_name"`
 		Phone      string `json:"phone"`
 		Company    string `json:"company"`
 		Siren      string `json:"siren"`
@@ -196,6 +235,8 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 	}
 	resp, err := client.UpdateUser(c.Request.Context(), &users.UpdateUserRequest{
 		UserId:     userIDFromCtx(c),
+		FirstName:  input.FirstName,
+		LastName:   input.LastName,
 		Phone:      input.Phone,
 		Company:    input.Company,
 		Siren:      input.Siren,
@@ -260,6 +301,7 @@ func marshalAdminAccount(a *users.AdminAccount) gin.H {
 		"company":       a.Company,
 		"siren":         a.Siren,
 		"vat":           a.Vat,
+		"created_at":    a.CreatedAt,
 	}
 }
 
@@ -677,6 +719,8 @@ func marshalUser(u *users.User) gin.H {
 	return gin.H{
 		"user_id":     u.UserId,
 		"email":       u.Email,
+		"first_name":  u.FirstName,
+		"last_name":   u.LastName,
 		"phone":       u.Phone,
 		"company":     u.Company,
 		"siren":       u.Siren,

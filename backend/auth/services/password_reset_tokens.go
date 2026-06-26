@@ -2,9 +2,7 @@ package services
 
 import (
 	"context"
-	"crypto/rand"
 	"database/sql"
-	"encoding/base64"
 	"errors"
 	"time"
 )
@@ -17,16 +15,8 @@ var (
 	ErrPasswordResetTokenUsed     = errors.New("password reset token already used")
 )
 
-func generatePasswordResetToken() (string, error) {
-	buf := make([]byte, 32)
-	if _, err := rand.Read(buf); err != nil {
-		return "", err
-	}
-	return base64.RawURLEncoding.EncodeToString(buf), nil
-}
-
 func GeneratePasswordResetToken(ctx context.Context, db *sql.DB, userID string) (string, error) {
-	rawToken, err := generatePasswordResetToken()
+	rawToken, err := generateRawToken()
 	if err != nil {
 		return "", err
 	}

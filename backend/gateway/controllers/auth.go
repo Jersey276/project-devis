@@ -144,9 +144,11 @@ func AuthRoutes(r *gin.RouterGroup) *gin.RouterGroup {
 
 	email := r.Group("/email")
 	email.POST("/verify", func(c *gin.Context) { VerifyEmail(c, client) })
+	email.POST("/confirm-change", func(c *gin.Context) { ConfirmEmailChange(c, client) })
 	emailAuth := email.Group("")
 	emailAuth.Use(middleware.AuthRequired())
 	emailAuth.POST("/resend-verification", func(c *gin.Context) { ResendEmailVerification(c, client) })
+	emailAuth.POST("/request-change", func(c *gin.Context) { RequestEmailChange(c, client) })
 
 	return r
 }
@@ -157,6 +159,7 @@ func AuthContextMe(c *gin.Context) {
 	role, _ := c.Get(middleware.CtxRole)
 	status, _ := c.Get(middleware.CtxAccountStatus)
 	tier, _ := c.Get(middleware.CtxSubscriptionTier)
+	emailVerified, _ := c.Get(middleware.CtxEmailVerified)
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
@@ -166,6 +169,7 @@ func AuthContextMe(c *gin.Context) {
 			"role":              role,
 			"account_status":    status,
 			"subscription_tier": tier,
+			"email_verified":    emailVerified,
 		},
 	})
 }

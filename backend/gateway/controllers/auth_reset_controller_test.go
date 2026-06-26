@@ -116,6 +116,26 @@ func (m *mockAuthClient) ResendEmailVerification(ctx context.Context, req *auth.
 	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
 }
 
+func (m *mockAuthClient) SendClientInvitation(context.Context, *auth.SendClientInvitationRequest, ...grpc.CallOption) (*auth.GenericResponse, error) {
+	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
+}
+
+func (m *mockAuthClient) AcceptClientInvitationNew(context.Context, *auth.AcceptClientInvitationNewRequest, ...grpc.CallOption) (*auth.AcceptClientInvitationResponse, error) {
+	return &auth.AcceptClientInvitationResponse{Success: true, Code: CodeSuccess}, nil
+}
+
+func (m *mockAuthClient) AcceptClientInvitationLinked(context.Context, *auth.AcceptClientInvitationLinkedRequest, ...grpc.CallOption) (*auth.AcceptClientInvitationResponse, error) {
+	return &auth.AcceptClientInvitationResponse{Success: true, Code: CodeSuccess}, nil
+}
+
+func (m *mockAuthClient) RequestEmailChange(context.Context, *auth.RequestEmailChangeRequest, ...grpc.CallOption) (*auth.GenericResponse, error) {
+	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
+}
+
+func (m *mockAuthClient) ConfirmEmailChange(context.Context, *auth.ConfirmEmailChangeRequest, ...grpc.CallOption) (*auth.GenericResponse, error) {
+	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
+}
+
 func resetAuthLimiterStateForTests() {
 	resetPasswordIPLimiter = newSlidingWindowLimiter()
 	resetPasswordEmailLimiter = newSlidingWindowLimiter()

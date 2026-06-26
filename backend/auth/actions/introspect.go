@@ -22,10 +22,11 @@ func (s *Server) IntrospectToken(ctx context.Context, req *authGrpc.IntrospectTo
 
 	var email, role, accountStatus, subscriptionTier string
 	var sessionVersion int32
+	var emailVerified bool
 	err = s.db.QueryRowContext(ctx,
-		"SELECT email, role, account_status, subscription_tier, session_version FROM auth WHERE user_id = $1",
+		"SELECT email, role, account_status, subscription_tier, session_version, email_verified FROM auth WHERE user_id = $1",
 		claims.UserID,
-	).Scan(&email, &role, &accountStatus, &subscriptionTier, &sessionVersion)
+	).Scan(&email, &role, &accountStatus, &subscriptionTier, &sessionVersion, &emailVerified)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return &authGrpc.IntrospectTokenResponse{Success: false, Code: CodeUserNotFound}, nil
@@ -47,6 +48,7 @@ func (s *Server) IntrospectToken(ctx context.Context, req *authGrpc.IntrospectTo
 			AccountStatus:    accountStatus,
 			SubscriptionTier: subscriptionTier,
 			SessionVersion:   sessionVersion,
+			EmailVerified:    emailVerified,
 		},
 	}, nil
 }

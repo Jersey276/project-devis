@@ -16,7 +16,7 @@ func Update(ctx context.Context, db *sql.DB, req *templateGrpc.UpdateTemplateLin
 			return &templateGrpc.UpdateTemplateLineResponse{
 				Success:          false,
 				Code:             codes.InvalidInput,
-				ValidationErrors: []*templateGrpc.ValidationError{{Field: "quantity", Message: "Doit être un nombre valide."}},
+				ValidationErrors: []*templateGrpc.ValidationError{sqlutil.Invalid("quantity", "Doit être un nombre valide.")},
 			}, nil
 		}
 	}

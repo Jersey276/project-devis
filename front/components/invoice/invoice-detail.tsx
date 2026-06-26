@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import InvoiceStatusBadge from "@/components/invoice/invoice-status-badge";
 import InvoiceLifecycleBadge from "@/components/invoice/invoice-lifecycle-badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import AdvanceLifecycleDialog from "@/components/invoice/advance-lifecycle-dialog";
 import LifecycleTimeline from "@/components/invoice/lifecycle-timeline";
 import CreateCreditNoteDialog from "@/components/invoice/create-credit-note-dialog";
@@ -148,7 +149,22 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
     router.push("/invoice");
   }
 
-  if (loading) return <p>{t("loading")}</p>;
+  if (loading) return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-9 w-32" />
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid grid-cols-2 gap-6">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-20 w-full" />
+      </CardContent>
+    </Card>
+  );
   if (error && !invoice) return <p className="text-destructive">{error}</p>;
   if (!invoice) return <p className="text-destructive">{t("notFound")}</p>;
 

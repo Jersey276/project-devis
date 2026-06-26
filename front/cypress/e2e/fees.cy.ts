@@ -38,28 +38,10 @@ describe("Fees page", () => {
   }
 
   describe("Premium gating", () => {
-    function stubTier(tier: "free" | "pro") {
-      cy.intercept("GET", "/api/auth/me", {
-        statusCode: 200,
-        body: {
-          success: true,
-          auth: {
-            user_id: "test-user",
-            email: "test@test.fr",
-            role: "free_user",
-            account_status: "active",
-            subscription_tier: tier,
-          },
-        },
-      }).as("getAuthMe");
-    }
-
     it("shows the upgrade message for free users", () => {
-      cy.login();
-      stubTier("free");
+      cy.login({ tier: "free" });
 
       cy.visit("/fees");
-      cy.wait("@getAuthMe");
 
       cy.contains(
         "Cette fonctionnalité est réservée aux abonnés Pro et Enterprise.",
@@ -67,15 +49,13 @@ describe("Fees page", () => {
     });
 
     it("renders the catalog for pro users", () => {
-      cy.login();
-      stubTier("pro");
+      cy.login({ tier: "pro" });
       cy.intercept("GET", "/api/fees**", {
         statusCode: 200,
         body: { success: true, fees: [] },
       }).as("getFees");
 
       cy.visit("/fees");
-      cy.wait("@getAuthMe");
 
       cy.contains(
         "Cette fonctionnalité est réservée aux abonnés Pro et Enterprise.",

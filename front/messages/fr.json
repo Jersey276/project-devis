@@ -6,6 +6,7 @@
       "saving": "Enregistrement…",
       "delete": "Supprimer",
       "edit": "Modifier",
+      "view": "Voir",
       "loading": "Chargement…",
       "close": "Fermer"
     },
@@ -51,8 +52,10 @@
     "taxes": "Taxes",
     "templates": "Templates",
     "subscriptions": "Abonnements",
-    "analytics": "Analytiques",
+    "dashboard": "Tableau de bord",
+    "adminDashboard": "Tableau de bord admin",
     "logs": "Journal d'activité",
+    "emailLogs": "Journaux d'email",
     "test": "Test",
     "clientProfile": "Mon profil",
     "modeToggle": {
@@ -63,7 +66,36 @@
   "breadcrumb": {},
   "dashboard": {
     "title": "Tableau de bord",
-    "welcome": "Bienvenue sur votre tableau de bord."
+    "welcome": "Bienvenue sur votre tableau de bord.",
+    "admin": {
+      "subscriptions": "Abonnements",
+      "usersTitle": "Utilisateurs",
+      "connectionBreakdown": "Répartition des dernières connexions",
+      "registrationTrend": "Inscriptions par mois",
+      "httpActivity": "Activité API",
+      "ranges": {
+        "last7": "0–7 jours",
+        "last30": "8–30 jours",
+        "last90": "31–90 jours",
+        "older": "90j+",
+        "never": "Jamais connecté"
+      }
+    },
+    "user": {
+      "chartsTitle": "Vue d'ensemble du compte",
+      "recentProjects": "Derniers projets",
+      "recentQuotes": "Derniers devis",
+      "noData": "Aucune donnée disponible.",
+      "noProjects": "Aucun projet.",
+      "noQuotes": "Aucun devis.",
+      "col": {
+        "name": "Nom",
+        "status": "Statut",
+        "date": "Date",
+        "state": "État",
+        "total": "Total TTC"
+      }
+    }
   },
   "auth": {
     "login": {
@@ -185,6 +217,22 @@
       "newPasswordHint": "12+ caractères avec majuscule, minuscule, chiffre et caractère spécial.",
       "rateLimited": "Trop de tentatives. Veuillez réessayer plus tard.",
       "alreadyLinkedBadge": "Compte lié"
+    },
+    "verifyEmail": {
+      "title": "Vérifiez votre adresse email",
+      "description": "Un lien de vérification a été envoyé à votre adresse email.",
+      "resendButton": "Renvoyer l'email de vérification",
+      "resendLoading": "Envoi…",
+      "resendSuccess": "Email de vérification renvoyé.",
+      "resendError": "Impossible de renvoyer l'email.",
+      "resendRateLimited": "Trop de demandes. Veuillez réessayer plus tard.",
+      "verifySuccess": "Adresse email vérifiée. Bienvenue !",
+      "verifyInvalidToken": "Le lien est invalide ou déjà utilisé.",
+      "verifyExpiredToken": "Le lien a expiré. Demandez-en un nouveau.",
+      "verifyAlreadyVerified": "Votre adresse email est déjà vérifiée.",
+      "backToApp": "Accéder à l'application",
+      "invalidLinkTitle": "Lien invalide",
+      "invalidLinkDescription": "Le lien est manquant ou mal formé."
     }
   },
   "clientProfile": {
@@ -375,7 +423,10 @@
         "userAddressEmpty": "Aucune adresse trouvée.",
         "addClientButton": "Nouveau client",
         "addAddressButton": "Nouvelle adresse",
-        "addUserAddressButton": "Nouvelle adresse"
+        "addUserAddressButton": "Nouvelle adresse",
+        "validUntilLabel": "Valable jusqu'au",
+        "paymentTermsLabel": "Conditions de paiement",
+        "paymentTermsPlaceholder": "Ex : Paiement à 30 jours net"
       },
       "items": {
         "label": "Éléments du devis",
@@ -456,6 +507,8 @@
       "negociation": "En négociation",
       "validated": "Validé",
       "drop": "Abandonné",
+      "accepted": "Accepté",
+      "refused": "Refusé",
       "archived": "Archivé"
     }
   },
@@ -855,6 +908,14 @@
       "loading": "Vérification des droits administrateur...",
       "forbidden": "Accès refusé. Cette section est réservée aux super administrateurs actifs."
     },
+    "analytics": {
+      "noData": "Aucune donnée disponible.",
+      "totalActive": "Abonnements actifs",
+      "totalRevenue": "Revenus cumulés",
+      "monthRevenue": "Revenus ce mois",
+      "planDistribution": "Répartition par plan",
+      "monthlyRevenue": "Revenus mensuels"
+    },
     "countries": {
       "tabs": {
         "countries": "Pays",
@@ -999,6 +1060,68 @@
         "sirenLabel": "SIREN",
         "vatLabel": "N° de TVA",
         "updateSuccessToast": "Compte mis à jour."
+      },
+      "detail": {
+        "backLink": "Retour aux utilisateurs",
+        "profile": {
+          "title": "Informations du compte",
+          "userId": "ID",
+          "email": "Adresse mail",
+          "firstName": "Prénom",
+          "lastName": "Nom",
+          "role": "Rôle",
+          "plan": "Plan",
+          "phone": "Téléphone",
+          "company": "Société",
+          "siren": "SIREN",
+          "vat": "N° de TVA",
+          "lastLogin": "Dernière connexion",
+          "status": "Statut",
+          "statusActive": "Actif",
+          "statusSuspended": "Suspendu",
+          "empty": "—"
+        },
+        "activityLogs": {
+          "title": "Registre d'activité",
+          "empty": "Aucune activité enregistrée."
+        },
+        "documents": {
+          "title": "Documents",
+          "tabs": {
+            "quotes": "Devis",
+            "schedules": "Échéanciers",
+            "invoices": "Factures"
+          },
+          "quotes": {
+            "empty": "Aucun devis.",
+            "columns": {
+              "name": "Nom",
+              "state": "Statut",
+              "client": "Client",
+              "createdAt": "Créé le"
+            }
+          },
+          "schedules": {
+            "empty": "Aucun échéancier.",
+            "columns": {
+              "name": "Nom",
+              "status": "Statut",
+              "quoteName": "Devis",
+              "startMonth": "Début",
+              "durationMonths": "Durée"
+            },
+            "durationValue": "{n} mois"
+          },
+          "invoices": {
+            "empty": "Aucune facture.",
+            "columns": {
+              "number": "N°",
+              "status": "Statut",
+              "issuedAt": "Émise le",
+              "total": "Total TTC"
+            }
+          }
+        }
       }
     },
     "plans": {
@@ -1034,7 +1157,12 @@
         "features": {
           "max_schedules": "Échéanciers max",
           "max_templates": "Templates max",
-          "unlimited": "Illimité"
+          "max_projects": "Projets max",
+          "max_linked_clients": "Clients liés max",
+          "fees_catalog": "Catalogue de frais",
+          "b2b_invoicing": "Facturation B2B",
+          "unlimited": "Illimité",
+          "enabled": "Activé"
         },
         "confirm": "Enregistrer",
         "successToast": "Plan mis à jour.",
@@ -1068,16 +1196,6 @@
         "enterprise": "Enterprise"
       }
     },
-    "analytics": {
-      "title": "Analytiques",
-      "totalActive": "Abonnements actifs",
-      "totalRevenue": "Revenu total",
-      "monthRevenue": "Revenu du mois",
-      "planDistribution": "Répartition des plans",
-      "monthlyRevenue": "Revenu mensuel (12 derniers mois)",
-      "loading": "Chargement des statistiques…",
-      "noData": "Aucune donnée disponible."
-    },
     "logs": {
       "title": "Journal d'activité",
       "statsTitle": "Répartition des statuts HTTP (6 derniers mois)",
@@ -1108,6 +1226,30 @@
         "reqBody": "Corps de la requête",
         "respBody": "Corps de la réponse"
       }
+    },
+    "emailLogs": {
+      "title": "Journaux d'email",
+      "noData": "Aucun email envoyé.",
+      "filters": {
+        "searchPlaceholder": "Rechercher par destinataire ou référence…",
+        "statusLabel": "Statut",
+        "statusPlaceholder": "Tous les statuts",
+        "statusEmpty": "Aucun statut",
+        "typeLabel": "Type",
+        "typePlaceholder": "Tous les types",
+        "typeEmpty": "Aucun type",
+        "dateLabel": "Date d'envoi"
+      },
+      "table": {
+        "id": "ID",
+        "toEmail": "Destinataire",
+        "type": "Type",
+        "referenceName": "Référence",
+        "status": "Statut",
+        "opened": "Ouvert",
+        "clicked": "Cliqué",
+        "createdAt": "Envoyé le"
+      }
     }
   },
   "profile": {
@@ -1126,6 +1268,11 @@
       "emailLabel": "Email",
       "emailHint": "L'adresse email se modifie depuis l'onglet Connexion.",
       "suspendedNotice": "Votre compte est suspendu. Les informations sont en lecture seule.",
+      "sectionBasic": "Informations de base",
+      "sectionCompany": "Informations de l'entreprise",
+      "sectionBanking": "Informations bancaires",
+      "firstNameLabel": "Prénom",
+      "lastNameLabel": "Nom",
       "phoneLabel": "Téléphone",
       "companyLabel": "Société",
       "sirenLabel": "SIREN",
@@ -1141,9 +1288,16 @@
       "successToast": "Informations mises à jour."
     },
     "connection": {
-      "emailLabel": "Adresse mail",
-      "emailHint": "Le changement d'adresse email n'est pas encore disponible.",
-      "suspendedNotice": "Votre compte est suspendu. Le changement de mot de passe est désactivé.",
+      "emailSectionTitle": "Adresse email",
+      "emailSectionHint": "Un lien de confirmation sera envoyé à la nouvelle adresse. Le changement ne sera effectif qu'après validation.",
+      "currentEmailLabel": "Adresse actuelle",
+      "newEmailLabel": "Nouvelle adresse",
+      "newEmailHint": "Entrez la nouvelle adresse email souhaitée.",
+      "emailChangeSubmit": "Envoyer le lien de confirmation",
+      "emailChangeSentToast": "Lien de confirmation envoyé.",
+      "emailChangeSentNotice": "Un email de confirmation a été envoyé à {email}. Cliquez sur le lien pour finaliser le changement.",
+      "suspendedNotice": "Votre compte est suspendu. Les modifications sont désactivées.",
+      "passwordSectionTitle": "Mot de passe",
       "oldPasswordLabel": "Mot de passe actuel",
       "newPasswordLabel": "Nouveau mot de passe",
       "newPasswordHint": "8 caractères minimum.",
@@ -1304,6 +1458,10 @@
       "features": {
         "max_schedules": "Échéanciers",
         "max_templates": "Templates",
+        "max_projects": "Projets",
+        "max_linked_clients": "Clients liés",
+        "fees_catalog": "Catalogue de frais",
+        "b2b_invoicing": "Facturation B2B",
         "unlimited": "Illimité"
       }
     },

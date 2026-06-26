@@ -25,13 +25,7 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 		return resp, nil
 	}
 
-	var quoteID, status, name string
-	var startMonth time.Time
-	var durationMonths int32
-	err = s.db.QueryRowContext(ctx,
-		`SELECT quote_id, status, name, start_month, duration_months FROM schedules WHERE schedule_id=$1 AND user_id=$2`,
-		req.ScheduleId, req.UserId,
-	).Scan(&quoteID, &status, &name, &startMonth, &durationMonths)
+	quoteID, status, name, startMonth, durationMonths, err := loadScheduleHeader(ctx, s.db, req.ScheduleId, req.UserId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeNotFound}
@@ -47,71 +41,21 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 		return resp, err
 	}
 
-	lineRows, err := s.db.QueryContext(ctx, `
-		SELECT sc.quote_line_id, COALESCE(SUM(sc.amount_cents), 0)
-		FROM schedule_cells sc
-		WHERE sc.schedule_id=$1
-		GROUP BY sc.quote_line_id
-		ORDER BY sc.quote_line_id
-	`, req.ScheduleId)
+	lineSummaries, plannedTotalCents, err := loadScheduleLines(ctx, s.db, req.ScheduleId, expectedByLineID)
 	if err != nil {
 		resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
 		return resp, err
 	}
-	defer lineRows.Close()
 
-	lineSummaries := make([]*scheduleGrpc.ScheduleLineSummary, 0)
-	plannedTotalCents := int64(0)
-	for lineRows.Next() {
-		var lineID string
-		var plannedCents int64
-		if err := lineRows.Scan(&lineID, &plannedCents); err != nil {
-			resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
-			return resp, err
-		}
-		plannedTotalCents += plannedCents
-		lineSummaries = append(lineSummaries, &scheduleGrpc.ScheduleLineSummary{
-			QuoteLineId:   lineID,
-			PlannedCents:  plannedCents,
-			ExpectedCents: expectedByLineID[lineID],
-		})
-	}
-	if err := lineRows.Err(); err != nil {
-		resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
-		return resp, err
-	}
-
-	columnRows, err := s.db.QueryContext(ctx,
-		`SELECT month_index, COALESCE(SUM(amount_cents), 0) FROM schedule_cells WHERE schedule_id=$1 GROUP BY month_index ORDER BY month_index`,
-		req.ScheduleId,
-	)
+	columnTotals, err := loadScheduleColumns(ctx, s.db, req.ScheduleId)
 	if err != nil {
 		resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
 		return resp, err
 	}
-	defer columnRows.Close()
 
-	columnTotals := make([]*scheduleGrpc.ScheduleColumnTotal, 0)
 	var quoteTotalCents int64
 	for _, expected := range expectedByLineID {
 		quoteTotalCents += expected
-	}
-
-	for columnRows.Next() {
-		var monthIndex int32
-		var amountCents int64
-		if err := columnRows.Scan(&monthIndex, &amountCents); err != nil {
-			resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
-			return resp, err
-		}
-		columnTotals = append(columnTotals, &scheduleGrpc.ScheduleColumnTotal{
-			MonthIndex:  monthIndex,
-			AmountCents: amountCents,
-		})
-	}
-	if err := columnRows.Err(); err != nil {
-		resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
-		return resp, err
 	}
 
 	resp = &scheduleGrpc.GetScheduleResponse{
@@ -132,6 +76,70 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 	}
 
 	return resp, nil
+}
+
+func loadScheduleHeader(ctx context.Context, db *sql.DB, scheduleID, userID string) (quoteID, status, name string, startMonth time.Time, durationMonths int32, err error) {
+	err = db.QueryRowContext(ctx,
+		`SELECT quote_id, status, name, start_month, duration_months FROM schedules WHERE schedule_id=$1 AND user_id=$2`,
+		scheduleID, userID,
+	).Scan(&quoteID, &status, &name, &startMonth, &durationMonths)
+	return
+}
+
+func loadScheduleLines(ctx context.Context, db *sql.DB, scheduleID string, expectedByLineID map[string]int64) ([]*scheduleGrpc.ScheduleLineSummary, int64, error) {
+	rows, err := db.QueryContext(ctx, `
+		SELECT sc.quote_line_id, COALESCE(SUM(sc.amount_cents), 0)
+		FROM schedule_cells sc
+		WHERE sc.schedule_id=$1
+		GROUP BY sc.quote_line_id
+		ORDER BY sc.quote_line_id
+	`, scheduleID)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	summaries := make([]*scheduleGrpc.ScheduleLineSummary, 0)
+	var plannedTotal int64
+	for rows.Next() {
+		var lineID string
+		var plannedCents int64
+		if err := rows.Scan(&lineID, &plannedCents); err != nil {
+			return nil, 0, err
+		}
+		plannedTotal += plannedCents
+		summaries = append(summaries, &scheduleGrpc.ScheduleLineSummary{
+			QuoteLineId:   lineID,
+			PlannedCents:  plannedCents,
+			ExpectedCents: expectedByLineID[lineID],
+		})
+	}
+	return summaries, plannedTotal, rows.Err()
+}
+
+func loadScheduleColumns(ctx context.Context, db *sql.DB, scheduleID string) ([]*scheduleGrpc.ScheduleColumnTotal, error) {
+	rows, err := db.QueryContext(ctx,
+		`SELECT month_index, COALESCE(SUM(amount_cents), 0) FROM schedule_cells WHERE schedule_id=$1 GROUP BY month_index ORDER BY month_index`,
+		scheduleID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	totals := make([]*scheduleGrpc.ScheduleColumnTotal, 0)
+	for rows.Next() {
+		var monthIndex int32
+		var amountCents int64
+		if err := rows.Scan(&monthIndex, &amountCents); err != nil {
+			return nil, err
+		}
+		totals = append(totals, &scheduleGrpc.ScheduleColumnTotal{
+			MonthIndex:  monthIndex,
+			AmountCents: amountCents,
+		})
+	}
+	return totals, rows.Err()
 }
 
 // GetScheduleCells returns the raw per-(line, month) amounts of a schedule.

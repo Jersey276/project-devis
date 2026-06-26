@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"log"
-	"net/mail"
 	"project-devis-auth/services"
 	authGrpc "project-devis-auth/services/grpc"
 	userGrpc "project-devis-auth/services/user_auth"
@@ -74,36 +73,6 @@ func (s *Server) Register(ctx context.Context, req *authGrpc.RegisterRequest) (*
 		Success: true,
 		Code:    CodeSuccess,
 	}, nil
-}
-
-func validateRegisterRequest(req *authGrpc.RegisterRequest) []*authGrpc.FormFieldError {
-	var fieldErrors []*authGrpc.FormFieldError
-
-	if strings.TrimSpace(req.Email) == "" {
-		fieldErrors = append(fieldErrors, &authGrpc.FormFieldError{
-			Field:     "email",
-			ErrorCode: []int32{FieldErrRequired},
-		})
-	} else if _, err := mail.ParseAddress(strings.TrimSpace(req.Email)); err != nil {
-		fieldErrors = append(fieldErrors, &authGrpc.FormFieldError{
-			Field:     "email",
-			ErrorCode: []int32{FieldErrInvalidFormat},
-		})
-	}
-
-	if req.Password == "" {
-		fieldErrors = append(fieldErrors, &authGrpc.FormFieldError{
-			Field:     "password",
-			ErrorCode: []int32{FieldErrRequired},
-		})
-	} else if passwordCodes := passwordPolicyFieldErrors(req.Password); len(passwordCodes) > 0 {
-		fieldErrors = append(fieldErrors, &authGrpc.FormFieldError{
-			Field:     "password",
-			ErrorCode: passwordCodes,
-		})
-	}
-
-	return fieldErrors
 }
 
 func (s *Server) rollbackUser(ctx context.Context, userID string) {

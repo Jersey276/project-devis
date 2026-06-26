@@ -100,7 +100,7 @@ function ScheduleListTableInner() {
     router.push(`${pathname}?${next.toString()}`);
   }
 
-  const refreshSchedules = useCallback(async () => {
+  const fetchSchedules = useCallback(async (signal: AbortSignal) => {
     const params = new URLSearchParams({ page: String(page), page_size: String(PAGE_SIZE) });
     if (statuses.length > 0) params.set("statuses", statuses.join(","));
     if (startFrom) params.set("start_from", startFrom);
@@ -109,7 +109,14 @@ function ScheduleListTableInner() {
     params.set("sort_direction", sortDirection);
     if (isCustomer && myClientId) params.set("client_id", myClientId);
 
-    const { ok, body } = await listSchedules(params.toString());
+    let ok: boolean, body: Awaited<ReturnType<typeof listSchedules>>["body"];
+    try {
+      ({ ok, body } = await listSchedules(params.toString(), signal));
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      throw err;
+    }
+    if (signal.aborted) return;
     if (!ok || !body.success || !Array.isArray(body.schedules)) {
       setItems([]);
       setError((body.message as string) ?? "Impossible de charger les échéanciers.");
@@ -121,7 +128,16 @@ function ScheduleListTableInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, myClientId]);
 
-  useEffect(() => { void refreshSchedules(); }, [refreshSchedules]);
+  const refreshSchedules = useCallback(() => {
+    const controller = new AbortController();
+    void fetchSchedules(controller.signal);
+  }, [fetchSchedules]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchSchedules(controller.signal);
+    return () => controller.abort();
+  }, [fetchSchedules]);
 
   const rowActions = useMemo<DataTableRowAction[]>(() => [{ type: "link", label: "Ouvrir", href: "/schedule/{id}" }], []);
 

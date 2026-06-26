@@ -38,6 +38,8 @@ const (
 	AuthService_SendClientInvitation_FullMethodName         = "/auth.AuthService/SendClientInvitation"
 	AuthService_AcceptClientInvitationNew_FullMethodName    = "/auth.AuthService/AcceptClientInvitationNew"
 	AuthService_AcceptClientInvitationLinked_FullMethodName = "/auth.AuthService/AcceptClientInvitationLinked"
+	AuthService_RequestEmailChange_FullMethodName           = "/auth.AuthService/RequestEmailChange"
+	AuthService_ConfirmEmailChange_FullMethodName           = "/auth.AuthService/ConfirmEmailChange"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -84,6 +86,10 @@ type AuthServiceClient interface {
 	AcceptClientInvitationNew(ctx context.Context, in *AcceptClientInvitationNewRequest, opts ...grpc.CallOption) (*AcceptClientInvitationResponse, error)
 	// AcceptClientInvitationLinked links an existing authenticated account to the client.
 	AcceptClientInvitationLinked(ctx context.Context, in *AcceptClientInvitationLinkedRequest, opts ...grpc.CallOption) (*AcceptClientInvitationResponse, error)
+	// RequestEmailChange initiates an email address change by sending a verification link to the new address.
+	RequestEmailChange(ctx context.Context, in *RequestEmailChangeRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// ConfirmEmailChange validates the token and applies the new email address.
+	ConfirmEmailChange(ctx context.Context, in *ConfirmEmailChangeRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 }
 
 type authServiceClient struct {
@@ -284,6 +290,26 @@ func (c *authServiceClient) AcceptClientInvitationLinked(ctx context.Context, in
 	return out, nil
 }
 
+func (c *authServiceClient) RequestEmailChange(ctx context.Context, in *RequestEmailChangeRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, AuthService_RequestEmailChange_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) ConfirmEmailChange(ctx context.Context, in *ConfirmEmailChangeRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, AuthService_ConfirmEmailChange_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -328,6 +354,10 @@ type AuthServiceServer interface {
 	AcceptClientInvitationNew(context.Context, *AcceptClientInvitationNewRequest) (*AcceptClientInvitationResponse, error)
 	// AcceptClientInvitationLinked links an existing authenticated account to the client.
 	AcceptClientInvitationLinked(context.Context, *AcceptClientInvitationLinkedRequest) (*AcceptClientInvitationResponse, error)
+	// RequestEmailChange initiates an email address change by sending a verification link to the new address.
+	RequestEmailChange(context.Context, *RequestEmailChangeRequest) (*GenericResponse, error)
+	// ConfirmEmailChange validates the token and applies the new email address.
+	ConfirmEmailChange(context.Context, *ConfirmEmailChangeRequest) (*GenericResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -394,6 +424,12 @@ func (UnimplementedAuthServiceServer) AcceptClientInvitationNew(context.Context,
 }
 func (UnimplementedAuthServiceServer) AcceptClientInvitationLinked(context.Context, *AcceptClientInvitationLinkedRequest) (*AcceptClientInvitationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AcceptClientInvitationLinked not implemented")
+}
+func (UnimplementedAuthServiceServer) RequestEmailChange(context.Context, *RequestEmailChangeRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RequestEmailChange not implemented")
+}
+func (UnimplementedAuthServiceServer) ConfirmEmailChange(context.Context, *ConfirmEmailChangeRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ConfirmEmailChange not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -758,6 +794,42 @@ func _AuthService_AcceptClientInvitationLinked_Handler(srv interface{}, ctx cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_RequestEmailChange_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestEmailChangeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).RequestEmailChange(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_RequestEmailChange_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).RequestEmailChange(ctx, req.(*RequestEmailChangeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_ConfirmEmailChange_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfirmEmailChangeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).ConfirmEmailChange(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_ConfirmEmailChange_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).ConfirmEmailChange(ctx, req.(*ConfirmEmailChangeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -840,6 +912,14 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AcceptClientInvitationLinked",
 			Handler:    _AuthService_AcceptClientInvitationLinked_Handler,
+		},
+		{
+			MethodName: "RequestEmailChange",
+			Handler:    _AuthService_RequestEmailChange_Handler,
+		},
+		{
+			MethodName: "ConfirmEmailChange",
+			Handler:    _AuthService_ConfirmEmailChange_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

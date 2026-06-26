@@ -3,15 +3,41 @@ package quote
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"strconv"
 	"strings"
 
+	"project-devis-export/internal/format"
 	"project-devis-export/quote"
 	"project-devis-export/templates"
 	"project-devis-export/users"
 )
+
+type vatView struct {
+	Rate string
+	Base string
+	VAT  string
+}
+
+// rowView is a polymorphic row driven by Kind:
+//
+//	"line"     — standard billable line
+//	"subline"  — indented child of a group or detailed line
+//	"group"    — section header (colspan, no numeric columns)
+//	"text"     — free-text row (colspan, no numeric columns)
+//	"detailed" — parent line with Sublines expanded below it
+type rowView struct {
+	Kind      string
+	Name      string
+	Quantity  string
+	Unit      string
+	UnitPrice string
+	TaxRate   string
+	Total     string
+	Sublines  []rowView
+}
 
 var quoteTpl = template.Must(template.New("quote.html").Parse(string(templates.QuoteHTML)))
 
@@ -22,15 +48,24 @@ type renderInput struct {
 	UserAddress   *users.Address
 	Client        *users.Client
 	ClientAddress *users.Address
+	Taxes         map[int32]*users.Tax
 }
 
 type viewModel struct {
 	ShortID                 string
 	QuoteName               string
+	IssuedAt                string
+	ValidUntil              string
+	PaymentTerms            string
 	Sender                  partyView
 	Recipient               partyView
-	Lines                   []lineView
+	Rows                    []rowView
+	OptionRows              []rowView
+	OptionTotalHT           string
+	VatBreakdown            []vatView
 	TotalHT                 string
+	TotalVAT                string
+	TotalTTC                string
 	SenderSignatureLabel    string
 	RecipientSignatureLabel string
 }
@@ -41,12 +76,32 @@ type partyView struct {
 	Lines   []string
 }
 
-type lineView struct {
-	Name      string
-	Quantity  string
-	Unit      string
-	UnitPrice string
-	Total     string
+// lineData mirrors the QuoteLineData TypeScript type stored as JSON in QuoteLine.Data.
+type lineData struct {
+	Kind         string        `json:"kind"`
+	Description  string        `json:"description"`
+	Option       bool          `json:"option"`
+	ParentLineID string        `json:"parent_line_id"`
+	FeeID        string        `json:"fee_id"`
+	Sublines     []sublineData `json:"sublines"`
+}
+
+type sublineData struct {
+	Name      string `json:"name"`
+	Quantity  string `json:"quantity"`
+	Unit      string `json:"unit"`
+	UnitPrice int64  `json:"unit_price"` // cents
+	Option    bool   `json:"option"`
+	FeeID     string `json:"fee_id"`
+}
+
+func parseLineData(raw string) lineData {
+	if raw == "" || raw == "{}" {
+		return lineData{}
+	}
+	var d lineData
+	_ = json.Unmarshal([]byte(raw), &d)
+	return d
 }
 
 func Render(ctx context.Context, gt pdfConverter, in renderInput) ([]byte, error) {
@@ -60,28 +115,156 @@ func Render(ctx context.Context, gt pdfConverter, in renderInput) ([]byte, error
 }
 
 func buildViewModel(in renderInput) viewModel {
-	totalCents := int64(0)
-	lineViews := make([]lineView, 0, len(in.Lines))
-	for _, l := range in.Lines {
+	type vatAccum struct {
+		baseHT  int64
+		vatCent int64
+	}
+	vatByRate := map[string]*vatAccum{}
+	var rateOrder []string
+
+	totalHT := int64(0)
+	totalVAT := int64(0)
+	optionTotalHT := int64(0)
+
+	accumulateVAT := func(lineHT int64, taxRateStr string) {
+		if taxRateStr == "" {
+			return
+		}
+		rateF, err := strconv.ParseFloat(strings.ReplaceAll(taxRateStr, ",", "."), 64)
+		if err != nil || rateF <= 0 {
+			return
+		}
+		lineVAT := int64(float64(lineHT) * rateF / 100)
+		totalVAT += lineVAT
+		if _, exists := vatByRate[taxRateStr]; !exists {
+			vatByRate[taxRateStr] = &vatAccum{}
+			rateOrder = append(rateOrder, taxRateStr)
+		}
+		vatByRate[taxRateStr].baseHT += lineHT
+		vatByRate[taxRateStr].vatCent += lineVAT
+	}
+
+	taxRateFor := func(l *quote.QuoteLine) string {
+		if l.TaxId == 0 {
+			return ""
+		}
+		if tax, ok := in.Taxes[l.TaxId]; ok {
+			return tax.Rate
+		}
+		return ""
+	}
+
+	rows := make([]rowView, 0, len(in.Lines))
+	var optionRows []rowView
+
+	// appendLeaf handles both "line" and "subline" kinds — same logic, different Kind value.
+	appendLeaf := func(kind string, l *quote.QuoteLine, isOption bool) {
 		qty := parseQuantity(l.Quantity)
-		lineTotal := int64(qty * float64(l.UnitPrice))
-		totalCents += lineTotal
-		lineViews = append(lineViews, lineView{
+		lineHT := int64(qty * float64(l.UnitPrice))
+		taxRateStr := taxRateFor(l)
+		taxRateDisplay := "--"
+		if taxRateStr != "" {
+			taxRateDisplay = format.Rate(taxRateStr)
+		}
+		rv := rowView{
+			Kind:      kind,
 			Name:      l.Name,
 			Quantity:  l.Quantity,
 			Unit:      l.Unit,
-			UnitPrice: formatCents(l.UnitPrice),
-			Total:     formatCents(lineTotal),
+			UnitPrice: format.Cents(l.UnitPrice),
+			TaxRate:   taxRateDisplay,
+			Total:     format.Cents(lineHT),
+		}
+		if isOption {
+			optionTotalHT += lineHT
+			optionRows = append(optionRows, rv)
+		} else {
+			totalHT += lineHT
+			accumulateVAT(lineHT, taxRateStr)
+			rows = append(rows, rv)
+		}
+	}
+
+	for _, l := range in.Lines {
+		d := parseLineData(l.Data)
+		kind := d.Kind
+		if kind == "" || kind == "fee" {
+			kind = "line"
+		}
+
+		switch kind {
+		case "group":
+			rows = append(rows, rowView{Kind: "group", Name: l.Name})
+
+		case "text":
+			rows = append(rows, rowView{Kind: "text", Name: l.Name})
+
+		case "subline":
+			appendLeaf("subline", l, d.Option)
+
+		case "detailed":
+			taxRateStr := taxRateFor(l)
+			detailTotal := int64(0)
+			subRows := make([]rowView, 0, len(d.Sublines))
+			for _, sl := range d.Sublines {
+				slQty := parseQuantity(sl.Quantity)
+				slHT := int64(slQty * float64(sl.UnitPrice))
+				subRows = append(subRows, rowView{
+					Kind:      "subline",
+					Name:      sl.Name,
+					Quantity:  sl.Quantity,
+					Unit:      sl.Unit,
+					UnitPrice: format.Cents(sl.UnitPrice),
+					Total:     format.Cents(slHT),
+				})
+				if !sl.Option {
+					detailTotal += slHT
+				}
+			}
+			totalHT += detailTotal
+			accumulateVAT(detailTotal, taxRateStr)
+			rows = append(rows, rowView{
+				Kind:     "detailed",
+				Name:     l.Name,
+				Total:    format.Cents(detailTotal),
+				Sublines: subRows,
+			})
+
+		default: // "line"
+			appendLeaf("line", l, d.Option)
+		}
+	}
+
+	vat := make([]vatView, 0, len(rateOrder))
+	for _, rate := range rateOrder {
+		acc := vatByRate[rate]
+		vat = append(vat, vatView{
+			Rate: format.Rate(rate),
+			Base: format.Cents(acc.baseHT),
+			VAT:  format.Cents(acc.vatCent),
 		})
 	}
 
+	optionHTStr := ""
+	if optionTotalHT > 0 {
+		optionHTStr = format.Cents(optionTotalHT)
+	}
+
 	return viewModel{
-		ShortID:                 shortID(in.Quote.QuoteId),
+		ShortID:                 format.ShortID(in.Quote.QuoteId),
 		QuoteName:               in.Quote.Name,
+		IssuedAt:                format.Date(in.Quote.IssuedAt),
+		ValidUntil:              in.Quote.ValidUntil,
+		PaymentTerms:            in.Quote.PaymentTerms,
 		Sender:                  buildSender(in.User, in.UserAddress),
 		Recipient:               buildRecipient(in.Client, in.ClientAddress),
-		Lines:                   lineViews,
-		TotalHT:                 formatCents(totalCents),
+		Rows:                    rows,
+		OptionRows:              optionRows,
+		OptionTotalHT:           optionHTStr,
+		VatBreakdown:            vat,
+		TotalHT:                 format.Cents(totalHT),
+		TotalVAT:                format.Cents(totalVAT),
+		TotalTTC:                format.Cents(totalHT + totalVAT),
 		SenderSignatureLabel:    senderSignatureLabel(in.User),
 		RecipientSignatureLabel: recipientSignatureLabel(in.Client),
 	}
@@ -101,7 +284,9 @@ func buildSender(u *users.User, a *users.Address) partyView {
 		if u.Phone != "" {
 			v.Lines = append(v.Lines, u.Phone)
 		}
-		if u.Siren != "" {
+		if u.Siret != "" {
+			v.Lines = append(v.Lines, "SIRET : "+u.Siret)
+		} else if u.Siren != "" {
 			v.Lines = append(v.Lines, "SIREN : "+u.Siren)
 		}
 		if u.Vat != "" {
@@ -161,43 +346,6 @@ func recipientSignatureLabel(c *users.Client) string {
 	return "Signature du client"
 }
 
-func formatCents(cents int64) string {
-	neg := cents < 0
-	if neg {
-		cents = -cents
-	}
-	euros := cents / 100
-	rem := cents % 100
-	euroStr := groupThousands(strconv.FormatInt(euros, 10))
-	sign := ""
-	if neg {
-		sign = "-"
-	}
-	return fmt.Sprintf("%s%s,%02d €", sign, euroStr, rem)
-}
-
-func groupThousands(s string) string {
-	n := len(s)
-	if n <= 3 {
-		return s
-	}
-	var b strings.Builder
-	pre := n % 3
-	if pre > 0 {
-		b.WriteString(s[:pre])
-		if n > pre {
-			b.WriteByte(' ')
-		}
-	}
-	for i := pre; i < n; i += 3 {
-		b.WriteString(s[i : i+3])
-		if i+3 < n {
-			b.WriteByte(' ')
-		}
-	}
-	return b.String()
-}
-
 func parseQuantity(s string) float64 {
 	if s == "" {
 		return 0
@@ -207,11 +355,4 @@ func parseQuantity(s string) float64 {
 		return 0
 	}
 	return v
-}
-
-func shortID(id string) string {
-	if len(id) >= 8 {
-		return id[:8]
-	}
-	return id
 }

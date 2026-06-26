@@ -21,19 +21,19 @@ func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateClientRequest)
 	var fieldErrors []*usersGrpc.ValidationError
 
 	if req.ClientId == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "client_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("client_id"))
 	}
 	if req.UserId == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "user_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("user_id"))
 	}
 	if req.FirstName == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "first_name", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("first_name"))
 	}
 	if req.LastName == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "last_name", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("last_name"))
 	}
 	if msg := sqlutil.ValidateSIRET(req.Siret, req.Siren); msg != "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "siret", Message: msg})
+		fieldErrors = append(fieldErrors, sqlutil.Invalid("siret", msg))
 	}
 
 	if len(fieldErrors) > 0 {

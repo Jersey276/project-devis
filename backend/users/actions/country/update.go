@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"project-devis-users/actions/codes"
+	"project-devis-users/actions/sqlutil"
 	usersGrpc "project-devis-users/services/grpc"
 )
 
@@ -12,10 +13,10 @@ func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateCountryRequest
 	var fieldErrors []*usersGrpc.ValidationError
 
 	if req.CountryId == 0 {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "country_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("country_id"))
 	}
 	if len(req.Code) > 0 && len(req.Code) != 2 {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "code", Message: "Doit être un code ISO à 2 caractères."})
+		fieldErrors = append(fieldErrors, sqlutil.Invalid("code", "Doit être un code ISO à 2 caractères."))
 	}
 
 	if len(fieldErrors) > 0 {

@@ -22,6 +22,8 @@ service UserService {
     rpc LinkClientUser(LinkClientUserRequest) returns (GenericResponse);
     // GetClientsByLinkedUser returns all clients linked to a given auth user (one per provider).
     rpc GetClientsByLinkedUser(GetClientByLinkedUserRequest) returns (GetClientsResponse);
+    // UpdateUserEmail updates the email on the users service after a confirmed email change.
+    rpc UpdateUserEmail(UpdateUserEmailRequest) returns (GenericResponse);
 }
 
 message CreateUserRequest {
@@ -58,6 +60,11 @@ message GetUserAccessInfoResponse {
 
 message TouchUserLastLoginRequest {
     string user_id = 1;
+}
+
+message UpdateUserEmailRequest {
+    string user_id   = 1;
+    string new_email = 2;
 }
 
 message GenericResponse {

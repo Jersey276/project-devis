@@ -1,18 +1,18 @@
-import { apiFetch } from "@/lib/api";
+import { apiFetch, type ApiResult } from "@/lib/api";
 
-export function listPlans() {
+export async function listPlans(): Promise<ApiResult> {
   return apiFetch("/api/plans");
 }
 
-export function getMySubscription() {
+export async function getMySubscription(): Promise<ApiResult> {
   return apiFetch("/api/subscriptions/me");
 }
 
-export function listAdminSubscriptions() {
+export async function listAdminSubscriptions(): Promise<ApiResult> {
   return apiFetch("/api/subscriptions/admin");
 }
 
-export function assignPlan(userId: string, planId: number) {
+export async function assignPlan(userId: string, planId: number): Promise<ApiResult> {
   return apiFetch(
     `/api/subscriptions/admin/${encodeURIComponent(userId)}/plan`,
     {
@@ -22,26 +22,26 @@ export function assignPlan(userId: string, planId: number) {
   );
 }
 
-export function createPaymentIntent(planId: number) {
+export async function createPaymentIntent(planId: number): Promise<ApiResult> {
   return apiFetch("/api/subscriptions/payment-intent", {
     method: "POST",
     body: JSON.stringify({ plan_id: planId }),
   });
 }
 
-export function cancelSubscription() {
+export async function cancelSubscription(): Promise<ApiResult> {
   return apiFetch("/api/subscriptions/cancel", { method: "POST" });
 }
 
-export function getAdminStats() {
+export async function getAdminStats(): Promise<ApiResult> {
   return apiFetch("/api/subscriptions/admin/stats");
 }
 
-export function listAllPlans() {
+export async function listAllPlans(): Promise<ApiResult> {
   return apiFetch("/api/plans?include_inactive=true");
 }
 
-export function updatePlan(
+export async function updatePlan(
   planId: number,
   data: {
     name: string;
@@ -50,7 +50,7 @@ export function updatePlan(
     stripe_price_id: string;
     features: string;
   },
-) {
+): Promise<ApiResult> {
   return apiFetch(`/api/plans/${planId}`, {
     method: "PUT",
     body: JSON.stringify(data),

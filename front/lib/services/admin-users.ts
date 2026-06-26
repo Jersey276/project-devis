@@ -1,6 +1,10 @@
-import { apiFetch } from "@/lib/api";
+import { apiFetch, type ApiResult } from "@/lib/api";
 
-export function listAdminUsers(params?: string) {
+export async function getAdminUser(userId: string): Promise<ApiResult> {
+  return apiFetch(`/api/users/admin/accounts/${encodeURIComponent(userId)}`);
+}
+
+export async function listAdminUsers(params?: string): Promise<ApiResult> {
   const url = params
     ? `/api/users/admin/accounts?${params}`
     : "/api/users/admin/accounts";
@@ -19,21 +23,36 @@ type UpdateAdminUserPayload = {
   vat?: string;
 };
 
-export function updateAdminUser(
+export async function updateAdminUser(
   userId: string,
   payload: UpdateAdminUserPayload,
-) {
+): Promise<ApiResult> {
   return apiFetch(`/api/users/admin/accounts/${encodeURIComponent(userId)}`, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
 }
 
-export function suspendAdminUser(userId: string) {
+export async function suspendAdminUser(userId: string): Promise<ApiResult> {
   return apiFetch(
     `/api/users/admin/accounts/${encodeURIComponent(userId)}/suspend`,
     {
       method: "POST",
     },
   );
+}
+
+export async function listAdminUserQuotes(userId: string, params?: string): Promise<ApiResult> {
+  const base = `/api/users/admin/accounts/${encodeURIComponent(userId)}/quotes`;
+  return apiFetch(params ? `${base}?${params}` : base);
+}
+
+export async function listAdminUserSchedules(userId: string, params?: string): Promise<ApiResult> {
+  const base = `/api/users/admin/accounts/${encodeURIComponent(userId)}/schedules`;
+  return apiFetch(params ? `${base}?${params}` : base);
+}
+
+export async function listAdminUserInvoices(userId: string, params?: string): Promise<ApiResult> {
+  const base = `/api/users/admin/accounts/${encodeURIComponent(userId)}/invoices`;
+  return apiFetch(params ? `${base}?${params}` : base);
 }

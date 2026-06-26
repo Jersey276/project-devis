@@ -93,7 +93,7 @@ function CreditNoteListTableInner() {
     router.push(`${pathname}?${next.toString()}`);
   }
 
-  const fetchCreditNotes = useCallback(async () => {
+  const fetchCreditNotes = useCallback(async (signal: AbortSignal) => {
     const params = new URLSearchParams({ page: String(page), page_size: String(PAGE_SIZE) });
     if (isTotal) params.set("is_total", isTotal);
     if (issuedFrom) params.set("issued_from", issuedFrom);
@@ -101,7 +101,8 @@ function CreditNoteListTableInner() {
     params.set("sort_by", sortBy);
     params.set("sort_direction", sortDirection);
 
-    const { ok, body } = await listCreditNotes(params.toString());
+    const { ok, body } = await listCreditNotes(params.toString(), signal);
+    if (signal.aborted) return;
     if (!ok || !body.success) {
       setError((body.message as string) ?? t("loadError"));
       return;
@@ -113,7 +114,9 @@ function CreditNoteListTableInner() {
   }, [searchParams]);
 
   useEffect(() => {
-    void fetchCreditNotes();
+    const controller = new AbortController();
+    void fetchCreditNotes(controller.signal);
+    return () => controller.abort();
   }, [fetchCreditNotes]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));

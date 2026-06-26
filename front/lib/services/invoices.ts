@@ -175,9 +175,9 @@ export async function getCreditNote(creditNoteId: string): Promise<ApiResult> {
   return apiFetch(`/api/credit-notes/${encodeURIComponent(creditNoteId)}`);
 }
 
-export async function listCreditNotes(queryString?: string): Promise<ApiResult> {
+export async function listCreditNotes(queryString?: string, signal?: AbortSignal): Promise<ApiResult> {
   const path = queryString ? `/api/credit-notes?${queryString}` : "/api/credit-notes";
-  return apiFetch(path);
+  return apiFetch(path, { signal });
 }
 
 export function readInvoicesFromBody(

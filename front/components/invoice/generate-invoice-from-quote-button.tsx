@@ -31,7 +31,7 @@ export default function GenerateInvoiceFromQuoteButton({
   useEffect(() => {
     if (!validated) return;
     let cancelled = false;
-    listSchedules(quoteId).then(({ ok, body }) => {
+    listSchedules(`quote_id=${encodeURIComponent(quoteId)}`).then(({ ok, body }) => {
       if (cancelled) return;
       if (!ok || !body.success) {
         setHasSchedule(false);

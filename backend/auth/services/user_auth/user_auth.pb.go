@@ -396,6 +396,58 @@ func (x *TouchUserLastLoginRequest) GetUserId() string {
 	return ""
 }
 
+type UpdateUserEmailRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	NewEmail      string                 `protobuf:"bytes,2,opt,name=new_email,json=newEmail,proto3" json:"new_email,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateUserEmailRequest) Reset() {
+	*x = UpdateUserEmailRequest{}
+	mi := &file_user_auth_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateUserEmailRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateUserEmailRequest) ProtoMessage() {}
+
+func (x *UpdateUserEmailRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_auth_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateUserEmailRequest.ProtoReflect.Descriptor instead.
+func (*UpdateUserEmailRequest) Descriptor() ([]byte, []int) {
+	return file_user_auth_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *UpdateUserEmailRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *UpdateUserEmailRequest) GetNewEmail() string {
+	if x != nil {
+		return x.NewEmail
+	}
+	return ""
+}
+
 type GenericResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -406,7 +458,7 @@ type GenericResponse struct {
 
 func (x *GenericResponse) Reset() {
 	*x = GenericResponse{}
-	mi := &file_user_auth_proto_msgTypes[7]
+	mi := &file_user_auth_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -418,7 +470,7 @@ func (x *GenericResponse) String() string {
 func (*GenericResponse) ProtoMessage() {}
 
 func (x *GenericResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_user_auth_proto_msgTypes[7]
+	mi := &file_user_auth_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -431,7 +483,7 @@ func (x *GenericResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenericResponse.ProtoReflect.Descriptor instead.
 func (*GenericResponse) Descriptor() ([]byte, []int) {
-	return file_user_auth_proto_rawDescGZIP(), []int{7}
+	return file_user_auth_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GenericResponse) GetSuccess() bool {
@@ -459,7 +511,7 @@ type LinkClientUserRequest struct {
 
 func (x *LinkClientUserRequest) Reset() {
 	*x = LinkClientUserRequest{}
-	mi := &file_user_auth_proto_msgTypes[8]
+	mi := &file_user_auth_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -471,7 +523,7 @@ func (x *LinkClientUserRequest) String() string {
 func (*LinkClientUserRequest) ProtoMessage() {}
 
 func (x *LinkClientUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_user_auth_proto_msgTypes[8]
+	mi := &file_user_auth_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -484,7 +536,7 @@ func (x *LinkClientUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinkClientUserRequest.ProtoReflect.Descriptor instead.
 func (*LinkClientUserRequest) Descriptor() ([]byte, []int) {
-	return file_user_auth_proto_rawDescGZIP(), []int{8}
+	return file_user_auth_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *LinkClientUserRequest) GetClientId() string {
@@ -517,7 +569,7 @@ type GetClientByLinkedUserRequest struct {
 
 func (x *GetClientByLinkedUserRequest) Reset() {
 	*x = GetClientByLinkedUserRequest{}
-	mi := &file_user_auth_proto_msgTypes[9]
+	mi := &file_user_auth_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -529,7 +581,7 @@ func (x *GetClientByLinkedUserRequest) String() string {
 func (*GetClientByLinkedUserRequest) ProtoMessage() {}
 
 func (x *GetClientByLinkedUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_user_auth_proto_msgTypes[9]
+	mi := &file_user_auth_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -542,7 +594,7 @@ func (x *GetClientByLinkedUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetClientByLinkedUserRequest.ProtoReflect.Descriptor instead.
 func (*GetClientByLinkedUserRequest) Descriptor() ([]byte, []int) {
-	return file_user_auth_proto_rawDescGZIP(), []int{9}
+	return file_user_auth_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetClientByLinkedUserRequest) GetLinkedUserId() string {
@@ -573,7 +625,7 @@ type ClientStub struct {
 
 func (x *ClientStub) Reset() {
 	*x = ClientStub{}
-	mi := &file_user_auth_proto_msgTypes[10]
+	mi := &file_user_auth_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -585,7 +637,7 @@ func (x *ClientStub) String() string {
 func (*ClientStub) ProtoMessage() {}
 
 func (x *ClientStub) ProtoReflect() protoreflect.Message {
-	mi := &file_user_auth_proto_msgTypes[10]
+	mi := &file_user_auth_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -598,7 +650,7 @@ func (x *ClientStub) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClientStub.ProtoReflect.Descriptor instead.
 func (*ClientStub) Descriptor() ([]byte, []int) {
-	return file_user_auth_proto_rawDescGZIP(), []int{10}
+	return file_user_auth_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ClientStub) GetClientId() string {
@@ -703,7 +755,7 @@ type GetClientResponse struct {
 
 func (x *GetClientResponse) Reset() {
 	*x = GetClientResponse{}
-	mi := &file_user_auth_proto_msgTypes[11]
+	mi := &file_user_auth_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -715,7 +767,7 @@ func (x *GetClientResponse) String() string {
 func (*GetClientResponse) ProtoMessage() {}
 
 func (x *GetClientResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_user_auth_proto_msgTypes[11]
+	mi := &file_user_auth_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -728,7 +780,7 @@ func (x *GetClientResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetClientResponse.ProtoReflect.Descriptor instead.
 func (*GetClientResponse) Descriptor() ([]byte, []int) {
-	return file_user_auth_proto_rawDescGZIP(), []int{11}
+	return file_user_auth_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetClientResponse) GetSuccess() bool {
@@ -763,7 +815,7 @@ type GetClientsResponse struct {
 
 func (x *GetClientsResponse) Reset() {
 	*x = GetClientsResponse{}
-	mi := &file_user_auth_proto_msgTypes[12]
+	mi := &file_user_auth_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -775,7 +827,7 @@ func (x *GetClientsResponse) String() string {
 func (*GetClientsResponse) ProtoMessage() {}
 
 func (x *GetClientsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_user_auth_proto_msgTypes[12]
+	mi := &file_user_auth_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -788,7 +840,7 @@ func (x *GetClientsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetClientsResponse.ProtoReflect.Descriptor instead.
 func (*GetClientsResponse) Descriptor() ([]byte, []int) {
-	return file_user_auth_proto_rawDescGZIP(), []int{12}
+	return file_user_auth_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetClientsResponse) GetSuccess() bool {
@@ -838,7 +890,10 @@ const file_user_auth_proto_rawDesc = "" +
 	"\x04role\x18\x05 \x01(\tR\x04role\x12\x1c\n" +
 	"\tsuspended\x18\x06 \x01(\bR\tsuspended\"4\n" +
 	"\x19TouchUserLastLoginRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"?\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"N\n" +
+	"\x16UpdateUserEmailRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1b\n" +
+	"\tnew_email\x18\x02 \x01(\tR\bnewEmail\"?\n" +
 	"\x0fGenericResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\"{\n" +
@@ -874,7 +929,7 @@ const file_user_auth_proto_rawDesc = "" +
 	"\x12GetClientsResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12+\n" +
-	"\aclients\x18\x03 \x03(\v2\x11.users.ClientStubR\aclients2\xc0\x04\n" +
+	"\aclients\x18\x03 \x03(\v2\x11.users.ClientStubR\aclients2\x8a\x05\n" +
 	"\vUserService\x12A\n" +
 	"\n" +
 	"CreateUser\x12\x18.users.CreateUserRequest\x1a\x19.users.CreateUserResponse\x12>\n" +
@@ -884,7 +939,8 @@ const file_user_auth_proto_rawDesc = "" +
 	"\x11GetUserAccessInfo\x12\x1f.users.GetUserAccessInfoRequest\x1a .users.GetUserAccessInfoResponse\x12N\n" +
 	"\x12TouchUserLastLogin\x12 .users.TouchUserLastLoginRequest\x1a\x16.users.GenericResponse\x12F\n" +
 	"\x0eLinkClientUser\x12\x1c.users.LinkClientUserRequest\x1a\x16.users.GenericResponse\x12X\n" +
-	"\x16GetClientsByLinkedUser\x12#.users.GetClientByLinkedUserRequest\x1a\x19.users.GetClientsResponseB'Z%project-devis-auth/services/user_authb\x06proto3"
+	"\x16GetClientsByLinkedUser\x12#.users.GetClientByLinkedUserRequest\x1a\x19.users.GetClientsResponse\x12H\n" +
+	"\x0fUpdateUserEmail\x12\x1d.users.UpdateUserEmailRequest\x1a\x16.users.GenericResponseB'Z%project-devis-auth/services/user_authb\x06proto3"
 
 var (
 	file_user_auth_proto_rawDescOnce sync.Once
@@ -898,7 +954,7 @@ func file_user_auth_proto_rawDescGZIP() []byte {
 	return file_user_auth_proto_rawDescData
 }
 
-var file_user_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_user_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_user_auth_proto_goTypes = []any{
 	(*CreateUserRequest)(nil),               // 0: users.CreateUserRequest
 	(*CreateUserResponse)(nil),              // 1: users.CreateUserResponse
@@ -907,32 +963,35 @@ var file_user_auth_proto_goTypes = []any{
 	(*GetUserAccessInfoByEmailRequest)(nil), // 4: users.GetUserAccessInfoByEmailRequest
 	(*GetUserAccessInfoResponse)(nil),       // 5: users.GetUserAccessInfoResponse
 	(*TouchUserLastLoginRequest)(nil),       // 6: users.TouchUserLastLoginRequest
-	(*GenericResponse)(nil),                 // 7: users.GenericResponse
-	(*LinkClientUserRequest)(nil),           // 8: users.LinkClientUserRequest
-	(*GetClientByLinkedUserRequest)(nil),    // 9: users.GetClientByLinkedUserRequest
-	(*ClientStub)(nil),                      // 10: users.ClientStub
-	(*GetClientResponse)(nil),               // 11: users.GetClientResponse
-	(*GetClientsResponse)(nil),              // 12: users.GetClientsResponse
+	(*UpdateUserEmailRequest)(nil),          // 7: users.UpdateUserEmailRequest
+	(*GenericResponse)(nil),                 // 8: users.GenericResponse
+	(*LinkClientUserRequest)(nil),           // 9: users.LinkClientUserRequest
+	(*GetClientByLinkedUserRequest)(nil),    // 10: users.GetClientByLinkedUserRequest
+	(*ClientStub)(nil),                      // 11: users.ClientStub
+	(*GetClientResponse)(nil),               // 12: users.GetClientResponse
+	(*GetClientsResponse)(nil),              // 13: users.GetClientsResponse
 }
 var file_user_auth_proto_depIdxs = []int32{
-	10, // 0: users.GetClientResponse.client:type_name -> users.ClientStub
-	10, // 1: users.GetClientsResponse.clients:type_name -> users.ClientStub
+	11, // 0: users.GetClientResponse.client:type_name -> users.ClientStub
+	11, // 1: users.GetClientsResponse.clients:type_name -> users.ClientStub
 	0,  // 2: users.UserService.CreateUser:input_type -> users.CreateUserRequest
 	2,  // 3: users.UserService.DeleteUser:input_type -> users.DeleteUserRequest
 	4,  // 4: users.UserService.GetUserAccessInfoByEmail:input_type -> users.GetUserAccessInfoByEmailRequest
 	3,  // 5: users.UserService.GetUserAccessInfo:input_type -> users.GetUserAccessInfoRequest
 	6,  // 6: users.UserService.TouchUserLastLogin:input_type -> users.TouchUserLastLoginRequest
-	8,  // 7: users.UserService.LinkClientUser:input_type -> users.LinkClientUserRequest
-	9,  // 8: users.UserService.GetClientsByLinkedUser:input_type -> users.GetClientByLinkedUserRequest
-	1,  // 9: users.UserService.CreateUser:output_type -> users.CreateUserResponse
-	7,  // 10: users.UserService.DeleteUser:output_type -> users.GenericResponse
-	5,  // 11: users.UserService.GetUserAccessInfoByEmail:output_type -> users.GetUserAccessInfoResponse
-	5,  // 12: users.UserService.GetUserAccessInfo:output_type -> users.GetUserAccessInfoResponse
-	7,  // 13: users.UserService.TouchUserLastLogin:output_type -> users.GenericResponse
-	7,  // 14: users.UserService.LinkClientUser:output_type -> users.GenericResponse
-	12, // 15: users.UserService.GetClientsByLinkedUser:output_type -> users.GetClientsResponse
-	9,  // [9:16] is the sub-list for method output_type
-	2,  // [2:9] is the sub-list for method input_type
+	9,  // 7: users.UserService.LinkClientUser:input_type -> users.LinkClientUserRequest
+	10, // 8: users.UserService.GetClientsByLinkedUser:input_type -> users.GetClientByLinkedUserRequest
+	7,  // 9: users.UserService.UpdateUserEmail:input_type -> users.UpdateUserEmailRequest
+	1,  // 10: users.UserService.CreateUser:output_type -> users.CreateUserResponse
+	8,  // 11: users.UserService.DeleteUser:output_type -> users.GenericResponse
+	5,  // 12: users.UserService.GetUserAccessInfoByEmail:output_type -> users.GetUserAccessInfoResponse
+	5,  // 13: users.UserService.GetUserAccessInfo:output_type -> users.GetUserAccessInfoResponse
+	8,  // 14: users.UserService.TouchUserLastLogin:output_type -> users.GenericResponse
+	8,  // 15: users.UserService.LinkClientUser:output_type -> users.GenericResponse
+	13, // 16: users.UserService.GetClientsByLinkedUser:output_type -> users.GetClientsResponse
+	8,  // 17: users.UserService.UpdateUserEmail:output_type -> users.GenericResponse
+	10, // [10:18] is the sub-list for method output_type
+	2,  // [2:10] is the sub-list for method input_type
 	2,  // [2:2] is the sub-list for extension type_name
 	2,  // [2:2] is the sub-list for extension extendee
 	0,  // [0:2] is the sub-list for field type_name
@@ -949,7 +1008,7 @@ func file_user_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_auth_proto_rawDesc), len(file_user_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -29,6 +29,7 @@ const (
 	UserService_TouchUserLastLogin_FullMethodName       = "/users.UserService/TouchUserLastLogin"
 	UserService_LinkClientUser_FullMethodName           = "/users.UserService/LinkClientUser"
 	UserService_GetClientsByLinkedUser_FullMethodName   = "/users.UserService/GetClientsByLinkedUser"
+	UserService_UpdateUserEmail_FullMethodName          = "/users.UserService/UpdateUserEmail"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -51,6 +52,8 @@ type UserServiceClient interface {
 	LinkClientUser(ctx context.Context, in *LinkClientUserRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	// GetClientsByLinkedUser returns all clients linked to a given auth user (one per provider).
 	GetClientsByLinkedUser(ctx context.Context, in *GetClientByLinkedUserRequest, opts ...grpc.CallOption) (*GetClientsResponse, error)
+	// UpdateUserEmail updates the email on the users service after a confirmed email change.
+	UpdateUserEmail(ctx context.Context, in *UpdateUserEmailRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 }
 
 type userServiceClient struct {
@@ -131,6 +134,16 @@ func (c *userServiceClient) GetClientsByLinkedUser(ctx context.Context, in *GetC
 	return out, nil
 }
 
+func (c *userServiceClient) UpdateUserEmail(ctx context.Context, in *UpdateUserEmailRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, UserService_UpdateUserEmail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
@@ -151,6 +164,8 @@ type UserServiceServer interface {
 	LinkClientUser(context.Context, *LinkClientUserRequest) (*GenericResponse, error)
 	// GetClientsByLinkedUser returns all clients linked to a given auth user (one per provider).
 	GetClientsByLinkedUser(context.Context, *GetClientByLinkedUserRequest) (*GetClientsResponse, error)
+	// UpdateUserEmail updates the email on the users service after a confirmed email change.
+	UpdateUserEmail(context.Context, *UpdateUserEmailRequest) (*GenericResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -181,6 +196,9 @@ func (UnimplementedUserServiceServer) LinkClientUser(context.Context, *LinkClien
 }
 func (UnimplementedUserServiceServer) GetClientsByLinkedUser(context.Context, *GetClientByLinkedUserRequest) (*GetClientsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetClientsByLinkedUser not implemented")
+}
+func (UnimplementedUserServiceServer) UpdateUserEmail(context.Context, *UpdateUserEmailRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateUserEmail not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -329,6 +347,24 @@ func _UserService_GetClientsByLinkedUser_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_UpdateUserEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUserEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UpdateUserEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_UpdateUserEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UpdateUserEmail(ctx, req.(*UpdateUserEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -363,6 +399,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetClientsByLinkedUser",
 			Handler:    _UserService_GetClientsByLinkedUser_Handler,
+		},
+		{
+			MethodName: "UpdateUserEmail",
+			Handler:    _UserService_UpdateUserEmail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

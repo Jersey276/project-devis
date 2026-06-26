@@ -27,9 +27,12 @@ export function useDialogSubmit(genericError: string) {
           onClose(false);
           return;
         }
-        if (status === 422 && Array.isArray(body.field_errors)) {
-          setFieldErrors(fieldErrorsFromBody(body));
-          return;
+        if (status === 422) {
+          const parsed = fieldErrorsFromBody(body);
+          if (Object.keys(parsed).length > 0) {
+            setFieldErrors(parsed);
+            return;
+          }
         }
         toast.error(body.message ?? genericError);
       } catch {

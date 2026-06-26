@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"project-devis-users/actions/codes"
+	"project-devis-users/actions/sqlutil"
 	usersGrpc "project-devis-users/services/grpc"
 )
 
@@ -12,10 +13,10 @@ func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateCountryGroupRe
 	var fieldErrors []*usersGrpc.ValidationError
 
 	if req.CountryGroupId == 0 {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "country_group_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("country_group_id"))
 	}
 	if req.Name == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "name", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("name"))
 	}
 
 	if len(fieldErrors) > 0 {

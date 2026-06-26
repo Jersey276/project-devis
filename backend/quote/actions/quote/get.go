@@ -22,11 +22,17 @@ func Get(ctx context.Context, db *sql.DB, req *quoteGrpc.GetQuoteRequest) (*quot
 		clientID      string
 		addressID     int32
 		userAddressID int32
+		issuedAt      sql.NullTime
+		validUntil    sql.NullTime
+		paymentTerms  sql.NullString
 	)
 	err := db.QueryRowContext(ctx,
-		`SELECT quote_id, user_id, name, archived_at, state, client_id, address_id, COALESCE(user_address_id, 0) FROM quotes WHERE quote_id=$1 AND user_id=$2`,
+		`SELECT quote_id, user_id, name, archived_at, state, client_id, address_id, COALESCE(user_address_id, 0),
+		        issued_at, valid_until, payment_terms
+		 FROM quotes WHERE quote_id=$1 AND user_id=$2`,
 		req.QuoteId, req.UserId,
-	).Scan(&quoteID, &userID, &name, &archivedAt, &state, &clientID, &addressID, &userAddressID)
+	).Scan(&quoteID, &userID, &name, &archivedAt, &state, &clientID, &addressID, &userAddressID,
+		&issuedAt, &validUntil, &paymentTerms)
 	if err == sql.ErrNoRows {
 		return &quoteGrpc.GetQuoteResponse{Success: false, Code: codes.NotFound}, nil
 	}
@@ -56,6 +62,15 @@ func Get(ctx context.Context, db *sql.DB, req *quoteGrpc.GetQuoteRequest) (*quot
 		return &quoteGrpc.GetQuoteResponse{Success: false, Code: codes.InternalError}, err
 	}
 
+	issuedAtStr := ""
+	if issuedAt.Valid {
+		issuedAtStr = issuedAt.Time.UTC().Format("2006-01-02T15:04:05Z")
+	}
+	validUntilStr := ""
+	if validUntil.Valid {
+		validUntilStr = validUntil.Time.Format("2006-01-02")
+	}
+
 	return &quoteGrpc.GetQuoteResponse{
 		Success: true,
 		Code:    codes.Success,
@@ -68,6 +83,9 @@ func Get(ctx context.Context, db *sql.DB, req *quoteGrpc.GetQuoteRequest) (*quot
 			ClientId:      clientID,
 			AddressId:     addressID,
 			UserAddressId: userAddressID,
+			IssuedAt:      issuedAtStr,
+			ValidUntil:    validUntilStr,
+			PaymentTerms:  paymentTerms.String,
 		},
 		Lines: lines,
 	}, nil

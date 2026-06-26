@@ -1,6 +1,10 @@
 package line
 
-import "testing"
+import (
+	"testing"
+
+	"project-devis-quote/actions/sqlutil"
+)
 
 func TestValidateData_Simple(t *testing.T) {
 	cases := []struct {
@@ -20,7 +24,7 @@ func TestValidateData_Simple(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			got, err := ValidateData(TypeSimple, c.input)
+			got, err := ValidateData(sqlutil.TypeSimple, c.input)
 			if c.wantErr {
 				if err == nil {
 					t.Fatalf("expected error for %q, got nil", c.input)
@@ -58,7 +62,7 @@ func TestValidateData_Multiple(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			_, err := ValidateData(TypeMultiple, c.input)
+			_, err := ValidateData(sqlutil.TypeMultiple, c.input)
 			if c.wantErr && err == nil {
 				t.Fatalf("expected error, got nil for input %q", c.input)
 			}

@@ -12,11 +12,12 @@ import {
   UsersIcon,
   WrenchIcon,
   CreditCardIcon,
-  BarChart2Icon,
   CoinsIcon,
   ReceiptEuroIcon,
   FolderIcon,
   BuildingIcon,
+  LayoutDashboardIcon,
+  MailIcon,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "../ui/button";
@@ -33,11 +34,13 @@ import {
 } from "../ui/sidebar";
 import UserMenu from "../user/user-menu";
 import { useMode, type UserMode } from "@/lib/mode-context";
-import { apiFetch } from "@/lib/api";
-import { isSuperAdmin, type AuthContext } from "@/lib/access";
+import { useAuth } from "@/lib/auth-context";
+import { canUsePaidFeatures, isSuperAdmin } from "@/lib/access";
 import { cn } from "@/lib/utils";
 
 type NavKey =
+  | "dashboard"
+  | "adminDashboard"
   | "project"
   | "quote"
   | "schedule"
@@ -51,24 +54,28 @@ type NavKey =
   | "taxes"
   | "templates"
   | "subscriptions"
-  | "analytics"
   | "logs"
+  | "emailLogs"
   | "test";
 
 type SidebarItem = {
   key: NavKey;
   url: string;
   icon: LucideIcon;
-  // Modes in which this entry is visible. Omit to show in every mode.
   modes?: UserMode[];
-  // Marker for entries that will be gated by the upcoming roles/permissions system.
   temp?: boolean;
   adminOnly?: boolean;
+  premium?: boolean;
 };
 
 type SidebarView = "user" | "admin";
 
 const items: SidebarItem[] = [
+  {
+    key: "dashboard",
+    url: "/",
+    icon: LayoutDashboardIcon,
+  },
   {
     key: "project",
     url: "/projects",
@@ -84,18 +91,21 @@ const items: SidebarItem[] = [
     url: "/schedule",
     icon: QuoteIcon,
     modes: ["provider"],
+    premium: true,
   },
   {
     key: "invoices",
     url: "/invoice",
     icon: ReceiptEuroIcon,
     modes: ["provider"],
+    premium: true,
   },
   {
     key: "creditNotes",
     url: "/credit-note",
     icon: ReceiptEuroIcon,
     modes: ["provider"],
+    premium: true,
   },
   {
     key: "clients",
@@ -108,6 +118,13 @@ const items: SidebarItem[] = [
     url: "/client-profile",
     icon: UserIcon,
     modes: ["customer"],
+  },
+  {
+    key: "adminDashboard",
+    url: "/admin/dashboard",
+    icon: LayoutDashboardIcon,
+    modes: ["provider"],
+    adminOnly: true,
   },
   {
     key: "users",
@@ -138,12 +155,14 @@ const items: SidebarItem[] = [
     url: "/fees",
     icon: CoinsIcon,
     modes: ["provider"],
+    premium: true,
   },
   {
     key: "templates",
     url: "/templates",
     icon: WrenchIcon,
     modes: ["provider"],
+    premium: true,
   },
   {
     key: "subscriptions",
@@ -153,16 +172,16 @@ const items: SidebarItem[] = [
     adminOnly: true,
   },
   {
-    key: "analytics",
-    url: "/analytics",
-    icon: BarChart2Icon,
+    key: "logs",
+    url: "/logs",
+    icon: ShieldIcon,
     modes: ["provider"],
     adminOnly: true,
   },
   {
-    key: "logs",
-    url: "/logs",
-    icon: ShieldIcon,
+    key: "emailLogs",
+    url: "/email-logs",
+    icon: MailIcon,
     modes: ["provider"],
     adminOnly: true,
   },
@@ -178,19 +197,15 @@ export default function AppSidebar() {
   const { mode, setMode, isCustomer } = useMode();
   const t = useTranslations("nav");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
   const [sidebarView, setSidebarView] = useState<SidebarView>("user");
 
+  const { auth, ok } = useAuth();
+
   useEffect(() => {
-    let cancelled = false;
-    apiFetch("/api/auth/me").then(({ ok, body }) => {
-      if (cancelled) return;
-      const auth = (body.auth ?? null) as AuthContext | null;
-      setIsAdmin(ok && body.success === true && isSuperAdmin(auth));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    setIsAdmin(ok && isSuperAdmin(auth));
+    setIsPremium(ok && canUsePaidFeatures(auth));
+  }, [auth, ok]);
 
   const effectiveSidebarView: SidebarView = isAdmin ? sidebarView : "user";
 
@@ -199,9 +214,10 @@ export default function AppSidebar() {
       items.filter(
         (item) =>
           (!item.modes || item.modes.includes(mode)) &&
-          (!item.adminOnly || isAdmin),
+          (!item.adminOnly || isAdmin) &&
+          (!item.premium || isPremium),
       ),
-    [mode, isAdmin],
+    [mode, isAdmin, isPremium],
   );
 
   const userItems = useMemo(

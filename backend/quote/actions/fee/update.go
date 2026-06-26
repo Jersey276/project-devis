@@ -11,15 +11,15 @@ import (
 )
 
 func Update(ctx context.Context, db *sql.DB, req *quoteGrpc.UpdateFeeRequest) (*quoteGrpc.UpdateFeeResponse, error) {
-	fieldErrors := validateInput(req.Category, req.Name)
+	fieldErrors := sqlutil.ValidateFeeInput(req.Category, req.Name)
 	if req.FeeId == "" {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "fee_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("fee_id"))
 	}
 	if req.UserId == "" {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "user_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("user_id"))
 	}
 	if req.UnitPrice < 0 {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "unit_price", Message: "Doit être positif ou nul."})
+		fieldErrors = append(fieldErrors, sqlutil.NonNegative("unit_price"))
 	}
 	if len(fieldErrors) > 0 {
 		return &quoteGrpc.UpdateFeeResponse{Success: false, Code: codes.InvalidInput, ValidationErrors: fieldErrors}, nil

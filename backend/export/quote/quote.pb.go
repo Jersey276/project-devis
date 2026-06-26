@@ -138,6 +138,9 @@ type Quote struct {
 	ClientId      string                 `protobuf:"bytes,6,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	AddressId     int32                  `protobuf:"varint,7,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
 	UserAddressId int32                  `protobuf:"varint,8,opt,name=user_address_id,json=userAddressId,proto3" json:"user_address_id,omitempty"`
+	IssuedAt      string                 `protobuf:"bytes,9,opt,name=issued_at,json=issuedAt,proto3" json:"issued_at,omitempty"`
+	ValidUntil    string                 `protobuf:"bytes,10,opt,name=valid_until,json=validUntil,proto3" json:"valid_until,omitempty"`
+	PaymentTerms  string                 `protobuf:"bytes,11,opt,name=payment_terms,json=paymentTerms,proto3" json:"payment_terms,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -226,6 +229,27 @@ func (x *Quote) GetUserAddressId() int32 {
 		return x.UserAddressId
 	}
 	return 0
+}
+
+func (x *Quote) GetIssuedAt() string {
+	if x != nil {
+		return x.IssuedAt
+	}
+	return ""
+}
+
+func (x *Quote) GetValidUntil() string {
+	if x != nil {
+		return x.ValidUntil
+	}
+	return ""
+}
+
+func (x *Quote) GetPaymentTerms() string {
+	if x != nil {
+		return x.PaymentTerms
+	}
+	return ""
 }
 
 type CreateQuoteRequest struct {
@@ -1779,7 +1803,7 @@ const file_quote_proto_rawDesc = "" +
 	"\vquote.proto\x12\x05quote\"?\n" +
 	"\x0fGenericResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\x05R\x04code\"\xf8\x01\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\"\xdb\x02\n" +
 	"\x05Quote\x12\x19\n" +
 	"\bquote_id\x18\x01 \x01(\tR\aquoteId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
@@ -1789,7 +1813,12 @@ const file_quote_proto_rawDesc = "" +
 	"\tclient_id\x18\x06 \x01(\tR\bclientId\x12\x1d\n" +
 	"\n" +
 	"address_id\x18\a \x01(\x05R\taddressId\x12&\n" +
-	"\x0fuser_address_id\x18\b \x01(\x05R\ruserAddressId\"\xa5\x01\n" +
+	"\x0fuser_address_id\x18\b \x01(\x05R\ruserAddressId\x12\x1b\n" +
+	"\tissued_at\x18\t \x01(\tR\bissuedAt\x12\x1f\n" +
+	"\vvalid_until\x18\n" +
+	" \x01(\tR\n" +
+	"validUntil\x12#\n" +
+	"\rpayment_terms\x18\v \x01(\tR\fpaymentTerms\"\xa5\x01\n" +
 	"\x12CreateQuoteRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1b\n" +

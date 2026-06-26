@@ -2,42 +2,68 @@ syntax = "proto3";
 
 package auth;
 
-option go_package = "gateway/auth";
+option go_package = "project-devis/auth/services/grpc";
 
+// AuthService provides authentication operations
 service AuthService {
+    // Register creates a new user account
     rpc Register(RegisterRequest) returns (FormGenericResponse);
+    // Login authenticates a user and returns credentials
     rpc Login(LoginRequest) returns (LoginResponse);
+    // ResetPassword initiates a password reset process
     rpc ResetPassword(ResetPasswordRequest) returns (GenericResponse);
+    // ConfirmResetPassword completes a password reset using a token
     rpc ConfirmResetPassword(ConfirmResetPasswordRequest) returns (GenericResponse);
+    // UpdatePassword changes a user's password
     rpc UpdatePassword(UpdatePasswordRequest) returns (GenericResponse);
+    // VerifyEmail confirms a user's email address
     rpc VerifyEmail(VerifyEmailRequest) returns (GenericResponse);
+    // RefreshToken generates new access and refresh tokens
     rpc RefreshToken(RefreshTokenRequest) returns (LoginResponse);
+    // OAuthLogin authenticates or provisions a user from a verified OAuth identity.
     rpc OAuthLogin(OAuthLoginRequest) returns (LoginResponse);
+    // LinkOAuthIdentity attaches a verified OAuth identity to an authenticated user.
     rpc LinkOAuthIdentity(LinkOAuthIdentityRequest) returns (GenericResponse);
+    // UnlinkOAuthIdentity removes a linked OAuth identity from a user.
     rpc UnlinkOAuthIdentity(UnlinkOAuthIdentityRequest) returns (GenericResponse);
+    // ListOAuthIdentities returns the OAuth identities linked to a user.
     rpc ListOAuthIdentities(ListOAuthIdentitiesRequest) returns (ListOAuthIdentitiesResponse);
+    // Logout invalidates a refresh token
     rpc Logout(LogoutRequest) returns (GenericResponse);
+    // IntrospectToken validates access token against current auth state.
     rpc IntrospectToken(IntrospectTokenRequest) returns (IntrospectTokenResponse);
+    // UpdateSubscriptionTier updates a user's subscription tier and invalidates existing tokens.
     rpc UpdateSubscriptionTier(UpdateSubscriptionTierRequest) returns (GenericResponse);
+    // ResendEmailVerification re-sends the verification email for an unverified account.
     rpc ResendEmailVerification(ResendEmailVerificationRequest) returns (GenericResponse);
     // UpdateRole updates a user's role and invalidates existing tokens.
     rpc UpdateRole(UpdateRoleRequest) returns (GenericResponse);
+    // SendClientInvitation generates an invitation token and sends it by email to a client.
     rpc SendClientInvitation(SendClientInvitationRequest) returns (GenericResponse);
+    // AcceptClientInvitationNew creates a new account and links it to the client.
     rpc AcceptClientInvitationNew(AcceptClientInvitationNewRequest) returns (AcceptClientInvitationResponse);
+    // AcceptClientInvitationLinked links an existing authenticated account to the client.
     rpc AcceptClientInvitationLinked(AcceptClientInvitationLinkedRequest) returns (AcceptClientInvitationResponse);
+    // RequestEmailChange initiates an email address change by sending a verification link to the new address.
+    rpc RequestEmailChange(RequestEmailChangeRequest) returns (GenericResponse);
+    // ConfirmEmailChange validates the token and applies the new email address.
+    rpc ConfirmEmailChange(ConfirmEmailChangeRequest) returns (GenericResponse);
 }
 
+// RegisterRequest contains user registration information
 message RegisterRequest {
     string email = 1;
     string password = 2;
 }
 
+// LoginRequest contains user login credentials
 message LoginRequest {
     string email = 1;
     string password = 2;
     bool remember_me = 3;
 }
 
+// LoginResponse returns authentication tokens
 message LoginResponse {
     bool success = 1;
     optional string token = 2;
@@ -46,18 +72,21 @@ message LoginResponse {
     optional bool remember_me = 5;
 }
 
+// OAuthLoginRequest carries a verified OAuth identity from the gateway.
 message OAuthLoginRequest {
-    string provider = 1;
-    string provider_user_id = 2;
+    string provider = 1;         // "google" | "github" | "microsoft"
+    string provider_user_id = 2; // stable provider "sub"/id
     string email = 3;
     bool email_verified = 4;
     bool remember_me = 5;
 }
 
+// LinkOAuthIdentityRequest attaches a verified OAuth identity to an existing,
+// authenticated user (user_id resolved from the JWT at the gateway).
 message LinkOAuthIdentityRequest {
     string user_id = 1;
-    string provider = 2;
-    string provider_user_id = 3;
+    string provider = 2;         // "google" | "github" | "microsoft"
+    string provider_user_id = 3; // stable provider "sub"/id
     string email = 4;
     bool email_verified = 5;
 }
@@ -71,6 +100,7 @@ message ListOAuthIdentitiesRequest {
     string user_id = 1;
 }
 
+// OAuthIdentity is a single linked provider for display purposes.
 message OAuthIdentity {
     string provider = 1;
     string email = 2;
@@ -80,7 +110,7 @@ message ListOAuthIdentitiesResponse {
     bool success = 1;
     int32 code = 2;
     repeated OAuthIdentity identities = 3;
-    bool has_password = 4;
+    bool has_password = 4; // whether the account also has a password login
 }
 
 message UpdatePasswordRequest {
@@ -139,6 +169,7 @@ message AccessContext {
     string account_status = 4;
     string subscription_tier = 5;
     int32 session_version = 6;
+    bool email_verified = 7;
 }
 
 message IntrospectTokenResponse {
@@ -185,4 +216,13 @@ message AcceptClientInvitationResponse {
     string token          = 3;
     string refresh_token  = 4;
     bool   is_new_account = 5;
+}
+
+message RequestEmailChangeRequest {
+    string user_id   = 1;
+    string new_email = 2;
+}
+
+message ConfirmEmailChangeRequest {
+    string token = 1;
 }

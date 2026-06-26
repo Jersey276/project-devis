@@ -107,3 +107,19 @@ Mappés vers HTTP dans `backend/gateway/controllers/projects.go`.
 | `2001` | `InternalError` | 500  | Une erreur interne est survenue.             |
 
 Ces codes sont indépendants des codes du service auth — l'espace numérique est local à chaque service.
+
+---
+
+## Service Audit — codes métier
+
+Définis dans `backend/audit/actions/codes.go`.
+Mappés vers HTTP dans `backend/gateway/controllers/audit.go`.
+
+| Code | Constante           | HTTP | Message gateway                    |
+| ---- | ------------------- | ---- | ---------------------------------- |
+| `0`  | `CodeSuccess`       | 200  | —                                  |
+| `1`  | `CodeInternalError` | 500  | Une erreur interne est survenue.   |
+| `2`  | `CodeInvalidInput`  | 400  | Données invalides.                 |
+| `3`  | `CodeNotFound`      | 404  | Entrée introuvable.                |
+
+Ces codes sont indépendants des codes du service auth — l'espace numérique est local à chaque service.

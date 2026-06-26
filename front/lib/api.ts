@@ -30,6 +30,7 @@ export type ApiResult = {
 };
 
 const CODE_SESSION_INVALIDATED = 1008;
+const CODE_EMAIL_NOT_VERIFIED = "EMAIL_NOT_VERIFIED";
 
 // Endpoints that must not trigger the refresh-and-retry loop (would recurse or mask login failures).
 // /api/auth/password/update returns 401 when the current password is wrong — not a session
@@ -71,6 +72,12 @@ function redirectToLogin() {
   if (typeof window !== "undefined") {
     const next = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     window.location.href = `/login?next=${encodeURIComponent(next)}`;
+  }
+}
+
+function redirectToVerifyEmail() {
+  if (typeof window !== "undefined") {
+    window.location.href = "/verify-email";
   }
 }
 
@@ -171,6 +178,12 @@ export async function apiFetch(
   } catch {
     body = { success: false };
   }
+
+  if (response.status === 403 && (body as Record<string, unknown>)["code"] === CODE_EMAIL_NOT_VERIFIED) {
+    redirectToVerifyEmail();
+    return { ok: false, status: 403, body };
+  }
+
   return { ok: response.ok, status: response.status, body };
 }
 

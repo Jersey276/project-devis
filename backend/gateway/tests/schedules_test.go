@@ -174,6 +174,24 @@ func (nopQuoteClient) UpdateFee(context.Context, *quote.UpdateFeeRequest, ...grp
 func (nopQuoteClient) ArchiveFee(context.Context, *quote.ArchiveFeeRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
 	return nil, nil
 }
+func (nopQuoteClient) AcceptQuote(context.Context, *quote.AcceptQuoteRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) RefuseQuote(context.Context, *quote.RefuseQuoteRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) CreateComment(context.Context, *quote.CreateCommentRequest, ...grpc.CallOption) (*quote.CreateCommentResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) ListComments(context.Context, *quote.ListCommentsRequest, ...grpc.CallOption) (*quote.ListCommentsResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) UpdateComment(context.Context, *quote.UpdateCommentRequest, ...grpc.CallOption) (*quote.UpdateCommentResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) DeleteComment(context.Context, *quote.DeleteCommentRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
+	return nil, nil
+}
 
 type nopUsersClient struct{}
 
@@ -292,6 +310,12 @@ func (nopUsersClient) UpdateTax(context.Context, *users.UpdateTaxRequest, ...grp
 	return nil, nil
 }
 func (nopUsersClient) DeleteTax(context.Context, *users.DeleteTaxRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) GetClientsByLinkedUser(context.Context, *users.GetClientByLinkedUserRequest, ...grpc.CallOption) (*users.ListClientsResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) LinkClientUser(context.Context, *users.LinkClientUserRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
 	return nil, nil
 }
 

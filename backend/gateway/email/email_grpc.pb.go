@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v7.34.0
-// source: email/email.proto
+// source: email.proto
 
 package email
 
@@ -269,5 +269,5 @@ var EmailService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "email/email.proto",
+	Metadata: "email.proto",
 }

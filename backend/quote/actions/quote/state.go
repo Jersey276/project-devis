@@ -13,6 +13,8 @@ const (
 	StateNegociation = "negociation"
 	StateValidated   = "validated"
 	StateDrop        = "drop"
+	StateAccepted    = "accepted"
+	StateRefused     = "refused"
 )
 
 func EditableStates() []string {
@@ -29,6 +31,10 @@ func StateFromString(s string) quoteGrpc.QuoteState {
 		return quoteGrpc.QuoteState_QUOTE_STATE_VALIDATED
 	case StateDrop:
 		return quoteGrpc.QuoteState_QUOTE_STATE_DROP
+	case StateAccepted:
+		return quoteGrpc.QuoteState_QUOTE_STATE_ACCEPTED
+	case StateRefused:
+		return quoteGrpc.QuoteState_QUOTE_STATE_REFUSED
 	default:
 		return quoteGrpc.QuoteState_QUOTE_STATE_UNSPECIFIED
 	}

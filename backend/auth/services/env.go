@@ -32,6 +32,7 @@ const (
 	ResendAPIKey            EnvKey = "RESEND_API_KEY"
 	VerifyEmailBaseURL      EnvKey = "VERIFY_EMAIL_BASE_URL"
 	ClientInviteBaseURL     EnvKey = "CLIENT_INVITE_BASE_URL"
+	EmailChangeBaseURL      EnvKey = "EMAIL_CHANGE_BASE_URL"
 )
 
 func (key EnvKey) GetValue() string {

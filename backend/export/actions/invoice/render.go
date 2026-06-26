@@ -5,9 +5,9 @@ import (
 	"context"
 	"fmt"
 	"html/template"
-	"strconv"
 	"strings"
 
+	"project-devis-export/internal/format"
 	invoicepb "project-devis-export/services/invoice"
 	"project-devis-export/templates"
 )
@@ -94,18 +94,18 @@ func buildViewModel(in *invoicepb.InvoiceDetails) viewModel {
 			Name:      l.GetName(),
 			Quantity:  l.GetQuantity(),
 			Unit:      l.GetUnit(),
-			UnitPrice: formatCents(l.GetUnitPriceCents()),
-			TaxRate:   formatRate(l.GetTaxRate()),
-			Total:     formatCents(l.GetLineHtCents()),
+			UnitPrice: format.Cents(l.GetUnitPriceCents()),
+			TaxRate:   format.Rate(l.GetTaxRate()),
+			Total:     format.Cents(l.GetLineHtCents()),
 		})
 	}
 
 	vat := make([]vatView, 0, len(in.GetVatBreakdown()))
 	for _, v := range in.GetVatBreakdown() {
 		vat = append(vat, vatView{
-			Rate: formatRate(v.GetTaxRate()),
-			Base: formatCents(v.GetBaseHtCents()),
-			VAT:  formatCents(v.GetVatCents()),
+			Rate: format.Rate(v.GetTaxRate()),
+			Base: format.Cents(v.GetBaseHtCents()),
+			VAT:  format.Cents(v.GetVatCents()),
 		})
 	}
 
@@ -114,7 +114,7 @@ func buildViewModel(in *invoicepb.InvoiceDetails) viewModel {
 		InvoiceNumber: in.GetInvoiceNumber(),
 		IsDraft:       draft,
 		Status:        in.GetStatus(),
-		IssuedAt:      formatDate(in.GetIssuedAt()),
+		IssuedAt:      format.Date(in.GetIssuedAt()),
 		SaleDate:      in.GetSaleDate(),
 		DueDate:       in.GetDueDate(),
 		Issuer:        buildIssuer(in.GetIssuer()),
@@ -123,9 +123,9 @@ func buildViewModel(in *invoicepb.InvoiceDetails) viewModel {
 		VatExempt:     in.GetVatExempt(),
 		OssApplied:    in.GetOssApplied(),
 		VatBreakdown:  vat,
-		TotalHT:       formatCents(in.GetTotalHtCents()),
-		TotalVAT:      formatCents(in.GetTotalVatCents()),
-		TotalTTC:      formatCents(in.GetTotalTtcCents()),
+		TotalHT:       format.Cents(in.GetTotalHtCents()),
+		TotalVAT:      format.Cents(in.GetTotalVatCents()),
+		TotalTTC:      format.Cents(in.GetTotalTtcCents()),
 	}
 }
 
@@ -181,59 +181,3 @@ func appendAddressLines(dst []string, p *invoicepb.InvoiceParty) []string {
 	return dst
 }
 
-func formatCents(cents int64) string {
-	neg := cents < 0
-	if neg {
-		cents = -cents
-	}
-	euros := cents / 100
-	rem := cents % 100
-	euroStr := groupThousands(strconv.FormatInt(euros, 10))
-	sign := ""
-	if neg {
-		sign = "-"
-	}
-	return fmt.Sprintf("%s%s,%02d €", sign, euroStr, rem)
-}
-
-func groupThousands(s string) string {
-	n := len(s)
-	if n <= 3 {
-		return s
-	}
-	var b strings.Builder
-	pre := n % 3
-	if pre > 0 {
-		b.WriteString(s[:pre])
-		if n > pre {
-			b.WriteByte(' ')
-		}
-	}
-	for i := pre; i < n; i += 3 {
-		b.WriteString(s[i : i+3])
-		if i+3 < n {
-			b.WriteByte(' ')
-		}
-	}
-	return b.String()
-}
-
-// formatRate renders a tax-rate string as a percentage label, e.g. "20" → "20 %".
-func formatRate(rate string) string {
-	rate = strings.TrimSpace(rate)
-	if rate == "" {
-		return "0 %"
-	}
-	return rate + " %"
-}
-
-func formatDate(rfc3339 string) string {
-	if rfc3339 == "" {
-		return ""
-	}
-	// The value is RFC3339; keep just the date part for display.
-	if i := strings.IndexByte(rfc3339, 'T'); i > 0 {
-		return rfc3339[:i]
-	}
-	return rfc3339
-}

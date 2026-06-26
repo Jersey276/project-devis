@@ -1,10 +1,11 @@
+import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AdminGuard from "@/components/custom/admin-guard";
-import AnalyticsDashboard from "@/components/admin/analytics/analytics-dashboard";
+import EmailLogsDashboard from "@/components/admin/email-logs/email-logs-dashboard";
 
-export default async function AnalyticsPage() {
-  const t = await getTranslations("admin.analytics");
+export default async function EmailLogsPage() {
+  const t = await getTranslations("admin.emailLogs");
 
   return (
     <AdminGuard>
@@ -13,7 +14,9 @@ export default async function AnalyticsPage() {
           <CardTitle>{t("title")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <AnalyticsDashboard />
+          <Suspense fallback={null}>
+            <EmailLogsDashboard />
+          </Suspense>
         </CardContent>
       </Card>
     </AdminGuard>

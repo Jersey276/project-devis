@@ -59,34 +59,41 @@ func setupRouter(auditLogger *middleware.AuditLogger, auditClient audit.AuditSer
 
 	usersGroup := audited.Group("/users")
 	usersGroup.Use(middleware.AuthRequired())
+	usersGroup.Use(middleware.RequireEmailVerified())
 	controllers.UserRoutes(usersGroup)
 
 	quotes := audited.Group("/quotes")
 	quotes.Use(middleware.AuthRequired())
+	quotes.Use(middleware.RequireEmailVerified())
 	controllers.QuotesRoutes(quotes, emailNotifier)
 
 	exportGrp := audited.Group("/export")
 	exportGrp.Use(middleware.AuthRequired())
+	exportGrp.Use(middleware.RequireEmailVerified())
 	controllers.ExportRoutes(exportGrp, usersClient)
 
 	templates := audited.Group("/templates")
 	templates.Use(middleware.AuthRequired())
+	templates.Use(middleware.RequireEmailVerified())
 	templates.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionTemplates))
 	controllers.TemplateRoutes(templates)
 
 	schedules := audited.Group("/schedules")
 	schedules.Use(middleware.AuthRequired())
+	schedules.Use(middleware.RequireEmailVerified())
 	schedules.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionSchedules))
 	controllers.SchedulesRoutes(schedules, emailNotifier)
 
 	fees := audited.Group("/fees")
 	fees.Use(middleware.AuthRequired())
+	fees.Use(middleware.RequireEmailVerified())
 	fees.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionFees))
 	controllers.FeesRoutes(fees)
 
 	projects := audited.Group("/projects")
 	projects.Use(middleware.AuthRequired())
-	projects.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionSchedules))
+	projects.Use(middleware.RequireEmailVerified())
+	projects.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionProjects))
 	controllers.ProjectsRoutes(projects)
 
 	quoteAddress := os.Getenv("QUOTE_SERVICE_ADDRESS")
@@ -101,30 +108,36 @@ func setupRouter(auditLogger *middleware.AuditLogger, auditClient audit.AuditSer
 
 	invoices := audited.Group("/invoices")
 	invoices.Use(middleware.AuthRequired())
+	invoices.Use(middleware.RequireEmailVerified())
 	invoices.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionInvoices))
 	controllers.InvoicesRoutes(invoices, usersClient, quoteClient)
 
 	creditNotes := audited.Group("/credit-notes")
 	creditNotes.Use(middleware.AuthRequired())
+	creditNotes.Use(middleware.RequireEmailVerified())
 	creditNotes.Use(middleware.RequireSubscriptionFeature(authz.ResourceSubscriptionInvoices))
 	creditNotes.Use(controllers.DenyCustomer())
 	controllers.CreditNotesRoutes(creditNotes)
 
 	plans := audited.Group("/plans")
 	plans.Use(middleware.AuthRequired())
+	plans.Use(middleware.RequireEmailVerified())
 	controllers.PlansRoutes(plans)
 
 	subscriptions := audited.Group("/subscriptions")
 	subscriptions.Use(middleware.AuthRequired())
+	subscriptions.Use(middleware.RequireEmailVerified())
 	controllers.SubscriptionsRoutes(subscriptions)
 
 	emailLogs := audited.Group("/email-logs")
 	emailLogs.Use(middleware.AuthRequired())
+	emailLogs.Use(middleware.RequireEmailVerified())
 	controllers.EmailLogsRoutes(emailLogs, authorizer)
 
 	// logs group intentionally not under audited — audit reads must not log themselves
 	logs := r.Group("/api/logs")
 	logs.Use(middleware.AuthRequired())
+	logs.Use(middleware.RequireEmailVerified())
 	logs.Use(middleware.RequireSuperAdmin())
 	controllers.AuditRoutes(logs, auditClient)
 
