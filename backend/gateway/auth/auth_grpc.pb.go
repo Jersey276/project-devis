@@ -4,7 +4,7 @@
 // - protoc             v7.34.0
 // source: auth.proto
 
-package auth
+package grpc
 
 import (
 	context "context"
@@ -38,32 +38,58 @@ const (
 	AuthService_SendClientInvitation_FullMethodName         = "/auth.AuthService/SendClientInvitation"
 	AuthService_AcceptClientInvitationNew_FullMethodName    = "/auth.AuthService/AcceptClientInvitationNew"
 	AuthService_AcceptClientInvitationLinked_FullMethodName = "/auth.AuthService/AcceptClientInvitationLinked"
+	AuthService_RequestEmailChange_FullMethodName           = "/auth.AuthService/RequestEmailChange"
+	AuthService_ConfirmEmailChange_FullMethodName           = "/auth.AuthService/ConfirmEmailChange"
 )
 
 // AuthServiceClient is the client API for AuthService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// AuthService provides authentication operations
 type AuthServiceClient interface {
+	// Register creates a new user account
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*FormGenericResponse, error)
+	// Login authenticates a user and returns credentials
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	// ResetPassword initiates a password reset process
 	ResetPassword(ctx context.Context, in *ResetPasswordRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// ConfirmResetPassword completes a password reset using a token
 	ConfirmResetPassword(ctx context.Context, in *ConfirmResetPasswordRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// UpdatePassword changes a user's password
 	UpdatePassword(ctx context.Context, in *UpdatePasswordRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// VerifyEmail confirms a user's email address
 	VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// RefreshToken generates new access and refresh tokens
 	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	// OAuthLogin authenticates or provisions a user from a verified OAuth identity.
 	OAuthLogin(ctx context.Context, in *OAuthLoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	// LinkOAuthIdentity attaches a verified OAuth identity to an authenticated user.
 	LinkOAuthIdentity(ctx context.Context, in *LinkOAuthIdentityRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// UnlinkOAuthIdentity removes a linked OAuth identity from a user.
 	UnlinkOAuthIdentity(ctx context.Context, in *UnlinkOAuthIdentityRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// ListOAuthIdentities returns the OAuth identities linked to a user.
 	ListOAuthIdentities(ctx context.Context, in *ListOAuthIdentitiesRequest, opts ...grpc.CallOption) (*ListOAuthIdentitiesResponse, error)
+	// Logout invalidates a refresh token
 	Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// IntrospectToken validates access token against current auth state.
 	IntrospectToken(ctx context.Context, in *IntrospectTokenRequest, opts ...grpc.CallOption) (*IntrospectTokenResponse, error)
+	// UpdateSubscriptionTier updates a user's subscription tier and invalidates existing tokens.
 	UpdateSubscriptionTier(ctx context.Context, in *UpdateSubscriptionTierRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// ResendEmailVerification re-sends the verification email for an unverified account.
 	ResendEmailVerification(ctx context.Context, in *ResendEmailVerificationRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	// UpdateRole updates a user's role and invalidates existing tokens.
 	UpdateRole(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// SendClientInvitation generates an invitation token and sends it by email to a client.
 	SendClientInvitation(ctx context.Context, in *SendClientInvitationRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// AcceptClientInvitationNew creates a new account and links it to the client.
 	AcceptClientInvitationNew(ctx context.Context, in *AcceptClientInvitationNewRequest, opts ...grpc.CallOption) (*AcceptClientInvitationResponse, error)
+	// AcceptClientInvitationLinked links an existing authenticated account to the client.
 	AcceptClientInvitationLinked(ctx context.Context, in *AcceptClientInvitationLinkedRequest, opts ...grpc.CallOption) (*AcceptClientInvitationResponse, error)
+	// RequestEmailChange initiates an email address change by sending a verification link to the new address.
+	RequestEmailChange(ctx context.Context, in *RequestEmailChangeRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// ConfirmEmailChange validates the token and applies the new email address.
+	ConfirmEmailChange(ctx context.Context, in *ConfirmEmailChangeRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 }
 
 type authServiceClient struct {
@@ -264,30 +290,74 @@ func (c *authServiceClient) AcceptClientInvitationLinked(ctx context.Context, in
 	return out, nil
 }
 
+func (c *authServiceClient) RequestEmailChange(ctx context.Context, in *RequestEmailChangeRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, AuthService_RequestEmailChange_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) ConfirmEmailChange(ctx context.Context, in *ConfirmEmailChangeRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, AuthService_ConfirmEmailChange_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
+//
+// AuthService provides authentication operations
 type AuthServiceServer interface {
+	// Register creates a new user account
 	Register(context.Context, *RegisterRequest) (*FormGenericResponse, error)
+	// Login authenticates a user and returns credentials
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	// ResetPassword initiates a password reset process
 	ResetPassword(context.Context, *ResetPasswordRequest) (*GenericResponse, error)
+	// ConfirmResetPassword completes a password reset using a token
 	ConfirmResetPassword(context.Context, *ConfirmResetPasswordRequest) (*GenericResponse, error)
+	// UpdatePassword changes a user's password
 	UpdatePassword(context.Context, *UpdatePasswordRequest) (*GenericResponse, error)
+	// VerifyEmail confirms a user's email address
 	VerifyEmail(context.Context, *VerifyEmailRequest) (*GenericResponse, error)
+	// RefreshToken generates new access and refresh tokens
 	RefreshToken(context.Context, *RefreshTokenRequest) (*LoginResponse, error)
+	// OAuthLogin authenticates or provisions a user from a verified OAuth identity.
 	OAuthLogin(context.Context, *OAuthLoginRequest) (*LoginResponse, error)
+	// LinkOAuthIdentity attaches a verified OAuth identity to an authenticated user.
 	LinkOAuthIdentity(context.Context, *LinkOAuthIdentityRequest) (*GenericResponse, error)
+	// UnlinkOAuthIdentity removes a linked OAuth identity from a user.
 	UnlinkOAuthIdentity(context.Context, *UnlinkOAuthIdentityRequest) (*GenericResponse, error)
+	// ListOAuthIdentities returns the OAuth identities linked to a user.
 	ListOAuthIdentities(context.Context, *ListOAuthIdentitiesRequest) (*ListOAuthIdentitiesResponse, error)
+	// Logout invalidates a refresh token
 	Logout(context.Context, *LogoutRequest) (*GenericResponse, error)
+	// IntrospectToken validates access token against current auth state.
 	IntrospectToken(context.Context, *IntrospectTokenRequest) (*IntrospectTokenResponse, error)
+	// UpdateSubscriptionTier updates a user's subscription tier and invalidates existing tokens.
 	UpdateSubscriptionTier(context.Context, *UpdateSubscriptionTierRequest) (*GenericResponse, error)
+	// ResendEmailVerification re-sends the verification email for an unverified account.
 	ResendEmailVerification(context.Context, *ResendEmailVerificationRequest) (*GenericResponse, error)
 	// UpdateRole updates a user's role and invalidates existing tokens.
 	UpdateRole(context.Context, *UpdateRoleRequest) (*GenericResponse, error)
+	// SendClientInvitation generates an invitation token and sends it by email to a client.
 	SendClientInvitation(context.Context, *SendClientInvitationRequest) (*GenericResponse, error)
+	// AcceptClientInvitationNew creates a new account and links it to the client.
 	AcceptClientInvitationNew(context.Context, *AcceptClientInvitationNewRequest) (*AcceptClientInvitationResponse, error)
+	// AcceptClientInvitationLinked links an existing authenticated account to the client.
 	AcceptClientInvitationLinked(context.Context, *AcceptClientInvitationLinkedRequest) (*AcceptClientInvitationResponse, error)
+	// RequestEmailChange initiates an email address change by sending a verification link to the new address.
+	RequestEmailChange(context.Context, *RequestEmailChangeRequest) (*GenericResponse, error)
+	// ConfirmEmailChange validates the token and applies the new email address.
+	ConfirmEmailChange(context.Context, *ConfirmEmailChangeRequest) (*GenericResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -354,6 +424,12 @@ func (UnimplementedAuthServiceServer) AcceptClientInvitationNew(context.Context,
 }
 func (UnimplementedAuthServiceServer) AcceptClientInvitationLinked(context.Context, *AcceptClientInvitationLinkedRequest) (*AcceptClientInvitationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AcceptClientInvitationLinked not implemented")
+}
+func (UnimplementedAuthServiceServer) RequestEmailChange(context.Context, *RequestEmailChangeRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RequestEmailChange not implemented")
+}
+func (UnimplementedAuthServiceServer) ConfirmEmailChange(context.Context, *ConfirmEmailChangeRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ConfirmEmailChange not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -718,6 +794,42 @@ func _AuthService_AcceptClientInvitationLinked_Handler(srv interface{}, ctx cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_RequestEmailChange_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestEmailChangeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).RequestEmailChange(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_RequestEmailChange_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).RequestEmailChange(ctx, req.(*RequestEmailChangeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_ConfirmEmailChange_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfirmEmailChangeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).ConfirmEmailChange(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_ConfirmEmailChange_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).ConfirmEmailChange(ctx, req.(*ConfirmEmailChangeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -800,6 +912,14 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AcceptClientInvitationLinked",
 			Handler:    _AuthService_AcceptClientInvitationLinked_Handler,
+		},
+		{
+			MethodName: "RequestEmailChange",
+			Handler:    _AuthService_RequestEmailChange_Handler,
+		},
+		{
+			MethodName: "ConfirmEmailChange",
+			Handler:    _AuthService_ConfirmEmailChange_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

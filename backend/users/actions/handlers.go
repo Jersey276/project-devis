@@ -54,6 +54,10 @@ func (s *Server) TouchUserLastLogin(ctx context.Context, req *usersGrpc.TouchUse
 	return user.TouchUserLastLogin(ctx, s.db, req)
 }
 
+func (s *Server) UpdateUserEmail(ctx context.Context, req *usersGrpc.UpdateUserEmailRequest) (*usersGrpc.GenericResponse, error) {
+	return user.UpdateEmail(ctx, s.db, req)
+}
+
 // ─── Client ──────────────────────────────────────────────────────────────────
 
 func (s *Server) CreateClient(ctx context.Context, req *usersGrpc.CreateClientRequest) (*usersGrpc.CreateClientResponse, error) {

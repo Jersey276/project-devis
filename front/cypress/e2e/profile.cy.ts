@@ -51,6 +51,10 @@ function stubProfile(addresses = INITIAL_ADDRESSES) {
     statusCode: 200,
     body: { success: true, identities: [], has_password: true },
   }).as("getOAuthIdentities");
+  cy.intercept("POST", "/api/auth/email/request-change", {
+    statusCode: 200,
+    body: { success: true },
+  }).as("requestEmailChange");
   cy.intercept("GET", "/api/subscriptions/me", {
     statusCode: 200,
     body: {
@@ -116,7 +120,7 @@ describe("Profile page", () => {
       cy.contains("[role='tab']", "Adresses").click();
       cy.contains("button", "Ajouter une adresse").should("be.visible");
       cy.contains("[role='tab']", "Connexion").click();
-      cy.get("input[name='old_password']").should("be.visible");
+      cy.contains("Adresse email").should("be.visible");
     });
   });
 
@@ -147,6 +151,8 @@ describe("Profile page", () => {
 
       cy.wait("@updateMe").then((interception) => {
         expect(interception.request.body).to.deep.equal({
+          first_name: "",
+          last_name: "",
           phone: "0606060606",
           company: USER.company,
           siren: USER.siren,
@@ -393,6 +399,48 @@ describe("Profile page", () => {
 
   describe("Connection tab", () => {
     beforeEach(() => stubProfile());
+
+    it("shows email section with current email read-only", () => {
+      cy.visit("/profile");
+      cy.wait("@getMe");
+      cy.contains("[role='tab']", "Connexion").click();
+
+      cy.contains("Adresse email").should("be.visible");
+      cy.get("input[name='current_email']").should("have.value", USER.email);
+      cy.get("input[name='current_email']").should("have.attr", "readonly");
+    });
+
+    it("sends email change request and shows confirmation notice", () => {
+      cy.visit("/profile");
+      cy.wait("@getMe");
+      cy.contains("[role='tab']", "Connexion").click();
+
+      cy.get("input[name='new_email']").type("new@example.com");
+      cy.contains("button", "Envoyer le lien de confirmation").click();
+
+      cy.wait("@requestEmailChange").then((interception) => {
+        expect(interception.request.body).to.deep.equal({ new_email: "new@example.com" });
+      });
+      cy.get("[data-sonner-toaster]").should("contain", "Lien de confirmation envoyé.");
+      cy.contains("new@example.com").should("be.visible");
+    });
+
+    it("shows error toast when email change request fails", () => {
+      cy.intercept("POST", "/api/auth/email/request-change", {
+        statusCode: 409,
+        body: { success: false, message: "Cette adresse email est déjà utilisée." },
+      }).as("requestEmailChangeFail");
+
+      cy.visit("/profile");
+      cy.wait("@getMe");
+      cy.contains("[role='tab']", "Connexion").click();
+
+      cy.get("input[name='new_email']").type("taken@example.com");
+      cy.contains("button", "Envoyer le lien de confirmation").click();
+
+      cy.wait("@requestEmailChangeFail");
+      cy.get("[data-sonner-toaster]").should("contain", "Cette adresse email est déjà utilisée.");
+    });
 
     it("validates password confirmation client-side without calling API", () => {
       cy.intercept("POST", "/api/auth/password/update", () => {

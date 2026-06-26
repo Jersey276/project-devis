@@ -16,6 +16,7 @@ service UserService {
     rpc UpdateAdminAccount(UpdateAdminAccountRequest) returns (GenericResponse);
     rpc SuspendAdminAccount(SuspendAdminAccountRequest) returns (GenericResponse);
     rpc TouchUserLastLogin(TouchUserLastLoginRequest) returns (GenericResponse);
+    rpc UpdateUserEmail(UpdateUserEmailRequest) returns (GenericResponse);
 
     // Client
     rpc CreateClient(CreateClientRequest) returns (CreateClientResponse);
@@ -208,6 +209,11 @@ message SuspendAdminAccountRequest {
 
 message TouchUserLastLoginRequest {
     string user_id = 1;
+}
+
+message UpdateUserEmailRequest {
+    string user_id   = 1;
+    string new_email = 2;
 }
 
 // ─── Client ──────────────────────────────────────────────────────────────────

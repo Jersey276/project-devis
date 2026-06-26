@@ -119,56 +119,58 @@ export default function UserInfoForm({
   }
 
   return (
-    <form className="grid max-w-3xl gap-4" onSubmit={handleSubmit} noValidate>
-      <FieldGroup>
-        {readOnly ? (
-          <p className="text-muted-foreground rounded-md border border-dashed px-3 py-2 text-sm">
-            {t("suspendedNotice")}
-          </p>
-        ) : null}
+    <form className="grid max-w-3xl gap-8" onSubmit={handleSubmit} noValidate>
+      {readOnly ? (
+        <p className="text-muted-foreground rounded-md border border-dashed px-3 py-2 text-sm">
+          {t("suspendedNotice")}
+        </p>
+      ) : null}
 
-        <Field>
-          <FieldLabel htmlFor="email">{t("emailLabel")}</FieldLabel>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            value={user.email}
-            readOnly
-            aria-readonly
-          />
-          <FieldDescription>{t("emailHint")}</FieldDescription>
-        </Field>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field data-invalid={!!fieldErrors.first_name?.length}>
-            <FieldLabel htmlFor="first_name">{t("firstNameLabel")}</FieldLabel>
+      {/* Informations de base */}
+      <section className="grid gap-4">
+        <h3 className="text-sm font-semibold">{t("sectionBasic")}</h3>
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="email">{t("emailLabel")}</FieldLabel>
             <Input
-              id="first_name"
-              name="first_name"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              aria-invalid={!!fieldErrors.first_name?.length}
-              disabled={readOnly}
+              id="email"
+              name="email"
+              type="email"
+              value={user.email}
+              readOnly
+              aria-readonly
             />
-            <FieldError errors={toErrorProps(fieldErrors.first_name)} />
+            <FieldDescription>{t("emailHint")}</FieldDescription>
           </Field>
 
-          <Field data-invalid={!!fieldErrors.last_name?.length}>
-            <FieldLabel htmlFor="last_name">{t("lastNameLabel")}</FieldLabel>
-            <Input
-              id="last_name"
-              name="last_name"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              aria-invalid={!!fieldErrors.last_name?.length}
-              disabled={readOnly}
-            />
-            <FieldError errors={toErrorProps(fieldErrors.last_name)} />
-          </Field>
-        </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Field data-invalid={!!fieldErrors.first_name?.length}>
+              <FieldLabel htmlFor="first_name">{t("firstNameLabel")}</FieldLabel>
+              <Input
+                id="first_name"
+                name="first_name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                aria-invalid={!!fieldErrors.first_name?.length}
+                disabled={readOnly}
+              />
+              <FieldError errors={toErrorProps(fieldErrors.first_name)} />
+            </Field>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Field data-invalid={!!fieldErrors.last_name?.length}>
+              <FieldLabel htmlFor="last_name">{t("lastNameLabel")}</FieldLabel>
+              <Input
+                id="last_name"
+                name="last_name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                aria-invalid={!!fieldErrors.last_name?.length}
+                disabled={readOnly}
+              />
+              <FieldError errors={toErrorProps(fieldErrors.last_name)} />
+            </Field>
+          </div>
+
           <Field data-invalid={!!fieldErrors.phone?.length}>
             <FieldLabel htmlFor="phone">{t("phoneLabel")}</FieldLabel>
             <Input
@@ -182,7 +184,13 @@ export default function UserInfoForm({
             />
             <FieldError errors={toErrorProps(fieldErrors.phone)} />
           </Field>
+        </FieldGroup>
+      </section>
 
+      {/* Informations de l'entreprise */}
+      <section className="grid gap-4">
+        <h3 className="text-sm font-semibold">{t("sectionCompany")}</h3>
+        <FieldGroup>
           <Field data-invalid={!!fieldErrors.company?.length}>
             <FieldLabel htmlFor="company">{t("companyLabel")}</FieldLabel>
             <Input
@@ -195,91 +203,97 @@ export default function UserInfoForm({
             />
             <FieldError errors={toErrorProps(fieldErrors.company)} />
           </Field>
-        </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field data-invalid={!!fieldErrors.siren?.length}>
-            <FieldLabel htmlFor="siren">{t("sirenLabel")}</FieldLabel>
-            <Input
-              id="siren"
-              name="siren"
-              value={siren}
-              onChange={(e) => setSiren(e.target.value)}
-              aria-invalid={!!fieldErrors.siren?.length}
-              disabled={readOnly}
-            />
-            <FieldError errors={toErrorProps(fieldErrors.siren)} />
-          </Field>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Field data-invalid={!!fieldErrors.siren?.length}>
+              <FieldLabel htmlFor="siren">{t("sirenLabel")}</FieldLabel>
+              <Input
+                id="siren"
+                name="siren"
+                value={siren}
+                onChange={(e) => setSiren(e.target.value)}
+                aria-invalid={!!fieldErrors.siren?.length}
+                disabled={readOnly}
+              />
+              <FieldError errors={toErrorProps(fieldErrors.siren)} />
+            </Field>
 
-          <Field data-invalid={!!fieldErrors.vat?.length}>
-            <FieldLabel htmlFor="vat">{t("vatLabel")}</FieldLabel>
-            <Input
-              id="vat"
-              name="vat"
-              value={vat}
-              onChange={(e) => setVat(e.target.value)}
-              aria-invalid={!!fieldErrors.vat?.length}
-              disabled={readOnly}
-            />
-            <FieldError errors={toErrorProps(fieldErrors.vat)} />
-          </Field>
+            <Field data-invalid={!!fieldErrors.siret?.length}>
+              <FieldLabel htmlFor="siret">{t("siretLabel")}</FieldLabel>
+              <Input
+                id="siret"
+                name="siret"
+                value={siret}
+                onChange={(e) => setSiret(e.target.value)}
+                aria-invalid={!!fieldErrors.siret?.length}
+                disabled={readOnly}
+              />
+              <FieldError errors={toErrorProps(fieldErrors.siret)} />
+            </Field>
 
-          <Field data-invalid={!!fieldErrors.siret?.length}>
-            <FieldLabel htmlFor="siret">{t("siretLabel")}</FieldLabel>
-            <Input
-              id="siret"
-              name="siret"
-              value={siret}
-              onChange={(e) => setSiret(e.target.value)}
-              aria-invalid={!!fieldErrors.siret?.length}
-              disabled={readOnly}
-            />
-            <FieldError errors={toErrorProps(fieldErrors.siret)} />
-          </Field>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field data-invalid={!!fieldErrors.iban?.length}>
-            <FieldLabel htmlFor="iban">{t("ibanLabel")}</FieldLabel>
-            <Input
-              id="iban"
-              name="iban"
-              value={iban}
-              onChange={(e) => setIban(e.target.value)}
-              aria-invalid={!!fieldErrors.iban?.length}
-              disabled={readOnly}
-            />
-            <FieldDescription>{t("ibanHint")}</FieldDescription>
-            <FieldError errors={toErrorProps(fieldErrors.iban)} />
-          </Field>
-
-          <Field data-invalid={!!fieldErrors.bic?.length}>
-            <FieldLabel htmlFor="bic">{t("bicLabel")}</FieldLabel>
-            <Input
-              id="bic"
-              name="bic"
-              value={bic}
-              onChange={(e) => setBic(e.target.value)}
-              aria-invalid={!!fieldErrors.bic?.length}
-              disabled={readOnly}
-            />
-            <FieldError errors={toErrorProps(fieldErrors.bic)} />
-          </Field>
-        </div>
-
-        <Field orientation="horizontal">
-          <Checkbox
-            id="oss_enabled"
-            checked={ossEnabled}
-            onCheckedChange={(checked) => setOssEnabled(checked === true)}
-            disabled={readOnly}
-          />
-          <div className="grid gap-1">
-            <FieldLabel htmlFor="oss_enabled">{t("ossEnabledLabel")}</FieldLabel>
-            <FieldDescription>{t("ossEnabledHint")}</FieldDescription>
+            <Field data-invalid={!!fieldErrors.vat?.length}>
+              <FieldLabel htmlFor="vat">{t("vatLabel")}</FieldLabel>
+              <Input
+                id="vat"
+                name="vat"
+                value={vat}
+                onChange={(e) => setVat(e.target.value)}
+                aria-invalid={!!fieldErrors.vat?.length}
+                disabled={readOnly}
+              />
+              <FieldError errors={toErrorProps(fieldErrors.vat)} />
+            </Field>
           </div>
-        </Field>
-      </FieldGroup>
+
+          <Field orientation="horizontal">
+            <Checkbox
+              id="oss_enabled"
+              checked={ossEnabled}
+              onCheckedChange={(checked) => setOssEnabled(checked === true)}
+              disabled={readOnly}
+            />
+            <div className="grid gap-1">
+              <FieldLabel htmlFor="oss_enabled">{t("ossEnabledLabel")}</FieldLabel>
+              <FieldDescription>{t("ossEnabledHint")}</FieldDescription>
+            </div>
+          </Field>
+        </FieldGroup>
+      </section>
+
+      {/* Informations bancaires */}
+      <section className="grid gap-4">
+        <h3 className="text-sm font-semibold">{t("sectionBanking")}</h3>
+        <FieldGroup>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Field data-invalid={!!fieldErrors.iban?.length}>
+              <FieldLabel htmlFor="iban">{t("ibanLabel")}</FieldLabel>
+              <Input
+                id="iban"
+                name="iban"
+                value={iban}
+                onChange={(e) => setIban(e.target.value)}
+                aria-invalid={!!fieldErrors.iban?.length}
+                disabled={readOnly}
+              />
+              <FieldDescription>{t("ibanHint")}</FieldDescription>
+              <FieldError errors={toErrorProps(fieldErrors.iban)} />
+            </Field>
+
+            <Field data-invalid={!!fieldErrors.bic?.length}>
+              <FieldLabel htmlFor="bic">{t("bicLabel")}</FieldLabel>
+              <Input
+                id="bic"
+                name="bic"
+                value={bic}
+                onChange={(e) => setBic(e.target.value)}
+                aria-invalid={!!fieldErrors.bic?.length}
+                disabled={readOnly}
+              />
+              <FieldError errors={toErrorProps(fieldErrors.bic)} />
+            </Field>
+          </div>
+        </FieldGroup>
+      </section>
 
       <div className="flex justify-end">
         <Button type="submit" disabled={submitting || readOnly}>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
+import AnalyticsDashboard from "@/components/admin/analytics/analytics-dashboard";
 import LogsStatsChart from "@/components/admin/logs/logs-stats-chart";
 import PieChartCard from "@/components/charts/pie-chart-card";
 import LineChartCard, { type LineSeriesConfig } from "@/components/charts/line-chart-card";
@@ -98,6 +99,16 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8">
+      {/* Analytiques abonnements */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("subscriptions")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AnalyticsDashboard />
+        </CardContent>
+      </Card>
+
       {/* Connexions & inscriptions */}
       <Card>
         <CardHeader>

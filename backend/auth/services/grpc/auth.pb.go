@@ -1652,6 +1652,102 @@ func (x *AcceptClientInvitationResponse) GetIsNewAccount() bool {
 	return false
 }
 
+type RequestEmailChangeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	NewEmail      string                 `protobuf:"bytes,2,opt,name=new_email,json=newEmail,proto3" json:"new_email,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestEmailChangeRequest) Reset() {
+	*x = RequestEmailChangeRequest{}
+	mi := &file_auth_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestEmailChangeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestEmailChangeRequest) ProtoMessage() {}
+
+func (x *RequestEmailChangeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestEmailChangeRequest.ProtoReflect.Descriptor instead.
+func (*RequestEmailChangeRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *RequestEmailChangeRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *RequestEmailChangeRequest) GetNewEmail() string {
+	if x != nil {
+		return x.NewEmail
+	}
+	return ""
+}
+
+type ConfirmEmailChangeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConfirmEmailChangeRequest) Reset() {
+	*x = ConfirmEmailChangeRequest{}
+	mi := &file_auth_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConfirmEmailChangeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConfirmEmailChangeRequest) ProtoMessage() {}
+
+func (x *ConfirmEmailChangeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConfirmEmailChangeRequest.ProtoReflect.Descriptor instead.
+func (*ConfirmEmailChangeRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *ConfirmEmailChangeRequest) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
 var File_auth_proto protoreflect.FileDescriptor
 
 const file_auth_proto_rawDesc = "" +
@@ -1773,7 +1869,12 @@ const file_auth_proto_rawDesc = "" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x14\n" +
 	"\x05token\x18\x03 \x01(\tR\x05token\x12#\n" +
 	"\rrefresh_token\x18\x04 \x01(\tR\frefreshToken\x12$\n" +
-	"\x0eis_new_account\x18\x05 \x01(\bR\fisNewAccount2\xad\v\n" +
+	"\x0eis_new_account\x18\x05 \x01(\bR\fisNewAccount\"Q\n" +
+	"\x19RequestEmailChangeRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1b\n" +
+	"\tnew_email\x18\x02 \x01(\tR\bnewEmail\"1\n" +
+	"\x19ConfirmEmailChangeRequest\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token2\xc9\f\n" +
 	"\vAuthService\x12<\n" +
 	"\bRegister\x12\x15.auth.RegisterRequest\x1a\x19.auth.FormGenericResponse\x120\n" +
 	"\x05Login\x12\x12.auth.LoginRequest\x1a\x13.auth.LoginResponse\x12B\n" +
@@ -1795,7 +1896,9 @@ const file_auth_proto_rawDesc = "" +
 	"UpdateRole\x12\x17.auth.UpdateRoleRequest\x1a\x15.auth.GenericResponse\x12P\n" +
 	"\x14SendClientInvitation\x12!.auth.SendClientInvitationRequest\x1a\x15.auth.GenericResponse\x12i\n" +
 	"\x19AcceptClientInvitationNew\x12&.auth.AcceptClientInvitationNewRequest\x1a$.auth.AcceptClientInvitationResponse\x12o\n" +
-	"\x1cAcceptClientInvitationLinked\x12).auth.AcceptClientInvitationLinkedRequest\x1a$.auth.AcceptClientInvitationResponseB\"Z project-devis/auth/services/grpcb\x06proto3"
+	"\x1cAcceptClientInvitationLinked\x12).auth.AcceptClientInvitationLinkedRequest\x1a$.auth.AcceptClientInvitationResponse\x12L\n" +
+	"\x12RequestEmailChange\x12\x1f.auth.RequestEmailChangeRequest\x1a\x15.auth.GenericResponse\x12L\n" +
+	"\x12ConfirmEmailChange\x12\x1f.auth.ConfirmEmailChangeRequest\x1a\x15.auth.GenericResponseB\"Z project-devis/auth/services/grpcb\x06proto3"
 
 var (
 	file_auth_proto_rawDescOnce sync.Once
@@ -1809,7 +1912,7 @@ func file_auth_proto_rawDescGZIP() []byte {
 	return file_auth_proto_rawDescData
 }
 
-var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
 var file_auth_proto_goTypes = []any{
 	(*RegisterRequest)(nil),                     // 0: auth.RegisterRequest
 	(*LoginRequest)(nil),                        // 1: auth.LoginRequest
@@ -1839,6 +1942,8 @@ var file_auth_proto_goTypes = []any{
 	(*AcceptClientInvitationNewRequest)(nil),    // 25: auth.AcceptClientInvitationNewRequest
 	(*AcceptClientInvitationLinkedRequest)(nil), // 26: auth.AcceptClientInvitationLinkedRequest
 	(*AcceptClientInvitationResponse)(nil),      // 27: auth.AcceptClientInvitationResponse
+	(*RequestEmailChangeRequest)(nil),           // 28: auth.RequestEmailChangeRequest
+	(*ConfirmEmailChangeRequest)(nil),           // 29: auth.ConfirmEmailChangeRequest
 }
 var file_auth_proto_depIdxs = []int32{
 	7,  // 0: auth.ListOAuthIdentitiesResponse.identities:type_name -> auth.OAuthIdentity
@@ -1863,27 +1968,31 @@ var file_auth_proto_depIdxs = []int32{
 	24, // 19: auth.AuthService.SendClientInvitation:input_type -> auth.SendClientInvitationRequest
 	25, // 20: auth.AuthService.AcceptClientInvitationNew:input_type -> auth.AcceptClientInvitationNewRequest
 	26, // 21: auth.AuthService.AcceptClientInvitationLinked:input_type -> auth.AcceptClientInvitationLinkedRequest
-	16, // 22: auth.AuthService.Register:output_type -> auth.FormGenericResponse
-	2,  // 23: auth.AuthService.Login:output_type -> auth.LoginResponse
-	10, // 24: auth.AuthService.ResetPassword:output_type -> auth.GenericResponse
-	10, // 25: auth.AuthService.ConfirmResetPassword:output_type -> auth.GenericResponse
-	10, // 26: auth.AuthService.UpdatePassword:output_type -> auth.GenericResponse
-	10, // 27: auth.AuthService.VerifyEmail:output_type -> auth.GenericResponse
-	2,  // 28: auth.AuthService.RefreshToken:output_type -> auth.LoginResponse
-	2,  // 29: auth.AuthService.OAuthLogin:output_type -> auth.LoginResponse
-	10, // 30: auth.AuthService.LinkOAuthIdentity:output_type -> auth.GenericResponse
-	10, // 31: auth.AuthService.UnlinkOAuthIdentity:output_type -> auth.GenericResponse
-	8,  // 32: auth.AuthService.ListOAuthIdentities:output_type -> auth.ListOAuthIdentitiesResponse
-	10, // 33: auth.AuthService.Logout:output_type -> auth.GenericResponse
-	20, // 34: auth.AuthService.IntrospectToken:output_type -> auth.IntrospectTokenResponse
-	10, // 35: auth.AuthService.UpdateSubscriptionTier:output_type -> auth.GenericResponse
-	10, // 36: auth.AuthService.ResendEmailVerification:output_type -> auth.GenericResponse
-	10, // 37: auth.AuthService.UpdateRole:output_type -> auth.GenericResponse
-	10, // 38: auth.AuthService.SendClientInvitation:output_type -> auth.GenericResponse
-	27, // 39: auth.AuthService.AcceptClientInvitationNew:output_type -> auth.AcceptClientInvitationResponse
-	27, // 40: auth.AuthService.AcceptClientInvitationLinked:output_type -> auth.AcceptClientInvitationResponse
-	22, // [22:41] is the sub-list for method output_type
-	3,  // [3:22] is the sub-list for method input_type
+	28, // 22: auth.AuthService.RequestEmailChange:input_type -> auth.RequestEmailChangeRequest
+	29, // 23: auth.AuthService.ConfirmEmailChange:input_type -> auth.ConfirmEmailChangeRequest
+	16, // 24: auth.AuthService.Register:output_type -> auth.FormGenericResponse
+	2,  // 25: auth.AuthService.Login:output_type -> auth.LoginResponse
+	10, // 26: auth.AuthService.ResetPassword:output_type -> auth.GenericResponse
+	10, // 27: auth.AuthService.ConfirmResetPassword:output_type -> auth.GenericResponse
+	10, // 28: auth.AuthService.UpdatePassword:output_type -> auth.GenericResponse
+	10, // 29: auth.AuthService.VerifyEmail:output_type -> auth.GenericResponse
+	2,  // 30: auth.AuthService.RefreshToken:output_type -> auth.LoginResponse
+	2,  // 31: auth.AuthService.OAuthLogin:output_type -> auth.LoginResponse
+	10, // 32: auth.AuthService.LinkOAuthIdentity:output_type -> auth.GenericResponse
+	10, // 33: auth.AuthService.UnlinkOAuthIdentity:output_type -> auth.GenericResponse
+	8,  // 34: auth.AuthService.ListOAuthIdentities:output_type -> auth.ListOAuthIdentitiesResponse
+	10, // 35: auth.AuthService.Logout:output_type -> auth.GenericResponse
+	20, // 36: auth.AuthService.IntrospectToken:output_type -> auth.IntrospectTokenResponse
+	10, // 37: auth.AuthService.UpdateSubscriptionTier:output_type -> auth.GenericResponse
+	10, // 38: auth.AuthService.ResendEmailVerification:output_type -> auth.GenericResponse
+	10, // 39: auth.AuthService.UpdateRole:output_type -> auth.GenericResponse
+	10, // 40: auth.AuthService.SendClientInvitation:output_type -> auth.GenericResponse
+	27, // 41: auth.AuthService.AcceptClientInvitationNew:output_type -> auth.AcceptClientInvitationResponse
+	27, // 42: auth.AuthService.AcceptClientInvitationLinked:output_type -> auth.AcceptClientInvitationResponse
+	10, // 43: auth.AuthService.RequestEmailChange:output_type -> auth.GenericResponse
+	10, // 44: auth.AuthService.ConfirmEmailChange:output_type -> auth.GenericResponse
+	24, // [24:45] is the sub-list for method output_type
+	3,  // [3:24] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
 	3,  // [3:3] is the sub-list for extension extendee
 	0,  // [0:3] is the sub-list for field type_name
@@ -1901,7 +2010,7 @@ func file_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_proto_rawDesc), len(file_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   28,
+			NumMessages:   30,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

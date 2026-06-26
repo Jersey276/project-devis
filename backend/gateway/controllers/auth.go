@@ -144,9 +144,11 @@ func AuthRoutes(r *gin.RouterGroup) *gin.RouterGroup {
 
 	email := r.Group("/email")
 	email.POST("/verify", func(c *gin.Context) { VerifyEmail(c, client) })
+	email.POST("/confirm-change", func(c *gin.Context) { ConfirmEmailChange(c, client) })
 	emailAuth := email.Group("")
 	emailAuth.Use(middleware.AuthRequired())
 	emailAuth.POST("/resend-verification", func(c *gin.Context) { ResendEmailVerification(c, client) })
+	emailAuth.POST("/request-change", func(c *gin.Context) { RequestEmailChange(c, client) })
 
 	return r
 }

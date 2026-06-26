@@ -44,6 +44,10 @@ service AuthService {
     rpc AcceptClientInvitationNew(AcceptClientInvitationNewRequest) returns (AcceptClientInvitationResponse);
     // AcceptClientInvitationLinked links an existing authenticated account to the client.
     rpc AcceptClientInvitationLinked(AcceptClientInvitationLinkedRequest) returns (AcceptClientInvitationResponse);
+    // RequestEmailChange initiates an email address change by sending a verification link to the new address.
+    rpc RequestEmailChange(RequestEmailChangeRequest) returns (GenericResponse);
+    // ConfirmEmailChange validates the token and applies the new email address.
+    rpc ConfirmEmailChange(ConfirmEmailChangeRequest) returns (GenericResponse);
 }
 
 // RegisterRequest contains user registration information
@@ -212,4 +216,13 @@ message AcceptClientInvitationResponse {
     string token          = 3;
     string refresh_token  = 4;
     bool   is_new_account = 5;
+}
+
+message RequestEmailChangeRequest {
+    string user_id   = 1;
+    string new_email = 2;
+}
+
+message ConfirmEmailChangeRequest {
+    string token = 1;
 }

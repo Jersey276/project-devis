@@ -213,7 +213,7 @@ export default function PlansTable() {
       </DataTable>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg p-6 overflow-y-auto max-h-[90dvh]">
           <DialogHeader>
             <DialogTitle>{t("editDialog.title")}</DialogTitle>
           </DialogHeader>

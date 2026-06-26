@@ -15,6 +15,9 @@ var emailVerificationTmpl string
 //go:embed templates/client_invitation.html
 var clientInvitationTmpl string
 
+//go:embed templates/email_change.html
+var emailChangeTmpl string
+
 type passwordResetData struct {
 	ResetURL string
 }
@@ -38,6 +41,14 @@ func renderEmailVerification(verifyURL string) (string, error) {
 
 func renderClientInvitation(inviteURL, clientName string) (string, error) {
 	return renderTmpl(clientInvitationTmpl, clientInvitationData{InviteURL: inviteURL, ClientName: clientName})
+}
+
+type emailChangeData struct {
+	ConfirmURL string
+}
+
+func renderEmailChange(confirmURL string) (string, error) {
+	return renderTmpl(emailChangeTmpl, emailChangeData{ConfirmURL: confirmURL})
 }
 
 func renderTmpl(tmpl string, data any) (string, error) {
