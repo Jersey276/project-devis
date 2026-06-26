@@ -68,7 +68,7 @@ func buildFilters(f *auditGrpc.ActivityLogFilters) (string, []interface{}) {
 
 	if f.UserId != "" && f.UrlContains != "" {
 		args = append(args, f.UserId, "%"+f.UrlContains+"%")
-		clauses = append(clauses, fmt.Sprintf("(user_id = $%d OR url ILIKE $%d)", len(args)-1, len(args)))
+		clauses = append(clauses, fmt.Sprintf("user_id = $%d AND url ILIKE $%d", len(args)-1, len(args)))
 	} else if f.UserId != "" {
 		args = append(args, f.UserId)
 		clauses = append(clauses, fmt.Sprintf("user_id = $%d", len(args)))

@@ -23,6 +23,8 @@ import { toast } from "sonner";
 export type UserProfile = {
   user_id: string;
   email: string;
+  first_name: string;
+  last_name: string;
   phone: string;
   company: string;
   siren: string;
@@ -47,6 +49,8 @@ export default function UserInfoForm({
 }: UserInfoFormProps) {
   const t = useTranslations("profile.userInfo");
   const tCommon = useTranslations("common");
+  const [firstName, setFirstName] = useState(user.first_name ?? "");
+  const [lastName, setLastName] = useState(user.last_name ?? "");
   const [phone, setPhone] = useState(user.phone ?? "");
   const [company, setCompany] = useState(user.company ?? "");
   const [siren, setSiren] = useState(user.siren ?? "");
@@ -84,6 +88,8 @@ export default function UserInfoForm({
       const { ok, body } = await apiFetch("/api/users/me", {
         method: "PUT",
         body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
           phone,
           company,
           siren,
@@ -96,7 +102,7 @@ export default function UserInfoForm({
       });
       if (ok && body.success) {
         toast.success(t("successToast"));
-        onSaved?.({ ...user, phone, company, siren, siret, vat, oss_enabled: ossEnabled, iban, bic });
+        onSaved?.({ ...user, first_name: firstName, last_name: lastName, phone, company, siren, siret, vat, oss_enabled: ossEnabled, iban, bic });
         return;
       }
       const parsed = fieldErrorsFromBody(body);
@@ -133,6 +139,34 @@ export default function UserInfoForm({
           />
           <FieldDescription>{t("emailHint")}</FieldDescription>
         </Field>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Field data-invalid={!!fieldErrors.first_name?.length}>
+            <FieldLabel htmlFor="first_name">{t("firstNameLabel")}</FieldLabel>
+            <Input
+              id="first_name"
+              name="first_name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              aria-invalid={!!fieldErrors.first_name?.length}
+              disabled={readOnly}
+            />
+            <FieldError errors={toErrorProps(fieldErrors.first_name)} />
+          </Field>
+
+          <Field data-invalid={!!fieldErrors.last_name?.length}>
+            <FieldLabel htmlFor="last_name">{t("lastNameLabel")}</FieldLabel>
+            <Input
+              id="last_name"
+              name="last_name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              aria-invalid={!!fieldErrors.last_name?.length}
+              disabled={readOnly}
+            />
+            <FieldError errors={toErrorProps(fieldErrors.last_name)} />
+          </Field>
+        </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field data-invalid={!!fieldErrors.phone?.length}>

@@ -242,6 +242,8 @@ type User struct {
 	Bic  string `protobuf:"bytes,11,opt,name=bic,proto3" json:"bic,omitempty"`
 	// siret: 14-digit establishment id (SIREN + NIC), recipient routing key.
 	Siret         string `protobuf:"bytes,12,opt,name=siret,proto3" json:"siret,omitempty"`
+	FirstName     string `protobuf:"bytes,13,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
+	LastName      string `protobuf:"bytes,14,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -356,6 +358,20 @@ func (x *User) GetBic() string {
 func (x *User) GetSiret() string {
 	if x != nil {
 		return x.Siret
+	}
+	return ""
+}
+
+func (x *User) GetFirstName() string {
+	if x != nil {
+		return x.FirstName
+	}
+	return ""
+}
+
+func (x *User) GetLastName() string {
+	if x != nil {
+		return x.LastName
 	}
 	return ""
 }
@@ -599,6 +615,8 @@ type UpdateUserRequest struct {
 	Iban          string                 `protobuf:"bytes,8,opt,name=iban,proto3" json:"iban,omitempty"`
 	Bic           string                 `protobuf:"bytes,9,opt,name=bic,proto3" json:"bic,omitempty"`
 	Siret         string                 `protobuf:"bytes,10,opt,name=siret,proto3" json:"siret,omitempty"`
+	FirstName     string                 `protobuf:"bytes,11,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
+	LastName      string                 `protobuf:"bytes,12,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -699,6 +717,20 @@ func (x *UpdateUserRequest) GetBic() string {
 func (x *UpdateUserRequest) GetSiret() string {
 	if x != nil {
 		return x.Siret
+	}
+	return ""
+}
+
+func (x *UpdateUserRequest) GetFirstName() string {
+	if x != nil {
+		return x.FirstName
+	}
+	return ""
+}
+
+func (x *UpdateUserRequest) GetLastName() string {
+	if x != nil {
+		return x.LastName
 	}
 	return ""
 }

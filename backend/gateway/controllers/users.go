@@ -213,6 +213,8 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 		return
 	}
 	var input struct {
+		FirstName  string `json:"first_name"`
+		LastName   string `json:"last_name"`
 		Phone      string `json:"phone"`
 		Company    string `json:"company"`
 		Siren      string `json:"siren"`
@@ -233,6 +235,8 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 	}
 	resp, err := client.UpdateUser(c.Request.Context(), &users.UpdateUserRequest{
 		UserId:     userIDFromCtx(c),
+		FirstName:  input.FirstName,
+		LastName:   input.LastName,
 		Phone:      input.Phone,
 		Company:    input.Company,
 		Siren:      input.Siren,
@@ -714,6 +718,8 @@ func marshalUser(u *users.User) gin.H {
 	return gin.H{
 		"user_id":     u.UserId,
 		"email":       u.Email,
+		"first_name":  u.FirstName,
+		"last_name":   u.LastName,
 		"phone":       u.Phone,
 		"company":     u.Company,
 		"siren":       u.Siren,

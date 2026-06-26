@@ -119,51 +119,6 @@ function ProfileCard({ user }: { user: AdminUserAccount }) {
   );
 }
 
-// ─── Login logs section ───────────────────────────────────────────────────────
-
-function LoginLogsSection({ userId }: { userId: string }) {
-  const t = useTranslations("admin.users.detail.loginLogs");
-  const [logs, setLogs] = useState<ActivityLog[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    const params = new URLSearchParams({
-      user_id: userId,
-      url_contains: "/api/auth",
-      page: "1",
-      page_size: "30",
-    });
-    apiFetch(`/api/logs?${params.toString()}`).then(({ ok, body }) => {
-      if (cancelled) return;
-      if (ok && body.success) setLogs((body.logs ?? []) as ActivityLog[]);
-      setLoading(false);
-    });
-    return () => { cancelled = true; };
-  }, [userId]);
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-9 w-full" />
-            ))}
-          </div>
-        ) : logs.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("empty")}</p>
-        ) : (
-          <LogsTable logs={logs} />
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 // ─── Activity logs section ────────────────────────────────────────────────────
 
 function ActivityLogsSection({ userId }: { userId: string }) {
@@ -465,7 +420,6 @@ export default function AdminUserDetail({ userId }: { userId: string }) {
   return (
     <div className="space-y-4">
       <ProfileCard user={user} />
-      <LoginLogsSection userId={userId} />
       <ActivityLogsSection userId={userId} />
       <DocumentsSection userId={userId} />
     </div>

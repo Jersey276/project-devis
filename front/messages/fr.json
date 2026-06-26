@@ -1026,10 +1026,6 @@
           "statusSuspended": "Suspendu",
           "empty": "—"
         },
-        "loginLogs": {
-          "title": "Registre des connexions",
-          "empty": "Aucune connexion enregistrée."
-        },
         "activityLogs": {
           "title": "Registre d'activité",
           "empty": "Aucune activité enregistrée."
@@ -1198,6 +1194,8 @@
       "emailLabel": "Email",
       "emailHint": "L'adresse email se modifie depuis l'onglet Connexion.",
       "suspendedNotice": "Votre compte est suspendu. Les informations sont en lecture seule.",
+      "firstNameLabel": "Prénom",
+      "lastNameLabel": "Nom",
       "phoneLabel": "Téléphone",
       "companyLabel": "Société",
       "sirenLabel": "SIREN",
