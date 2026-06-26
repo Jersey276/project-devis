@@ -33,12 +33,12 @@ func TestState_TamperRejected(t *testing.T) {
 
 func TestSafeNextPath(t *testing.T) {
 	cases := map[string]string{
-		"/quote":          "/quote",
-		"/quote/1?x=2":    "/quote/1?x=2",
-		"":                "/quote",
-		"//evil.com":      "/quote",
+		"/quote":           "/quote",
+		"/quote/1?x=2":     "/quote/1?x=2",
+		"":                 "/quote",
+		"//evil.com":       "/quote",
 		"https://evil.com": "/quote",
-		"relative":        "/quote",
+		"relative":         "/quote",
 	}
 	for in, want := range cases {
 		if got := SafeNextPath(in); got != want {

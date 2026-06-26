@@ -64,11 +64,11 @@ func (s *Server) GetAdminStats(ctx context.Context, _ *subGrpc.GetAdminStatsRequ
 	}
 
 	return &subGrpc.AdminStatsResponse{
-		Success:                 true,
-		Code:                    CodeSuccess,
+		Success:                  true,
+		Code:                     CodeSuccess,
 		TotalActiveSubscriptions: totalActive,
-		TotalRevenueCents:       totalRevenue,
-		PlanDistribution:        distribution,
-		MonthlyRevenue:          monthly,
+		TotalRevenueCents:        totalRevenue,
+		PlanDistribution:         distribution,
+		MonthlyRevenue:           monthly,
 	}, nil
 }

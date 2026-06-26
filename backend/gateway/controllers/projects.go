@@ -276,12 +276,12 @@ func removeQuoteFromProject(c *gin.Context, client project.ProjectServiceClient)
 
 // projectQuoteRow is the shape returned per quote in the detail response.
 type projectQuoteRow struct {
-	QuoteId   string             `json:"quote_id"`
-	UserId    string             `json:"user_id"`
-	Name      string             `json:"name"`
-	State     string             `json:"state"`
-	ClientId  string             `json:"client_id"`
-	Archived  bool               `json:"archived"`
+	QuoteId   string                      `json:"quote_id"`
+	UserId    string                      `json:"user_id"`
+	Name      string                      `json:"name"`
+	State     string                      `json:"state"`
+	ClientId  string                      `json:"client_id"`
+	Archived  bool                        `json:"archived"`
 	Schedules []*schedule.ScheduleSummary `json:"schedules"`
 	Invoices  []*invoice.InvoiceSummary   `json:"invoices"`
 }
@@ -430,10 +430,10 @@ func getProjectDetail(
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success":              true,
-		"project":              projectResp.Project,
-		"quotes":               rows,
-		"total_ht_cents":       totalHT,
-		"collected_ht_cents":   collectedHT,
+		"success":            true,
+		"project":            projectResp.Project,
+		"quotes":             rows,
+		"total_ht_cents":     totalHT,
+		"collected_ht_cents": collectedHT,
 	})
 }

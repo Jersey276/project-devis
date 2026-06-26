@@ -51,6 +51,7 @@ export default function EditProjectDialog({ project, open, onOpenChange, onUpdat
 
   useEffect(() => {
     if (!open) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync form fields when dialog opens
     setName(project.name);
     setClientId(project.client_id ?? "");
     setStatus(project.status);

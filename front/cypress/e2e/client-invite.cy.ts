@@ -1,7 +1,6 @@
 import { client } from "../support/fixtures";
 
 const clientWithEmail = client({ email: "jean@example.com" });
-const clientWithoutEmail = client({ email: "", client_id: "c-2" });
 const clientLinked = client({ linked_user_id: "u-linked" });
 
 describe("Client invitation", () => {

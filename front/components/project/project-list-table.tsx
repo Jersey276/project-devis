@@ -105,8 +105,8 @@ function ProjectListTableInner() {
   }) {
     const params = new URLSearchParams(searchParams.toString());
     if (p.page !== undefined) params.set("page", String(p.page));
-    if (p.search !== undefined) { p.search ? params.set("search", p.search) : params.delete("search"); }
-    if (p.status !== undefined) { p.status ? params.set("status", p.status) : params.delete("status"); }
+    if (p.search !== undefined) { if (p.search) params.set("search", p.search); else params.delete("search"); }
+    if (p.status !== undefined) { if (p.status) params.set("status", p.status); else params.delete("status"); }
     if (p.sort_by !== undefined) params.set("sort_by", p.sort_by);
     if (p.sort_direction !== undefined) params.set("sort_direction", p.sort_direction);
     router.push(`${pathname}?${params.toString()}`);

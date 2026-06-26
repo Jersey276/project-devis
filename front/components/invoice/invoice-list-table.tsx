@@ -206,6 +206,7 @@ function InvoiceListTableInner() {
 
   useEffect(() => {
     const controller = new AbortController();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch with AbortController, setState called after await
     void fetchInvoices(controller.signal);
     return () => controller.abort();
   }, [fetchInvoices]);

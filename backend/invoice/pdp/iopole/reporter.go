@@ -95,9 +95,9 @@ type transactionBody struct {
 }
 
 type transaction struct {
-	CategoryCode string   `json:"categoryCode"`
-	Currency     string   `json:"currency"`
-	Monetary     monetary `json:"monetary"`
+	CategoryCode string      `json:"categoryCode"`
+	Currency     string      `json:"currency"`
+	Monetary     monetary    `json:"monetary"`
 	TaxDetails   []taxDetail `json:"taxDetails"`
 }
 

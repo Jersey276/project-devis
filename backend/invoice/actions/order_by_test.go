@@ -9,15 +9,15 @@ func TestBuildOrderBy(t *testing.T) {
 	}
 
 	cases := []struct {
-		sortBy    string
-		sortDir   string
-		want      string
+		sortBy  string
+		sortDir string
+		want    string
 	}{
 		{"name", "asc", "invoice_name ASC"},
 		{"name", "ASC", "invoice_name ASC"},
 		{"name", "desc", "invoice_name DESC"},
 		{"status", "asc", "status ASC"},
-		{"unknown", "asc", "created_at ASC"},  // whitelist fallback
+		{"unknown", "asc", "created_at ASC"},   // whitelist fallback
 		{"unknown", "desc", "created_at DESC"}, // whitelist fallback
 		{"name", "", "invoice_name DESC"},      // empty direction → DESC
 	}

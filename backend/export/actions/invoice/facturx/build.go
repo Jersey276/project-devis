@@ -16,11 +16,11 @@ const xmlHeader = `<?xml version="1.0" encoding="UTF-8"?>` + "\n"
 // lacks (a credit note has no due/sale date; an invoice has no referenced
 // document) are simply left zero.
 type docInput struct {
-	typeCode    string
-	number      string
-	issuedAt    string
-	saleDate    string
-	dueDate     string
+	typeCode          string
+	number            string
+	issuedAt          string
+	saleDate          string
+	dueDate           string
 	referencedInvoice string // BT-3, credit note only
 
 	issuer *invoicepb.InvoiceParty

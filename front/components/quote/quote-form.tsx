@@ -55,7 +55,6 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const { isCustomer } = useMode();
   const t = useTranslations("quote.form");
   const tSteps = useTranslations("quote.steps");
-  const tStatus = useTranslations("status.quote");
   const tCommon = useTranslations("common");
   const isCreate = !quoteId;
 

@@ -98,12 +98,12 @@ func (s *Server) ListSchedules(ctx context.Context, req *scheduleGrpc.ListSchedu
 }
 
 var allowedScheduleSortColumns = map[string]string{
-	"id":              "schedule_id",
-	"name":            "name",
-	"quoteId":         "quote_id",
-	"status":          "status",
-	"startMonth":      "start_month",
-	"durationMonths":  "duration_months",
+	"id":             "schedule_id",
+	"name":           "name",
+	"quoteId":        "quote_id",
+	"status":         "status",
+	"startMonth":     "start_month",
+	"durationMonths": "duration_months",
 }
 
 func buildScheduleOrderBy(sortBy, sortDirection string) string {

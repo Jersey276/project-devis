@@ -169,4 +169,3 @@ func appendAddressLines(dst []string, p *invoicepb.InvoiceParty) []string {
 	}
 	return dst
 }
-

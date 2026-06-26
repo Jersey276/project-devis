@@ -21,14 +21,14 @@ import (
 )
 
 const (
-	QuoteCodeNotFound        int32 = 1001
-	QuoteCodeAlreadyExists   int32 = 1002
-	QuoteCodeInvalidInput    int32 = 1003
-	QuoteCodeInvalidLineType int32 = 1004
-	QuoteCodeInvalidLineData int32 = 1005
-	QuoteCodeFinalized       int32 = 1006
+	QuoteCodeNotFound         int32 = 1001
+	QuoteCodeAlreadyExists    int32 = 1002
+	QuoteCodeInvalidInput     int32 = 1003
+	QuoteCodeInvalidLineType  int32 = 1004
+	QuoteCodeInvalidLineData  int32 = 1005
+	QuoteCodeFinalized        int32 = 1006
 	QuoteCodeCommentForbidden int32 = 1007
-	QuoteCodeInternalError   int32 = 2001
+	QuoteCodeInternalError    int32 = 2001
 )
 
 func quoteValidationErrors(errs []*quote.ValidationError) []FieldError {
@@ -1168,4 +1168,3 @@ func DeleteQuoteLineComment(c *gin.Context, client quote.QuoteServiceClient) {
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
-

@@ -146,4 +146,3 @@ func (al *AuditLogger) Middleware() gin.HandlerFunc {
 		}
 	}
 }
-

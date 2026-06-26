@@ -91,6 +91,7 @@ export default function LogsDashboard() {
   }, [searchParams]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch, setState called after await
     fetchLogs();
   }, [fetchLogs]);
 

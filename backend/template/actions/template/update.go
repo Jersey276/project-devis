@@ -30,4 +30,3 @@ func Update(ctx context.Context, db *sql.DB, req *templateGrpc.UpdateTemplateReq
 
 	return &templateGrpc.UpdateTemplateResponse{Success: true, Code: codes.Success}, nil
 }
-

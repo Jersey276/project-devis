@@ -36,13 +36,13 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
       setDetail(body as unknown as BackendProjectDetail);
     }).catch(() => {});
     return () => controller.abort();
-  }, [projectId, refreshKey, t]);
+  }, [projectId, t]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch, setState called after await
     const cleanup = load();
     return cleanup;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshKey, projectId]);
+  }, [load, refreshKey]);
 
   useEffect(() => {
     listClients().then(({ ok, body }) => {

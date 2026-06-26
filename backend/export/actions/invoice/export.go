@@ -9,8 +9,8 @@ import (
 	"project-devis-export/actions/invoice/facturx"
 	"project-devis-export/internal/slug"
 	"project-devis-export/services/facturxpdf"
-	invoicepb "project-devis-export/services/invoice"
 	exportGrpc "project-devis-export/services/grpc"
+	invoicepb "project-devis-export/services/invoice"
 )
 
 // Upstream invoice-service codes mirrored here (kept in sync with

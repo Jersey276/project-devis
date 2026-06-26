@@ -28,7 +28,7 @@ func loadPDFA3Fixture(t *testing.T) []byte {
 // fakeInvoice implements just the GetInvoice call the export orchestrator uses.
 type fakeInvoice struct {
 	invoicepb.InvoiceServiceClient // embedded: other methods panic if ever called
-	getInvoice func(context.Context, *invoicepb.GetInvoiceRequest) (*invoicepb.GetInvoiceResponse, error)
+	getInvoice                     func(context.Context, *invoicepb.GetInvoiceRequest) (*invoicepb.GetInvoiceResponse, error)
 }
 
 func (f *fakeInvoice) GetInvoice(ctx context.Context, in *invoicepb.GetInvoiceRequest, _ ...grpc.CallOption) (*invoicepb.GetInvoiceResponse, error) {
