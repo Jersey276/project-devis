@@ -301,6 +301,7 @@ func marshalAdminAccount(a *users.AdminAccount) gin.H {
 		"company":       a.Company,
 		"siren":         a.Siren,
 		"vat":           a.Vat,
+		"created_at":    a.CreatedAt,
 	}
 }
 

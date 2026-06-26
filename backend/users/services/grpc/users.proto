@@ -173,6 +173,7 @@ message AdminAccount {
     string company = 10;
     string siren = 11;
     string vat = 12;
+    string created_at = 13;
 }
 
 message ListAdminAccountsRequest {

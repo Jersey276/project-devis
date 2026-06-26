@@ -16,6 +16,7 @@ export type AdminUserAccount = {
   role: AdminUserRole;
   plan: string;
   last_login_at: string | null;
+  created_at: string;
   suspended: boolean;
   phone?: string;
   company?: string;

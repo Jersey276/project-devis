@@ -105,7 +105,8 @@ func ListAdminAccounts(ctx context.Context, db *sql.DB, req *usersGrpc.ListAdmin
 			COALESCE(phone, ''),
 			COALESCE(company, ''),
 			COALESCE(siren, ''),
-			COALESCE(vat, '')
+			COALESCE(vat, ''),
+			created_at
 		FROM users`
 	if len(conditions) > 0 {
 		query += " WHERE " + strings.Join(conditions, " AND ")
@@ -125,6 +126,7 @@ func ListAdminAccounts(ctx context.Context, db *sql.DB, req *usersGrpc.ListAdmin
 	for rows.Next() {
 		var account usersGrpc.AdminAccount
 		var lastLoginAt sql.NullTime
+		var createdAt time.Time
 		if err := rows.Scan(
 			&account.UserId,
 			&account.FirstName,
@@ -138,12 +140,14 @@ func ListAdminAccounts(ctx context.Context, db *sql.DB, req *usersGrpc.ListAdmin
 			&account.Company,
 			&account.Siren,
 			&account.Vat,
+			&createdAt,
 		); err != nil {
 			return &usersGrpc.ListAdminAccountsResponse{Success: false, Code: codes.InternalError}, err
 		}
 		if lastLoginAt.Valid {
 			account.LastLoginAt = lastLoginAt.Time.UTC().Format(time.RFC3339)
 		}
+		account.CreatedAt = createdAt.UTC().Format(time.RFC3339)
 		accounts = append(accounts, &account)
 	}
 	if err := rows.Err(); err != nil {

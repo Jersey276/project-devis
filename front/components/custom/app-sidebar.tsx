@@ -17,6 +17,7 @@ import {
   ReceiptEuroIcon,
   FolderIcon,
   BuildingIcon,
+  LayoutDashboardIcon,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "../ui/button";
@@ -38,6 +39,7 @@ import { isSuperAdmin, type AuthContext } from "@/lib/access";
 import { cn } from "@/lib/utils";
 
 type NavKey =
+  | "dashboard"
   | "project"
   | "quote"
   | "schedule"
@@ -69,6 +71,11 @@ type SidebarItem = {
 type SidebarView = "user" | "admin";
 
 const items: SidebarItem[] = [
+  {
+    key: "dashboard",
+    url: "/",
+    icon: LayoutDashboardIcon,
+  },
   {
     key: "project",
     url: "/projects",

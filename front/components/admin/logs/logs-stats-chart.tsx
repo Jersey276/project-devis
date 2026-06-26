@@ -2,17 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 import { apiFetch } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
+import LineChartCard, { type LineSeriesConfig } from "@/components/charts/line-chart-card";
 
 type RawStat = {
   date: string;
@@ -42,7 +34,6 @@ function groupKey(status: number): string {
 
 function pivot(raw: RawStat[]): ChartPoint[] {
   const byDate = new Map<string, ChartPoint>();
-
   for (const entry of raw) {
     if (!byDate.has(entry.date)) {
       byDate.set(entry.date, { date: entry.date });
@@ -51,10 +42,7 @@ function pivot(raw: RawStat[]): ChartPoint[] {
     const key = groupKey(entry.resp_status);
     point[key] = ((point[key] as number | undefined) ?? 0) + entry.count;
   }
-
-  return Array.from(byDate.values()).sort((a, b) =>
-    a.date < b.date ? -1 : 1,
-  );
+  return Array.from(byDate.values()).sort((a, b) => (a.date < b.date ? -1 : 1));
 }
 
 function formatDate(dateStr: string): string {
@@ -80,6 +68,12 @@ export default function LogsStatsChart() {
     new Set(data.flatMap((p) => Object.keys(p).filter((k) => k !== "date")))
   ).sort();
 
+  const lines: LineSeriesConfig[] = presentGroups.map((group) => ({
+    key: group,
+    color: STATUS_GROUPS[group]?.color ?? "#94a3b8",
+    label: `HTTP ${group}`,
+  }));
+
   if (loading) {
     return <Skeleton className="h-48 w-full rounded-lg" />;
   }
@@ -89,42 +83,16 @@ export default function LogsStatsChart() {
   }
 
   return (
-    <div className="space-y-2">
-      <p className="text-sm font-medium">{t("statsTitle")}</p>
-      <ResponsiveContainer width="100%" height={220}>
-        <LineChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis
-            dataKey="date"
-            tickFormatter={formatDate}
-            tick={{ fontSize: 11 }}
-            tickLine={false}
-            axisLine={false}
-          />
-          <YAxis
-            allowDecimals={false}
-            tick={{ fontSize: 11 }}
-            tickLine={false}
-            axisLine={false}
-            width={32}
-          />
-          <Tooltip
-            formatter={(value, name) => [value, `HTTP ${name}`]}
-            labelFormatter={(label) => formatDate(label as string)}
-          />
-          {presentGroups.map((group) => (
-            <Line
-              key={group}
-              type="monotone"
-              dataKey={group}
-              stroke={STATUS_GROUPS[group]?.color ?? "#94a3b8"}
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4 }}
-            />
-          ))}
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
+    <LineChartCard
+      title={t("statsTitle")}
+      data={data}
+      lines={lines}
+      xAxisKey="date"
+      height={240}
+      xTickFormatter={formatDate}
+      tooltipLabelFormatter={formatDate}
+      tooltipFormatter={(value, name) => [value, name]}
+      vertical={false}
+    />
   );
 }

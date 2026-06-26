@@ -1025,6 +1025,7 @@ type AdminAccount struct {
 	Company       string                 `protobuf:"bytes,10,opt,name=company,proto3" json:"company,omitempty"`
 	Siren         string                 `protobuf:"bytes,11,opt,name=siren,proto3" json:"siren,omitempty"`
 	Vat           string                 `protobuf:"bytes,12,opt,name=vat,proto3" json:"vat,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,13,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1139,6 +1140,13 @@ func (x *AdminAccount) GetSiren() string {
 func (x *AdminAccount) GetVat() string {
 	if x != nil {
 		return x.Vat
+	}
+	return ""
+}
+
+func (x *AdminAccount) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
 	}
 	return ""
 }

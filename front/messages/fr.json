@@ -52,6 +52,7 @@
     "taxes": "Taxes",
     "templates": "Templates",
     "subscriptions": "Abonnements",
+    "dashboard": "Tableau de bord",
     "analytics": "Analytiques",
     "logs": "Journal d'activité",
     "test": "Test",
@@ -64,7 +65,36 @@
   "breadcrumb": {},
   "dashboard": {
     "title": "Tableau de bord",
-    "welcome": "Bienvenue sur votre tableau de bord."
+    "welcome": "Bienvenue sur votre tableau de bord.",
+    "admin": {
+      "subscriptions": "Abonnements",
+      "usersTitle": "Utilisateurs",
+      "connectionBreakdown": "Répartition des dernières connexions",
+      "registrationTrend": "Inscriptions par mois",
+      "httpActivity": "Activité API",
+      "ranges": {
+        "last7": "0–7 jours",
+        "last30": "8–30 jours",
+        "last90": "31–90 jours",
+        "older": "90j+",
+        "never": "Jamais connecté"
+      }
+    },
+    "user": {
+      "chartsTitle": "Vue d'ensemble du compte",
+      "recentProjects": "Derniers projets",
+      "recentQuotes": "Derniers devis",
+      "noData": "Aucune donnée disponible.",
+      "noProjects": "Aucun projet.",
+      "noQuotes": "Aucun devis.",
+      "col": {
+        "name": "Nom",
+        "status": "Statut",
+        "date": "Date",
+        "state": "État",
+        "total": "Total TTC"
+      }
+    }
   },
   "auth": {
     "login": {
