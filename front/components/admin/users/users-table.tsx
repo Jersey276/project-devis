@@ -29,7 +29,7 @@ import {
   DataTableSortableHead,
   type DataTableRowAction,
 } from "@/components/custom/data-table";
-import { BanIcon, PencilIcon } from "lucide-react";
+import { BanIcon, EyeIcon, PencilIcon } from "lucide-react";
 import { toast } from "sonner";
 import { listAdminUsers, suspendAdminUser } from "@/lib/services/admin-users";
 import { type AdminUserAccount } from "@/components/admin/types";
@@ -114,6 +114,12 @@ function UsersTableInner() {
   }
 
   const rowActions: DataTableRowAction[] = [
+    {
+      type: "link",
+      label: tCommon("actions.view"),
+      icon: EyeIcon,
+      href: "/users/{id}",
+    },
     {
       type: "callback",
       label: tCommon("actions.edit"),

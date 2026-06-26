@@ -55,6 +55,12 @@ func ListAdminAccounts(ctx context.Context, db *sql.DB, req *usersGrpc.ListAdmin
 	var args []any
 	argIdx := 1
 
+	if userID := strings.TrimSpace(req.UserId); userID != "" {
+		conditions = append(conditions, `user_id = $`+fmt.Sprintf("%d", argIdx))
+		args = append(args, userID)
+		argIdx++
+	}
+
 	if search := strings.TrimSpace(req.Search); search != "" {
 		conditions = append(conditions, `(
 			LOWER(COALESCE(first_name, '')) LIKE $`+fmt.Sprintf("%d", argIdx)+`

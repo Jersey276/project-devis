@@ -1104,6 +1104,7 @@ type ListAdminAccountsRequest struct {
 	Search        string                 `protobuf:"bytes,1,opt,name=search,proto3" json:"search,omitempty"`
 	Roles         []string               `protobuf:"bytes,2,rep,name=roles,proto3" json:"roles,omitempty"`
 	Statuses      []string               `protobuf:"bytes,3,rep,name=statuses,proto3" json:"statuses,omitempty"`
+	UserId        string                 `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1157,6 +1158,13 @@ func (x *ListAdminAccountsRequest) GetStatuses() []string {
 		return x.Statuses
 	}
 	return nil
+}
+
+func (x *ListAdminAccountsRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
 }
 
 type ListAdminAccountsResponse struct {

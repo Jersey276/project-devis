@@ -6,6 +6,7 @@
       "saving": "Enregistrement…",
       "delete": "Supprimer",
       "edit": "Modifier",
+      "view": "Voir",
       "loading": "Chargement…",
       "close": "Fermer"
     },
@@ -1004,6 +1005,72 @@
         "sirenLabel": "SIREN",
         "vatLabel": "N° de TVA",
         "updateSuccessToast": "Compte mis à jour."
+      },
+      "detail": {
+        "backLink": "Retour aux utilisateurs",
+        "profile": {
+          "title": "Informations du compte",
+          "userId": "ID",
+          "email": "Adresse mail",
+          "firstName": "Prénom",
+          "lastName": "Nom",
+          "role": "Rôle",
+          "plan": "Plan",
+          "phone": "Téléphone",
+          "company": "Société",
+          "siren": "SIREN",
+          "vat": "N° de TVA",
+          "lastLogin": "Dernière connexion",
+          "status": "Statut",
+          "statusActive": "Actif",
+          "statusSuspended": "Suspendu",
+          "empty": "—"
+        },
+        "loginLogs": {
+          "title": "Registre des connexions",
+          "empty": "Aucune connexion enregistrée."
+        },
+        "activityLogs": {
+          "title": "Registre d'activité",
+          "empty": "Aucune activité enregistrée."
+        },
+        "documents": {
+          "title": "Documents",
+          "tabs": {
+            "quotes": "Devis",
+            "schedules": "Échéanciers",
+            "invoices": "Factures"
+          },
+          "quotes": {
+            "empty": "Aucun devis.",
+            "columns": {
+              "name": "Nom",
+              "state": "Statut",
+              "client": "Client",
+              "createdAt": "Créé le"
+            }
+          },
+          "schedules": {
+            "empty": "Aucun échéancier.",
+            "columns": {
+              "name": "Nom",
+              "status": "Statut",
+              "quoteName": "Devis",
+              "startMonth": "Début",
+              "durationMonths": "Durée"
+            },
+            "durationValue": "{n} mois"
+          },
+          "invoices": {
+            "empty": "Aucune facture.",
+            "columns": {
+              "number": "N°",
+              "status": "Statut",
+              "issuedAt": "Émise le",
+              "total": "Total TTC"
+            }
+          }
+        }
       }
     },
     "plans": {

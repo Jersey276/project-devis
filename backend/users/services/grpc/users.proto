@@ -175,6 +175,7 @@ message ListAdminAccountsRequest {
     string search = 1;
     repeated string roles = 2;
     repeated string statuses = 3;
+    string user_id = 4;
 }
 
 message ListAdminAccountsResponse {
