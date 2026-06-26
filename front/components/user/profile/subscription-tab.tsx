@@ -21,6 +21,17 @@ type SubscriptionTabProps = {
   name?: string;
 };
 
+const PLAN_FEATURE_KEYS = [
+  "max_schedules",
+  "max_templates",
+  "max_projects",
+  "max_linked_clients",
+  "fees_catalog",
+  "b2b_invoicing",
+] as const;
+
+const BOOLEAN_FEATURE_KEYS = new Set(["fees_catalog", "b2b_invoicing"]);
+
 function parsePlanFeatures(
   features: BackendPlan["features"],
 ): Record<string, number> {
@@ -109,8 +120,6 @@ export default function SubscriptionTab({
     setSelectedPlan(plan);
     setDialogOpen(true);
   }
-
-  const PLAN_FEATURE_KEYS = ["max_schedules", "max_templates"] as const;
 
   const currentTier = subscription?.tier ?? "free";
 
@@ -213,7 +222,13 @@ export default function SubscriptionTab({
                       key={plan.plan_id}
                       className={`px-6 py-3 text-center${isCurrent ? " bg-primary/5" : ""}`}
                     >
-                      {value === undefined || value === 0 ? (
+                      {BOOLEAN_FEATURE_KEYS.has(key) ? (
+                        value === 1 ? (
+                          <span className="font-medium text-primary">✓</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )
+                      ) : value === undefined || value === 0 ? (
                         <span className="text-muted-foreground">—</span>
                       ) : value === -1 ? (
                         <span className="font-medium text-primary">

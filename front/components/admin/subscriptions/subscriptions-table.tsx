@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import {
   DataTable,
-  DataTableBody,
+  DataTableBodyRows,
   DataTableCell,
   DataTableHead,
   DataTableHeader,
@@ -156,42 +156,32 @@ export default function SubscriptionsTable() {
             </DataTableHead>
           </DataTableRow>
         </DataTableHeader>
-        <DataTableBody>
-          {subscriptions.length === 0 ? (
-            <DataTableRow>
-              <DataTableCell className="text-muted-foreground">
-                {t("empty")}
+        <DataTableBodyRows<BackendSubscription>
+          emptyColSpan={5}
+          empty={<span className="text-muted-foreground">{t("empty")}</span>}
+          render={(sub) => (
+            <DataTableRow key={sub.subscription_id || sub.user_id}>
+              <DataTableCell className="font-mono text-xs">
+                {sub.user_id}
               </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
+              <DataTableCell>
+                <Badge variant={tierVariant(sub.tier)}>
+                  {t(`tiers.${sub.tier}`)}
+                </Badge>
+              </DataTableCell>
+              <DataTableCell>{sub.status}</DataTableCell>
+              <DataTableCell className="text-muted-foreground">
+                {formatDate(sub.updated_at)}
+              </DataTableCell>
+              <DataTableCell className="w-12 text-right">
+                <DataTableRowActions
+                  id={sub.subscription_id || sub.user_id}
+                  row={sub}
+                />
+              </DataTableCell>
             </DataTableRow>
-          ) : (
-            subscriptions.map((sub) => (
-              <DataTableRow key={sub.subscription_id || sub.user_id}>
-                <DataTableCell className="font-mono text-xs">
-                  {sub.user_id}
-                </DataTableCell>
-                <DataTableCell>
-                  <Badge variant={tierVariant(sub.tier)}>
-                    {t(`tiers.${sub.tier}`)}
-                  </Badge>
-                </DataTableCell>
-                <DataTableCell>{sub.status}</DataTableCell>
-                <DataTableCell className="text-muted-foreground">
-                  {formatDate(sub.updated_at)}
-                </DataTableCell>
-                <DataTableCell className="w-12 text-right">
-                  <DataTableRowActions
-                    id={sub.subscription_id || sub.user_id}
-                    row={sub}
-                  />
-                </DataTableCell>
-              </DataTableRow>
-            ))
           )}
-        </DataTableBody>
+        />
       </DataTable>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

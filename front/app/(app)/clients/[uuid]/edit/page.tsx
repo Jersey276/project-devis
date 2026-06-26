@@ -29,7 +29,9 @@ function clientFromBackend(c: BackendClient): ClientFormValues {
     phone: c.phone ?? "",
     company: c.company ?? "",
     siren: c.siren ?? "",
+    siret: c.siret ?? "",
     vat: c.vat ?? "",
+    client_type: c.client_type || "individual",
   };
 }
 
@@ -39,6 +41,7 @@ export default function EditClientPage() {
   const t = useTranslations("client.edit");
   const tCommon = useTranslations("common");
   const [client, setClient] = useState<ClientFormValues>(EMPTY_CLIENT_VALUES);
+  const [isLinked, setIsLinked] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -48,7 +51,9 @@ export default function EditClientPage() {
     getClient(uuid).then(({ ok, body }) => {
       if (cancelled) return;
       if (ok && body.success) {
-        setClient(clientFromBackend(body.client as BackendClient));
+        const c = body.client as BackendClient;
+        setClient(clientFromBackend(c));
+        setIsLinked(!!c.linked_user_id);
         setLoaded(true);
       } else {
         toast.error((body.message as string) ?? t("notFoundToast"));
@@ -61,18 +66,19 @@ export default function EditClientPage() {
   }, [uuid, router, t]);
 
   async function handleSubmit() {
-    if (submitting) return;
+    if (submitting || isLinked) return;
     setFieldErrors({});
     setSubmitting(true);
     try {
-      const { ok, status, body } = await updateClient(uuid, client);
+      const { ok, body } = await updateClient(uuid, client);
       if (ok && body.success) {
         toast.success(t("successToast"));
         router.push(`/clients/${uuid}`);
         return;
       }
-      if (status === 422) {
-        setFieldErrors(fieldErrorsFromBody(body));
+      const parsed = fieldErrorsFromBody(body);
+      if (Object.keys(parsed).length > 0) {
+        setFieldErrors(parsed);
       } else {
         toast.error((body.message as string) ?? t("failedToast"));
       }
@@ -95,14 +101,20 @@ export default function EditClientPage() {
     <Card className="max-w-3xl">
       <CardHeader>
         <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
+        {isLinked ? (
+          <CardDescription className="text-amber-600">
+            {t("linkedNotice")}
+          </CardDescription>
+        ) : (
+          <CardDescription>{t("description")}</CardDescription>
+        )}
       </CardHeader>
 
       <CardContent>
         <ClientForm
           client={client}
-          onClientChange={setClient}
-          fieldErrors={fieldErrors}
+          onClientChange={isLinked ? () => {} : setClient}
+          fieldErrors={isLinked ? {} : fieldErrors}
         />
       </CardContent>
 
@@ -112,11 +124,13 @@ export default function EditClientPage() {
           type="button"
           onClick={() => router.push(`/clients/${uuid}`)}
         >
-          {tCommon("actions.cancel")}
+          {isLinked ? tCommon("actions.close") : tCommon("actions.cancel")}
         </Button>
-        <Button type="button" onClick={handleSubmit} disabled={submitting}>
-          {submitting ? tCommon("actions.saving") : tCommon("actions.save")}
-        </Button>
+        {!isLinked && (
+          <Button type="button" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? tCommon("actions.saving") : tCommon("actions.save")}
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

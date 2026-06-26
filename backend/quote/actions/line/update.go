@@ -15,23 +15,23 @@ func Update(ctx context.Context, db *sql.DB, req *quoteGrpc.UpdateQuoteLineReque
 	var fieldErrors []*quoteGrpc.ValidationError
 
 	if req.LineId == "" {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "line_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("line_id"))
 	}
 	if req.UserId == "" {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "user_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("user_id"))
 	}
 	if req.Type == "" {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "type", Message: "Champ requis."})
-	} else if req.Type != TypeSimple && req.Type != TypeMultiple {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "type", Message: "Type invalide."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("type"))
+	} else if req.Type != sqlutil.TypeSimple && req.Type != sqlutil.TypeMultiple {
+		fieldErrors = append(fieldErrors, sqlutil.Invalid("type", "Type invalide."))
 	}
 	if req.Quantity == "" {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "quantity", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("quantity"))
 	} else if _, err := strconv.ParseFloat(req.Quantity, 64); err != nil {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "quantity", Message: "Doit être un nombre valide."})
+		fieldErrors = append(fieldErrors, sqlutil.Invalid("quantity", "Doit être un nombre valide."))
 	}
 	if req.UnitPrice < 0 {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "unit_price", Message: "Doit être positif ou nul."})
+		fieldErrors = append(fieldErrors, sqlutil.NonNegative("unit_price"))
 	}
 
 	if len(fieldErrors) > 0 {
@@ -50,11 +50,12 @@ func Update(ctx context.Context, db *sql.DB, req *quoteGrpc.UpdateQuoteLineReque
 	res, err := db.ExecContext(ctx,
 		`UPDATE quote_lines
 		 SET type=$1, name=$2, quantity=$3::DECIMAL, unit=$4, unit_price=$5, data=$6::jsonb,
-		     position=$7, tax_id=$8, updated_at=NOW()
-		 WHERE line_id=$9`,
+		     position=$7, tax_id=$8, fee_id=$9, updated_at=NOW()
+		 WHERE line_id=$10`,
 		req.Type, req.Name, req.Quantity, sqlutil.NullableStr(req.Unit),
 		req.UnitPrice, cleanData, req.Position,
 		sqlutil.NullableInt32(req.TaxId),
+		sqlutil.NullableStr(FeeIDFromData(cleanData)),
 		req.LineId,
 	)
 	if err != nil {

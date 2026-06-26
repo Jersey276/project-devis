@@ -34,6 +34,8 @@ const (
 	UserService_ListClients_FullMethodName              = "/users.UserService/ListClients"
 	UserService_UpdateClient_FullMethodName             = "/users.UserService/UpdateClient"
 	UserService_ArchiveClient_FullMethodName            = "/users.UserService/ArchiveClient"
+	UserService_LinkClientUser_FullMethodName           = "/users.UserService/LinkClientUser"
+	UserService_GetClientsByLinkedUser_FullMethodName   = "/users.UserService/GetClientsByLinkedUser"
 	UserService_CreateAddress_FullMethodName            = "/users.UserService/CreateAddress"
 	UserService_GetAddress_FullMethodName               = "/users.UserService/GetAddress"
 	UserService_ListAddresses_FullMethodName            = "/users.UserService/ListAddresses"
@@ -55,6 +57,7 @@ const (
 	UserService_GetTax_FullMethodName                   = "/users.UserService/GetTax"
 	UserService_ListTaxes_FullMethodName                = "/users.UserService/ListTaxes"
 	UserService_ListTaxesForUser_FullMethodName         = "/users.UserService/ListTaxesForUser"
+	UserService_ListTaxesForCountry_FullMethodName      = "/users.UserService/ListTaxesForCountry"
 	UserService_UpdateTax_FullMethodName                = "/users.UserService/UpdateTax"
 	UserService_DeleteTax_FullMethodName                = "/users.UserService/DeleteTax"
 )
@@ -80,6 +83,8 @@ type UserServiceClient interface {
 	ListClients(ctx context.Context, in *ListClientsRequest, opts ...grpc.CallOption) (*ListClientsResponse, error)
 	UpdateClient(ctx context.Context, in *UpdateClientRequest, opts ...grpc.CallOption) (*UpdateClientResponse, error)
 	ArchiveClient(ctx context.Context, in *ArchiveClientRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	LinkClientUser(ctx context.Context, in *LinkClientUserRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	GetClientsByLinkedUser(ctx context.Context, in *GetClientByLinkedUserRequest, opts ...grpc.CallOption) (*ListClientsResponse, error)
 	// Address
 	CreateAddress(ctx context.Context, in *CreateAddressRequest, opts ...grpc.CallOption) (*CreateAddressResponse, error)
 	GetAddress(ctx context.Context, in *GetAddressRequest, opts ...grpc.CallOption) (*GetAddressResponse, error)
@@ -105,6 +110,7 @@ type UserServiceClient interface {
 	GetTax(ctx context.Context, in *GetTaxRequest, opts ...grpc.CallOption) (*GetTaxResponse, error)
 	ListTaxes(ctx context.Context, in *ListTaxesRequest, opts ...grpc.CallOption) (*ListTaxesResponse, error)
 	ListTaxesForUser(ctx context.Context, in *ListTaxesForUserRequest, opts ...grpc.CallOption) (*ListTaxesResponse, error)
+	ListTaxesForCountry(ctx context.Context, in *ListTaxesForCountryRequest, opts ...grpc.CallOption) (*ListTaxesResponse, error)
 	UpdateTax(ctx context.Context, in *UpdateTaxRequest, opts ...grpc.CallOption) (*UpdateTaxResponse, error)
 	DeleteTax(ctx context.Context, in *DeleteTaxRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 }
@@ -261,6 +267,26 @@ func (c *userServiceClient) ArchiveClient(ctx context.Context, in *ArchiveClient
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GenericResponse)
 	err := c.cc.Invoke(ctx, UserService_ArchiveClient_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) LinkClientUser(ctx context.Context, in *LinkClientUserRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, UserService_LinkClientUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetClientsByLinkedUser(ctx context.Context, in *GetClientByLinkedUserRequest, opts ...grpc.CallOption) (*ListClientsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListClientsResponse)
+	err := c.cc.Invoke(ctx, UserService_GetClientsByLinkedUser_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -477,6 +503,16 @@ func (c *userServiceClient) ListTaxesForUser(ctx context.Context, in *ListTaxesF
 	return out, nil
 }
 
+func (c *userServiceClient) ListTaxesForCountry(ctx context.Context, in *ListTaxesForCountryRequest, opts ...grpc.CallOption) (*ListTaxesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListTaxesResponse)
+	err := c.cc.Invoke(ctx, UserService_ListTaxesForCountry_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userServiceClient) UpdateTax(ctx context.Context, in *UpdateTaxRequest, opts ...grpc.CallOption) (*UpdateTaxResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateTaxResponse)
@@ -518,6 +554,8 @@ type UserServiceServer interface {
 	ListClients(context.Context, *ListClientsRequest) (*ListClientsResponse, error)
 	UpdateClient(context.Context, *UpdateClientRequest) (*UpdateClientResponse, error)
 	ArchiveClient(context.Context, *ArchiveClientRequest) (*GenericResponse, error)
+	LinkClientUser(context.Context, *LinkClientUserRequest) (*GenericResponse, error)
+	GetClientsByLinkedUser(context.Context, *GetClientByLinkedUserRequest) (*ListClientsResponse, error)
 	// Address
 	CreateAddress(context.Context, *CreateAddressRequest) (*CreateAddressResponse, error)
 	GetAddress(context.Context, *GetAddressRequest) (*GetAddressResponse, error)
@@ -543,6 +581,7 @@ type UserServiceServer interface {
 	GetTax(context.Context, *GetTaxRequest) (*GetTaxResponse, error)
 	ListTaxes(context.Context, *ListTaxesRequest) (*ListTaxesResponse, error)
 	ListTaxesForUser(context.Context, *ListTaxesForUserRequest) (*ListTaxesResponse, error)
+	ListTaxesForCountry(context.Context, *ListTaxesForCountryRequest) (*ListTaxesResponse, error)
 	UpdateTax(context.Context, *UpdateTaxRequest) (*UpdateTaxResponse, error)
 	DeleteTax(context.Context, *DeleteTaxRequest) (*GenericResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
@@ -599,6 +638,12 @@ func (UnimplementedUserServiceServer) UpdateClient(context.Context, *UpdateClien
 }
 func (UnimplementedUserServiceServer) ArchiveClient(context.Context, *ArchiveClientRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ArchiveClient not implemented")
+}
+func (UnimplementedUserServiceServer) LinkClientUser(context.Context, *LinkClientUserRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method LinkClientUser not implemented")
+}
+func (UnimplementedUserServiceServer) GetClientsByLinkedUser(context.Context, *GetClientByLinkedUserRequest) (*ListClientsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetClientsByLinkedUser not implemented")
 }
 func (UnimplementedUserServiceServer) CreateAddress(context.Context, *CreateAddressRequest) (*CreateAddressResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateAddress not implemented")
@@ -662,6 +707,9 @@ func (UnimplementedUserServiceServer) ListTaxes(context.Context, *ListTaxesReque
 }
 func (UnimplementedUserServiceServer) ListTaxesForUser(context.Context, *ListTaxesForUserRequest) (*ListTaxesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListTaxesForUser not implemented")
+}
+func (UnimplementedUserServiceServer) ListTaxesForCountry(context.Context, *ListTaxesForCountryRequest) (*ListTaxesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListTaxesForCountry not implemented")
 }
 func (UnimplementedUserServiceServer) UpdateTax(context.Context, *UpdateTaxRequest) (*UpdateTaxResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateTax not implemented")
@@ -956,6 +1004,42 @@ func _UserService_ArchiveClient_Handler(srv interface{}, ctx context.Context, de
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).ArchiveClient(ctx, req.(*ArchiveClientRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_LinkClientUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LinkClientUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).LinkClientUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_LinkClientUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).LinkClientUser(ctx, req.(*LinkClientUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetClientsByLinkedUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetClientByLinkedUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetClientsByLinkedUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetClientsByLinkedUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetClientsByLinkedUser(ctx, req.(*GetClientByLinkedUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1338,6 +1422,24 @@ func _UserService_ListTaxesForUser_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_ListTaxesForCountry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListTaxesForCountryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).ListTaxesForCountry(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_ListTaxesForCountry_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).ListTaxesForCountry(ctx, req.(*ListTaxesForCountryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UserService_UpdateTax_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateTaxRequest)
 	if err := dec(in); err != nil {
@@ -1442,6 +1544,14 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_ArchiveClient_Handler,
 		},
 		{
+			MethodName: "LinkClientUser",
+			Handler:    _UserService_LinkClientUser_Handler,
+		},
+		{
+			MethodName: "GetClientsByLinkedUser",
+			Handler:    _UserService_GetClientsByLinkedUser_Handler,
+		},
+		{
 			MethodName: "CreateAddress",
 			Handler:    _UserService_CreateAddress_Handler,
 		},
@@ -1524,6 +1634,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListTaxesForUser",
 			Handler:    _UserService_ListTaxesForUser_Handler,
+		},
+		{
+			MethodName: "ListTaxesForCountry",
+			Handler:    _UserService_ListTaxesForCountry_Handler,
 		},
 		{
 			MethodName: "UpdateTax",

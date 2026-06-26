@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strings"
 	"time"
 
@@ -49,8 +50,49 @@ func GetUserAccessInfoByEmail(ctx context.Context, db *sql.DB, req *usersGrpc.Ge
 	return getAccessInfo(ctx, db, `SELECT user_id, email, role, suspended FROM users WHERE email = $1`, strings.TrimSpace(req.Email))
 }
 
-func ListAdminAccounts(ctx context.Context, db *sql.DB, _ *usersGrpc.ListAdminAccountsRequest) (*usersGrpc.ListAdminAccountsResponse, error) {
-	rows, err := db.QueryContext(ctx, `
+func ListAdminAccounts(ctx context.Context, db *sql.DB, req *usersGrpc.ListAdminAccountsRequest) (*usersGrpc.ListAdminAccountsResponse, error) {
+	var conditions []string
+	var args []any
+	argIdx := 1
+
+	if userID := strings.TrimSpace(req.UserId); userID != "" {
+		conditions = append(conditions, `user_id = $`+fmt.Sprintf("%d", argIdx))
+		args = append(args, userID)
+		argIdx++
+	}
+
+	if search := strings.TrimSpace(req.Search); search != "" {
+		conditions = append(conditions, `(
+			LOWER(COALESCE(first_name, '')) LIKE $`+fmt.Sprintf("%d", argIdx)+`
+			OR LOWER(COALESCE(last_name, '')) LIKE $`+fmt.Sprintf("%d", argIdx)+`
+			OR LOWER(email) LIKE $`+fmt.Sprintf("%d", argIdx)+`
+		)`)
+		args = append(args, "%"+strings.ToLower(search)+"%")
+		argIdx++
+	}
+
+	if len(req.Roles) > 0 {
+		conditions = append(conditions, `role = ANY($`+fmt.Sprintf("%d", argIdx)+`)`)
+		args = append(args, pq.Array(req.Roles))
+		argIdx++
+	}
+
+	if len(req.Statuses) > 0 {
+		var statusConds []string
+		for _, s := range req.Statuses {
+			switch s {
+			case "active":
+				statusConds = append(statusConds, "suspended = FALSE")
+			case "suspended":
+				statusConds = append(statusConds, "suspended = TRUE")
+			}
+		}
+		if len(statusConds) > 0 {
+			conditions = append(conditions, "("+strings.Join(statusConds, " OR ")+")")
+		}
+	}
+
+	query := `
 		SELECT
 			user_id,
 			COALESCE(first_name, ''),
@@ -63,12 +105,18 @@ func ListAdminAccounts(ctx context.Context, db *sql.DB, _ *usersGrpc.ListAdminAc
 			COALESCE(phone, ''),
 			COALESCE(company, ''),
 			COALESCE(siren, ''),
-			COALESCE(vat, '')
-		FROM users
+			COALESCE(vat, ''),
+			created_at
+		FROM users`
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+	query += `
 		ORDER BY last_name ASC, first_name ASC, email ASC,
 			CASE WHEN role = 'admin' THEN 0 ELSE 1 END ASC,
-			user_id ASC
-	`)
+			user_id ASC`
+
+	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return &usersGrpc.ListAdminAccountsResponse{Success: false, Code: codes.InternalError}, err
 	}
@@ -78,6 +126,7 @@ func ListAdminAccounts(ctx context.Context, db *sql.DB, _ *usersGrpc.ListAdminAc
 	for rows.Next() {
 		var account usersGrpc.AdminAccount
 		var lastLoginAt sql.NullTime
+		var createdAt time.Time
 		if err := rows.Scan(
 			&account.UserId,
 			&account.FirstName,
@@ -91,12 +140,14 @@ func ListAdminAccounts(ctx context.Context, db *sql.DB, _ *usersGrpc.ListAdminAc
 			&account.Company,
 			&account.Siren,
 			&account.Vat,
+			&createdAt,
 		); err != nil {
 			return &usersGrpc.ListAdminAccountsResponse{Success: false, Code: codes.InternalError}, err
 		}
 		if lastLoginAt.Valid {
 			account.LastLoginAt = lastLoginAt.Time.UTC().Format(time.RFC3339)
 		}
+		account.CreatedAt = createdAt.UTC().Format(time.RFC3339)
 		accounts = append(accounts, &account)
 	}
 	if err := rows.Err(); err != nil {

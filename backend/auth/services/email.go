@@ -14,15 +14,19 @@ import (
 type EmailSender interface {
 	SendPasswordReset(email, token string) error
 	SendEmailVerification(email, token string) error
+	SendClientInvitation(email, clientName, token string) error
+	SendEmailChange(email, token string) error
 }
 
 // ─── Resend ──────────────────────────────────────────────────────────────────
 
 type resendEmailSender struct {
-	client        *resend.Client
-	from          string
-	resetBaseURL  string
-	verifyBaseURL string
+	client         *resend.Client
+	from           string
+	resetBaseURL   string
+	verifyBaseURL  string
+	inviteBaseURL  string
+	emailChangeURL string
 }
 
 func (s *resendEmailSender) SendPasswordReset(email, token string) error {
@@ -53,16 +57,46 @@ func (s *resendEmailSender) SendEmailVerification(email, token string) error {
 	return err
 }
 
+func (s *resendEmailSender) SendClientInvitation(email, clientName, token string) error {
+	html, err := renderClientInvitation(buildURL(s.inviteBaseURL, token), clientName)
+	if err != nil {
+		return fmt.Errorf("render client invitation template: %w", err)
+	}
+	_, err = s.client.Emails.Send(&resend.SendEmailRequest{
+		From:    s.from,
+		To:      []string{email},
+		Subject: "Vous avez été invité à rejoindre votre espace client",
+		Html:    html,
+	})
+	return err
+}
+
+func (s *resendEmailSender) SendEmailChange(email, token string) error {
+	html, err := renderEmailChange(buildURL(s.emailChangeURL, token))
+	if err != nil {
+		return fmt.Errorf("render email change template: %w", err)
+	}
+	_, err = s.client.Emails.Send(&resend.SendEmailRequest{
+		From:    s.from,
+		To:      []string{email},
+		Subject: "Confirmez votre nouvelle adresse email",
+		Html:    html,
+	})
+	return err
+}
+
 // ─── SMTP ────────────────────────────────────────────────────────────────────
 
 type smtpEmailSender struct {
-	host          string
-	port          string
-	user          string
-	pass          string
-	from          string
-	resetBaseURL  string
-	verifyBaseURL string
+	host           string
+	port           string
+	user           string
+	pass           string
+	from           string
+	resetBaseURL   string
+	verifyBaseURL  string
+	inviteBaseURL  string
+	emailChangeURL string
 }
 
 func (s *smtpEmailSender) SendPasswordReset(email, token string) error {
@@ -79,6 +113,22 @@ func (s *smtpEmailSender) SendEmailVerification(email, token string) error {
 		return fmt.Errorf("render email verification template: %w", err)
 	}
 	return s.sendMail(email, "Vérifiez votre adresse email", html)
+}
+
+func (s *smtpEmailSender) SendClientInvitation(email, clientName, token string) error {
+	html, err := renderClientInvitation(buildURL(s.inviteBaseURL, token), clientName)
+	if err != nil {
+		return fmt.Errorf("render client invitation template: %w", err)
+	}
+	return s.sendMail(email, "Vous avez été invité à rejoindre votre espace client", html)
+}
+
+func (s *smtpEmailSender) SendEmailChange(email, token string) error {
+	html, err := renderEmailChange(buildURL(s.emailChangeURL, token))
+	if err != nil {
+		return fmt.Errorf("render email change template: %w", err)
+	}
+	return s.sendMail(email, "Confirmez votre nouvelle adresse email", html)
 }
 
 func (s *smtpEmailSender) sendMail(to, subject, htmlBody string) error {
@@ -104,8 +154,10 @@ func (s *smtpEmailSender) sendMail(to, subject, htmlBody string) error {
 // ─── Log fallback ────────────────────────────────────────────────────────────
 
 type logEmailSender struct {
-	resetBaseURL  string
-	verifyBaseURL string
+	resetBaseURL   string
+	verifyBaseURL  string
+	inviteBaseURL  string
+	emailChangeURL string
 }
 
 func (s *logEmailSender) SendPasswordReset(email, token string) error {
@@ -118,11 +170,23 @@ func (s *logEmailSender) SendEmailVerification(email, token string) error {
 	return nil
 }
 
+func (s *logEmailSender) SendClientInvitation(email, clientName, token string) error {
+	log.Printf("client invitation email fallback: to=%s client=%s invite_url=%s", email, clientName, buildURL(s.inviteBaseURL, token))
+	return nil
+}
+
+func (s *logEmailSender) SendEmailChange(email, token string) error {
+	log.Printf("email change fallback: to=%s confirm_url=%s", email, buildURL(s.emailChangeURL, token))
+	return nil
+}
+
 // ─── Factory ─────────────────────────────────────────────────────────────────
 
 func NewEmailSenderFromEnv() EmailSender {
 	resetBaseURL := getResetPasswordBaseURL()
 	verifyBaseURL := getVerifyEmailBaseURL()
+	inviteBaseURL := getClientInviteBaseURL()
+	emailChangeURL := getEmailChangeBaseURL()
 
 	if apiKey := ResendAPIKey.GetValue(); apiKey != "" {
 		from := SMTPFrom.GetValue()
@@ -130,10 +194,12 @@ func NewEmailSenderFromEnv() EmailSender {
 			from = "no-reply@project-devis.local"
 		}
 		return &resendEmailSender{
-			client:        resend.NewClient(apiKey),
-			from:          from,
-			resetBaseURL:  resetBaseURL,
-			verifyBaseURL: verifyBaseURL,
+			client:         resend.NewClient(apiKey),
+			from:           from,
+			resetBaseURL:   resetBaseURL,
+			verifyBaseURL:  verifyBaseURL,
+			inviteBaseURL:  inviteBaseURL,
+			emailChangeURL: emailChangeURL,
 		}
 	}
 
@@ -147,17 +213,19 @@ func NewEmailSenderFromEnv() EmailSender {
 			from = "no-reply@project-devis.local"
 		}
 		return &smtpEmailSender{
-			host:          host,
-			port:          port,
-			user:          SMTPUser.GetValue(),
-			pass:          SMTPPassword.GetValue(),
-			from:          from,
-			resetBaseURL:  resetBaseURL,
-			verifyBaseURL: verifyBaseURL,
+			host:           host,
+			port:           port,
+			user:           SMTPUser.GetValue(),
+			pass:           SMTPPassword.GetValue(),
+			from:           from,
+			resetBaseURL:   resetBaseURL,
+			verifyBaseURL:  verifyBaseURL,
+			inviteBaseURL:  inviteBaseURL,
+			emailChangeURL: emailChangeURL,
 		}
 	}
 
-	return &logEmailSender{resetBaseURL: resetBaseURL, verifyBaseURL: verifyBaseURL}
+	return &logEmailSender{resetBaseURL: resetBaseURL, verifyBaseURL: verifyBaseURL, inviteBaseURL: inviteBaseURL, emailChangeURL: emailChangeURL}
 }
 
 func getResetPasswordBaseURL() string {
@@ -172,6 +240,20 @@ func getVerifyEmailBaseURL() string {
 		return v
 	}
 	return "http://localhost:3000/verify-email"
+}
+
+func getClientInviteBaseURL() string {
+	if v := ClientInviteBaseURL.GetValue(); v != "" {
+		return v
+	}
+	return "http://localhost:3000/accept-invitation"
+}
+
+func getEmailChangeBaseURL() string {
+	if v := EmailChangeBaseURL.GetValue(); v != "" {
+		return v
+	}
+	return "http://localhost:3000/confirm-email-change"
 }
 
 func buildURL(baseURL, token string) string {

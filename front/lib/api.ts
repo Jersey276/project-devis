@@ -10,11 +10,16 @@ export type FieldErrors = Record<string, string[]>;
 
 export type ApiFieldError = { field: string; error_code: number[] };
 
+// Some services (users gateway) return already-localized per-field messages under
+// `errors` instead of the auth-style coded `field_errors`. Both are supported.
+export type ApiFieldMessage = { field: string; message: string };
+
 export type ApiBody = {
   success: boolean;
   message?: string;
   code?: number;
   field_errors?: ApiFieldError[];
+  errors?: ApiFieldMessage[];
   [key: string]: unknown;
 };
 
@@ -25,6 +30,7 @@ export type ApiResult = {
 };
 
 const CODE_SESSION_INVALIDATED = 1008;
+const CODE_EMAIL_NOT_VERIFIED = "EMAIL_NOT_VERIFIED";
 
 // Endpoints that must not trigger the refresh-and-retry loop (would recurse or mask login failures).
 // /api/auth/password/update returns 401 when the current password is wrong — not a session
@@ -33,6 +39,7 @@ const REFRESH_SKIP_PATHS = new Set([
   "/api/auth/refresh",
   "/api/auth/login",
   "/api/auth/logout",
+  "/api/auth/me",
   "/api/auth/password/update",
   "/api/auth/password/reset",
   "/api/auth/password/confirm-reset",
@@ -65,6 +72,12 @@ function redirectToLogin() {
   if (typeof window !== "undefined") {
     const next = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     window.location.href = `/login?next=${encodeURIComponent(next)}`;
+  }
+}
+
+function redirectToVerifyEmail() {
+  if (typeof window !== "undefined") {
+    window.location.href = "/verify-email";
   }
 }
 
@@ -131,10 +144,17 @@ export async function fetchWithRefresh(
   return res;
 }
 
+export function readUserModeCookie(): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  const match = document.cookie.split("; ").find((c) => c.startsWith("user-mode="));
+  return match?.split("=")[1];
+}
+
 export async function apiFetch(
   path: string,
   init?: RequestInit,
 ): Promise<ApiResult> {
+  const clientMode = readUserModeCookie() === "customer";
   const doFetch = () =>
     fetch(path, {
       ...init,
@@ -142,6 +162,7 @@ export async function apiFetch(
       headers: {
         Accept: "application/json",
         ...(init?.body ? { "Content-Type": "application/json" } : {}),
+        ...(clientMode ? { "X-Client-Mode": "customer" } : {}),
         ...(init?.headers ?? {}),
       },
     });
@@ -157,17 +178,31 @@ export async function apiFetch(
   } catch {
     body = { success: false };
   }
+
+  if (response.status === 403 && (body as Record<string, unknown>)["code"] === CODE_EMAIL_NOT_VERIFIED) {
+    redirectToVerifyEmail();
+    return { ok: false, status: 403, body };
+  }
+
   return { ok: response.ok, status: response.status, body };
 }
 
 export function fieldErrorsFromBody(body: ApiBody): FieldErrors {
   const errors: FieldErrors = {};
-  if (!Array.isArray(body.field_errors)) return errors;
-  for (const entry of body.field_errors) {
-    errors[entry.field] = entry.error_code.map(
-      (code) =>
-        FIELD_VALIDATION_MESSAGES[code] ?? `Erreur de validation (${code}).`,
-    );
+  // Auth-style coded errors, translated client-side.
+  if (Array.isArray(body.field_errors)) {
+    for (const entry of body.field_errors) {
+      errors[entry.field] = entry.error_code.map(
+        (code) =>
+          FIELD_VALIDATION_MESSAGES[code] ?? `Erreur de validation (${code}).`,
+      );
+    }
+  }
+  // Users-style errors carry an already-localized message per field.
+  if (Array.isArray(body.errors)) {
+    for (const entry of body.errors) {
+      (errors[entry.field] ??= []).push(entry.message);
+    }
   }
   return errors;
 }

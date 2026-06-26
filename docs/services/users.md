@@ -33,7 +33,40 @@ Fournir les donnees utilisateur et referentiels associes:
 - export (assemblage PDF)
 - quote (recuperation taxes utilisateur)
 
-## Particularites
+## Clients
+
+Les clients sont les tiers (B2C ou B2B) pour lesquels un prestataire cree des devis.
+
+### Schema (table `clients`)
+
+| Colonne | Type | Notes |
+| --- | --- | --- |
+| `client_id` | TEXT UNIQUE | UUID genere a la creation |
+| `user_id` | TEXT FK | proprietaire (utilisateur prestataire) |
+| `first_name`, `last_name` | TEXT NOT NULL | identite |
+| `email`, `phone` | TEXT | optionnels |
+| `company`, `siren`, `siret`, `vat` | TEXT | champs B2B uniquement |
+| `client_type` | TEXT CHECK | `'individual'` ou `'business'` |
+| `archived_at` | TIMESTAMP | soft-delete |
+
+### RPCs
+
+| RPC | Description |
+| --- | --- |
+| `CreateClient` | Cree un client ; genere `client_id` UUID |
+| `GetClient` | Retourne un client non archive |
+| `ListClients` | Pagination, recherche full-text, filtre `client_types` |
+| `UpdateClient` | Remplacement complet (full-replace) |
+| `ArchiveClient` | Soft-delete via `archived_at = NOW()` |
+
+### Notes
+
+- `client_type` vaut `'individual'` par defaut si non fourni (retrocompatibilite).
+- `siret` (14 chiffres) est l'identifiant d'etablissement ; distinct de `siren` (9 chiffres, identifiant entreprise).
+- `GetClient` exclut les clients archives ; pour les voir, passer `include_archived=true` a `ListClients`.
+- L'update est un full-replace : omettre un champ le met a NULL cote serveur.
+
+## Notes gateway
 
 - Le gateway applique des validations d'entree (owner_type, URL logo, IDs)
 - La route taxes disponible sert a calculer les totaux TTC cote gateway

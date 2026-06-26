@@ -21,12 +21,9 @@ export type UpdateScheduleStatusPayload = {
   status: "DRAFT" | "NEGOCIATE" | "DENIED" | "VALID";
 };
 
-export async function listSchedules(quoteId?: string): Promise<ApiResult> {
-  const q = quoteId?.trim();
-  const path = q
-    ? `/api/schedules?quote_id=${encodeURIComponent(q)}`
-    : "/api/schedules";
-  return apiFetch(path);
+export async function listSchedules(queryString?: string, signal?: AbortSignal): Promise<ApiResult> {
+  const url = queryString ? `/api/schedules?${queryString}` : "/api/schedules";
+  return apiFetch(url, { signal });
 }
 
 export async function createSchedule(

@@ -6,11 +6,6 @@ import (
 	authGrpc "project-devis-auth/services/grpc"
 )
 
-var validRoles = map[string]bool{
-	"free_user":   true,
-	"super_admin": true,
-}
-
 func (s *Server) UpdateRole(ctx context.Context, req *authGrpc.UpdateRoleRequest) (*authGrpc.GenericResponse, error) {
 	if !validRoles[req.GetRole()] {
 		return &authGrpc.GenericResponse{Success: false, Code: CodeInvalidInput}, nil

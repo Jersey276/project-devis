@@ -6,6 +6,7 @@ import (
 
 	"github.com/lib/pq"
 	"project-devis-users/actions/codes"
+	"project-devis-users/actions/sqlutil"
 	usersGrpc "project-devis-users/services/grpc"
 )
 
@@ -13,10 +14,10 @@ func Create(ctx context.Context, db *sql.DB, req *usersGrpc.CreateCountryRequest
 	var fieldErrors []*usersGrpc.ValidationError
 
 	if len(req.Code) != 2 {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "code", Message: "Doit être un code ISO à 2 caractères."})
+		fieldErrors = append(fieldErrors, sqlutil.Invalid("code", "Doit être un code ISO à 2 caractères."))
 	}
 	if req.Name == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "name", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("name"))
 	}
 
 	if len(fieldErrors) > 0 {

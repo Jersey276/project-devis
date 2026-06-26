@@ -64,6 +64,24 @@ func (m *mockAuthClient) RefreshToken(context.Context, *auth.RefreshTokenRequest
 	return &auth.LoginResponse{Success: true, Token: &token, RefreshToken: &refresh}, nil
 }
 
+func (m *mockAuthClient) OAuthLogin(context.Context, *auth.OAuthLoginRequest, ...grpc.CallOption) (*auth.LoginResponse, error) {
+	token := "token"
+	refresh := "refresh"
+	return &auth.LoginResponse{Success: true, Token: &token, RefreshToken: &refresh}, nil
+}
+
+func (m *mockAuthClient) LinkOAuthIdentity(context.Context, *auth.LinkOAuthIdentityRequest, ...grpc.CallOption) (*auth.GenericResponse, error) {
+	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
+}
+
+func (m *mockAuthClient) UnlinkOAuthIdentity(context.Context, *auth.UnlinkOAuthIdentityRequest, ...grpc.CallOption) (*auth.GenericResponse, error) {
+	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
+}
+
+func (m *mockAuthClient) ListOAuthIdentities(context.Context, *auth.ListOAuthIdentitiesRequest, ...grpc.CallOption) (*auth.ListOAuthIdentitiesResponse, error) {
+	return &auth.ListOAuthIdentitiesResponse{Success: true, Code: CodeSuccess}, nil
+}
+
 func (m *mockAuthClient) Logout(context.Context, *auth.LogoutRequest, ...grpc.CallOption) (*auth.GenericResponse, error) {
 	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
 }
@@ -95,6 +113,26 @@ func (m *mockAuthClient) ResendEmailVerification(ctx context.Context, req *auth.
 	if m.resendVerifyFn != nil {
 		return m.resendVerifyFn(ctx, req)
 	}
+	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
+}
+
+func (m *mockAuthClient) SendClientInvitation(context.Context, *auth.SendClientInvitationRequest, ...grpc.CallOption) (*auth.GenericResponse, error) {
+	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
+}
+
+func (m *mockAuthClient) AcceptClientInvitationNew(context.Context, *auth.AcceptClientInvitationNewRequest, ...grpc.CallOption) (*auth.AcceptClientInvitationResponse, error) {
+	return &auth.AcceptClientInvitationResponse{Success: true, Code: CodeSuccess}, nil
+}
+
+func (m *mockAuthClient) AcceptClientInvitationLinked(context.Context, *auth.AcceptClientInvitationLinkedRequest, ...grpc.CallOption) (*auth.AcceptClientInvitationResponse, error) {
+	return &auth.AcceptClientInvitationResponse{Success: true, Code: CodeSuccess}, nil
+}
+
+func (m *mockAuthClient) RequestEmailChange(context.Context, *auth.RequestEmailChangeRequest, ...grpc.CallOption) (*auth.GenericResponse, error) {
+	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
+}
+
+func (m *mockAuthClient) ConfirmEmailChange(context.Context, *auth.ConfirmEmailChangeRequest, ...grpc.CallOption) (*auth.GenericResponse, error) {
 	return &auth.GenericResponse{Success: true, Code: CodeSuccess}, nil
 }
 

@@ -10,7 +10,7 @@ function stubCountries() {
 }
 
 function stubList(clients: ClientFixture[]) {
-  cy.intercept("GET", "/api/users/clients", {
+  cy.intercept("GET", /^\/api\/users\/clients(\?.*)?$/, {
     statusCode: 200,
     body: { success: true, clients },
   }).as("listClients");
@@ -292,7 +292,7 @@ describe("Clients", () => {
     it("archives a client and reloads the list", () => {
       cy.login();
       // First load: one client.
-      cy.intercept("GET", "/api/users/clients", (req) => {
+      cy.intercept("GET", /^\/api\/users\/clients(\?.*)?$/, (req) => {
         req.reply({
           statusCode: 200,
           body: {
@@ -311,7 +311,7 @@ describe("Clients", () => {
         statusCode: 200,
         body: { success: true },
       }).as("archive");
-      cy.intercept("GET", "/api/users/clients", {
+      cy.intercept("GET", /^\/api\/users\/clients(\?.*)?$/, {
         statusCode: 200,
         body: { success: true, clients: [] },
       }).as("listAfter");

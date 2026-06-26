@@ -1,12 +1,19 @@
-import { fetchWithRefresh } from "./api";
+import { fetchWithRefresh, readUserModeCookie } from "./api";
 
 export async function downloadBlob(
   path: string,
   fallbackFilename: string,
   accept = "application/pdf",
 ): Promise<void> {
+  const clientMode = readUserModeCookie() === "customer";
   const res = await fetchWithRefresh(() =>
-    fetch(path, { credentials: "include", headers: { Accept: accept } }),
+    fetch(path, {
+      credentials: "include",
+      headers: {
+        Accept: accept,
+        ...(clientMode ? { "X-Client-Mode": "customer" } : {}),
+      },
+    }),
   );
   if (!res) return;
   if (!res.ok) throw new Error(`HTTP ${res.status}`);

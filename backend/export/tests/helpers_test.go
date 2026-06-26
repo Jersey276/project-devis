@@ -24,10 +24,11 @@ func (f *fakeQuote) GetQuote(ctx context.Context, in *quote.GetQuoteRequest, _ .
 
 type fakeUsers struct {
 	users.UserServiceClient
-	getUser       func(context.Context, *users.GetUserRequest) (*users.GetUserResponse, error)
-	listAddresses func(context.Context, *users.ListAddressesRequest) (*users.ListAddressesResponse, error)
-	getClient     func(context.Context, *users.GetClientRequest) (*users.GetClientResponse, error)
-	getAddress    func(context.Context, *users.GetAddressRequest) (*users.GetAddressResponse, error)
+	getUser          func(context.Context, *users.GetUserRequest) (*users.GetUserResponse, error)
+	listAddresses    func(context.Context, *users.ListAddressesRequest) (*users.ListAddressesResponse, error)
+	getClient        func(context.Context, *users.GetClientRequest) (*users.GetClientResponse, error)
+	getAddress       func(context.Context, *users.GetAddressRequest) (*users.GetAddressResponse, error)
+	listTaxesForUser func(context.Context, *users.ListTaxesForUserRequest) (*users.ListTaxesResponse, error)
 }
 
 type fakeSchedule struct {
@@ -55,13 +56,33 @@ func (f *fakeUsers) GetAddress(ctx context.Context, in *users.GetAddressRequest,
 	return f.getAddress(ctx, in)
 }
 
+func (f *fakeUsers) ListTaxesForUser(ctx context.Context, in *users.ListTaxesForUserRequest, _ ...grpc.CallOption) (*users.ListTaxesResponse, error) {
+	if f.listTaxesForUser != nil {
+		return f.listTaxesForUser(ctx, in)
+	}
+	return &users.ListTaxesResponse{Success: true}, nil
+}
+
 // fakeGotenberg satisfies the orchestrator's unexported pdfConverter interface
-// (structural typing — any Convert(ctx, []byte) ([]byte, error) works).
+// (structural typing — Convert + ConvertPDFA3). Call counters let tests assert
+// which path ran (e.g. that a draft never reaches PDF/A rendering).
 type fakeGotenberg struct {
-	convert func(context.Context, []byte) ([]byte, error)
+	convert      func(context.Context, []byte) ([]byte, error)
+	convertPDFA3 func(context.Context, []byte) ([]byte, error)
+	convertCalls int
+	pdfa3Calls   int
 }
 
 func (f *fakeGotenberg) Convert(ctx context.Context, html []byte) ([]byte, error) {
+	f.convertCalls++
+	return f.convert(ctx, html)
+}
+
+func (f *fakeGotenberg) ConvertPDFA3(ctx context.Context, html []byte) ([]byte, error) {
+	f.pdfa3Calls++
+	if f.convertPDFA3 != nil {
+		return f.convertPDFA3(ctx, html)
+	}
 	return f.convert(ctx, html)
 }
 
@@ -80,7 +101,7 @@ func happyFakes() (*fakeQuote, *fakeUsers, *fakeGotenberg) {
 					AddressId: 42,
 				},
 				Lines: []*quote.QuoteLine{
-					{LineId: "l1", Name: "Pose plan de travail", Quantity: "1", UnitPrice: 50000},
+					{LineId: "l1", Name: "Pose plan de travail", Quantity: "1", UnitPrice: 50000, TaxId: 1},
 				},
 			}, nil
 		},
@@ -109,6 +130,13 @@ func happyFakes() (*fakeQuote, *fakeUsers, *fakeGotenberg) {
 				Success: true,
 				Address: &users.Address{Id: req.AddressId, Street: "2 av Recipient", City: "Lyon", ZipCode: "69000"},
 			}, nil
+		},
+		listTaxesForUser: func(_ context.Context, req *users.ListTaxesForUserRequest) (*users.ListTaxesResponse, error) {
+			taxes := make([]*users.Tax, 0, len(req.IncludeIds))
+			for _, id := range req.IncludeIds {
+				taxes = append(taxes, &users.Tax{Id: id, Name: "TVA 20%", Rate: "20.00"})
+			}
+			return &users.ListTaxesResponse{Success: true, Taxes: taxes}, nil
 		},
 	}
 	gt := &fakeGotenberg{

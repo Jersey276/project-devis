@@ -1,5 +1,5 @@
 import { apiFetch, type ApiResult } from "@/lib/api";
-import type { BackendClient } from "@/types/backend";
+import type { BackendClient, ClientType } from "@/types/backend";
 
 // Full-replace shape: all fields are required strings on the wire.
 // Empty string clears the column server-side (see client.Update action).
@@ -10,11 +10,14 @@ export type ClientPayload = {
   phone: string;
   company: string;
   siren: string;
+  siret: string;
   vat: string;
+  client_type: ClientType;
 };
 
-export async function listClients(): Promise<ApiResult> {
-  return apiFetch("/api/users/clients");
+export async function listClients(queryString?: string, signal?: AbortSignal): Promise<ApiResult> {
+  const url = queryString ? `/api/users/clients?${queryString}` : "/api/users/clients";
+  return apiFetch(url, { signal });
 }
 
 export async function createClient(payload: ClientPayload): Promise<ApiResult> {
@@ -44,4 +47,26 @@ export async function archiveClient(clientId: string): Promise<ApiResult> {
   });
 }
 
-export type { BackendClient };
+export async function sendClientInvitation(clientId: string): Promise<ApiResult> {
+  return apiFetch("/api/auth/invite/client", {
+    method: "POST",
+    body: JSON.stringify({ client_id: clientId }),
+  });
+}
+
+export async function getMyClientProfiles(): Promise<ApiResult> {
+  return apiFetch("/api/users/clients/me");
+}
+
+export async function updateMyClientProfile(clientId: string, payload: ClientPayload): Promise<ApiResult> {
+  return apiFetch(`/api/users/clients/me?client_id=${encodeURIComponent(clientId)}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getMyClientAddresses(clientId: string): Promise<ApiResult> {
+  return apiFetch(`/api/users/clients/me/addresses?client_id=${encodeURIComponent(clientId)}`);
+}
+
+export type { BackendClient, ClientType };

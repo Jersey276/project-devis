@@ -14,15 +14,16 @@ func TestCreateClient_Success(t *testing.T) {
 	srv, mock := setupServer(t)
 
 	mock.ExpectExec(`INSERT INTO clients`).
-		WithArgs(sqlmock.AnyArg(), "user-1", "Jean", "Dupont", "jean@example.com", nil, "Acme", nil, nil).
+		WithArgs(sqlmock.AnyArg(), "user-1", "Jean", "Dupont", "jean@example.com", nil, "Acme", nil, nil, nil, "business").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.CreateClient(context.Background(), &usersGrpc.CreateClientRequest{
-		UserId:    "user-1",
-		FirstName: "Jean",
-		LastName:  "Dupont",
-		Email:     "jean@example.com",
-		Company:   "Acme",
+		UserId:     "user-1",
+		FirstName:  "Jean",
+		LastName:   "Dupont",
+		Email:      "jean@example.com",
+		Company:    "Acme",
+		ClientType: usersGrpc.ClientType_CLIENT_TYPE_BUSINESS,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -80,11 +81,11 @@ func TestCreateClient_MissingUserID(t *testing.T) {
 func TestGetClient_Success(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	cols := []string{"client_id", "user_id", "first_name", "last_name", "email", "phone", "company", "siren", "vat", "archived"}
+	cols := []string{"client_id", "user_id", "first_name", "last_name", "email", "phone", "company", "siren", "vat", "siret", "client_type", "archived", "linked_user_id"}
 	mock.ExpectQuery(`SELECT client_id, user_id`).
 		WithArgs("c-1", "user-1").
 		WillReturnRows(sqlmock.NewRows(cols).
-			AddRow("c-1", "user-1", "Jean", "Dupont", "jean@example.com", nil, "Acme", nil, nil, false))
+			AddRow("c-1", "user-1", "Jean", "Dupont", "jean@example.com", nil, "Acme", nil, nil, nil, "individual", false, nil))
 
 	resp, err := srv.GetClient(context.Background(), &usersGrpc.GetClientRequest{
 		ClientId: "c-1",
@@ -102,12 +103,15 @@ func TestGetClient_Success(t *testing.T) {
 	if resp.Client.Email != "jean@example.com" || resp.Client.Company != "Acme" {
 		t.Fatalf("unexpected client fields: %+v", resp.Client)
 	}
+	if resp.Client.ClientType != usersGrpc.ClientType_CLIENT_TYPE_INDIVIDUAL {
+		t.Fatalf("expected individual client_type, got %v", resp.Client.ClientType)
+	}
 }
 
 func TestGetClient_NotFound(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	cols := []string{"client_id", "user_id", "first_name", "last_name", "email", "phone", "company", "siren", "vat", "archived"}
+	cols := []string{"client_id", "user_id", "first_name", "last_name", "email", "phone", "company", "siren", "vat", "siret", "client_type", "archived", "linked_user_id"}
 	mock.ExpectQuery(`SELECT client_id, user_id`).
 		WithArgs("ghost", "user-1").
 		WillReturnRows(sqlmock.NewRows(cols))
@@ -133,7 +137,7 @@ func TestGetClient_NotFound(t *testing.T) {
 func TestGetClient_ExcludesArchived(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	cols := []string{"client_id", "user_id", "first_name", "last_name", "email", "phone", "company", "siren", "vat", "archived"}
+	cols := []string{"client_id", "user_id", "first_name", "last_name", "email", "phone", "company", "siren", "vat", "siret", "client_type", "archived", "linked_user_id"}
 	mock.ExpectQuery(`SELECT client_id, user_id.*archived_at IS NULL`).
 		WithArgs("c-1", "user-1").
 		WillReturnRows(sqlmock.NewRows(cols))
@@ -159,12 +163,16 @@ func TestGetClient_ExcludesArchived(t *testing.T) {
 func TestListClients_ExcludesArchivedByDefault(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	cols := []string{"client_id", "user_id", "first_name", "last_name", "email", "phone", "company", "siren", "vat", "archived"}
-	mock.ExpectQuery(`SELECT client_id, user_id.*FROM clients WHERE user_id=\$1 AND archived_at IS NULL`).
+	cols := []string{"client_id", "user_id", "first_name", "last_name", "email", "phone", "company", "siren", "vat", "siret", "client_type", "archived", "linked_user_id"}
+	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM clients WHERE user_id = \$1 AND archived_at IS NULL`).
 		WithArgs("user-1").
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(2))
+
+	mock.ExpectQuery(`SELECT client_id, user_id.*FROM clients WHERE user_id = \$1 AND archived_at IS NULL ORDER BY id LIMIT \$2 OFFSET \$3`).
+		WithArgs("user-1", int32(20), int32(0)).
 		WillReturnRows(sqlmock.NewRows(cols).
-			AddRow("c-1", "user-1", "Jean", "Dupont", nil, nil, nil, nil, nil, false).
-			AddRow("c-2", "user-1", "Marie", "Martin", nil, nil, nil, nil, nil, false))
+			AddRow("c-1", "user-1", "Jean", "Dupont", nil, nil, nil, nil, nil, nil, "individual", false, nil).
+			AddRow("c-2", "user-1", "Marie", "Martin", nil, nil, nil, nil, nil, nil, "business", false, nil))
 
 	resp, err := srv.ListClients(context.Background(), &usersGrpc.ListClientsRequest{UserId: "user-1"})
 	if err != nil {
@@ -176,18 +184,25 @@ func TestListClients_ExcludesArchivedByDefault(t *testing.T) {
 	if len(resp.Clients) != 2 {
 		t.Fatalf("expected 2 clients, got %d", len(resp.Clients))
 	}
+	if resp.Total != 2 {
+		t.Fatalf("expected total 2, got %d", resp.Total)
+	}
 }
 
 func TestListClients_IncludeArchived(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	cols := []string{"client_id", "user_id", "first_name", "last_name", "email", "phone", "company", "siren", "vat", "archived"}
-	// IncludeArchived=true must NOT add the archived_at IS NULL filter.
-	mock.ExpectQuery(`SELECT client_id, user_id.*FROM clients WHERE user_id=\$1 ORDER`).
+	cols := []string{"client_id", "user_id", "first_name", "last_name", "email", "phone", "company", "siren", "vat", "siret", "client_type", "archived", "linked_user_id"}
+	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM clients WHERE user_id = \$1`).
 		WithArgs("user-1").
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(2))
+
+	// IncludeArchived=true must NOT add the archived_at IS NULL filter.
+	mock.ExpectQuery(`SELECT client_id, user_id.*FROM clients WHERE user_id = \$1 ORDER BY id LIMIT \$2 OFFSET \$3`).
+		WithArgs("user-1", int32(20), int32(0)).
 		WillReturnRows(sqlmock.NewRows(cols).
-			AddRow("c-1", "user-1", "Jean", "Dupont", nil, nil, nil, nil, nil, false).
-			AddRow("c-2", "user-1", "Marie", "Martin", nil, nil, nil, nil, nil, true))
+			AddRow("c-1", "user-1", "Jean", "Dupont", nil, nil, nil, nil, nil, nil, "individual", false, nil).
+			AddRow("c-2", "user-1", "Marie", "Martin", nil, nil, nil, nil, nil, nil, "individual", true, nil))
 
 	resp, err := srv.ListClients(context.Background(), &usersGrpc.ListClientsRequest{
 		UserId:          "user-1",
@@ -208,7 +223,7 @@ func TestUpdateClient_Success(t *testing.T) {
 	srv, mock := setupServer(t)
 
 	mock.ExpectExec(`UPDATE clients SET first_name`).
-		WithArgs("Jean", "Dupont", "jean@example.com", nil, nil, nil, nil, "c-1", "user-1").
+		WithArgs("Jean", "Dupont", "jean@example.com", nil, nil, nil, nil, nil, "individual", "c-1", "user-1").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	resp, err := srv.UpdateClient(context.Background(), &usersGrpc.UpdateClientRequest{
@@ -233,7 +248,7 @@ func TestUpdateClient_NotFound(t *testing.T) {
 	srv, mock := setupServer(t)
 
 	mock.ExpectExec(`UPDATE clients SET first_name`).
-		WithArgs("Jean", "Dupont", nil, nil, nil, nil, nil, "ghost", "user-1").
+		WithArgs("Jean", "Dupont", nil, nil, nil, nil, nil, nil, "individual", "ghost", "user-1").
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	resp, err := srv.UpdateClient(context.Background(), &usersGrpc.UpdateClientRequest{

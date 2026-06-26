@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   DataTable,
-  DataTableBody,
+  DataTableBodyRows,
   DataTableCell,
   DataTableHead,
   DataTableHeader,
@@ -138,42 +138,31 @@ export default function TaxesTable() {
             </DataTableHead>
           </DataTableRow>
         </DataTableHeader>
-        <DataTableBody>
-          {taxes.length === 0 ? (
-            <DataTableRow>
-              <DataTableCell className="text-muted-foreground">
-                {t("empty")}
+        <DataTableBodyRows<Tax>
+          emptyColSpan={6}
+          empty={<span className="text-muted-foreground">{t("empty")}</span>}
+          render={(tax) => (
+            <DataTableRow key={tax.id}>
+              <DataTableCell>{tax.id}</DataTableCell>
+              <DataTableCell>{tax.name}</DataTableCell>
+              <DataTableCell>
+                {t("rateValue", { rate: tax.rate })}
               </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
+              <DataTableCell>{groupName(tax.country_group_id)}</DataTableCell>
+              <DataTableCell>
+                {tax.is_default ? (
+                  <CheckIcon
+                    className="size-4 text-emerald-600"
+                    aria-label="Taxe par défaut"
+                  />
+                ) : null}
+              </DataTableCell>
+              <DataTableCell className="w-12 text-right">
+                <DataTableRowActions id={tax.id} row={tax} />
+              </DataTableCell>
             </DataTableRow>
-          ) : (
-            taxes.map((tax) => (
-              <DataTableRow key={tax.id}>
-                <DataTableCell>{tax.id}</DataTableCell>
-                <DataTableCell>{tax.name}</DataTableCell>
-                <DataTableCell>
-                  {t("rateValue", { rate: tax.rate })}
-                </DataTableCell>
-                <DataTableCell>{groupName(tax.country_group_id)}</DataTableCell>
-                <DataTableCell>
-                  {tax.is_default ? (
-                    <CheckIcon
-                      className="size-4 text-emerald-600"
-                      aria-label="Taxe par défaut"
-                    />
-                  ) : null}
-                </DataTableCell>
-                <DataTableCell className="w-12 text-right">
-                  <DataTableRowActions id={tax.id} row={tax} />
-                </DataTableCell>
-              </DataTableRow>
-            ))
           )}
-        </DataTableBody>
+        />
       </DataTable>
 
       <TaxDialog

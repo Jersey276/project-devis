@@ -15,7 +15,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Combobox,
   ComboboxContent,
@@ -32,25 +31,29 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   BookmarkIcon,
-  CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   EllipsisVerticalIcon,
-  LayoutTemplateIcon,
-  Loader2Icon,
-  PlusIcon,
+  MessageSquareIcon,
   Trash2Icon,
-  TriangleAlertIcon,
 } from "lucide-react";
 import type {
+  BackendFee,
   BackendTax,
   BackendQuoteLineType,
   QuoteLineData,
 } from "@/types/backend";
 import SaveTemplateDialog from "@/components/template/save-template-dialog";
-import SelectLineTemplatePopover from "@/components/template/select-line-template-popover";
+import SaveIndicator, {
+  type LineSaveStatus,
+  type IndicatorLabels,
+} from "./save-indicator";
+import QuoteTotalsDisplay from "./quote-totals-display";
+import LineDetailedSublines from "./line-detailed-sublines";
+import LineGroupChildren from "./line-group-children";
+import AddItemControls from "./add-item-controls";
 
-export type LineSaveStatus = "idle" | "saving" | "saved" | "error";
+export type { LineSaveStatus };
 
 export type QuoteItemRow = {
   lineId: string;
@@ -88,6 +91,8 @@ type QuoteStepItemsProps = {
   onRemoveItem: (lineId: string) => void;
   onAddItem: (kind?: QuoteLineData["kind"]) => void;
   onAddChildItem?: (parentLineId: string, kind?: QuoteLineData["kind"]) => void;
+  onAddFeeItem?: (fee: BackendFee) => void | Promise<void>;
+  onAddFeeSubline?: (lineId: string, fee: BackendFee) => void;
   onSublineAdd?: (lineId: string) => void;
   onSublineChange?: (
     lineId: string,
@@ -97,70 +102,8 @@ type QuoteStepItemsProps = {
   onSublineRemove?: (lineId: string, index: number) => void;
   onSaveLineAsTemplate?: (lineId: string, name: string) => Promise<boolean>;
   onAddItemFromTemplate?: (templateId: string) => Promise<void>;
+  onOpenComments?: (lineId: string, lineName: string) => void;
 };
-
-type IndicatorLabels = { saving: string; saved: string; error: string };
-
-function SaveIndicator({
-  status,
-  labels,
-}: {
-  status: LineSaveStatus;
-  labels: IndicatorLabels;
-}) {
-  if (status === "saving") {
-    return (
-      <span
-        data-slot="line-save-indicator"
-        data-status="saving"
-        className="text-muted-foreground inline-flex items-center"
-        aria-label={labels.saving}
-      >
-        <Loader2Icon className="size-4 animate-spin" />
-      </span>
-    );
-  }
-  if (status === "saved") {
-    return (
-      <span
-        data-slot="line-save-indicator"
-        data-status="saved"
-        className="inline-flex items-center text-emerald-600"
-        aria-label={labels.saved}
-      >
-        <CheckIcon className="size-4" />
-      </span>
-    );
-  }
-  if (status === "error") {
-    return (
-      <span
-        data-slot="line-save-indicator"
-        data-status="error"
-        className="text-destructive inline-flex items-center"
-        aria-label={labels.error}
-      >
-        <TriangleAlertIcon className="size-4" />
-      </span>
-    );
-  }
-  return (
-    <span
-      data-slot="line-save-indicator"
-      data-status="idle"
-      className="sr-only"
-    >
-      idle
-    </span>
-  );
-}
-
-const CREATABLE_KINDS: Array<QuoteLineData["kind"]> = [
-  "line",
-  "text",
-  "group",
-  "detailed",
-];
 
 export default function QuoteStepItems({
   items,
@@ -179,11 +122,14 @@ export default function QuoteStepItems({
   onRemoveItem,
   onAddItem,
   onAddChildItem,
+  onAddFeeItem,
+  onAddFeeSubline,
   onSublineAdd,
   onSublineChange,
   onSublineRemove,
   onSaveLineAsTemplate,
   onAddItemFromTemplate,
+  onOpenComments,
 }: QuoteStepItemsProps) {
   const tCommon = useTranslations("common");
   const selectableTaxes = availableTaxes.filter((tax) => !tax.superseded_at);
@@ -210,6 +156,8 @@ export default function QuoteStepItems({
           return t("lineKinds.detailed");
         case "subline":
           return t("lineKinds.subline");
+        case "fee":
+          return t("lineKinds.fee");
         default:
           return t("lineKinds.line");
       }
@@ -268,12 +216,16 @@ export default function QuoteStepItems({
   function renderItemRows(item: QuoteItemRow) {
     const kind = lineKind(item);
     const itemChildren = childrenByParentId.get(item.lineId) ?? [];
-    const sublines = item.data.sublines ?? [];
     const lineTotalValue = lineTotal(item);
     const selectedTax =
       item.taxId != null ? (taxById.get(item.taxId) ?? null) : null;
     const canEditAdvanced = !!onDescriptionChange && !!onOptionChange;
     const showAdvanced = expandedLineId === item.lineId;
+    // A fee line mirrors a catalog entry: its name/price/unit are driven by the
+    // fee and may be overwritten by propagation, so they are locked here. The
+    // tax stays editable — the fee only seeds a default tax — as do quantity
+    // and the option flag.
+    const isFee = kind === "fee";
 
     return (
       <Fragment key={item.lineId}>
@@ -287,7 +239,7 @@ export default function QuoteStepItems({
                   onChange={(event) =>
                     onNameChange(item.lineId, event.target.value)
                   }
-                  disabled={isReadonly}
+                  disabled={isReadonly || isFee}
                   placeholder={t("lineNamePlaceholder")}
                 />
                 {kind !== "line" && (
@@ -347,7 +299,7 @@ export default function QuoteStepItems({
                 onChange={(event) =>
                   onUnitPriceChange(item.lineId, Number(event.target.value))
                 }
-                disabled={isReadonly || kind === "detailed"}
+                disabled={isReadonly || kind === "detailed" || isFee}
               />
             )}
           </TableCell>
@@ -391,42 +343,55 @@ export default function QuoteStepItems({
             <SaveIndicator status={item.saveStatus} labels={indicatorLabels} />
           </TableCell>
           <TableCell>
-            {!isReadonly && (
-              <div className="flex items-center justify-end gap-1">
-                {onSaveLineAsTemplate && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label={t("action")}
-                      >
-                        <EllipsisVerticalIcon className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => openSaveLineDialog(item.lineId)}
-                      >
-                        <BookmarkIcon className="size-4" />
-                        {t("saveAsTemplate")}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
+            <div className="flex items-center justify-end gap-1">
+              {onOpenComments && (
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  aria-label={t("deleteAria")}
-                  disabled={!item.data.parent_line_id && topLevelCount <= 1}
-                  onClick={() => onRemoveItem(item.lineId)}
+                  aria-label={t("commentsAria")}
+                  onClick={() => onOpenComments(item.lineId, item.name)}
                 >
-                  <Trash2Icon className="size-4" />
+                  <MessageSquareIcon className="size-4" />
                 </Button>
-              </div>
-            )}
+              )}
+              {!isReadonly && (
+                <>
+                  {onSaveLineAsTemplate && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label={t("action")}
+                        >
+                          <EllipsisVerticalIcon className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => openSaveLineDialog(item.lineId)}
+                        >
+                          <BookmarkIcon className="size-4" />
+                          {t("saveAsTemplate")}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={t("deleteAria")}
+                    disabled={!item.data.parent_line_id && topLevelCount <= 1}
+                    onClick={() => onRemoveItem(item.lineId)}
+                  >
+                    <Trash2Icon className="size-4" />
+                  </Button>
+                </>
+              )}
+            </div>
           </TableCell>
         </TableRow>
 
@@ -468,173 +433,22 @@ export default function QuoteStepItems({
           </TableRow>
         )}
 
-        {kind === "group" && (!isReadonly || itemChildren.length > 0) && (
-          <TableRow key={`${item.lineId}-group-children`}>
-            <TableCell colSpan={7} className="p-0 pb-2 pl-8">
-              <div className="overflow-hidden rounded-md border">
-                {itemChildren.length > 0 && (
-                  <Table>
-                    <TableBody>
-                      {itemChildren.map((child) => renderItemRows(child))}
-                    </TableBody>
-                  </Table>
-                )}
-                {!isReadonly && onAddChildItem && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="h-auto w-full p-0"
-                        disabled={isAdding}
-                        aria-label={t("addLineInGroupAria")}
-                        title={t("addChildTypeAria")}
-                      >
-                        <Skeleton className="flex h-8 w-full items-center justify-center">
-                          {isAdding ? (
-                            <Loader2Icon className="size-4 animate-spin" />
-                          ) : (
-                            <PlusIcon className="size-4" />
-                          )}
-                        </Skeleton>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                      {CREATABLE_KINDS.map((k) => (
-                        <DropdownMenuItem
-                          key={k}
-                          onClick={() => onAddChildItem(item.lineId, k)}
-                        >
-                          {kindLabel(k)}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
-            </TableCell>
-          </TableRow>
-        )}
-        {kind === "detailed" && (!isReadonly || sublines.length > 0) && (
-          <TableRow key={`${item.lineId}-sublines`}>
-            <TableCell colSpan={7} className="p-0 pb-2 pl-8">
-              <div className="overflow-hidden rounded-md border">
-                {sublines.length > 0 && (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t("sublines.name")}</TableHead>
-                        <TableHead>{t("sublines.quantity")}</TableHead>
-                        <TableHead>{t("sublines.unit")}</TableHead>
-                        <TableHead>{t("sublines.unitPrice")}</TableHead>
-                        <TableHead>{t("sublines.option")}</TableHead>
-                        <TableHead className="w-10" />
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sublines.map((subline, idx) => (
-                        <TableRow key={subline._key ?? String(idx)}>
-                          <TableCell>
-                            <Input
-                              value={subline.name}
-                              onChange={(e) =>
-                                onSublineChange?.(item.lineId, idx, {
-                                  name: e.target.value,
-                                })
-                              }
-                              disabled={isReadonly}
-                              placeholder={t("lineNamePlaceholder")}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min={0}
-                              value={subline.quantity}
-                              onChange={(e) =>
-                                onSublineChange?.(item.lineId, idx, {
-                                  quantity: e.target.value,
-                                })
-                              }
-                              disabled={isReadonly}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              value={subline.unit ?? ""}
-                              onChange={(e) =>
-                                onSublineChange?.(item.lineId, idx, {
-                                  unit: e.target.value || undefined,
-                                })
-                              }
-                              disabled={isReadonly}
-                              placeholder={t("sublines.unitPlaceholder")}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min={0}
-                              step="0.01"
-                              value={subline.unit_price / 100}
-                              onChange={(e) =>
-                                onSublineChange?.(item.lineId, idx, {
-                                  unit_price: Math.round(
-                                    Number(e.target.value) * 100,
-                                  ),
-                                })
-                              }
-                              disabled={isReadonly}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Checkbox
-                              checked={!!subline.option}
-                              onCheckedChange={(checked) =>
-                                onSublineChange?.(item.lineId, idx, {
-                                  option: checked === true,
-                                })
-                              }
-                              disabled={isReadonly}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            {!isReadonly && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                aria-label={t("sublines.deleteAria")}
-                                onClick={() =>
-                                  onSublineRemove?.(item.lineId, idx)
-                                }
-                              >
-                                <Trash2Icon className="size-4" />
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-                {!isReadonly && onSublineAdd && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="h-auto w-full p-0"
-                    onClick={() => onSublineAdd(item.lineId)}
-                    aria-label={t("sublines.addAria")}
-                  >
-                    <Skeleton className="flex h-8 w-full items-center justify-center">
-                      <PlusIcon className="size-4" />
-                    </Skeleton>
-                  </Button>
-                )}
-              </div>
-            </TableCell>
-          </TableRow>
-        )}
+        <LineGroupChildren
+          item={item}
+          isReadonly={isReadonly}
+          isAdding={isAdding}
+          renderedChildren={itemChildren.map((child) => renderItemRows(child))}
+          kindLabel={kindLabel}
+          onAddChildItem={onAddChildItem}
+        />
+        <LineDetailedSublines
+          item={item}
+          isReadonly={isReadonly}
+          onSublineAdd={onSublineAdd}
+          onSublineChange={onSublineChange}
+          onSublineRemove={onSublineRemove}
+          onAddFeeSubline={onAddFeeSubline}
+        />
       </Fragment>
     );
   }
@@ -661,91 +475,20 @@ export default function QuoteStepItems({
       </Table>
 
       {!isReadonly && (
-        <div className="flex gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                className="h-auto flex-1 p-0"
-                disabled={isAdding}
-                aria-label={t("addAria")}
-                title={t("addTypeAria")}
-              >
-                <Skeleton className="flex h-14 w-full items-center justify-center">
-                  {isAdding ? (
-                    <Loader2Icon className="size-7 animate-spin" />
-                  ) : (
-                    <PlusIcon className="size-7" />
-                  )}
-                </Skeleton>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              {CREATABLE_KINDS.map((kind) => (
-                <DropdownMenuItem key={kind} onClick={() => onAddItem(kind)}>
-                  {kindLabel(kind)}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {onAddItemFromTemplate && (
-            <SelectLineTemplatePopover
-              disabled={isAdding}
-              onSelect={onAddItemFromTemplate}
-            >
-              <Button
-                type="button"
-                variant="ghost"
-                className="h-auto p-0"
-                disabled={isAdding}
-                aria-label={t("addFromTemplateAria")}
-              >
-                <Skeleton className="flex h-14 w-14 items-center justify-center">
-                  <LayoutTemplateIcon className="size-5" />
-                </Skeleton>
-              </Button>
-            </SelectLineTemplatePopover>
-          )}
-        </div>
+        <AddItemControls
+          isAdding={isAdding}
+          kindLabel={kindLabel}
+          onAddItem={onAddItem}
+          onAddFeeItem={onAddFeeItem}
+          onAddItemFromTemplate={onAddItemFromTemplate}
+        />
       )}
 
-      <div className="flex justify-end">
-        {!hideTotals && (
-          <div
-            data-slot="quote-totals"
-            className="min-w-65 space-y-1 rounded-md border px-4 py-2 text-sm"
-          >
-            <div className="flex justify-between font-medium">
-              <span>{t("totalHt")}</span>
-              <span data-slot="total-ht">{totals.ht.toFixed(2)} €</span>
-            </div>
-            <div className="flex justify-between text-muted-foreground">
-              <span>Total options</span>
-              <span data-slot="total-option-ht">
-                {totals.optionHt.toFixed(2)} €
-              </span>
-            </div>
-            {totals.breakdown.map(({ tax, amount }) => (
-              <div
-                key={tax.id}
-                data-slot="total-tax-line"
-                data-tax-id={tax.id}
-                className="text-muted-foreground flex justify-between"
-              >
-                <span>{taxLabel(tax)}</span>
-                <span>{amount.toFixed(2)} €</span>
-              </div>
-            ))}
-            {totals.breakdown.length > 0 && (
-              <div className="flex justify-between border-t pt-1 font-semibold">
-                <span>{t("totalTtc")}</span>
-                <span data-slot="total-ttc">{totals.ttc.toFixed(2)} €</span>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      <QuoteTotalsDisplay
+        totals={totals}
+        hideTotals={hideTotals}
+        taxLabel={taxLabel}
+      />
 
       {onSaveLineAsTemplate && (
         <SaveTemplateDialog

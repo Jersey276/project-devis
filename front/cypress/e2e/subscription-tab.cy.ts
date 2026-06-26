@@ -5,7 +5,7 @@ const PLANS = [
     tier: "free",
     price_cents: 0,
     billing_cycle: "none",
-    features: {},
+    features: { max_schedules: 3, max_templates: 2, max_projects: 0, max_linked_clients: 0, fees_catalog: 0, b2b_invoicing: 0 },
   },
   {
     plan_id: 2,
@@ -13,7 +13,7 @@ const PLANS = [
     tier: "pro",
     price_cents: 900,
     billing_cycle: "monthly",
-    features: {},
+    features: { max_schedules: -1, max_templates: -1, max_projects: 10, max_linked_clients: 5, fees_catalog: 1, b2b_invoicing: 1 },
   },
   {
     plan_id: 3,
@@ -21,7 +21,7 @@ const PLANS = [
     tier: "enterprise",
     price_cents: 4900,
     billing_cycle: "monthly",
-    features: {},
+    features: { max_schedules: -1, max_templates: -1, max_projects: -1, max_linked_clients: -1, fees_catalog: 1, b2b_invoicing: 1 },
   },
 ];
 
@@ -119,13 +119,28 @@ describe("Profile — Subscription tab", () => {
     cy.contains("Résiliation programmée.").should("be.visible");
   });
 
+  it("comparison table shows new feature rows", () => {
+    stubSubscriptionTab(FREE_SUB);
+    cy.visit("/profile?tab=abonnement");
+    cy.wait("@getMySub");
+    cy.wait("@getPlans");
+
+    cy.contains("Projets").should("be.visible");
+    cy.contains("Clients liés").should("be.visible");
+    cy.contains("Catalogue de frais").should("be.visible");
+    cy.contains("Facturation B2B").should("be.visible");
+
+    // Pro and Enterprise should show checkmark for boolean features
+    cy.contains("✓").should("be.visible");
+  });
+
   it("S'abonner button calls payment-intent and opens dialog", () => {
     stubSubscriptionTab(FREE_SUB);
     cy.intercept("POST", "/api/subscriptions/payment-intent", {
       statusCode: 200,
       body: {
         success: true,
-        client_secret: "pi_test_xxx_secret",
+        client_secret: "pi_test_abc123_secret_def456xyz",
         stripe_subscription_id: "sub_test_123",
       },
     }).as("createIntent");

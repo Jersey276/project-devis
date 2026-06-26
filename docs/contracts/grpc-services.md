@@ -10,6 +10,8 @@ Ce document fournit une vue contractuelle de haut niveau. Les details exacts de 
 - Export: `:50054`
 - Template: `:50055`
 - Schedule: `:50056`
+- Audit: `:50057`
+- Project: `:50061`
 
 ## Pattern de reponse
 
@@ -77,6 +79,36 @@ Particularites:
 - depend du service quote pour verifier le devis cible et recuperer les lignes eligibles
 - expose les donnees consolidees necessaires a l'export PDF d'echeancier
 - applique les regles de verrouillage metier selon le statut (`DRAFT`, `NEGOCIATE`, `DENIED`, `VALID`)
+
+## Audit service
+
+Responsabilites:
+
+- traçage de chaque requête HTTP du gateway (`LogActivity`)
+- consultation / filtrage paginé du journal
+- statistiques d'activité sur 6 mois glissants
+- export CSV envoyé par email
+- purge automatique des entrées de plus de 6 mois (worker dédié)
+
+Particularites:
+
+- `user_id` et `req_body` sont stockés NULL si vides (requêtes non authentifiées)
+- utilise deux connexions DB distinctes : lecture/écriture + DELETE-only pour la purge
+- dépend du service email (`:50058`) pour `ExportActivityLogs`
+
+## Project service
+
+Responsabilites:
+
+- création / mise à jour / suppression de projets
+- rattachement de devis à un projet (contrainte : un devis = un seul projet via `UNIQUE(quote_id)`)
+- liste paginée avec filtres search / status / client
+
+Particularites:
+
+- `DeleteProject` s'exécute dans une transaction (supprime d'abord `project_quotes`)
+- `AddQuoteToProject` retourne `AlreadyExists` (1002) si le devis appartient déjà à un autre projet
+- `ListProjectQuoteIds` est utilisé par le gateway pour le fan-out vers quote / schedule / invoice
 
 ## Export service
 

@@ -1,0 +1,126 @@
+syntax = "proto3";
+
+package schedule;
+
+option go_package = "project-devis-invoice/services/schedulegrpc";
+
+service ScheduleService {
+    rpc CreateSchedule(CreateScheduleRequest) returns (CreateScheduleResponse);
+    rpc UpdateScheduleCell(UpdateScheduleCellRequest) returns (GenericResponse);
+    rpc ValidateSchedule(ValidateScheduleRequest) returns (GenericResponse);
+    rpc GetSchedule(GetScheduleRequest) returns (GetScheduleResponse);
+    rpc GetScheduleCells(GetScheduleCellsRequest) returns (GetScheduleCellsResponse);
+    rpc ListSchedules(ListSchedulesRequest) returns (ListSchedulesResponse);
+}
+
+message GenericResponse {
+    bool  success = 1;
+    int32 code    = 2;
+}
+
+message ValidationError {
+    string field   = 1;
+    string message = 2;
+}
+
+message CreateScheduleRequest {
+    string user_id          = 1;
+    string quote_id         = 2;
+    string name             = 3;
+    string start_month      = 4;
+    int32  duration_months  = 5;
+}
+
+message CreateScheduleResponse {
+    bool   success     = 1;
+    int32  code        = 2;
+    string schedule_id = 3;
+    repeated ValidationError validation_errors = 4;
+}
+
+message UpdateScheduleCellRequest {
+    string schedule_id   = 1;
+    string user_id       = 2;
+    string quote_line_id = 3;
+    int32  month_index   = 4;
+    string amount_eur    = 5;
+}
+
+message ValidateScheduleRequest {
+    string schedule_id = 1;
+    string user_id     = 2;
+}
+
+message GetScheduleRequest {
+    string schedule_id = 1;
+    string user_id     = 2;
+}
+
+message ScheduleLineSummary {
+    string quote_line_id   = 1;
+    int64  planned_cents   = 2;
+    int64  expected_cents  = 3;
+}
+
+message ScheduleColumnTotal {
+    int32 month_index   = 1;
+    int64 amount_cents  = 2;
+}
+
+message ScheduleDetails {
+    string schedule_id        = 1;
+    string quote_id           = 2;
+    string status             = 3;
+    string name               = 4;
+    string start_month        = 5;
+    int32  duration_months    = 6;
+    repeated ScheduleLineSummary lines         = 7;
+    repeated ScheduleColumnTotal column_totals = 8;
+    int64  quote_total_cents   = 9;
+    int64  planned_total_cents = 10;
+}
+
+message GetScheduleResponse {
+    bool            success  = 1;
+    int32           code     = 2;
+    ScheduleDetails schedule = 3;
+}
+
+// Per-cell amounts (quote_line_id × month_index), needed by downstream services
+// (e.g. invoicing) to bill a subset of months with a correct per-line breakdown.
+message GetScheduleCellsRequest {
+    string schedule_id = 1;
+    string user_id     = 2;
+}
+
+message ScheduleCell {
+    string quote_line_id = 1;
+    int32  month_index   = 2;
+    int64  amount_cents  = 3;
+}
+
+message GetScheduleCellsResponse {
+    bool                  success = 1;
+    int32                 code    = 2;
+    repeated ScheduleCell cells   = 3;
+}
+
+message ScheduleSummary {
+    string schedule_id      = 1;
+    string name             = 2;
+    string status           = 3;
+    string start_month      = 4;
+    int32  duration_months  = 5;
+    string quote_id         = 6;
+}
+
+message ListSchedulesRequest {
+    string user_id  = 1;
+    string quote_id = 2;
+}
+
+message ListSchedulesResponse {
+    bool                     success   = 1;
+    int32                    code      = 2;
+    repeated ScheduleSummary schedules = 3;
+}

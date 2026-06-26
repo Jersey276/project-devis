@@ -74,7 +74,7 @@ describe("Schedule", () => {
   describe("List", () => {
     it("renders schedules list from API", () => {
       cy.login();
-      cy.intercept("GET", "/api/schedules", {
+      cy.intercept("GET", "/api/schedules**", {
         statusCode: 200,
         body: listResponse(),
       }).as("listSchedules");
@@ -94,7 +94,7 @@ describe("Schedule", () => {
       cy.login();
 
       let currentStatus = "DRAFT";
-      cy.intercept("GET", "/api/schedules", (req) => {
+      cy.intercept("GET", "/api/schedules**", (req) => {
         req.reply({
           statusCode: 200,
           body: {
@@ -148,7 +148,7 @@ describe("Schedule", () => {
 
     it("shows empty state when API returns no schedules", () => {
       cy.login();
-      cy.intercept("GET", "/api/schedules", {
+      cy.intercept("GET", "/api/schedules**", {
         statusCode: 200,
         body: { success: true, schedules: [] },
       }).as("listSchedulesEmpty");
@@ -163,7 +163,7 @@ describe("Schedule", () => {
       cy.login();
 
       let created = false;
-      cy.intercept("GET", "/api/schedules", (req) => {
+      cy.intercept("GET", "/api/schedules**", (req) => {
         req.reply({
           statusCode: 200,
           body: created
@@ -268,7 +268,7 @@ describe("Schedule", () => {
 
     it("shows validation message on create failure", () => {
       cy.login();
-      cy.intercept("GET", "/api/schedules", {
+      cy.intercept("GET", "/api/schedules**", {
         statusCode: 200,
         body: { success: true, schedules: [] },
       }).as("listSchedules");
@@ -344,7 +344,7 @@ describe("Schedule", () => {
     it("sorts quote options by quote name and excludes quotes already VALID", () => {
       cy.login();
 
-      cy.intercept("GET", "/api/schedules", {
+      cy.intercept("GET", "/api/schedules**", {
         statusCode: 200,
         body: {
           success: true,
@@ -465,7 +465,7 @@ describe("Schedule", () => {
       cy.visit("/schedule/sch-1");
       cy.wait("@getSchedule");
 
-      cy.contains("Échéancier sch-1").should("be.visible");
+      cy.contains("Échéancier Echeancier principal").should("be.visible");
       cy.contains("Nom:").should("be.visible");
       cy.contains("Statut:").should("be.visible");
       cy.contains("Brouillon").should("be.visible");
@@ -730,7 +730,7 @@ describe("Schedule", () => {
 
       cy.on("window:confirm", () => true);
 
-      cy.intercept("GET", "/api/schedules", {
+      cy.intercept("GET", "/api/schedules**", {
         statusCode: 200,
         body: {
           success: true,

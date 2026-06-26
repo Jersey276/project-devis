@@ -146,6 +146,137 @@ func TestExport_RenderError(t *testing.T) {
 	}
 }
 
+func TestExport_VATRendered(t *testing.T) {
+	qc, uc, gt := happyFakes()
+	var capturedHTML []byte
+	gt.convert = func(_ context.Context, html []byte) ([]byte, error) {
+		capturedHTML = html
+		return []byte("%PDF-1.4 fake"), nil
+	}
+
+	resp, err := quoteexport.Export(context.Background(), qc, uc, gt, validReq())
+	if err != nil || !resp.Success {
+		t.Fatalf("export failed: err=%v resp=%+v", err, resp)
+	}
+	for _, want := range []string{"20.00 %", "Total TVA", "Total TTC"} {
+		if !strings.Contains(string(capturedHTML), want) {
+			t.Errorf("HTML output missing %q", want)
+		}
+	}
+}
+
+func captureHTML(t *testing.T, qc *fakeQuote, uc *fakeUsers, gt *fakeGotenberg) string {
+	t.Helper()
+	var capturedHTML []byte
+	origConvert := gt.convert
+	gt.convert = func(ctx context.Context, html []byte) ([]byte, error) {
+		capturedHTML = html
+		return origConvert(ctx, html)
+	}
+	resp, err := quoteexport.Export(context.Background(), qc, uc, gt, validReq())
+	if err != nil || !resp.Success {
+		t.Fatalf("export failed: err=%v resp=%+v", err, resp)
+	}
+	return string(capturedHTML)
+}
+
+func TestExport_GroupLine_RenderedAsHeader(t *testing.T) {
+	qc, uc, gt := happyFakes()
+	qc.getQuote = func(_ context.Context, req *quote.GetQuoteRequest) (*quote.GetQuoteResponse, error) {
+		return &quote.GetQuoteResponse{
+			Success: true,
+			Quote:   &quote.Quote{QuoteId: req.QuoteId, UserId: req.UserId, Name: "Test", ClientId: "client-1", AddressId: 42},
+			Lines: []*quote.QuoteLine{
+				{LineId: "l1", Name: "Matériaux", Data: `{"kind":"group"}`},
+				{LineId: "l2", Name: "Vis", Quantity: "10", UnitPrice: 100, TaxId: 1, Data: `{"kind":"line"}`},
+			},
+		}, nil
+	}
+	html := captureHTML(t, qc, uc, gt)
+	if !strings.Contains(html, "group-header") {
+		t.Error("HTML missing group-header class")
+	}
+	if !strings.Contains(html, "Matériaux") {
+		t.Error("HTML missing group name")
+	}
+}
+
+func TestExport_TextLine_RenderedFullWidth(t *testing.T) {
+	qc, uc, gt := happyFakes()
+	qc.getQuote = func(_ context.Context, req *quote.GetQuoteRequest) (*quote.GetQuoteResponse, error) {
+		return &quote.GetQuoteResponse{
+			Success: true,
+			Quote:   &quote.Quote{QuoteId: req.QuoteId, UserId: req.UserId, Name: "Test", ClientId: "client-1", AddressId: 42},
+			Lines: []*quote.QuoteLine{
+				{LineId: "l1", Name: "Travaux réalisés selon les normes en vigueur.", Data: `{"kind":"text"}`},
+				{LineId: "l2", Name: "Pose", Quantity: "1", UnitPrice: 50000, TaxId: 1},
+			},
+		}, nil
+	}
+	html := captureHTML(t, qc, uc, gt)
+	if !strings.Contains(html, "text-line") {
+		t.Error("HTML missing text-line class")
+	}
+	if !strings.Contains(html, "Travaux réalisés") {
+		t.Error("HTML missing text content")
+	}
+}
+
+func TestExport_OptionLine_ExcludedFromTotal(t *testing.T) {
+	qc, uc, gt := happyFakes()
+	qc.getQuote = func(_ context.Context, req *quote.GetQuoteRequest) (*quote.GetQuoteResponse, error) {
+		return &quote.GetQuoteResponse{
+			Success: true,
+			Quote:   &quote.Quote{QuoteId: req.QuoteId, UserId: req.UserId, Name: "Test", ClientId: "client-1", AddressId: 42},
+			Lines: []*quote.QuoteLine{
+				// Normal line: 500,00 € HT
+				{LineId: "l1", Name: "Pose", Quantity: "1", UnitPrice: 50000, TaxId: 1, Data: `{"kind":"line"}`},
+				// Option line: 200,00 € HT (must NOT be in TotalHT)
+				{LineId: "l2", Name: "Garantie étendue", Quantity: "1", UnitPrice: 20000, Data: `{"kind":"line","option":true}`},
+			},
+		}, nil
+	}
+	html := captureHTML(t, qc, uc, gt)
+	// Options section must appear
+	if !strings.Contains(html, "Options") {
+		t.Error("HTML missing options section")
+	}
+	if !strings.Contains(html, "Garantie étendue") {
+		t.Error("HTML missing option line name")
+	}
+	// TotalHT must reflect only the normal line (500,00 €), not 700,00 €
+	if strings.Contains(html, "700,00") {
+		t.Error("option line amount incorrectly included in total")
+	}
+}
+
+func TestExport_DetailedLine_SublineExpanded(t *testing.T) {
+	qc, uc, gt := happyFakes()
+	qc.getQuote = func(_ context.Context, req *quote.GetQuoteRequest) (*quote.GetQuoteResponse, error) {
+		return &quote.GetQuoteResponse{
+			Success: true,
+			Quote:   &quote.Quote{QuoteId: req.QuoteId, UserId: req.UserId, Name: "Test", ClientId: "client-1", AddressId: 42},
+			Lines: []*quote.QuoteLine{
+				{
+					LineId: "l1", Name: "Installation complète", Type: "multiple", TaxId: 1,
+					Data: `{"kind":"detailed","sublines":[{"name":"Fourniture matériel","quantity":"2","unit":"u","unit_price":15000},{"name":"Main d'oeuvre","quantity":"3","unit":"h","unit_price":5000}]}`,
+				},
+			},
+		}, nil
+	}
+	html := captureHTML(t, qc, uc, gt)
+	if !strings.Contains(html, "Fourniture matériel") {
+		t.Error("HTML missing first subline")
+	}
+	if !strings.Contains(html, `class="subline"`) {
+		t.Error("HTML missing subline class")
+	}
+	// Total: 2*150 + 3*50 = 300 + 150 = 450,00 €
+	if !strings.Contains(html, "450,00") {
+		t.Error("HTML missing correct detailed total")
+	}
+}
+
 func TestExport_Success(t *testing.T) {
 	qc, uc, gt := happyFakes()
 

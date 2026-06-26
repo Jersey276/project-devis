@@ -16,7 +16,10 @@ service QuoteService {
     rpc TrashQuotes(TrashQuotesRequest) returns (GenericResponse);
     rpc DropQuote(DropQuoteRequest) returns (GenericResponse);
     rpc ContinueQuote(ContinueQuoteRequest) returns (GenericResponse);
-    rpc SendQuote(SendQuoteRequest) returns (SendQuoteResponse);
+    rpc ValidateQuote(ValidateQuoteRequest) returns (GenericResponse);
+    rpc NegociateQuote(NegociateQuoteRequest) returns (NegociateQuoteResponse);
+    rpc AcceptQuote(AcceptQuoteRequest) returns (GenericResponse);
+    rpc RefuseQuote(RefuseQuoteRequest) returns (GenericResponse);
 
     // Line
     rpc CreateQuoteLine(CreateQuoteLineRequest) returns (CreateQuoteLineResponse);
@@ -25,6 +28,19 @@ service QuoteService {
     rpc ListUserQuoteLines(ListUserQuoteLinesRequest) returns (ListUserQuoteLinesResponse);
     rpc UpdateQuoteLine(UpdateQuoteLineRequest) returns (UpdateQuoteLineResponse);
     rpc DeleteQuoteLine(DeleteQuoteLineRequest) returns (GenericResponse);
+
+    // Fee (premium catalog)
+    rpc CreateFee(CreateFeeRequest) returns (CreateFeeResponse);
+    rpc GetFee(GetFeeRequest) returns (GetFeeResponse);
+    rpc ListFees(ListFeesRequest) returns (ListFeesResponse);
+    rpc UpdateFee(UpdateFeeRequest) returns (UpdateFeeResponse);
+    rpc ArchiveFee(ArchiveFeeRequest) returns (GenericResponse);
+
+    // Comment
+    rpc CreateComment(CreateCommentRequest) returns (CreateCommentResponse);
+    rpc ListComments(ListCommentsRequest)   returns (ListCommentsResponse);
+    rpc UpdateComment(UpdateCommentRequest) returns (UpdateCommentResponse);
+    rpc DeleteComment(DeleteCommentRequest) returns (GenericResponse);
 }
 
 message GenericResponse {
@@ -45,6 +61,9 @@ enum QuoteState {
     QUOTE_STATE_SENT        = 2;
     QUOTE_STATE_VALIDATED   = 3;
     QUOTE_STATE_DROP        = 4;
+    QUOTE_STATE_NEGOCIATION = 5;
+    QUOTE_STATE_ACCEPTED    = 6;
+    QUOTE_STATE_REFUSED     = 7;
 }
 
 message Quote {
@@ -56,6 +75,9 @@ message Quote {
     string     client_id       = 6;
     int32      address_id      = 7;
     int32      user_address_id = 8;
+    string     issued_at       = 9;
+    string     valid_until     = 10;
+    string     payment_terms   = 11;
 }
 
 message CreateQuoteRequest {
@@ -85,15 +107,28 @@ message GetQuoteResponse {
     repeated QuoteLine lines = 4;
 }
 
+message QuoteFilters {
+    string search = 1;
+    repeated string states = 2;
+    string client_id = 3;
+    repeated string quote_ids = 4;
+}
+
 message ListQuotesRequest {
     string user_id = 1;
     bool include_archived = 2;
+    int32 page = 3;
+    int32 page_size = 4;
+    QuoteFilters filters = 5;
+    string sort_by = 6;
+    string sort_direction = 7;
 }
 
 message ListQuotesResponse {
     bool success = 1;
     int32 code = 2;
     repeated Quote quotes = 3;
+    int64 total = 4;
 }
 
 message UpdateQuoteRequest {
@@ -103,6 +138,8 @@ message UpdateQuoteRequest {
     string client_id       = 4;
     int32  address_id      = 5;
     int32  user_address_id = 6;
+    string valid_until     = 7;
+    string payment_terms   = 8;
 }
 
 message UpdateQuoteResponse {
@@ -140,12 +177,29 @@ message ContinueQuoteRequest {
     string user_id = 2;
 }
 
-message SendQuoteRequest {
-    string quote_id  = 1;
-    string user_id   = 2;
+message ValidateQuoteRequest {
+    string quote_id = 1;
+    string user_id = 2;
 }
 
-message SendQuoteResponse {
+message NegociateQuoteRequest {
+    string quote_id = 1;
+    string user_id = 2;
+}
+
+message AcceptQuoteRequest {
+    string quote_id = 1;
+    string user_id  = 2;
+}
+
+message RefuseQuoteRequest {
+    string quote_id = 1;
+    string user_id  = 2;
+}
+
+// NegociateQuoteResponse carries the client_id and quote name so the gateway can
+// notify the client by email (sending the quote is part of entering negotiation).
+message NegociateQuoteResponse {
     bool   success   = 1;
     int32  code      = 2;
     string client_id = 3;
@@ -242,4 +296,130 @@ message UpdateQuoteLineResponse {
 message DeleteQuoteLineRequest {
     string line_id = 1;
     string user_id = 2;
+}
+
+// ─── Fee ─────────────────────────────────────────────────────────────────────
+
+message Fee {
+    string fee_id     = 1;
+    string user_id    = 2;
+    string category   = 3; // "fixed" | "service"
+    string name       = 4;
+    string unit       = 5;
+    int64  unit_price = 6;
+    int32  tax_id     = 7;
+    bool   archived   = 8;
+}
+
+message CreateFeeRequest {
+    string user_id    = 1;
+    string category   = 2;
+    string name       = 3;
+    string unit       = 4;
+    int64  unit_price = 5;
+    int32  tax_id     = 6;
+}
+
+message CreateFeeResponse {
+    bool   success = 1;
+    int32  code = 2;
+    string fee_id = 3;
+    repeated ValidationError validation_errors = 4;
+}
+
+message GetFeeRequest {
+    string fee_id = 1;
+    string user_id = 2;
+}
+
+message GetFeeResponse {
+    bool  success = 1;
+    int32 code = 2;
+    Fee   fee = 3;
+}
+
+message ListFeesRequest {
+    string user_id = 1;
+    bool   include_archived = 2;
+}
+
+message ListFeesResponse {
+    bool  success = 1;
+    int32 code = 2;
+    repeated Fee fees = 3;
+}
+
+message UpdateFeeRequest {
+    string fee_id     = 1;
+    string user_id    = 2;
+    string category   = 3;
+    string name       = 4;
+    string unit       = 5;
+    int64  unit_price = 6;
+    int32  tax_id     = 7;
+}
+
+message UpdateFeeResponse {
+    bool  success = 1;
+    int32 code = 2;
+    repeated ValidationError validation_errors = 3;
+}
+
+message ArchiveFeeRequest {
+    string fee_id = 1;
+    string user_id = 2;
+}
+
+// ─── Comment ──────────────────────────────────────────────────────────────────
+
+message QuoteLineComment {
+    string comment_id  = 1;
+    string line_id     = 2;
+    string quote_id    = 3;
+    string author_id   = 4;
+    string author_name = 5;
+    string body        = 6;
+    string created_at  = 7;
+    string updated_at  = 8;
+}
+
+message CreateCommentRequest {
+    string line_id     = 1;
+    string quote_id    = 2;
+    string author_id   = 3;
+    string author_name = 4;
+    string body        = 5;
+}
+
+message CreateCommentResponse {
+    bool              success    = 1;
+    int32             code       = 2;
+    QuoteLineComment  comment    = 3;
+}
+
+message ListCommentsRequest {
+    string line_id = 1;
+}
+
+message ListCommentsResponse {
+    bool                     success  = 1;
+    int32                    code     = 2;
+    repeated QuoteLineComment comments = 3;
+}
+
+message UpdateCommentRequest {
+    string comment_id = 1;
+    string author_id  = 2;
+    string body       = 3;
+}
+
+message UpdateCommentResponse {
+    bool             success = 1;
+    int32            code    = 2;
+    QuoteLineComment comment = 3;
+}
+
+message DeleteCommentRequest {
+    string comment_id = 1;
+    string author_id  = 2;
 }

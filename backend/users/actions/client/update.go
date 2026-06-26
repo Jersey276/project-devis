@@ -21,16 +21,19 @@ func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateClientRequest)
 	var fieldErrors []*usersGrpc.ValidationError
 
 	if req.ClientId == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "client_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("client_id"))
 	}
 	if req.UserId == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "user_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("user_id"))
 	}
 	if req.FirstName == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "first_name", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("first_name"))
 	}
 	if req.LastName == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "last_name", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("last_name"))
+	}
+	if msg := sqlutil.ValidateSIRET(req.Siret, req.Siren); msg != "" {
+		fieldErrors = append(fieldErrors, sqlutil.Invalid("siret", msg))
 	}
 
 	if len(fieldErrors) > 0 {
@@ -39,11 +42,13 @@ func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateClientRequest)
 
 	res, err := db.ExecContext(ctx,
 		`UPDATE clients SET first_name=$1, last_name=$2, email=$3, phone=$4,
-		        company=$5, siren=$6, vat=$7, updated_at=NOW()
-		 WHERE client_id=$8 AND user_id=$9 AND archived_at IS NULL`,
+		        company=$5, siren=$6, vat=$7, siret=$8, client_type=$9, updated_at=NOW()
+		 WHERE client_id=$10 AND user_id=$11 AND archived_at IS NULL`,
 		req.FirstName, req.LastName,
 		sqlutil.NullableStr(req.Email), sqlutil.NullableStr(req.Phone),
 		sqlutil.NullableStr(req.Company), sqlutil.NullableStr(req.Siren), sqlutil.NullableStr(req.Vat),
+		sqlutil.NullableStr(sqlutil.NormalizeSIRET(req.Siret)),
+		sqlutil.ClientTypeToDBString(req.ClientType),
 		req.ClientId, req.UserId,
 	)
 	if err != nil {

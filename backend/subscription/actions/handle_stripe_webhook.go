@@ -8,9 +8,9 @@ import (
 	"github.com/google/uuid"
 	stripe "github.com/stripe/stripe-go/v82"
 	"github.com/stripe/stripe-go/v82/webhook"
-	authpb "project-devis-subscription/services/grpc/auth"
 	"project-devis-subscription/services"
 	subGrpc "project-devis-subscription/services/grpc"
+	authpb "project-devis-subscription/services/grpc/auth"
 )
 
 func (s *Server) HandleStripeWebhook(ctx context.Context, req *subGrpc.HandleStripeWebhookRequest) (*subGrpc.GenericResponse, error) {
@@ -147,4 +147,3 @@ func (s *Server) callAuthUpdateTier(ctx context.Context, userID, tier string) {
 		log.Printf("callAuthUpdateTier: failed for user %s tier %s: %v", userID, tier, err)
 	}
 }
-

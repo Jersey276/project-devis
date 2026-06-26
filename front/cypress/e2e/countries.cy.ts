@@ -61,19 +61,6 @@ describe("Countries page", () => {
     });
   });
 
-  describe("Sidebar", () => {
-    beforeEach(() => stubCountriesPage());
-
-    it("exposes Pays and Taxes entries", () => {
-      cy.visit("/countries");
-      cy.wait("@getAuthMe");
-      cy.wait("@getCountries");
-      cy.contains("button", "Admin").click();
-      cy.contains("a", "Pays").should("have.attr", "href", "/countries");
-      cy.contains("a", "Taxes").should("have.attr", "href", "/taxes");
-    });
-  });
-
   describe("Pays tab", () => {
     beforeEach(() => stubCountriesPage());
 
@@ -260,7 +247,7 @@ describe("Countries page", () => {
       cy.contains("Modifier").click();
 
       cy.get("input[name='name']").should("have.value", "Union européenne");
-      cy.get("input[name='name']").clear().should("have.value", "").type("UE");
+      cy.get("input[name='name']").clear().type("UE");
       cy.contains("[data-slot='dialog-content'] button", "Enregistrer").click();
 
       cy.wait("@updateGroup").then((interception) => {

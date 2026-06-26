@@ -15,12 +15,17 @@ Facade HTTP publique du backend.
 
 ## Routes
 
-- auth: `controllers.AuthRoutes`
-- users: `controllers.UserRoutes`
-- quotes: `controllers.QuotesRoutes`
-- schedules: `controllers.SchedulesRoutes`
-- export: `controllers.ExportRoutes`
-- templates: `controllers.TemplateRoutes`
+| Groupe           | Contrôleur                     | Notes                                      |
+| ---------------- | ------------------------------ | ------------------------------------------ |
+| `/api/auth`      | `controllers.AuthRoutes`       |                                            |
+| `/api/users`     | `controllers.UserRoutes`       |                                            |
+| `/api/quotes`    | `controllers.QuotesRoutes`     |                                            |
+| `/api/schedules` | `controllers.SchedulesRoutes`  |                                            |
+| `/api/export`    | `controllers.ExportRoutes`     |                                            |
+| `/api/templates` | `controllers.TemplateRoutes`   |                                            |
+| `/api/invoices`  | `controllers.InvoicesRoutes`   |                                            |
+| `/api/projects`  | `controllers.ProjectsRoutes`   | inclut `GET /:id/detail` (fan-out agrégé)  |
+| `/api/logs`      | `controllers.AuditRoutes`      | super-admin uniquement, non audité         |
 
 ## Dependances
 
@@ -32,6 +37,9 @@ Variables inter-services:
 - `SCHEDULE_SERVICE_ADDRESS`
 - `EXPORT_SERVICE_ADDRESS`
 - `TEMPLATE_SERVICE_ADDRESS` (local/dev)
+- `INVOICE_SERVICE_ADDRESS`
+- `AUDIT_SERVICE_ADDRESS`
+- `PROJECT_SERVICE_ADDRESS`
 
 ## Ports
 
@@ -50,9 +58,12 @@ Variables inter-services:
 | `AUTH_SERVICE_ADDRESS`     | client gRPC auth                     | oui           | oui           |
 | `USER_SERVICE_ADDRESS`     | client gRPC users                    | oui           | oui           |
 | `QUOTE_SERVICE_ADDRESS`    | client gRPC quote                    | oui           | oui           |
-| `SCHEDULE_SERVICE_ADDRESS` | client gRPC schedule                 | a ajouter     | a ajouter     |
+| `SCHEDULE_SERVICE_ADDRESS` | client gRPC schedule                 | oui           | oui           |
 | `EXPORT_SERVICE_ADDRESS`   | client gRPC export                   | oui           | oui           |
 | `TEMPLATE_SERVICE_ADDRESS` | client gRPC template                 | oui           | non           |
+| `INVOICE_SERVICE_ADDRESS`  | client gRPC invoice                  | oui           | oui           |
+| `AUDIT_SERVICE_ADDRESS`    | client gRPC audit                    | oui           | oui           |
+| `PROJECT_SERVICE_ADDRESS`  | client gRPC project                  | oui           | oui           |
 | `ENV`                      | cookie `secure` dans auth controller | non (compose) | non (compose) |
 
 ### Variables injectees par compose (non lues directement par le code gateway)
@@ -60,6 +71,13 @@ Variables inter-services:
 | Variable | Definie local | Definie prod | Note             |
 | -------- | ------------- | ------------ | ---------------- |
 | `TZ`     | oui           | oui          | timezone runtime |
+
+## Middleware audit
+
+- source: `backend/gateway/middleware/audit.go`
+- enregistre chaque requête HTTP (méthode, URL, durée, statuts, corps tronqué à 64 KB) dans le service audit via gRPC
+- monté sur le groupe `/api` (tous les groupes métier), **sauf** le groupe `/api/logs` qui est enregistré directement sur `r` pour éviter que les consultations de logs se loggent elles-mêmes
+- non-bloquant : envoi asynchrone via channel (taille 512) ; les entrées sont silencieusement abandonnées si le channel est plein
 
 ## Middleware auth
 
@@ -77,16 +95,6 @@ Comportement en cas de session invalidee:
 
 - JSON standard avec `success`, `message`, `code`
 - cas export: `application/pdf`
-
-## Extension cible pour les echeanciers
-
-Le gateway devra ajouter un controleur dedie aux echeanciers afin de:
-
-- exposer les routes `/api/schedules/*`
-- mapper les codes metier du service schedule vers des statuts HTTP coherents
-- deleguer l'export PDF d'echeancier au service export
-
-L'integration cible est detaillee dans `docs/services/schedule.md` et `docs/contracts/http-gateway.md`.
 
 ## Risques connus
 

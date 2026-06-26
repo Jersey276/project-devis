@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	stripe "github.com/stripe/stripe-go/v82"
 	"github.com/DATA-DOG/go-sqlmock"
+	stripe "github.com/stripe/stripe-go/v82"
 	subGrpc "project-devis-subscription/services/grpc"
 )
 
@@ -166,10 +166,10 @@ func TestProcessWebhookEvent_InvoicePaymentFailed(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	rawData, _ := json.Marshal(map[string]any{
-		"id":              "in_test",
-		"customer":        map[string]any{"id": "cus_test"},
-		"period_start":    time.Now().Unix(),
-		"period_end":      time.Now().Unix() + 2592000,
+		"id":           "in_test",
+		"customer":     map[string]any{"id": "cus_test"},
+		"period_start": time.Now().Unix(),
+		"period_end":   time.Now().Unix() + 2592000,
 	})
 	event := buildStripeEvent("invoice.payment_failed", rawData)
 

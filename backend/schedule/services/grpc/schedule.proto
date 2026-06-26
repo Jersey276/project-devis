@@ -9,6 +9,7 @@ service ScheduleService {
     rpc UpdateScheduleCell(UpdateScheduleCellRequest) returns (GenericResponse);
     rpc ValidateSchedule(ValidateScheduleRequest) returns (GenericResponse);
     rpc GetSchedule(GetScheduleRequest) returns (GetScheduleResponse);
+    rpc GetScheduleCells(GetScheduleCellsRequest) returns (GetScheduleCellsResponse);
     rpc ListSchedules(ListSchedulesRequest) returns (ListSchedulesResponse);
 }
 
@@ -28,6 +29,7 @@ message CreateScheduleRequest {
     string name             = 3;
     string start_month      = 4;
     int32  duration_months  = 5;
+    string client_id        = 6;
 }
 
 message CreateScheduleResponse {
@@ -85,6 +87,25 @@ message GetScheduleResponse {
     ScheduleDetails schedule = 3;
 }
 
+// Per-cell amounts (quote_line_id × month_index), needed by downstream services
+// (e.g. invoicing) to bill a subset of months with a correct per-line breakdown.
+message GetScheduleCellsRequest {
+    string schedule_id = 1;
+    string user_id     = 2;
+}
+
+message ScheduleCell {
+    string quote_line_id = 1;
+    int32  month_index   = 2;
+    int64  amount_cents  = 3;
+}
+
+message GetScheduleCellsResponse {
+    bool                  success = 1;
+    int32                 code    = 2;
+    repeated ScheduleCell cells   = 3;
+}
+
 message ScheduleSummary {
     string schedule_id      = 1;
     string name             = 2;
@@ -92,15 +113,30 @@ message ScheduleSummary {
     string start_month      = 4;
     int32  duration_months  = 5;
     string quote_id         = 6;
+    string client_id        = 7;
+}
+
+message ScheduleFilters {
+    repeated string statuses   = 1;
+    string          start_from = 2;
+    string          start_to   = 3;
+    string          client_id  = 4;
 }
 
 message ListSchedulesRequest {
-    string user_id  = 1;
-    string quote_id = 2;
+    string          user_id        = 1;
+    string          quote_id       = 2;
+    int32           page           = 3;
+    int32           page_size      = 4;
+    ScheduleFilters filters        = 5;
+    string          sort_by        = 6;
+    string          sort_direction = 7;
+    repeated string quote_ids      = 8;
 }
 
 message ListSchedulesResponse {
     bool                     success   = 1;
     int32                    code      = 2;
     repeated ScheduleSummary schedules = 3;
+    int64                    total     = 4;
 }

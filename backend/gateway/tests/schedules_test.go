@@ -135,7 +135,10 @@ func (nopQuoteClient) DropQuote(context.Context, *quote.DropQuoteRequest, ...grp
 func (nopQuoteClient) ContinueQuote(context.Context, *quote.ContinueQuoteRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
 	return nil, nil
 }
-func (nopQuoteClient) SendQuote(context.Context, *quote.SendQuoteRequest, ...grpc.CallOption) (*quote.SendQuoteResponse, error) {
+func (nopQuoteClient) ValidateQuote(context.Context, *quote.ValidateQuoteRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) NegociateQuote(context.Context, *quote.NegociateQuoteRequest, ...grpc.CallOption) (*quote.NegociateQuoteResponse, error) {
 	return nil, nil
 }
 func (nopQuoteClient) CreateQuoteLine(context.Context, *quote.CreateQuoteLineRequest, ...grpc.CallOption) (*quote.CreateQuoteLineResponse, error) {
@@ -154,6 +157,39 @@ func (nopQuoteClient) UpdateQuoteLine(context.Context, *quote.UpdateQuoteLineReq
 	return nil, nil
 }
 func (nopQuoteClient) DeleteQuoteLine(context.Context, *quote.DeleteQuoteLineRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) CreateFee(context.Context, *quote.CreateFeeRequest, ...grpc.CallOption) (*quote.CreateFeeResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) GetFee(context.Context, *quote.GetFeeRequest, ...grpc.CallOption) (*quote.GetFeeResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) ListFees(context.Context, *quote.ListFeesRequest, ...grpc.CallOption) (*quote.ListFeesResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) UpdateFee(context.Context, *quote.UpdateFeeRequest, ...grpc.CallOption) (*quote.UpdateFeeResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) ArchiveFee(context.Context, *quote.ArchiveFeeRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) AcceptQuote(context.Context, *quote.AcceptQuoteRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) RefuseQuote(context.Context, *quote.RefuseQuoteRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) CreateComment(context.Context, *quote.CreateCommentRequest, ...grpc.CallOption) (*quote.CreateCommentResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) ListComments(context.Context, *quote.ListCommentsRequest, ...grpc.CallOption) (*quote.ListCommentsResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) UpdateComment(context.Context, *quote.UpdateCommentRequest, ...grpc.CallOption) (*quote.UpdateCommentResponse, error) {
+	return nil, nil
+}
+func (nopQuoteClient) DeleteComment(context.Context, *quote.DeleteCommentRequest, ...grpc.CallOption) (*quote.GenericResponse, error) {
 	return nil, nil
 }
 
@@ -267,10 +303,19 @@ func (nopUsersClient) ListTaxes(context.Context, *users.ListTaxesRequest, ...grp
 func (nopUsersClient) ListTaxesForUser(context.Context, *users.ListTaxesForUserRequest, ...grpc.CallOption) (*users.ListTaxesResponse, error) {
 	return nil, nil
 }
+func (nopUsersClient) ListTaxesForCountry(context.Context, *users.ListTaxesForCountryRequest, ...grpc.CallOption) (*users.ListTaxesResponse, error) {
+	return nil, nil
+}
 func (nopUsersClient) UpdateTax(context.Context, *users.UpdateTaxRequest, ...grpc.CallOption) (*users.UpdateTaxResponse, error) {
 	return nil, nil
 }
 func (nopUsersClient) DeleteTax(context.Context, *users.DeleteTaxRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) GetClientsByLinkedUser(context.Context, *users.GetClientByLinkedUserRequest, ...grpc.CallOption) (*users.ListClientsResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) LinkClientUser(context.Context, *users.LinkClientUserRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
 	return nil, nil
 }
 
@@ -297,10 +342,10 @@ func setupScheduleRouter(client schedule.ScheduleServiceClient) *gin.Engine {
 		c.Next()
 	})
 	g := r.Group("/schedules")
-	g.GET("", func(c *gin.Context) { controllers.ListSchedules(c, client) })
-	g.POST("", func(c *gin.Context) { controllers.CreateSchedule(c, client) })
+	g.GET("", func(c *gin.Context) { controllers.ListSchedules(c, client, nopQuoteClient{}) })
+	g.POST("", func(c *gin.Context) { controllers.CreateSchedule(c, client, nopQuoteClient{}) })
 	one := g.Group("/:id")
-	one.GET("", func(c *gin.Context) { controllers.GetSchedule(c, client) })
+	one.GET("", func(c *gin.Context) { controllers.GetSchedule(c, client, nopQuoteClient{}) })
 	one.PATCH("/cells", func(c *gin.Context) { controllers.UpdateScheduleCell(c, client) })
 	one.POST("/validate", func(c *gin.Context) {
 		controllers.ValidateSchedule(c, client, nopQuoteClient{}, nopUsersClient{}, nopEmailNotifier{})

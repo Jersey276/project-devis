@@ -3,13 +3,12 @@ package quote
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync/atomic"
-	"unicode"
 
 	"golang.org/x/sync/errgroup"
 
 	"project-devis-export/actions/codes"
+	"project-devis-export/internal/slug"
 	"project-devis-export/quote"
 	exportGrpc "project-devis-export/services/grpc"
 	"project-devis-export/users"
@@ -177,6 +176,29 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 		return nil, err
 	}
 
+	// Phase 3: resolve distinct tax_ids from quote lines in a single batch RPC.
+	taxes := make(map[int32]*users.Tax)
+	var taxIDs []int32
+	seen := map[int32]bool{}
+	for _, l := range lines {
+		if l.TaxId != 0 && !seen[l.TaxId] {
+			seen[l.TaxId] = true
+			taxIDs = append(taxIDs, l.TaxId)
+		}
+	}
+	if len(taxIDs) > 0 {
+		taxResp, err := uc.ListTaxesForUser(ctx, &users.ListTaxesForUserRequest{
+			UserId:     req.UserId,
+			IncludeIds: taxIDs,
+		})
+		if err != nil {
+			return nil, err
+		}
+		for _, t := range taxResp.Taxes {
+			taxes[t.Id] = t
+		}
+	}
+
 	pdfBytes, err := Render(ctx, gt, renderInput{
 		Quote:         q,
 		Lines:         lines,
@@ -184,6 +206,7 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 		UserAddress:   userAddr,
 		Client:        client,
 		ClientAddress: clientAddr,
+		Taxes:         taxes,
 	})
 	if err != nil {
 		return nil, err
@@ -198,37 +221,11 @@ func Export(ctx context.Context, qc quote.QuoteServiceClient, uc users.UserServi
 }
 
 func buildFilename(q *quote.Quote) string {
-	slug := slugify(q.Name)
-	if slug == "" {
+	s := slug.Slugify(q.Name)
+	if s == "" {
 		return fmt.Sprintf("devis-%s.pdf", q.QuoteId)
 	}
-	return fmt.Sprintf("devis-%s.pdf", slug)
-}
-
-func slugify(s string) string {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return ""
-	}
-	var b strings.Builder
-	prevDash := false
-	for _, r := range s {
-		switch {
-		case unicode.IsLetter(r) || unicode.IsDigit(r):
-			b.WriteRune(r)
-			prevDash = false
-		case unicode.IsSpace(r) || r == '_' || r == '-':
-			if !prevDash && b.Len() > 0 {
-				b.WriteByte('-')
-				prevDash = true
-			}
-		}
-	}
-	out := b.String()
-	for len(out) > 0 && out[len(out)-1] == '-' {
-		out = out[:len(out)-1]
-	}
-	return out
+	return fmt.Sprintf("devis-%s.pdf", s)
 }
 
 func fail(code int32) *exportGrpc.ExportQuoteResponse {

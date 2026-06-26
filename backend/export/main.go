@@ -11,6 +11,7 @@ import (
 	"project-devis-export/quote"
 	"project-devis-export/services/gotenberg"
 	exportGrpc "project-devis-export/services/grpc"
+	"project-devis-export/services/invoice"
 	"project-devis-export/services/schedule"
 	"project-devis-export/users"
 
@@ -31,6 +32,7 @@ func main() {
 	quoteAddr := envOrDefault("QUOTE_SERVICE_ADDRESS", "localhost:50053")
 	usersAddr := envOrDefault("USER_SERVICE_ADDRESS", "localhost:50052")
 	scheduleAddr := envOrDefault("SCHEDULE_SERVICE_ADDRESS", "localhost:50056")
+	invoiceAddr := envOrDefault("INVOICE_SERVICE_ADDRESS", "localhost:50059")
 	gotenbergAddr := envOrDefault("GOTENBERG_ADDRESS", "http://localhost:3000")
 
 	qConn, err := grpc.NewClient(quoteAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -45,10 +47,15 @@ func main() {
 	if err != nil {
 		log.Fatalf("dial schedule service: %v", err)
 	}
+	iConn, err := grpc.NewClient(invoiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("dial invoice service: %v", err)
+	}
 
 	qClient := quote.NewQuoteServiceClient(qConn)
 	uClient := users.NewUserServiceClient(uConn)
 	sClient := schedule.NewScheduleServiceClient(sConn)
+	iClient := invoice.NewInvoiceServiceClient(iConn)
 	gtClient := gotenberg.New(gotenbergAddr)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
@@ -60,7 +67,7 @@ func main() {
 		grpc.MaxRecvMsgSize(maxExportMessageBytes),
 		grpc.MaxSendMsgSize(maxExportMessageBytes),
 	)
-	exportGrpc.RegisterExportServiceServer(grpcServer, actions.NewServer(qClient, uClient, sClient, gtClient))
+	exportGrpc.RegisterExportServiceServer(grpcServer, actions.NewServer(qClient, uClient, sClient, iClient, gtClient))
 	log.Printf("export configured with gotenberg=%s", gotenbergAddr)
 
 	log.Printf("export gRPC server listening on %s", lis.Addr().String())

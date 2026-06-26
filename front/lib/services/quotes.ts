@@ -34,8 +34,27 @@ function toLinePayload(draft: LineDraft) {
   };
 }
 
-export async function listQuotes(): Promise<ApiResult> {
-  return apiFetch("/api/quotes");
+export async function listQuotes(queryString?: string, signal?: AbortSignal): Promise<ApiResult> {
+  const url = queryString ? `/api/quotes?${queryString}` : "/api/quotes";
+  return apiFetch(url, { signal });
+}
+
+export async function listMyQuotes(queryString?: string, signal?: AbortSignal): Promise<ApiResult> {
+  const url = queryString ? `/api/quotes/me?${queryString}` : "/api/quotes/me";
+  return apiFetch(url, { signal });
+}
+
+export async function getMyQuote(quoteId: string, clientId?: string): Promise<ApiResult> {
+  const qs = clientId ? `?client_id=${encodeURIComponent(clientId)}` : "";
+  return apiFetch(`/api/quotes/me/${encodeURIComponent(quoteId)}${qs}`);
+}
+
+export async function updateMyQuoteAddress(quoteId: string, addressId: number, clientId?: string): Promise<ApiResult> {
+  const qs = clientId ? `?client_id=${encodeURIComponent(clientId)}` : "";
+  return apiFetch(`/api/quotes/me/${encodeURIComponent(quoteId)}${qs}`, {
+    method: "PUT",
+    body: JSON.stringify({ address_id: addressId }),
+  });
 }
 
 export type CreateQuotePayload = {
@@ -68,6 +87,8 @@ export type UpdateQuotePayload = {
   clientId?: string;
   addressId?: number;
   userAddressId?: number;
+  validUntil?: string;
+  paymentTerms?: string;
 };
 
 export async function updateQuote(
@@ -79,6 +100,8 @@ export async function updateQuote(
   if (payload.addressId !== undefined) body.address_id = payload.addressId;
   if (payload.userAddressId !== undefined)
     body.user_address_id = payload.userAddressId;
+  if (payload.validUntil !== undefined) body.valid_until = payload.validUntil;
+  if (payload.paymentTerms !== undefined) body.payment_terms = payload.paymentTerms;
   return apiFetch(`/api/quotes/${encodeURIComponent(quoteId)}`, {
     method: "PUT",
     body: JSON.stringify(body),
@@ -93,6 +116,32 @@ export async function dropQuote(quoteId: string): Promise<ApiResult> {
 
 export async function continueQuote(quoteId: string): Promise<ApiResult> {
   return apiFetch(`/api/quotes/${encodeURIComponent(quoteId)}/continue`, {
+    method: "POST",
+  });
+}
+
+export async function validateQuote(quoteId: string): Promise<ApiResult> {
+  return apiFetch(`/api/quotes/${encodeURIComponent(quoteId)}/validate`, {
+    method: "POST",
+  });
+}
+
+export async function negociateQuote(quoteId: string): Promise<ApiResult> {
+  return apiFetch(`/api/quotes/${encodeURIComponent(quoteId)}/negociate`, {
+    method: "POST",
+  });
+}
+
+export async function acceptMyQuote(quoteId: string, clientId?: string): Promise<ApiResult> {
+  const qs = clientId ? `?client_id=${encodeURIComponent(clientId)}` : "";
+  return apiFetch(`/api/quotes/me/${encodeURIComponent(quoteId)}${qs}/accept`, {
+    method: "POST",
+  });
+}
+
+export async function refuseMyQuote(quoteId: string, clientId?: string): Promise<ApiResult> {
+  const qs = clientId ? `?client_id=${encodeURIComponent(clientId)}` : "";
+  return apiFetch(`/api/quotes/me/${encodeURIComponent(quoteId)}${qs}/refuse`, {
     method: "POST",
   });
 }

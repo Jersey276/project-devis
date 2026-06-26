@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"project-devis-users/actions/codes"
+	"project-devis-users/actions/sqlutil"
 	usersGrpc "project-devis-users/services/grpc"
 )
 
@@ -26,15 +27,15 @@ func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateTaxRequest) (*
 	var fieldErrors []*usersGrpc.ValidationError
 
 	if req.TaxId == 0 {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "tax_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("tax_id"))
 	}
 	if req.Name == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "name", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("name"))
 	}
 	if req.Rate == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "rate", Message: "Champ requis."})
-	} else if err := validateRate(req.Rate); err != nil {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "rate", Message: "Taux invalide (0–999.99)."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("rate"))
+	} else if err := sqlutil.ValidateRate(req.Rate); err != nil {
+		fieldErrors = append(fieldErrors, sqlutil.Invalid("rate", "Taux invalide (0–999.99)."))
 	}
 
 	if len(fieldErrors) > 0 {

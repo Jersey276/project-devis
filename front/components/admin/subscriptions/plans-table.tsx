@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import {
   DataTable,
-  DataTableBody,
+  DataTableBodyRows,
   DataTableCell,
   DataTableHead,
   DataTableHeader,
@@ -44,7 +44,15 @@ import { listAllPlans, updatePlan } from "@/lib/services/subscriptions";
 import type { BackendPlan, SubscriptionTier } from "@/types/backend";
 
 const BILLING_CYCLES = ["monthly", "yearly", "none"] as const;
-const PLAN_FEATURE_KEYS = ["max_schedules", "max_templates"] as const;
+const PLAN_FEATURE_KEYS = [
+  "max_schedules",
+  "max_templates",
+  "max_projects",
+  "max_linked_clients",
+  "fees_catalog",
+  "b2b_invoicing",
+] as const;
+const BOOLEAN_FEATURE_KEYS = new Set(["fees_catalog", "b2b_invoicing"]);
 
 function parsePlanFeatures(
   features: BackendPlan["features"],
@@ -175,8 +183,8 @@ export default function PlansTable() {
             </DataTableHead>
           </DataTableRow>
         </DataTableHeader>
-        <DataTableBody>
-          {plans.map((plan) => (
+        <DataTableBodyRows<BackendPlan>
+          render={(plan) => (
             <DataTableRow key={plan.plan_id}>
               <DataTableCell className="font-medium">{plan.name}</DataTableCell>
               <DataTableCell>
@@ -200,12 +208,12 @@ export default function PlansTable() {
                 <DataTableRowActions id={String(plan.plan_id)} row={plan} />
               </DataTableCell>
             </DataTableRow>
-          ))}
-        </DataTableBody>
+          )}
+        />
       </DataTable>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg p-6 overflow-y-auto max-h-[90dvh]">
           <DialogHeader>
             <DialogTitle>{t("editDialog.title")}</DialogTitle>
           </DialogHeader>
@@ -273,6 +281,27 @@ export default function PlansTable() {
               <FieldLabel>{t("editDialog.featuresLabel")}</FieldLabel>
               <FieldGroup>
                 {PLAN_FEATURE_KEYS.map((key) => {
+                  if (BOOLEAN_FEATURE_KEYS.has(key)) {
+                    return (
+                      <div key={key} className="flex items-center gap-3">
+                        <span className="flex-1 text-sm">
+                          {t(`editDialog.features.${key}`)}
+                        </span>
+                        <label className="flex items-center gap-1.5 text-sm cursor-pointer select-none">
+                          <Checkbox
+                            checked={formFeatures[key] === 1}
+                            onCheckedChange={(checked) =>
+                              setFormFeatures((prev) => ({
+                                ...prev,
+                                [key]: checked ? 1 : 0,
+                              }))
+                            }
+                          />
+                          {t("editDialog.features.enabled")}
+                        </label>
+                      </div>
+                    );
+                  }
                   const isUnlimited = formFeatures[key] === -1;
                   return (
                     <div key={key} className="flex items-center gap-3">

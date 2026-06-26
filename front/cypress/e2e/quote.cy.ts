@@ -23,12 +23,17 @@ describe("Quote", () => {
       force: true,
     });
     cy.contains("button", "Valider").click();
+    cy.contains("button", "Valider").should("not.exist");
+    cy.get("#schedule-start-month").should(
+      "contain.text",
+      `${monthLabel} ${year}`,
+    );
   }
 
   describe("List", () => {
     it("renders quotes and maps state + archived_at to status", () => {
       cy.login();
-      cy.intercept("GET", "/api/quotes", {
+      cy.intercept("GET", "/api/quotes**", {
         statusCode: 200,
         body: {
           success: true,
@@ -67,7 +72,7 @@ describe("Quote", () => {
 
     it("shows the empty state when no quotes are returned", () => {
       cy.login();
-      cy.intercept("GET", "/api/quotes", {
+      cy.intercept("GET", "/api/quotes**", {
         statusCode: 200,
         body: { success: true, quotes: [] },
       }).as("listQuotesEmpty");
@@ -79,7 +84,7 @@ describe("Quote", () => {
 
     it("creates a schedule from the quote row actions menu", () => {
       cy.login();
-      cy.intercept("GET", "/api/quotes", {
+      cy.intercept("GET", "/api/quotes**", {
         statusCode: 200,
         body: {
           success: true,
@@ -140,7 +145,9 @@ describe("Quote", () => {
       );
       cy.get("input[name='name']").type("Echéancier Alpha");
       selectScheduleStartMonth("2026", "Aout");
-      cy.get("input[name='duration_months']").type("6").should("have.value", "6");
+      cy.get("input[name='duration_months']")
+        .type("6")
+        .should("have.value", "6");
       cy.contains("button", "Créer").click();
 
       cy.wait("@createSchedule").then((interception) => {
@@ -588,15 +595,16 @@ describe("Quote", () => {
       cy.wait("@getQuote");
 
       cy.get("[data-quote-state='draft']").should("exist");
-      cy.contains("button", "Abandonner").click();
+      cy.contains("button", "Changer l'état").click();
+      cy.contains("[role='menuitem']", "Refuser").click();
       cy.get("[data-slot='alert-dialog-content']").should("be.visible");
-      cy.contains("button", "Confirmer").click();
+      cy.contains("button", "Refuser").click();
 
       cy.wait("@dropQuote");
       cy.get("[data-quote-state='drop']").should("exist");
       cy.get("[data-slot='quote-state-badge']").should("contain", "Abandonné");
       cy.get("input[name='name']").should("be.disabled");
-      cy.contains("button", "Continuer").should("be.visible");
+      cy.contains("button", "Changer l'état").should("be.visible");
       cy.contains("button", "Abandonner").should("not.exist");
     });
 
@@ -611,7 +619,9 @@ describe("Quote", () => {
       cy.visit("/quote/q-1");
       cy.wait("@getQuote");
 
-      cy.contains("button", "Abandonner").click();
+      cy.contains("button", "Changer l'état").click();
+      cy.contains("[role='menuitem']", "Refuser").click();
+      cy.get("[data-slot='alert-dialog-content']").should("be.visible");
       cy.contains("button", "Annuler").click();
       cy.get("[data-slot='alert-dialog-content']").should("not.exist");
       cy.get("[data-quote-state='draft']").should("exist");
@@ -634,7 +644,8 @@ describe("Quote", () => {
 
       cy.get("[data-quote-state='drop']").should("exist");
       cy.get("input[name='name']").should("be.disabled");
-      cy.contains("button", "Continuer").click();
+      cy.contains("button", "Changer l'état").click();
+      cy.contains("[role='menuitem']", "Reprendre").click();
       cy.wait("@continueQuote");
 
       cy.get("[data-quote-state='draft']").should("exist");
@@ -657,8 +668,7 @@ describe("Quote", () => {
 
       cy.get("[data-quote-state='validated']").should("exist");
       cy.get("input[name='name']").should("be.disabled");
-      cy.contains("button", "Abandonner").should("not.exist");
-      cy.contains("button", "Continuer").should("not.exist");
+      cy.contains("button", "Changer l'état").should("not.exist");
     });
 
     it("blocks PDF export when quote is refused", () => {
@@ -708,7 +718,7 @@ describe("Quote", () => {
           lines: [],
         },
       }).as("getQuote");
-      cy.intercept("GET", "/api/quotes", {
+      cy.intercept("GET", "/api/quotes**", {
         statusCode: 200,
         body: {
           success: true,

@@ -1,7 +1,8 @@
 "use client";
-import { FormEvent } from "react";
+import { FormEvent, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import OAuthButtons from "@/components/auth/oauth-buttons";
 import {
   Card,
   CardContent,
@@ -61,8 +62,25 @@ export default function LoginForm({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   const router = useRouter();
-  const next = safeNextPath(useSearchParams().get(NEXT_PARAM));
+  const searchParams = useSearchParams();
+  const next = safeNextPath(searchParams.get(NEXT_PARAM));
   const t = useTranslations("auth.login");
+  const tOAuthErrors = useTranslations("auth.oauth.errors");
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    // Signal to Cypress that React has hydrated and onSubmit is attached.
+    formRef.current?.setAttribute("data-hydrated", "true");
+  }, []);
+
+  // Surface OAuth callback failures redirected back here as ?oauth_error=<slug>.
+  const oauthError = searchParams.get("oauth_error");
+  useEffect(() => {
+    if (oauthError) {
+      toast.error(tOAuthErrors(oauthError as never));
+    }
+  }, [oauthError, tOAuthErrors]);
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -72,6 +90,8 @@ export default function LoginForm({
         </CardHeader>
         <CardContent>
           <form
+            ref={formRef}
+            method="post"
             onSubmit={submitLoginForm(router, next, {
               success: t("successToast"),
               failure: t("failureToast"),
@@ -112,9 +132,7 @@ export default function LoginForm({
               </Field>
               <Field>
                 <Button type="submit">{t("submit")}</Button>
-                <Button variant="outline" type="button">
-                  {t("googleSubmit")}
-                </Button>
+                <OAuthButtons next={next} />
                 <FieldDescription className="text-center">
                   {t("signupPrompt")} <a href="/register">{t("signupLink")}</a>
                 </FieldDescription>

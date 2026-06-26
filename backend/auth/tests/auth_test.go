@@ -72,7 +72,7 @@ func TestRegister_Success(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 
 	mock.ExpectExec(`INSERT INTO auth`).
-		WithArgs("user-123", "new@example.com", sqlmock.AnyArg(), "super_admin", "active", "free").
+		WithArgs("user-123", "new@example.com", sqlmock.AnyArg(), "super_admin", "active", "free", false).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
@@ -224,7 +224,7 @@ func TestRegister_RollbackOnAuthInsertFailure(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
 	mock.ExpectExec(`INSERT INTO auth`).
-		WithArgs("user-456", "fail@example.com", sqlmock.AnyArg(), "free_user", "active", "free").
+		WithArgs("user-456", "fail@example.com", sqlmock.AnyArg(), "free_user", "active", "free", false).
 		WillReturnError(sqlmock.ErrCancelled)
 	mock.ExpectRollback()
 
@@ -289,10 +289,14 @@ func TestLogin_Success(t *testing.T) {
 	// bcrypt hash of "password123" (cost 14 is slow for tests, use a pre-computed hash)
 	hashedPassword := "$2a$14$XC05j1ejsVEfzQm6g5f52.dw2EN.cadB6VJPH2R5YsdKIpYHmf/NW"
 
-	mock.ExpectQuery(`SELECT password, role, account_status, subscription_tier, session_version FROM auth WHERE user_id = \$1`).
+	mock.ExpectQuery(`SELECT password FROM auth WHERE user_id = \$1`).
 		WithArgs("user-789").
-		WillReturnRows(sqlmock.NewRows([]string{"password", "role", "account_status", "subscription_tier", "session_version"}).
-			AddRow(hashedPassword, "free_user", "active", "free", 1))
+		WillReturnRows(sqlmock.NewRows([]string{"password"}).AddRow(hashedPassword))
+
+	mock.ExpectQuery(`SELECT role, account_status, subscription_tier, session_version FROM auth WHERE user_id = \$1`).
+		WithArgs("user-789").
+		WillReturnRows(sqlmock.NewRows([]string{"role", "account_status", "subscription_tier", "session_version"}).
+			AddRow("free_user", "active", "free", 1))
 
 	mock.ExpectExec(`INSERT INTO refresh_tokens`).
 		WithArgs("user-789", sqlmock.AnyArg(), sqlmock.AnyArg(), false).
@@ -350,10 +354,9 @@ func TestLogin_InvalidPassword(t *testing.T) {
 	// Hash for "correctpassword", NOT "wrongpassword"
 	hashedPassword := "$2a$14$XC05j1ejsVEfzQm6g5f52.dw2EN.cadB6VJPH2R5YsdKIpYHmf/NW"
 
-	mock.ExpectQuery(`SELECT password, role, account_status, subscription_tier, session_version FROM auth WHERE user_id = \$1`).
+	mock.ExpectQuery(`SELECT password FROM auth WHERE user_id = \$1`).
 		WithArgs("user-789").
-		WillReturnRows(sqlmock.NewRows([]string{"password", "role", "account_status", "subscription_tier", "session_version"}).
-			AddRow(hashedPassword, "free_user", "active", "free", 1))
+		WillReturnRows(sqlmock.NewRows([]string{"password"}).AddRow(hashedPassword))
 
 	resp, err := srv.Login(context.Background(), &authGrpc.LoginRequest{
 		Email:    "user@example.com",
@@ -380,10 +383,14 @@ func TestLogin_RememberMe(t *testing.T) {
 
 	hashedPassword := "$2a$14$XC05j1ejsVEfzQm6g5f52.dw2EN.cadB6VJPH2R5YsdKIpYHmf/NW"
 
-	mock.ExpectQuery(`SELECT password, role, account_status, subscription_tier, session_version FROM auth WHERE user_id = \$1`).
+	mock.ExpectQuery(`SELECT password FROM auth WHERE user_id = \$1`).
 		WithArgs("user-789").
-		WillReturnRows(sqlmock.NewRows([]string{"password", "role", "account_status", "subscription_tier", "session_version"}).
-			AddRow(hashedPassword, "free_user", "active", "free", 1))
+		WillReturnRows(sqlmock.NewRows([]string{"password"}).AddRow(hashedPassword))
+
+	mock.ExpectQuery(`SELECT role, account_status, subscription_tier, session_version FROM auth WHERE user_id = \$1`).
+		WithArgs("user-789").
+		WillReturnRows(sqlmock.NewRows([]string{"role", "account_status", "subscription_tier", "session_version"}).
+			AddRow("free_user", "active", "free", 1))
 
 	mock.ExpectExec(`INSERT INTO refresh_tokens`).
 		WithArgs("user-789", sqlmock.AnyArg(), sqlmock.AnyArg(), true).
@@ -422,12 +429,14 @@ func TestRefreshToken_Success(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"user_id", "expires_at", "remember_me"}).
 			AddRow("user-789", time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC), true))
 
-	mock.ExpectQuery(`SELECT role, account_status, subscription_tier, session_version FROM auth WHERE user_id = \$1`).
-		WithArgs("user-789").
-		WillReturnRows(sqlmock.NewRows([]string{"role", "account_status", "subscription_tier", "session_version"}).AddRow("free_user", "active", "free", 1))
+	// Rotation now happens before issuing the new pair (issueLoginTokens).
 	mock.ExpectExec(`DELETE FROM refresh_tokens WHERE token_hash = \$1`).
 		WithArgs(fakeTokenHash).
 		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	mock.ExpectQuery(`SELECT role, account_status, subscription_tier, session_version FROM auth WHERE user_id = \$1`).
+		WithArgs("user-789").
+		WillReturnRows(sqlmock.NewRows([]string{"role", "account_status", "subscription_tier", "session_version"}).AddRow("free_user", "active", "free", 1))
 
 	mock.ExpectExec(`INSERT INTO refresh_tokens`).
 		WithArgs("user-789", sqlmock.AnyArg(), sqlmock.AnyArg(), true).

@@ -16,6 +16,7 @@ import {
   listTemplateLines,
 } from "@/lib/services/templates";
 import type {
+  BackendFee,
   BackendQuoteLine,
   BackendTax,
   BackendTemplateLine,
@@ -445,6 +446,72 @@ export function useQuoteLines({
     [adding, quoteId, setItems, t],
   );
 
+  const handleAddFeeItem = useCallback(
+    async (fee: BackendFee) => {
+      if (!quoteId || adding) return;
+      setAdding(true);
+      try {
+        // A fee line snapshots the catalog entry; data.fee_id keeps the live
+        // link so backend propagation can refresh it while the quote is a draft.
+        const draft: LineDraft = {
+          type: "simple",
+          name: fee.name,
+          quantity: 1,
+          unit: fee.unit || undefined,
+          unitPriceEuros: fee.unit_price / 100,
+          position: itemsRef.current.length,
+          taxId: fee.tax_id ?? null,
+          data: { kind: "fee", fee_id: fee.fee_id },
+        };
+        const { ok, body } = await createLine(quoteId, draft);
+        if (ok && body.success) {
+          setItems((prev) => [
+            ...prev,
+            {
+              lineId: body.line_id as string,
+              type: "simple",
+              name: fee.name,
+              quantity: 1,
+              unitPriceEuros: fee.unit_price / 100,
+              position: prev.length,
+              taxId: fee.tax_id ?? null,
+              data: { kind: "fee", fee_id: fee.fee_id },
+              saveStatus: "idle",
+            },
+          ]);
+        } else {
+          toast.error((body.message as string) ?? t("errors.lineAddFailedToast"));
+        }
+      } finally {
+        setAdding(false);
+      }
+    },
+    [adding, quoteId, setItems, t],
+  );
+
+  const handleAddFeeSubline = useCallback(
+    (lineId: string, fee: BackendFee) => {
+      const newSubline = {
+        name: fee.name,
+        quantity: "1",
+        unit: fee.unit || undefined,
+        unit_price: fee.unit_price,
+        option: false,
+        fee_id: fee.fee_id,
+        _key: nextSublineKey(),
+      };
+      setItems((prev) =>
+        prev.map((row) =>
+          row.lineId !== lineId
+            ? row
+            : { ...row, data: { ...row.data, sublines: [...(row.data.sublines ?? []), newSubline] } },
+        ),
+      );
+      scheduleLineSave(lineId);
+    },
+    [scheduleLineSave, setItems],
+  );
+
   const handleRemoveItem = useCallback(
     async (lineId: string) => {
       if (!quoteId) return;
@@ -616,6 +683,8 @@ export function useQuoteLines({
     handleSublineRemove,
     handleAddItem,
     handleAddChildItem,
+    handleAddFeeItem,
+    handleAddFeeSubline,
     handleRemoveItem,
     handleAddItemFromTemplate,
     handleSaveLineAsTemplate,

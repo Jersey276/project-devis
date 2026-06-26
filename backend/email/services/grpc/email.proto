@@ -7,6 +7,7 @@ option go_package = "project-devis-email/services/grpc";
 service EmailService {
     rpc SendQuoteEmail(SendQuoteEmailRequest) returns (SendEmailResponse);
     rpc SendScheduleEmail(SendScheduleEmailRequest) returns (SendEmailResponse);
+    rpc SendGenericEmail(SendGenericEmailRequest) returns (SendEmailResponse);
     rpc GetEmailLogs(GetEmailLogsRequest) returns (GetEmailLogsResponse);
     rpc TrackEmailEvent(TrackEmailEventRequest) returns (GenericResponse);
 }
@@ -29,15 +30,30 @@ message SendScheduleEmailRequest {
     string quote_id   = 6;
 }
 
+message SendGenericEmailRequest {
+    string to_email          = 1;
+    string to_name           = 2;
+    string subject           = 3;
+    string text_body         = 4;
+    string attachment_name   = 5;
+    bytes  attachment_bytes  = 6;
+    string attachment_type   = 7; // MIME type, e.g. "text/csv"
+}
+
 message SendEmailResponse {
     bool   success = 1;
     int32  code    = 2;
 }
 
 message GetEmailLogsRequest {
-    string user_id = 1;
-    int32  limit   = 2;
-    int32  offset  = 3;
+    string          user_id   = 1;
+    int32           limit     = 2;
+    int32           offset    = 3;
+    repeated string statuses  = 4;
+    repeated string types     = 5;
+    string          date_from = 6;
+    string          date_to   = 7;
+    string          search    = 8;
 }
 
 message EmailLog {

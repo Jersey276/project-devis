@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
@@ -12,7 +12,12 @@ import {
   UsersIcon,
   WrenchIcon,
   CreditCardIcon,
-  BarChart2Icon,
+  CoinsIcon,
+  ReceiptEuroIcon,
+  FolderIcon,
+  BuildingIcon,
+  LayoutDashboardIcon,
+  MailIcon,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "../ui/button";
@@ -29,36 +34,53 @@ import {
 } from "../ui/sidebar";
 import UserMenu from "../user/user-menu";
 import { useMode, type UserMode } from "@/lib/mode-context";
-import { apiFetch } from "@/lib/api";
-import { isSuperAdmin, type AuthContext } from "@/lib/access";
+import { useAuth } from "@/lib/auth-context";
+import { canUsePaidFeatures, isSuperAdmin } from "@/lib/access";
+import { cn } from "@/lib/utils";
 
 type NavKey =
+  | "dashboard"
+  | "adminDashboard"
+  | "project"
   | "quote"
   | "schedule"
   | "invoices"
+  | "creditNotes"
   | "clients"
+  | "clientProfile"
+  | "fees"
   | "users"
   | "countries"
   | "taxes"
   | "templates"
   | "subscriptions"
-  | "analytics"
+  | "logs"
+  | "emailLogs"
   | "test";
 
 type SidebarItem = {
   key: NavKey;
   url: string;
   icon: LucideIcon;
-  // Modes in which this entry is visible. Omit to show in every mode.
   modes?: UserMode[];
-  // Marker for entries that will be gated by the upcoming roles/permissions system.
   temp?: boolean;
   adminOnly?: boolean;
+  premium?: boolean;
 };
 
 type SidebarView = "user" | "admin";
 
 const items: SidebarItem[] = [
+  {
+    key: "dashboard",
+    url: "/",
+    icon: LayoutDashboardIcon,
+  },
+  {
+    key: "project",
+    url: "/projects",
+    icon: FolderIcon,
+  },
   {
     key: "quote",
     url: "/quote",
@@ -69,18 +91,40 @@ const items: SidebarItem[] = [
     url: "/schedule",
     icon: QuoteIcon,
     modes: ["provider"],
+    premium: true,
   },
-  // {
-  //   key: "invoices",
-  //   url: "/invoice",
-  //   icon: ReceiptEuroIcon,
-  //   modes: ["provider"],
-  // },
+  {
+    key: "invoices",
+    url: "/invoice",
+    icon: ReceiptEuroIcon,
+    modes: ["provider"],
+    premium: true,
+  },
+  {
+    key: "creditNotes",
+    url: "/credit-note",
+    icon: ReceiptEuroIcon,
+    modes: ["provider"],
+    premium: true,
+  },
   {
     key: "clients",
     url: "/clients",
     icon: QuoteIcon,
     modes: ["provider"],
+  },
+  {
+    key: "clientProfile",
+    url: "/client-profile",
+    icon: UserIcon,
+    modes: ["customer"],
+  },
+  {
+    key: "adminDashboard",
+    url: "/admin/dashboard",
+    icon: LayoutDashboardIcon,
+    modes: ["provider"],
+    adminOnly: true,
   },
   {
     key: "users",
@@ -107,10 +151,18 @@ const items: SidebarItem[] = [
     adminOnly: true,
   },
   {
+    key: "fees",
+    url: "/fees",
+    icon: CoinsIcon,
+    modes: ["provider"],
+    premium: true,
+  },
+  {
     key: "templates",
     url: "/templates",
     icon: WrenchIcon,
     modes: ["provider"],
+    premium: true,
   },
   {
     key: "subscriptions",
@@ -120,9 +172,16 @@ const items: SidebarItem[] = [
     adminOnly: true,
   },
   {
-    key: "analytics",
-    url: "/analytics",
-    icon: BarChart2Icon,
+    key: "logs",
+    url: "/logs",
+    icon: ShieldIcon,
+    modes: ["provider"],
+    adminOnly: true,
+  },
+  {
+    key: "emailLogs",
+    url: "/email-logs",
+    icon: MailIcon,
     modes: ["provider"],
     adminOnly: true,
   },
@@ -135,22 +194,14 @@ const items: SidebarItem[] = [
 ];
 
 export default function AppSidebar() {
-  const { mode } = useMode();
+  const { mode, setMode, isCustomer } = useMode();
   const t = useTranslations("nav");
-  const [isAdmin, setIsAdmin] = useState(false);
   const [sidebarView, setSidebarView] = useState<SidebarView>("user");
 
-  useEffect(() => {
-    let cancelled = false;
-    apiFetch("/api/auth/me").then(({ ok, body }) => {
-      if (cancelled) return;
-      const auth = (body.auth ?? null) as AuthContext | null;
-      setIsAdmin(ok && body.success === true && isSuperAdmin(auth));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { auth, ok } = useAuth();
+
+  const isAdmin = useMemo(() => ok && isSuperAdmin(auth), [auth, ok]);
+  const isPremium = useMemo(() => ok && canUsePaidFeatures(auth), [auth, ok]);
 
   const effectiveSidebarView: SidebarView = isAdmin ? sidebarView : "user";
 
@@ -159,9 +210,10 @@ export default function AppSidebar() {
       items.filter(
         (item) =>
           (!item.modes || item.modes.includes(mode)) &&
-          (!item.adminOnly || isAdmin),
+          (!item.adminOnly || isAdmin) &&
+          (!item.premium || isPremium),
       ),
-    [mode, isAdmin],
+    [mode, isAdmin, isPremium],
   );
 
   const userItems = useMemo(
@@ -231,6 +283,23 @@ export default function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="bg-primary-foreground text-primary">
+        <div className="px-2 pb-1">
+          <button
+            type="button"
+            data-slot="mode-toggle"
+            data-active={isCustomer ? "true" : undefined}
+            onClick={() => setMode(isCustomer ? "provider" : "customer")}
+            className={cn(
+              "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+              isCustomer
+                ? "bg-primary text-primary-foreground"
+                : "hover:bg-muted",
+            )}
+          >
+            <BuildingIcon className="h-4 w-4" />
+            <span>{isCustomer ? t("modeToggle.active") : t("modeToggle.inactive")}</span>
+          </button>
+        </div>
         <UserMenu />
       </SidebarFooter>
     </Sidebar>

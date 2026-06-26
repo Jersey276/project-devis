@@ -14,28 +14,28 @@ func Create(ctx context.Context, db *sql.DB, req *usersGrpc.CreateAddressRequest
 
 	ownerType, err := sqlutil.OwnerTypeToDBString(req.OwnerType)
 	if err != nil {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "owner_type", Message: "Type de propriétaire invalide."})
+		fieldErrors = append(fieldErrors, sqlutil.Invalid("owner_type", "Type de propriétaire invalide."))
 	}
 	if req.OwnerId == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "owner_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("owner_id"))
 	}
 	if req.AuthUserId == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "auth_user_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("auth_user_id"))
 	}
 	if req.Name == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "name", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("name"))
 	}
 	if req.Street == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "street", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("street"))
 	}
 	if req.City == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "city", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("city"))
 	}
 	if req.ZipCode == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "zip_code", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("zip_code"))
 	}
 	if req.CountryId == 0 {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "country_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("country_id"))
 	}
 
 	if len(fieldErrors) > 0 {

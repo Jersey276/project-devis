@@ -3,10 +3,9 @@ package tax
 import (
 	"context"
 	"database/sql"
-	"fmt"
-	"strconv"
 
 	"project-devis-users/actions/codes"
+	"project-devis-users/actions/sqlutil"
 	usersGrpc "project-devis-users/services/grpc"
 )
 
@@ -14,15 +13,15 @@ func Create(ctx context.Context, db *sql.DB, req *usersGrpc.CreateTaxRequest) (*
 	var fieldErrors []*usersGrpc.ValidationError
 
 	if req.Name == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "name", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("name"))
 	}
 	if req.Rate == "" {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "rate", Message: "Champ requis."})
-	} else if err := validateRate(req.Rate); err != nil {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "rate", Message: "Taux invalide (0–999.99)."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("rate"))
+	} else if err := sqlutil.ValidateRate(req.Rate); err != nil {
+		fieldErrors = append(fieldErrors, sqlutil.Invalid("rate", "Taux invalide (0–999.99)."))
 	}
 	if req.CountryGroupId == 0 {
-		fieldErrors = append(fieldErrors, &usersGrpc.ValidationError{Field: "country_group_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("country_group_id"))
 	}
 
 	if len(fieldErrors) > 0 {
@@ -54,15 +53,4 @@ func Create(ctx context.Context, db *sql.DB, req *usersGrpc.CreateTaxRequest) (*
 	}
 
 	return &usersGrpc.CreateTaxResponse{Success: true, Code: codes.Success, TaxId: taxID}, nil
-}
-
-func validateRate(rate string) error {
-	v, err := strconv.ParseFloat(rate, 64)
-	if err != nil {
-		return fmt.Errorf("invalid rate format")
-	}
-	if v < 0 || v > 999.99 {
-		return fmt.Errorf("rate out of range")
-	}
-	return nil
 }

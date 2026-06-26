@@ -10,6 +10,7 @@ import (
 type EmailSender interface {
 	SendQuoteEmail(toEmail, toName, quoteName string, pdfBytes []byte) (resendID string, err error)
 	SendScheduleEmail(toEmail, toName, quoteName, status string) (resendID string, err error)
+	SendGenericEmail(toEmail, toName, subject, textBody, attachmentName, attachmentType string, attachmentBytes []byte) (resendID string, err error)
 }
 
 // ─── Resend ──────────────────────────────────────────────────────────────────
@@ -45,6 +46,29 @@ func (s *resendSender) SendQuoteEmail(toEmail, toName, quoteName string, pdfByte
 	return resp.Id, nil
 }
 
+func (s *resendSender) SendGenericEmail(toEmail, toName, subject, textBody, attachmentName, attachmentType string, attachmentBytes []byte) (string, error) {
+	req := &resend.SendEmailRequest{
+		From:    s.from,
+		To:      []string{toEmail},
+		Subject: subject,
+		Text:    textBody,
+	}
+	if len(attachmentBytes) > 0 && attachmentName != "" {
+		req.Attachments = []*resend.Attachment{
+			{
+				Filename:    attachmentName,
+				Content:     attachmentBytes,
+				ContentType: attachmentType,
+			},
+		}
+	}
+	resp, err := s.client.Emails.Send(req)
+	if err != nil {
+		return "", err
+	}
+	return resp.Id, nil
+}
+
 func (s *resendSender) SendScheduleEmail(toEmail, toName, quoteName, status string) (string, error) {
 	html, err := RenderScheduleNotification(toName, quoteName, status)
 	if err != nil {
@@ -68,6 +92,11 @@ type logSender struct{}
 
 func (s *logSender) SendQuoteEmail(toEmail, toName, quoteName string, _ []byte) (string, error) {
 	log.Printf("email fallback: send quote to=%s quote=%q", toEmail, quoteName)
+	return "", nil
+}
+
+func (s *logSender) SendGenericEmail(toEmail, toName, subject, _, _, _ string, _ []byte) (string, error) {
+	log.Printf("email fallback: generic email to=%s subject=%q", toEmail, subject)
 	return "", nil
 }
 

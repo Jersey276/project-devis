@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	EmailService_SendQuoteEmail_FullMethodName    = "/email.EmailService/SendQuoteEmail"
 	EmailService_SendScheduleEmail_FullMethodName = "/email.EmailService/SendScheduleEmail"
+	EmailService_SendGenericEmail_FullMethodName  = "/email.EmailService/SendGenericEmail"
 	EmailService_GetEmailLogs_FullMethodName      = "/email.EmailService/GetEmailLogs"
 	EmailService_TrackEmailEvent_FullMethodName   = "/email.EmailService/TrackEmailEvent"
 )
@@ -31,6 +32,7 @@ const (
 type EmailServiceClient interface {
 	SendQuoteEmail(ctx context.Context, in *SendQuoteEmailRequest, opts ...grpc.CallOption) (*SendEmailResponse, error)
 	SendScheduleEmail(ctx context.Context, in *SendScheduleEmailRequest, opts ...grpc.CallOption) (*SendEmailResponse, error)
+	SendGenericEmail(ctx context.Context, in *SendGenericEmailRequest, opts ...grpc.CallOption) (*SendEmailResponse, error)
 	GetEmailLogs(ctx context.Context, in *GetEmailLogsRequest, opts ...grpc.CallOption) (*GetEmailLogsResponse, error)
 	TrackEmailEvent(ctx context.Context, in *TrackEmailEventRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 }
@@ -63,6 +65,16 @@ func (c *emailServiceClient) SendScheduleEmail(ctx context.Context, in *SendSche
 	return out, nil
 }
 
+func (c *emailServiceClient) SendGenericEmail(ctx context.Context, in *SendGenericEmailRequest, opts ...grpc.CallOption) (*SendEmailResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendEmailResponse)
+	err := c.cc.Invoke(ctx, EmailService_SendGenericEmail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *emailServiceClient) GetEmailLogs(ctx context.Context, in *GetEmailLogsRequest, opts ...grpc.CallOption) (*GetEmailLogsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetEmailLogsResponse)
@@ -89,6 +101,7 @@ func (c *emailServiceClient) TrackEmailEvent(ctx context.Context, in *TrackEmail
 type EmailServiceServer interface {
 	SendQuoteEmail(context.Context, *SendQuoteEmailRequest) (*SendEmailResponse, error)
 	SendScheduleEmail(context.Context, *SendScheduleEmailRequest) (*SendEmailResponse, error)
+	SendGenericEmail(context.Context, *SendGenericEmailRequest) (*SendEmailResponse, error)
 	GetEmailLogs(context.Context, *GetEmailLogsRequest) (*GetEmailLogsResponse, error)
 	TrackEmailEvent(context.Context, *TrackEmailEventRequest) (*GenericResponse, error)
 	mustEmbedUnimplementedEmailServiceServer()
@@ -106,6 +119,9 @@ func (UnimplementedEmailServiceServer) SendQuoteEmail(context.Context, *SendQuot
 }
 func (UnimplementedEmailServiceServer) SendScheduleEmail(context.Context, *SendScheduleEmailRequest) (*SendEmailResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SendScheduleEmail not implemented")
+}
+func (UnimplementedEmailServiceServer) SendGenericEmail(context.Context, *SendGenericEmailRequest) (*SendEmailResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SendGenericEmail not implemented")
 }
 func (UnimplementedEmailServiceServer) GetEmailLogs(context.Context, *GetEmailLogsRequest) (*GetEmailLogsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetEmailLogs not implemented")
@@ -170,6 +186,24 @@ func _EmailService_SendScheduleEmail_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EmailService_SendGenericEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendGenericEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EmailServiceServer).SendGenericEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EmailService_SendGenericEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EmailServiceServer).SendGenericEmail(ctx, req.(*SendGenericEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _EmailService_GetEmailLogs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetEmailLogsRequest)
 	if err := dec(in); err != nil {
@@ -220,6 +254,10 @@ var EmailService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendScheduleEmail",
 			Handler:    _EmailService_SendScheduleEmail_Handler,
+		},
+		{
+			MethodName: "SendGenericEmail",
+			Handler:    _EmailService_SendGenericEmail_Handler,
 		},
 		{
 			MethodName: "GetEmailLogs",

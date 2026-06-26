@@ -23,6 +23,8 @@ service UserService {
     rpc ListClients(ListClientsRequest) returns (ListClientsResponse);
     rpc UpdateClient(UpdateClientRequest) returns (UpdateClientResponse);
     rpc ArchiveClient(ArchiveClientRequest) returns (GenericResponse);
+    rpc LinkClientUser(LinkClientUserRequest) returns (GenericResponse);
+    rpc GetClientsByLinkedUser(GetClientByLinkedUserRequest) returns (ListClientsResponse);
 
     // Address
     rpc CreateAddress(CreateAddressRequest) returns (CreateAddressResponse);
@@ -52,6 +54,7 @@ service UserService {
     rpc GetTax(GetTaxRequest) returns (GetTaxResponse);
     rpc ListTaxes(ListTaxesRequest) returns (ListTaxesResponse);
     rpc ListTaxesForUser(ListTaxesForUserRequest) returns (ListTaxesResponse);
+    rpc ListTaxesForCountry(ListTaxesForCountryRequest) returns (ListTaxesResponse);
     rpc UpdateTax(UpdateTaxRequest) returns (UpdateTaxResponse);
     rpc DeleteTax(DeleteTaxRequest) returns (GenericResponse);
 }
@@ -77,6 +80,10 @@ message User {
     string vat = 6;
     string logo_url = 7;
     bool suspended = 8;
+    bool oss_enabled = 9;
+    string iban = 10;
+    string bic = 11;
+    string siret = 12;
 }
 
 message CreateUserRequest {
@@ -107,11 +114,16 @@ message UpdateUserRequest {
     string siren = 4;
     string vat = 5;
     string logo_url = 6;
+    bool oss_enabled = 7;
+    string iban = 8;
+    string bic = 9;
+    string siret = 10;
 }
 
 message UpdateUserResponse {
     bool success = 1;
     int32 code = 2;
+    repeated ValidationError validation_errors = 3;
 }
 
 message DeleteUserRequest {
@@ -150,7 +162,11 @@ message AdminAccount {
     string vat = 12;
 }
 
-message ListAdminAccountsRequest {}
+message ListAdminAccountsRequest {
+    string search = 1;
+    repeated string roles = 2;
+    repeated string statuses = 3;
+}
 
 message ListAdminAccountsResponse {
     bool success = 1;
@@ -181,6 +197,14 @@ message TouchUserLastLoginRequest {
 
 // ─── Client ──────────────────────────────────────────────────────────────────
 
+// ClientType discriminates a billable client between an individual (B2C) and a
+// business (B2B). Wire string equivalents are "individual" / "business".
+enum ClientType {
+    CLIENT_TYPE_UNSPECIFIED = 0;
+    CLIENT_TYPE_INDIVIDUAL  = 1;
+    CLIENT_TYPE_BUSINESS    = 2;
+}
+
 message Client {
     string client_id = 1;
     string user_id = 2;
@@ -192,6 +216,9 @@ message Client {
     string siren = 8;
     string vat = 9;
     bool archived = 10;
+    ClientType client_type = 11;
+    string siret = 12;
+    string linked_user_id = 13;
 }
 
 message CreateClientRequest {
@@ -203,6 +230,8 @@ message CreateClientRequest {
     string company = 6;
     string siren = 7;
     string vat = 8;
+    ClientType client_type = 9;
+    string siret = 10;
 }
 
 message CreateClientResponse {
@@ -223,15 +252,24 @@ message GetClientResponse {
     Client client = 3;
 }
 
+message ClientFilters {
+    string search = 1;
+    repeated string client_types = 2;
+}
+
 message ListClientsRequest {
     string user_id = 1;
     bool include_archived = 2;
+    int32 page = 3;
+    int32 page_size = 4;
+    ClientFilters filters = 5;
 }
 
 message ListClientsResponse {
     bool success = 1;
     int32 code = 2;
     repeated Client clients = 3;
+    int64 total = 4;
 }
 
 message UpdateClientRequest {
@@ -244,6 +282,8 @@ message UpdateClientRequest {
     string company = 7;
     string siren = 8;
     string vat = 9;
+    ClientType client_type = 10;
+    string siret = 11;
 }
 
 message UpdateClientResponse {
@@ -362,6 +402,7 @@ message Country {
     int32 id = 1;
     string code = 2;
     string name = 3;
+    bool is_eu = 4;
 }
 
 message CreateCountryRequest {
@@ -523,6 +564,10 @@ message ListTaxesForUserRequest {
     int32 address_id = 3;
 }
 
+message ListTaxesForCountryRequest {
+    int32 country_id = 1;
+}
+
 message ListTaxesResponse {
     bool success = 1;
     int32 code = 2;
@@ -545,4 +590,14 @@ message UpdateTaxResponse {
 
 message DeleteTaxRequest {
     int32 tax_id = 1;
+}
+
+message LinkClientUserRequest {
+    string client_id      = 1;
+    string provider_id    = 2;
+    string linked_user_id = 3;
+}
+
+message GetClientByLinkedUserRequest {
+    string linked_user_id = 1;
 }

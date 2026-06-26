@@ -6,7 +6,7 @@ describe("Admin Subscriptions page", () => {
       tier: "free",
       price_cents: 0,
       billing_cycle: "none",
-      features: {},
+      features: { max_schedules: 3, max_templates: 2, max_projects: 0, max_linked_clients: 0, fees_catalog: 0, b2b_invoicing: 0 },
     },
     {
       plan_id: 2,
@@ -14,7 +14,7 @@ describe("Admin Subscriptions page", () => {
       tier: "pro",
       price_cents: 900,
       billing_cycle: "monthly",
-      features: {},
+      features: { max_schedules: -1, max_templates: -1, max_projects: 10, max_linked_clients: 5, fees_catalog: 1, b2b_invoicing: 1 },
     },
     {
       plan_id: 3,
@@ -22,7 +22,7 @@ describe("Admin Subscriptions page", () => {
       tier: "enterprise",
       price_cents: 4900,
       billing_cycle: "monthly",
-      features: {},
+      features: { max_schedules: -1, max_templates: -1, max_projects: -1, max_linked_clients: -1, fees_catalog: 1, b2b_invoicing: 1 },
     },
   ];
 
@@ -74,6 +74,10 @@ describe("Admin Subscriptions page", () => {
       statusCode: 200,
       body: { success: true, plans: PLANS },
     }).as("getPlans");
+    cy.intercept("GET", "/api/plans?include_inactive=true", {
+      statusCode: 200,
+      body: { success: true, plans: PLANS },
+    }).as("getAllPlans");
   }
 
   it("renders the subscriptions table with user rows", () => {
@@ -112,6 +116,10 @@ describe("Admin Subscriptions page", () => {
       statusCode: 200,
       body: { success: true, plans: PLANS },
     }).as("getPlans");
+    cy.intercept("GET", "/api/plans?include_inactive=true", {
+      statusCode: 200,
+      body: { success: true, plans: PLANS },
+    });
 
     cy.visit("/subscriptions");
     cy.wait("@getSubscriptionsEmpty");
@@ -170,6 +178,27 @@ describe("Admin Subscriptions page", () => {
     });
     cy.wait("@getSubscriptionsReload");
     cy.contains("Enterprise").should("be.visible");
+  });
+
+  it("opens edit plan dialog and shows new feature fields", () => {
+    stubAdminSubscriptionsPage();
+
+    cy.visit("/subscriptions");
+    cy.wait("@getAuthMe");
+    cy.wait("@getAllPlans");
+
+    // Open actions menu on the Pro plan row (scoped to the plans table, first table on the page)
+    cy.get("table").first().contains("td", "Pro")
+      .closest("tr")
+      .within(() => {
+        cy.get("button.h-8.w-8").click({ force: true });
+      });
+
+    cy.contains("Modifier le plan").click({ force: true });
+    cy.contains("Projets max").scrollIntoView().should("be.visible");
+    cy.contains("Clients liés max").scrollIntoView().should("be.visible");
+    cy.contains("Catalogue de frais").scrollIntoView().should("be.visible");
+    cy.contains("Facturation B2B").scrollIntoView().should("be.visible");
   });
 
   it("blocks access for non-admin users", () => {

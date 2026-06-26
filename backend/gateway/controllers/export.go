@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	export "gateway/export"
+	users "gateway/users"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -39,7 +40,7 @@ var exportErrors = &serviceErrors{
 }
 
 // ExportRoutes wires the /export API group against the export gRPC service.
-func ExportRoutes(r *gin.RouterGroup) {
+func ExportRoutes(r *gin.RouterGroup, usersClient users.UserServiceClient) {
 	exportAddress := os.Getenv("EXPORT_SERVICE_ADDRESS")
 	if exportAddress == "" {
 		exportAddress = "localhost:50054"
@@ -58,6 +59,8 @@ func ExportRoutes(r *gin.RouterGroup) {
 
 	r.GET("/quotes/:id", func(c *gin.Context) { ExportQuote(c, exportClient) })
 	r.GET("/schedules/:id", func(c *gin.Context) { ExportSchedule(c, exportClient) })
+	r.GET("/invoices/:id", func(c *gin.Context) { ExportInvoice(c, exportClient, usersClient) })
+	r.GET("/credit-notes/:id", func(c *gin.Context) { ExportCreditNote(c, exportClient) })
 }
 
 func ExportQuote(c *gin.Context, client export.ExportServiceClient) {
@@ -95,6 +98,62 @@ func ExportSchedule(c *gin.Context, exportClient export.ExportServiceClient) {
 	filename := exportResp.Filename
 	if strings.TrimSpace(filename) == "" {
 		filename = fmt.Sprintf("echeancier-%s.pdf", scheduleID)
+	}
+	c.Header("Content-Disposition", contentDispositionAttachment(filename))
+	c.Data(http.StatusOK, "application/pdf", exportResp.Pdf)
+}
+
+func ExportInvoice(c *gin.Context, exportClient export.ExportServiceClient, usersClient users.UserServiceClient) {
+	invoiceID := c.Param("id")
+	userID := userIDFromCtx(c)
+	if c.GetHeader("X-Client-Mode") == "customer" {
+		linked := resolveMyClient(c, usersClient)
+		if linked == nil {
+			return
+		}
+		userID = linked.UserId
+	}
+	exportResp, err := exportClient.ExportInvoice(c.Request.Context(), &export.ExportInvoiceRequest{
+		InvoiceId: invoiceID,
+		UserId:    userID,
+		Facturx:   c.Query("facturx") == "1",
+	})
+	if err != nil {
+		exportErrors.unavailable(c)
+		return
+	}
+	if !exportResp.Success {
+		exportErrors.reply(c, exportResp.Code)
+		return
+	}
+
+	filename := exportResp.Filename
+	if strings.TrimSpace(filename) == "" {
+		filename = fmt.Sprintf("facture-%s.pdf", invoiceID)
+	}
+	c.Header("Content-Disposition", contentDispositionAttachment(filename))
+	c.Data(http.StatusOK, "application/pdf", exportResp.Pdf)
+}
+
+func ExportCreditNote(c *gin.Context, exportClient export.ExportServiceClient) {
+	creditNoteID := c.Param("id")
+	exportResp, err := exportClient.ExportCreditNote(c.Request.Context(), &export.ExportCreditNoteRequest{
+		CreditNoteId: creditNoteID,
+		UserId:       userIDFromCtx(c),
+		Facturx:      c.Query("facturx") == "1",
+	})
+	if err != nil {
+		exportErrors.unavailable(c)
+		return
+	}
+	if !exportResp.Success {
+		exportErrors.reply(c, exportResp.Code)
+		return
+	}
+
+	filename := exportResp.Filename
+	if strings.TrimSpace(filename) == "" {
+		filename = fmt.Sprintf("avoir-%s.pdf", creditNoteID)
 	}
 	c.Header("Content-Disposition", contentDispositionAttachment(filename))
 	c.Data(http.StatusOK, "application/pdf", exportResp.Pdf)

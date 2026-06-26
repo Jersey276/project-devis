@@ -2,9 +2,7 @@ package services
 
 import (
 	"context"
-	"crypto/rand"
 	"database/sql"
-	"encoding/base64"
 	"errors"
 	"time"
 )
@@ -18,15 +16,14 @@ var (
 )
 
 func GenerateEmailVerificationToken(ctx context.Context, db *sql.DB, userID string) (string, error) {
-	buf := make([]byte, 32)
-	if _, err := rand.Read(buf); err != nil {
+	rawToken, err := generateRawToken()
+	if err != nil {
 		return "", err
 	}
-	rawToken := base64.RawURLEncoding.EncodeToString(buf)
 	tokenHash := hashToken(rawToken)
 	expiresAt := time.Now().Add(EmailVerificationTokenTTL)
 
-	_, err := db.ExecContext(ctx,
+	_, err = db.ExecContext(ctx,
 		"INSERT INTO email_verification_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)",
 		userID, tokenHash, expiresAt,
 	)

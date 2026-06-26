@@ -55,6 +55,9 @@ services:
       SCHEDULE_SERVICE_ADDRESS: devis-schedule:50056
       SUBSCRIPTION_SERVICE_ADDRESS: devis-subscription:50057
       EMAIL_SERVICE_ADDRESS: devis-email:50058
+      INVOICE_SERVICE_ADDRESS: devis-invoice:50059
+      AUDIT_SERVICE_ADDRESS: devis-audit:50060
+      PROJECT_SERVICE_ADDRESS: devis-project:50061
       EMAIL_FROM: ${EMAIL_FROM:-}
       RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}
     ports:
@@ -70,6 +73,9 @@ services:
       - devis-schedule
       - devis-subscription
       - devis-email
+      - devis-invoice
+      - devis-audit
+      - devis-project
 
   devis-subscription:
     <<: *db-service
@@ -157,6 +163,65 @@ services:
       DB_NAME: schedule
       QUOTE_SERVICE_ADDRESS: devis-quote:50053
 
+  devis-invoice:
+    <<: *db-service
+    build:
+      <<: *service-build
+      args:
+        SERVICE_NAME: invoice
+    environment:
+      <<: *db-env
+      DB_USER: devis-invoice
+      DB_NAME: invoice
+      QUOTE_SERVICE_ADDRESS: devis-quote:50053
+      USER_SERVICE_ADDRESS: devis-user:50052
+      SCHEDULE_SERVICE_ADDRESS: devis-schedule:50056
+      EXPORT_SERVICE_ADDRESS: devis-export:50054
+      PDP_PROVIDER: ${PDP_PROVIDER:-noop}
+      PDP_POLL_INTERVAL: ${PDP_POLL_INTERVAL:-}
+      IOPOLE_BASE_URL: ${IOPOLE_BASE_URL:-}
+      IOPOLE_TOKEN_URL: ${IOPOLE_TOKEN_URL:-}
+      IOPOLE_CLIENT_ID: ${IOPOLE_CLIENT_ID:-}
+      IOPOLE_CLIENT_SECRET: ${IOPOLE_CLIENT_SECRET:-}
+      IOPOLE_CUSTOMER_ID: ${IOPOLE_CUSTOMER_ID:-}
+    depends_on:
+      postgres-init:
+        condition: service_completed_successfully
+      devis-quote:
+        condition: service_started
+      devis-user:
+        condition: service_started
+      devis-schedule:
+        condition: service_started
+
+  devis-audit:
+    <<: *db-service
+    build:
+      <<: *service-build
+      args:
+        SERVICE_NAME: audit
+    environment:
+      <<: *db-env
+      DB_USER: devis-audit
+      DB_NAME: audit
+      EMAIL_SERVICE_ADDRESS: devis-email:50058
+    depends_on:
+      postgres-init:
+        condition: service_completed_successfully
+      devis-email:
+        condition: service_started
+
+  devis-project:
+    <<: *db-service
+    build:
+      <<: *service-build
+      args:
+        SERVICE_NAME: project
+    environment:
+      <<: *db-env
+      DB_USER: devis-project
+      DB_NAME: project
+
   devis-template:
     <<: *db-service
     build:
@@ -178,10 +243,14 @@ services:
       TZ: Europe/Paris
       QUOTE_SERVICE_ADDRESS: devis-quote:50053
       USER_SERVICE_ADDRESS: devis-user:50052
+      SCHEDULE_SERVICE_ADDRESS: devis-schedule:50056
+      INVOICE_SERVICE_ADDRESS: devis-invoice:50059
       GOTENBERG_ADDRESS: http://gotenberg:3000
     depends_on:
       - devis-quote
       - devis-user
+      - devis-schedule
+      - devis-invoice
       - gotenberg
 
   gotenberg:
@@ -216,7 +285,7 @@ services:
       POSTGRES_DB: auth
       TZ: Europe/Paris
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql
     secrets:
       - db_password
     healthcheck:

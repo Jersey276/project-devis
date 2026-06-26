@@ -16,7 +16,7 @@ func Drop(ctx context.Context, db *sql.DB, req *quoteGrpc.DropQuoteRequest) (*qu
 	res, err := db.ExecContext(ctx,
 		`UPDATE quotes SET state='drop', updated_at=NOW()
 		 WHERE quote_id=$1 AND user_id=$2 AND archived_at IS NULL
-		   AND state IN ('draft', 'sent')`,
+		   AND state IN ('draft', 'negociation')`,
 		req.QuoteId, req.UserId,
 	)
 	if err != nil {

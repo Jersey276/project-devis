@@ -15,18 +15,39 @@
   .party .row { line-height: 1.35; }
 
   .quote-title { font-size: 16pt; font-weight: 700; margin: 4mm 0 1mm; }
-  .quote-name  { font-size: 11pt; margin: 0 0 6mm; }
+  .quote-name  { font-size: 11pt; margin: 0 0 2mm; }
+  .doc-meta  { font-size: 10pt; margin: 0 0 6mm; line-height: 1.5; }
+  .doc-meta .label { color: #555; }
 
   table.lines { width: 100%; border-collapse: collapse; font-size: 10pt; }
   table.lines th, table.lines td { border: 1px solid #444; padding: 1.5mm 2mm; }
   table.lines th { background: #e6e6e6; font-weight: 700; }
-  table.lines th.qty, table.lines th.unit, table.lines td.qty, table.lines td.unit { text-align: center; }
+  table.lines th.qty, table.lines th.unit, table.lines th.rate,
+  table.lines td.qty, table.lines td.unit, table.lines td.rate { text-align: center; }
   table.lines th.price, table.lines th.total, table.lines td.price, table.lines td.total { text-align: right; white-space: nowrap; }
   table.lines tr { page-break-inside: avoid; }
   table.lines thead { display: table-header-group; }
 
-  .total-row { margin-top: 4mm; text-align: right; font-weight: 700; font-size: 11pt; }
-  .total-row .amount { display: inline-block; min-width: 40mm; border: 1px solid #444; padding: 1.5mm 2mm; margin-left: 2mm; }
+  td.group-header { font-weight: 700; background: #e6e6e6; font-size: 10pt; border-top: 2px solid #444; }
+  td.text-line { font-style: italic; color: #333; border-left: none; border-right: none; }
+  tr.subline td.name { padding-left: 8mm; }
+  tr.detailed td.name { font-weight: 600; }
+
+  .vat-table { margin-top: 5mm; }
+  .vat-table table { border-collapse: collapse; font-size: 9pt; }
+  .vat-table th, .vat-table td { border: 1px solid #888; padding: 1mm 2mm; }
+  .vat-table th { background: #f0f0f0; }
+  .vat-table td.amount { text-align: right; white-space: nowrap; }
+
+  .totals { margin-top: 4mm; width: 70mm; margin-left: auto; }
+  .totals table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  .totals td { padding: 1mm 2mm; }
+  .totals td.amount { text-align: right; white-space: nowrap; }
+  .totals tr.grand td { font-weight: 700; font-size: 11pt; border-top: 1px solid #444; padding-top: 2mm; }
+
+  .options-section { margin-top: 8mm; border: 1px solid #bbb; padding: 3mm; page-break-inside: avoid; }
+  .options-title { font-weight: 700; font-size: 10pt; margin-bottom: 2mm; }
+  .options-total { text-align: right; font-size: 9pt; margin-top: 2mm; color: #555; }
 
   .signatures { display: flex; gap: 10mm; margin-top: 15mm; page-break-inside: avoid; }
   .signature  { flex: 1; }
@@ -49,6 +70,11 @@
 
   <h1 class="quote-title">Devis #{{.ShortID}}</h1>
   <div class="quote-name">{{.QuoteName}}</div>
+  <div class="doc-meta">
+    {{if .IssuedAt}}<div><span class="label">Date d'émission :</span> {{.IssuedAt}}</div>{{end}}
+    {{if .ValidUntil}}<div><span class="label">Valable jusqu'au :</span> {{.ValidUntil}}</div>{{end}}
+    {{if .PaymentTerms}}<div><span class="label">Conditions de paiement :</span> {{.PaymentTerms}}</div>{{end}}
+  </div>
 
   <table class="lines">
     <thead>
@@ -57,23 +83,121 @@
         <th class="qty">Qté</th>
         <th class="unit">Unité</th>
         <th class="price">PU HT</th>
+        <th class="rate">TVA</th>
         <th class="total">Total HT</th>
       </tr>
     </thead>
     <tbody>
-      {{range .Lines}}
+      {{range .Rows}}
+      {{if eq .Kind "group"}}
+      <tr class="group-row">
+        <td colspan="6" class="group-header">{{.Name}}</td>
+      </tr>
+      {{else if eq .Kind "text"}}
+      <tr class="text-row">
+        <td colspan="6" class="text-line">{{.Name}}</td>
+      </tr>
+      {{else if eq .Kind "detailed"}}
+      <tr class="detailed">
+        <td class="name">{{.Name}}</td>
+        <td class="qty"></td>
+        <td class="unit"></td>
+        <td class="price"></td>
+        <td class="rate"></td>
+        <td class="total">{{.Total}}</td>
+      </tr>
+      {{range .Sublines}}
+      <tr class="subline">
+        <td class="name">{{.Name}}</td>
+        <td class="qty">{{.Quantity}}</td>
+        <td class="unit">{{.Unit}}</td>
+        <td class="price">{{.UnitPrice}}</td>
+        <td class="rate"></td>
+        <td class="total">{{.Total}}</td>
+      </tr>
+      {{end}}
+      {{else if eq .Kind "subline"}}
+      <tr class="subline">
+        <td class="name">{{.Name}}</td>
+        <td class="qty">{{.Quantity}}</td>
+        <td class="unit">{{.Unit}}</td>
+        <td class="price">{{.UnitPrice}}</td>
+        <td class="rate">{{.TaxRate}}</td>
+        <td class="total">{{.Total}}</td>
+      </tr>
+      {{else}}
       <tr>
         <td class="name">{{.Name}}</td>
         <td class="qty">{{.Quantity}}</td>
         <td class="unit">{{.Unit}}</td>
         <td class="price">{{.UnitPrice}}</td>
+        <td class="rate">{{.TaxRate}}</td>
         <td class="total">{{.Total}}</td>
       </tr>
+      {{end}}
       {{end}}
     </tbody>
   </table>
 
-  <div class="total-row">Total HT <span class="amount">{{.TotalHT}}</span></div>
+  {{if .OptionRows}}
+  <div class="options-section">
+    <div class="options-title">Options (non incluses dans le total)</div>
+    <table class="lines">
+      <thead>
+        <tr>
+          <th class="name">Désignation</th>
+          <th class="qty">Qté</th>
+          <th class="unit">Unité</th>
+          <th class="price">PU HT</th>
+          <th class="rate">TVA</th>
+          <th class="total">Total HT</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .OptionRows}}
+        <tr>
+          <td class="name">{{.Name}}</td>
+          <td class="qty">{{.Quantity}}</td>
+          <td class="unit">{{.Unit}}</td>
+          <td class="price">{{.UnitPrice}}</td>
+          <td class="rate">{{.TaxRate}}</td>
+          <td class="total">{{.Total}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+    {{if .OptionTotalHT}}
+    <div class="options-total">Total HT des options : {{.OptionTotalHT}}</div>
+    {{end}}
+  </div>
+  {{end}}
+
+  {{if .VatBreakdown}}
+  <div class="vat-table">
+    <table>
+      <thead>
+        <tr><th>Taux TVA</th><th>Base HT</th><th>Montant TVA</th></tr>
+      </thead>
+      <tbody>
+        {{range .VatBreakdown}}
+        <tr>
+          <td>{{.Rate}}</td>
+          <td class="amount">{{.Base}}</td>
+          <td class="amount">{{.VAT}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{end}}
+
+  <div class="totals">
+    <table>
+      <tr><td>Total HT</td><td class="amount">{{.TotalHT}}</td></tr>
+      <tr><td>Total TVA</td><td class="amount">{{.TotalVAT}}</td></tr>
+      <tr class="grand"><td>Total TTC</td><td class="amount">{{.TotalTTC}}</td></tr>
+    </table>
+  </div>
 
   <section class="signatures">
     <div class="signature">

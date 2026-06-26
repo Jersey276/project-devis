@@ -327,3 +327,38 @@ func TestUpdateTax_SupersededRowIsImmutable(t *testing.T) {
 		t.Fatalf("expected CodeInvalidInput, got %d", resp.Code)
 	}
 }
+
+func TestListTaxesForCountry_Success(t *testing.T) {
+	srv, mock := setupServer(t)
+
+	mock.ExpectQuery(`SELECT id, name, rate.*FROM taxes.*country_group_countries.*country_id = \$1`).
+		WithArgs(int32(42)).
+		WillReturnRows(taxRows().
+			AddRow(7, "USt 19%", "19.00", 3, true, int32(0), int32(1), "", int32(0)))
+
+	resp, err := srv.ListTaxesForCountry(context.Background(), &usersGrpc.ListTaxesForCountryRequest{CountryId: 42})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatalf("expected success, got code %d", resp.Code)
+	}
+	if len(resp.Taxes) != 1 || resp.Taxes[0].Rate != "19.00" {
+		t.Fatalf("expected one tax at 19.00, got %+v", resp.Taxes)
+	}
+}
+
+func TestListTaxesForCountry_MissingCountryID(t *testing.T) {
+	srv, _ := setupServer(t)
+
+	resp, err := srv.ListTaxesForCountry(context.Background(), &usersGrpc.ListTaxesForCountryRequest{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for missing country_id")
+	}
+	if resp.Code != actions.CodeInvalidInput {
+		t.Fatalf("expected CodeInvalidInput, got %d", resp.Code)
+	}
+}

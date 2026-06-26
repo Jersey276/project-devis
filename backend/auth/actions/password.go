@@ -5,17 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"log"
-	"net/mail"
 
 	"project-devis-auth/services"
 	authGrpc "project-devis-auth/services/grpc"
 	userGrpc "project-devis-auth/services/user_auth"
 )
-
-func validEmail(email string) bool {
-	_, err := mail.ParseAddress(email)
-	return err == nil
-}
 
 func (s *Server) ResetPassword(ctx context.Context, req *authGrpc.ResetPasswordRequest) (*authGrpc.GenericResponse, error) {
 	if !validEmail(req.Email) {

@@ -54,6 +54,10 @@ func (s *Server) TouchUserLastLogin(ctx context.Context, req *usersGrpc.TouchUse
 	return user.TouchUserLastLogin(ctx, s.db, req)
 }
 
+func (s *Server) UpdateUserEmail(ctx context.Context, req *usersGrpc.UpdateUserEmailRequest) (*usersGrpc.GenericResponse, error) {
+	return user.UpdateEmail(ctx, s.db, req)
+}
+
 // ─── Client ──────────────────────────────────────────────────────────────────
 
 func (s *Server) CreateClient(ctx context.Context, req *usersGrpc.CreateClientRequest) (*usersGrpc.CreateClientResponse, error) {
@@ -74,6 +78,14 @@ func (s *Server) UpdateClient(ctx context.Context, req *usersGrpc.UpdateClientRe
 
 func (s *Server) ArchiveClient(ctx context.Context, req *usersGrpc.ArchiveClientRequest) (*usersGrpc.GenericResponse, error) {
 	return client.Archive(ctx, s.db, req)
+}
+
+func (s *Server) LinkClientUser(ctx context.Context, req *usersGrpc.LinkClientUserRequest) (*usersGrpc.GenericResponse, error) {
+	return client.LinkUser(ctx, s.db, req)
+}
+
+func (s *Server) GetClientsByLinkedUser(ctx context.Context, req *usersGrpc.GetClientByLinkedUserRequest) (*usersGrpc.ListClientsResponse, error) {
+	return client.GetByLinkedUser(ctx, s.db, req)
 }
 
 // ─── Address ─────────────────────────────────────────────────────────────────
@@ -166,6 +178,10 @@ func (s *Server) ListTaxes(ctx context.Context, req *usersGrpc.ListTaxesRequest)
 
 func (s *Server) ListTaxesForUser(ctx context.Context, req *usersGrpc.ListTaxesForUserRequest) (*usersGrpc.ListTaxesResponse, error) {
 	return tax.ListForUser(ctx, s.db, req)
+}
+
+func (s *Server) ListTaxesForCountry(ctx context.Context, req *usersGrpc.ListTaxesForCountryRequest) (*usersGrpc.ListTaxesResponse, error) {
+	return tax.ListForCountry(ctx, s.db, req)
 }
 
 func (s *Server) UpdateTax(ctx context.Context, req *usersGrpc.UpdateTaxRequest) (*usersGrpc.UpdateTaxResponse, error) {

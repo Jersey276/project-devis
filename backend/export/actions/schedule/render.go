@@ -5,10 +5,10 @@ import (
 	"context"
 	"fmt"
 	"html/template"
-	"strconv"
 	"strings"
 	"time"
 
+	"project-devis-export/internal/format"
 	"project-devis-export/quote"
 	schedulepb "project-devis-export/services/schedule"
 	"project-devis-export/templates"
@@ -66,9 +66,9 @@ func buildScheduleViewModel(in scheduleRenderInput) scheduleViewModel {
 		}
 		lines = append(lines, scheduleLineView{
 			Name:      name,
-			Expected:  formatCents(line.ExpectedCents),
-			Planned:   formatCents(line.PlannedCents),
-			Remaining: formatCents(line.ExpectedCents - line.PlannedCents),
+			Expected:  format.Cents(line.ExpectedCents),
+			Planned:   format.Cents(line.PlannedCents),
+			Remaining: format.Cents(line.ExpectedCents - line.PlannedCents),
 		})
 	}
 
@@ -76,12 +76,12 @@ func buildScheduleViewModel(in scheduleRenderInput) scheduleViewModel {
 	for _, col := range s.ColumnTotals {
 		months = append(months, scheduleMonthTotalView{
 			Label:  monthLabel(s.StartMonth, col.MonthIndex),
-			Amount: formatCents(col.AmountCents),
+			Amount: format.Cents(col.AmountCents),
 		})
 	}
 
 	return scheduleViewModel{
-		ShortID:        shortID(s.ScheduleId),
+		ShortID:        format.ShortID(s.ScheduleId),
 		ScheduleName:   s.Name,
 		Status:         s.Status,
 		StartMonth:     s.StartMonth,
@@ -89,8 +89,8 @@ func buildScheduleViewModel(in scheduleRenderInput) scheduleViewModel {
 		QuoteID:        s.QuoteId,
 		Lines:          lines,
 		MonthlyTotals:  months,
-		PlannedTotal:   formatCents(s.PlannedTotalCents),
-		QuoteTotal:     formatCents(s.QuoteTotalCents),
+		PlannedTotal:   format.Cents(s.PlannedTotalCents),
+		QuoteTotal:     format.Cents(s.QuoteTotalCents),
 	}
 }
 
@@ -101,48 +101,4 @@ func monthLabel(startMonth string, monthIndex int32) string {
 	}
 	current := base.AddDate(0, int(monthIndex)-1, 0)
 	return strings.Title(strings.ToLower(current.Format("Jan 2006")))
-}
-
-func formatCents(cents int64) string {
-	neg := cents < 0
-	if neg {
-		cents = -cents
-	}
-	euros := cents / 100
-	rem := cents % 100
-	euroStr := groupThousands(strconv.FormatInt(euros, 10))
-	sign := ""
-	if neg {
-		sign = "-"
-	}
-	return fmt.Sprintf("%s%s,%02d €", sign, euroStr, rem)
-}
-
-func groupThousands(s string) string {
-	n := len(s)
-	if n <= 3 {
-		return s
-	}
-	var b strings.Builder
-	pre := n % 3
-	if pre > 0 {
-		b.WriteString(s[:pre])
-		if n > pre {
-			b.WriteByte(' ')
-		}
-	}
-	for i := pre; i < n; i += 3 {
-		b.WriteString(s[i : i+3])
-		if i+3 < n {
-			b.WriteByte(' ')
-		}
-	}
-	return b.String()
-}
-
-func shortID(id string) string {
-	if len(id) >= 8 {
-		return id[:8]
-	}
-	return id
 }

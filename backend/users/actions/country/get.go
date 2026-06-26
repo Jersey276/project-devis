@@ -14,8 +14,8 @@ func Get(ctx context.Context, db *sql.DB, req *usersGrpc.GetCountryRequest) (*us
 	}
 
 	var c usersGrpc.Country
-	err := db.QueryRowContext(ctx, "SELECT id, code, name FROM countries WHERE id=$1", req.CountryId).
-		Scan(&c.Id, &c.Code, &c.Name)
+	err := db.QueryRowContext(ctx, "SELECT id, code, name, is_eu FROM countries WHERE id=$1", req.CountryId).
+		Scan(&c.Id, &c.Code, &c.Name, &c.IsEu)
 	if err == sql.ErrNoRows {
 		return &usersGrpc.GetCountryResponse{Success: false, Code: codes.NotFound}, nil
 	}

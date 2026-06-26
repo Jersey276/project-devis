@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   DataTable,
-  DataTableBody,
+  DataTableBodyRows,
   DataTableCell,
   DataTableHead,
   DataTableHeader,
@@ -13,14 +14,29 @@ import {
   DataTableSortableHead,
 } from "@/components/custom/data-table";
 import { Button } from "@/components/ui/button";
+import { FilterSidebar, FilterSidebarSection } from "@/components/ui/filter-sidebar";
+import { SelectCombobox } from "@/components/ui/select-combobox";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { listSchedules } from "@/lib/services/schedules";
 import type { BackendScheduleSummary } from "@/types/backend";
 import CreateScheduleDialog from "@/components/schedule/create-schedule-dialog";
 import ScheduleStatusSelect from "@/components/schedule/schedule-status-select";
+import { useMode } from "@/lib/mode-context";
+import { getMyClientProfiles } from "@/lib/services/clients";
+
+const PAGE_SIZE = 20;
+
+const SCHEDULE_STATUS_ITEMS = [
+  { value: "DRAFT", label: "Brouillon" },
+  { value: "NEGOCIATE", label: "En négociation" },
+  { value: "DENIED", label: "Refusé" },
+  { value: "VALID", label: "Validé" },
+];
 
 type ScheduleRow = {
   id: string;
   quoteId: string;
+  quoteName: string;
   name: string;
   status: string;
   startMonth: string;
@@ -31,6 +47,7 @@ function toRows(schedules: BackendScheduleSummary[]): ScheduleRow[] {
   return schedules.map((s) => ({
     id: s.schedule_id,
     quoteId: s.quote_id,
+    quoteName: s.quote_name || s.quote_id,
     name: s.name,
     status: s.status,
     startMonth: s.start_month,
@@ -38,68 +55,138 @@ function toRows(schedules: BackendScheduleSummary[]): ScheduleRow[] {
   }));
 }
 
-export default function ScheduleListTable() {
+function ScheduleListTableInner() {
+  const { isCustomer } = useMode();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const page = Number(searchParams.get("page") ?? "1");
+  const statuses = searchParams.get("statuses") ? searchParams.get("statuses")!.split(",") : [];
+  const startFrom = searchParams.get("start_from") ?? "";
+  const startTo = searchParams.get("start_to") ?? "";
+  const sortBy = searchParams.get("sort_by") ?? "created_at";
+  const sortDirection = (searchParams.get("sort_direction") ?? "desc") as "asc" | "desc";
+
   const [items, setItems] = useState<ScheduleRow[]>([]);
+  const [total, setTotal] = useState(0);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [myClientId, setMyClientId] = useState<string | null>(null);
 
-  const refreshSchedules = useCallback(async () => {
-    const { ok, body } = await listSchedules();
+  useEffect(() => {
+    if (!isCustomer) return;
+    getMyClientProfiles().then(({ ok, body }) => {
+      if (ok && Array.isArray(body.clients) && body.clients.length > 0) {
+        setMyClientId((body.clients[0] as { client_id: string }).client_id);
+      }
+    });
+  }, [isCustomer]);
+
+  function pushParams(p: { statuses?: string[]; startFrom?: string; startTo?: string; page?: number; sortBy?: string; sortDirection?: string }) {
+    const next = new URLSearchParams();
+    const st = p.statuses ?? statuses;
+    const sf = p.startFrom ?? startFrom;
+    const stt = p.startTo ?? startTo;
+    const pg = p.page ?? 1;
+    const sb = p.sortBy ?? sortBy;
+    const sd = p.sortDirection ?? sortDirection;
+    if (pg > 1) next.set("page", String(pg));
+    if (st.length > 0) next.set("statuses", st.join(","));
+    if (sf) next.set("start_from", sf);
+    if (stt) next.set("start_to", stt);
+    if (sb !== "created_at") next.set("sort_by", sb);
+    if (sd !== "desc") next.set("sort_direction", sd);
+    router.push(`${pathname}?${next.toString()}`);
+  }
+
+  const fetchSchedules = useCallback(async (signal: AbortSignal) => {
+    const params = new URLSearchParams({ page: String(page), page_size: String(PAGE_SIZE) });
+    if (statuses.length > 0) params.set("statuses", statuses.join(","));
+    if (startFrom) params.set("start_from", startFrom);
+    if (startTo) params.set("start_to", startTo);
+    params.set("sort_by", sortBy);
+    params.set("sort_direction", sortDirection);
+    if (isCustomer && myClientId) params.set("client_id", myClientId);
+
+    let ok: boolean, body: Awaited<ReturnType<typeof listSchedules>>["body"];
+    try {
+      ({ ok, body } = await listSchedules(params.toString(), signal));
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      throw err;
+    }
+    if (signal.aborted) return;
     if (!ok || !body.success || !Array.isArray(body.schedules)) {
       setItems([]);
-      setError(
-        (body.message as string) ?? "Impossible de charger les échéanciers.",
-      );
+      setError((body.message as string) ?? "Impossible de charger les échéanciers.");
       return;
     }
     setError(null);
     setItems(toRows(body.schedules as BackendScheduleSummary[]));
-  }, []);
+    setTotal((body.total ?? 0) as number);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, myClientId]);
 
-  const rowActions = useMemo<DataTableRowAction[]>(
-    () => [
-      {
-        type: "link",
-        label: "Ouvrir",
-        href: "/schedule/{id}",
-      },
-    ],
-    [],
-  );
+  const refreshSchedules = useCallback(() => {
+    const controller = new AbortController();
+    void fetchSchedules(controller.signal);
+  }, [fetchSchedules]);
 
   useEffect(() => {
-    let cancelled = false;
-    listSchedules().then(({ ok, body }) => {
-      if (cancelled) return;
-      if (!ok || !body.success || !Array.isArray(body.schedules)) {
-        setItems([]);
-        setError(
-          (body.message as string) ?? "Impossible de charger les échéanciers.",
-        );
-        return;
-      }
-      setError(null);
-      setItems(toRows(body.schedules as BackendScheduleSummary[]));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    const controller = new AbortController();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch with AbortController, setState called after await
+    void fetchSchedules(controller.signal);
+    return () => controller.abort();
+  }, [fetchSchedules]);
+
+  const rowActions = useMemo<DataTableRowAction[]>(() => [{ type: "link", label: "Ouvrir", href: "/schedule/{id}" }], []);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const activeFilterCount = (statuses.length > 0 ? 1 : 0) + (startFrom || startTo ? 1 : 0);
 
   return (
     <>
-      <div className="mb-4 flex justify-end">
-        <Button type="button" onClick={() => setOpen(true)}>
-          Nouvel échéancier
-        </Button>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <FilterSidebar
+          triggerLabel="Filtres"
+          title="Filtres"
+          resetLabel="Réinitialiser les filtres"
+          activeCount={activeFilterCount}
+          onReset={() => pushParams({ statuses: [], startFrom: "", startTo: "" })}
+        >
+          <FilterSidebarSection label="Statut">
+            <SelectCombobox
+              multiple
+              items={SCHEDULE_STATUS_ITEMS}
+              value={statuses}
+              onValueChange={(vals) => pushParams({ statuses: vals })}
+              placeholder="Sélectionner des statuts…"
+              emptyLabel="Aucun statut trouvé."
+            />
+          </FilterSidebarSection>
+          <FilterSidebarSection label="Mois de départ">
+            <DateRangePicker
+              from={startFrom}
+              to={startTo}
+              onValueChange={(from, to) => pushParams({ startFrom: from, startTo: to, page: 1 })}
+            />
+          </FilterSidebarSection>
+        </FilterSidebar>
+        {!isCustomer && (
+          <Button type="button" onClick={() => setOpen(true)}>
+            Nouvel échéancier
+          </Button>
+        )}
       </div>
 
       {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
 
       <DataTable
         datas={items}
-        sortBy="startMonth"
-        sortDirection="desc"
+        sortBy={sortBy}
+        sortDirection={sortDirection}
+        onSortChange={(col, dir) => pushParams({ sortBy: col, sortDirection: dir, page: 1 })}
         row_actions={rowActions}
       >
         <DataTableHeader>
@@ -108,35 +195,23 @@ export default function ScheduleListTable() {
             <DataTableSortableHead name="name">Nom</DataTableSortableHead>
             <DataTableSortableHead name="quoteId">Devis</DataTableSortableHead>
             <DataTableSortableHead name="status">Statut</DataTableSortableHead>
-            <DataTableSortableHead name="startMonth">
-              Début
-            </DataTableSortableHead>
-            <DataTableSortableHead name="durationMonths">
-              Durée (mois)
-            </DataTableSortableHead>
+            <DataTableSortableHead name="startMonth">Début</DataTableSortableHead>
+            <DataTableSortableHead name="durationMonths">Durée (mois)</DataTableSortableHead>
             <DataTableHead>Actions</DataTableHead>
           </DataTableRow>
         </DataTableHeader>
-        <DataTableBody>
-          {items.length === 0 ? (
-            <DataTableRow>
-              <DataTableCell className="text-muted-foreground">
-                Aucun échéancier.
-              </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
-              <DataTableCell> </DataTableCell>
-            </DataTableRow>
-          ) : (
-            items.map((item) => (
-              <DataTableRow key={item.id}>
-                <DataTableCell>{item.id}</DataTableCell>
-                <DataTableCell>{item.name}</DataTableCell>
-                <DataTableCell>{item.quoteId}</DataTableCell>
-                <DataTableCell>
+        <DataTableBodyRows<ScheduleRow>
+          emptyColSpan={7}
+          empty={<span className="text-muted-foreground">Aucun échéancier.</span>}
+          render={(item) => (
+            <DataTableRow key={item.id}>
+              <DataTableCell>{item.id}</DataTableCell>
+              <DataTableCell>{item.name}</DataTableCell>
+              <DataTableCell>{item.quoteName}</DataTableCell>
+              <DataTableCell>
+                {isCustomer ? (
+                  <span>{item.status}</span>
+                ) : (
                   <ScheduleStatusSelect
                     scheduleId={item.id}
                     value={item.status as BackendScheduleSummary["status"]}
@@ -144,23 +219,38 @@ export default function ScheduleListTable() {
                     onUpdated={refreshSchedules}
                     onError={setError}
                   />
-                </DataTableCell>
-                <DataTableCell>{item.startMonth}</DataTableCell>
-                <DataTableCell>{item.durationMonths}</DataTableCell>
-                <DataTableCell>
-                  <DataTableRowActions id={item.id} row={item} />
-                </DataTableCell>
-              </DataTableRow>
-            ))
+                )}
+              </DataTableCell>
+              <DataTableCell>{item.startMonth}</DataTableCell>
+              <DataTableCell>{item.durationMonths}</DataTableCell>
+              <DataTableCell><DataTableRowActions id={item.id} row={item} /></DataTableCell>
+            </DataTableRow>
           )}
-        </DataTableBody>
+        />
       </DataTable>
 
-      <CreateScheduleDialog
-        open={open}
-        onOpenChange={setOpen}
-        onCreated={refreshSchedules}
-      />
+      {total > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-4 text-sm text-muted-foreground">
+          <span>{total} échéancier{total > 1 ? "s" : ""}</span>
+          <div className="flex gap-2">
+            <button className="rounded border px-3 py-1 disabled:opacity-40" disabled={page <= 1} onClick={() => pushParams({ page: page - 1 })}>←</button>
+            <span>{page} / {totalPages}</span>
+            <button className="rounded border px-3 py-1 disabled:opacity-40" disabled={page >= totalPages} onClick={() => pushParams({ page: page + 1 })}>→</button>
+          </div>
+        </div>
+      )}
+
+      {!isCustomer && (
+        <CreateScheduleDialog open={open} onOpenChange={setOpen} onCreated={refreshSchedules} />
+      )}
     </>
+  );
+}
+
+export default function ScheduleListTable() {
+  return (
+    <Suspense fallback={null}>
+      <ScheduleListTableInner />
+    </Suspense>
   );
 }

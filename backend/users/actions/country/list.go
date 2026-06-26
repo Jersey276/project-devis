@@ -9,7 +9,7 @@ import (
 )
 
 func List(ctx context.Context, db *sql.DB, _ *usersGrpc.ListCountriesRequest) (*usersGrpc.ListCountriesResponse, error) {
-	rows, err := db.QueryContext(ctx, "SELECT id, code, name FROM countries ORDER BY name")
+	rows, err := db.QueryContext(ctx, "SELECT id, code, name, is_eu FROM countries ORDER BY name")
 	if err != nil {
 		return &usersGrpc.ListCountriesResponse{Success: false, Code: codes.InternalError}, err
 	}
@@ -18,7 +18,7 @@ func List(ctx context.Context, db *sql.DB, _ *usersGrpc.ListCountriesRequest) (*
 	var countries []*usersGrpc.Country
 	for rows.Next() {
 		var c usersGrpc.Country
-		if err := rows.Scan(&c.Id, &c.Code, &c.Name); err != nil {
+		if err := rows.Scan(&c.Id, &c.Code, &c.Name, &c.IsEu); err != nil {
 			return &usersGrpc.ListCountriesResponse{Success: false, Code: codes.InternalError}, err
 		}
 		countries = append(countries, &c)

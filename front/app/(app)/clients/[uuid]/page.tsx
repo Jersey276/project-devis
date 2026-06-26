@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { PencilIcon, Trash2Icon } from "lucide-react";
+import { LinkIcon, PencilIcon, Trash2Icon } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -94,15 +94,23 @@ export default function ClientProfilePage() {
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline">{t("badge")}</Badge>
-            <Button asChild size="sm" variant="outline">
-              <Link
-                href={`/clients/${uuid}/edit`}
-                className="inline-flex items-center gap-1"
-              >
-                <PencilIcon className="h-4 w-4" />
-                {tCommon("actions.edit")}
-              </Link>
-            </Button>
+            {client.linked_user_id && (
+              <Badge variant="secondary" className="gap-1">
+                <LinkIcon className="h-3 w-3" />
+                {t("linkedBadge")}
+              </Badge>
+            )}
+            {!client.linked_user_id && (
+              <Button asChild size="sm" variant="outline">
+                <Link
+                  href={`/clients/${uuid}/edit`}
+                  className="inline-flex items-center gap-1"
+                >
+                  <PencilIcon className="h-4 w-4" />
+                  {tCommon("actions.edit")}
+                </Link>
+              </Button>
+            )}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
@@ -173,6 +181,12 @@ export default function ClientProfilePage() {
               <p>
                 <span className="font-medium">{t("info.siren")}</span>{" "}
                 {client.siren}
+              </p>
+            )}
+            {client.siret && (
+              <p>
+                <span className="font-medium">{t("info.siret")}</span>{" "}
+                {client.siret}
               </p>
             )}
             {client.vat && (

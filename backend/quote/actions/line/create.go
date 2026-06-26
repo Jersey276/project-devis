@@ -16,23 +16,23 @@ func Create(ctx context.Context, db *sql.DB, req *quoteGrpc.CreateQuoteLineReque
 	var fieldErrors []*quoteGrpc.ValidationError
 
 	if req.QuoteId == "" {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "quote_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("quote_id"))
 	}
 	if req.UserId == "" {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "user_id", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("user_id"))
 	}
 	if req.Type == "" {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "type", Message: "Champ requis."})
-	} else if req.Type != TypeSimple && req.Type != TypeMultiple {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "type", Message: "Type invalide."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("type"))
+	} else if req.Type != sqlutil.TypeSimple && req.Type != sqlutil.TypeMultiple {
+		fieldErrors = append(fieldErrors, sqlutil.Invalid("type", "Type invalide."))
 	}
 	if req.Quantity == "" {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "quantity", Message: "Champ requis."})
+		fieldErrors = append(fieldErrors, sqlutil.Required("quantity"))
 	} else if _, err := strconv.ParseFloat(req.Quantity, 64); err != nil {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "quantity", Message: "Doit être un nombre valide."})
+		fieldErrors = append(fieldErrors, sqlutil.Invalid("quantity", "Doit être un nombre valide."))
 	}
 	if req.UnitPrice < 0 {
-		fieldErrors = append(fieldErrors, &quoteGrpc.ValidationError{Field: "unit_price", Message: "Doit être positif ou nul."})
+		fieldErrors = append(fieldErrors, sqlutil.NonNegative("unit_price"))
 	}
 
 	if len(fieldErrors) > 0 {
@@ -50,11 +50,11 @@ func Create(ctx context.Context, db *sql.DB, req *quoteGrpc.CreateQuoteLineReque
 
 	lineID := uuid.New().String()
 	_, err = db.ExecContext(ctx,
-		`INSERT INTO quote_lines (line_id, quote_id, type, name, quantity, unit, unit_price, data, position, tax_id)
-		 VALUES ($1, $2, $3, $4, $5::DECIMAL, $6, $7, $8::jsonb, $9, $10)`,
+		`INSERT INTO quote_lines (line_id, quote_id, type, name, quantity, unit, unit_price, data, position, tax_id, fee_id)
+		 VALUES ($1, $2, $3, $4, $5::DECIMAL, $6, $7, $8::jsonb, $9, $10, $11)`,
 		lineID, req.QuoteId, req.Type, req.Name, req.Quantity,
 		sqlutil.NullableStr(req.Unit), req.UnitPrice, cleanData, req.Position,
-		sqlutil.NullableInt32(req.TaxId),
+		sqlutil.NullableInt32(req.TaxId), sqlutil.NullableStr(FeeIDFromData(cleanData)),
 	)
 	if err != nil {
 		return &quoteGrpc.CreateQuoteLineResponse{Success: false, Code: codes.InternalError}, err

@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v7.34.0
-// source: services/user_auth/user_auth.proto
+// source: user_auth.proto
 
 // Package matches the users service so the wire format aligns:
 // /users.UserService/CreateUser and /users.UserService/DeleteUser
@@ -27,6 +27,9 @@ const (
 	UserService_GetUserAccessInfoByEmail_FullMethodName = "/users.UserService/GetUserAccessInfoByEmail"
 	UserService_GetUserAccessInfo_FullMethodName        = "/users.UserService/GetUserAccessInfo"
 	UserService_TouchUserLastLogin_FullMethodName       = "/users.UserService/TouchUserLastLogin"
+	UserService_LinkClientUser_FullMethodName           = "/users.UserService/LinkClientUser"
+	UserService_GetClientsByLinkedUser_FullMethodName   = "/users.UserService/GetClientsByLinkedUser"
+	UserService_UpdateUserEmail_FullMethodName          = "/users.UserService/UpdateUserEmail"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -45,6 +48,12 @@ type UserServiceClient interface {
 	GetUserAccessInfo(ctx context.Context, in *GetUserAccessInfoRequest, opts ...grpc.CallOption) (*GetUserAccessInfoResponse, error)
 	// TouchUserLastLogin stores the timestamp of the latest successful login.
 	TouchUserLastLogin(ctx context.Context, in *TouchUserLastLoginRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// LinkClientUser links an auth user account to a client record.
+	LinkClientUser(ctx context.Context, in *LinkClientUserRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// GetClientsByLinkedUser returns all clients linked to a given auth user (one per provider).
+	GetClientsByLinkedUser(ctx context.Context, in *GetClientByLinkedUserRequest, opts ...grpc.CallOption) (*GetClientsResponse, error)
+	// UpdateUserEmail updates the email on the users service after a confirmed email change.
+	UpdateUserEmail(ctx context.Context, in *UpdateUserEmailRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 }
 
 type userServiceClient struct {
@@ -105,6 +114,36 @@ func (c *userServiceClient) TouchUserLastLogin(ctx context.Context, in *TouchUse
 	return out, nil
 }
 
+func (c *userServiceClient) LinkClientUser(ctx context.Context, in *LinkClientUserRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, UserService_LinkClientUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetClientsByLinkedUser(ctx context.Context, in *GetClientByLinkedUserRequest, opts ...grpc.CallOption) (*GetClientsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetClientsResponse)
+	err := c.cc.Invoke(ctx, UserService_GetClientsByLinkedUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) UpdateUserEmail(ctx context.Context, in *UpdateUserEmailRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, UserService_UpdateUserEmail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
@@ -121,6 +160,12 @@ type UserServiceServer interface {
 	GetUserAccessInfo(context.Context, *GetUserAccessInfoRequest) (*GetUserAccessInfoResponse, error)
 	// TouchUserLastLogin stores the timestamp of the latest successful login.
 	TouchUserLastLogin(context.Context, *TouchUserLastLoginRequest) (*GenericResponse, error)
+	// LinkClientUser links an auth user account to a client record.
+	LinkClientUser(context.Context, *LinkClientUserRequest) (*GenericResponse, error)
+	// GetClientsByLinkedUser returns all clients linked to a given auth user (one per provider).
+	GetClientsByLinkedUser(context.Context, *GetClientByLinkedUserRequest) (*GetClientsResponse, error)
+	// UpdateUserEmail updates the email on the users service after a confirmed email change.
+	UpdateUserEmail(context.Context, *UpdateUserEmailRequest) (*GenericResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -145,6 +190,15 @@ func (UnimplementedUserServiceServer) GetUserAccessInfo(context.Context, *GetUse
 }
 func (UnimplementedUserServiceServer) TouchUserLastLogin(context.Context, *TouchUserLastLoginRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method TouchUserLastLogin not implemented")
+}
+func (UnimplementedUserServiceServer) LinkClientUser(context.Context, *LinkClientUserRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method LinkClientUser not implemented")
+}
+func (UnimplementedUserServiceServer) GetClientsByLinkedUser(context.Context, *GetClientByLinkedUserRequest) (*GetClientsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetClientsByLinkedUser not implemented")
+}
+func (UnimplementedUserServiceServer) UpdateUserEmail(context.Context, *UpdateUserEmailRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateUserEmail not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -257,6 +311,60 @@ func _UserService_TouchUserLastLogin_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_LinkClientUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LinkClientUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).LinkClientUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_LinkClientUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).LinkClientUser(ctx, req.(*LinkClientUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetClientsByLinkedUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetClientByLinkedUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetClientsByLinkedUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetClientsByLinkedUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetClientsByLinkedUser(ctx, req.(*GetClientByLinkedUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_UpdateUserEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUserEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UpdateUserEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_UpdateUserEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UpdateUserEmail(ctx, req.(*UpdateUserEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -284,7 +392,19 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "TouchUserLastLogin",
 			Handler:    _UserService_TouchUserLastLogin_Handler,
 		},
+		{
+			MethodName: "LinkClientUser",
+			Handler:    _UserService_LinkClientUser_Handler,
+		},
+		{
+			MethodName: "GetClientsByLinkedUser",
+			Handler:    _UserService_GetClientsByLinkedUser_Handler,
+		},
+		{
+			MethodName: "UpdateUserEmail",
+			Handler:    _UserService_UpdateUserEmail_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "services/user_auth/user_auth.proto",
+	Metadata: "user_auth.proto",
 }

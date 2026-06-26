@@ -10,6 +10,7 @@ import (
 	auth "gateway/auth"
 	"gateway/authcookie"
 	"gateway/middleware"
+	"gateway/oauth"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -30,6 +31,9 @@ const (
 	CodeInvalidVerificationToken int32 = 1010
 	CodeExpiredVerificationToken int32 = 1011
 	CodeAlreadyVerified          int32 = 1012
+	CodeOAuthEmailNotVerified    int32 = 1013
+	CodeOAuthIdentityTaken       int32 = 1014
+	CodeLastLoginMethod          int32 = 1015
 	CodeUserServiceError         int32 = 2001
 	CodeInternalError            int32 = 2002
 	CodeNotImplemented           int32 = 2003
@@ -82,6 +86,12 @@ var authErrors = &serviceErrors{
 		CodeInvalidVerificationToken: {http.StatusBadRequest, "Le lien de vérification est invalide ou déjà utilisé."},
 		CodeExpiredVerificationToken: {http.StatusGone, "Le lien de vérification a expiré."},
 		CodeAlreadyVerified:          {http.StatusConflict, "Cette adresse email est déjà vérifiée."},
+		CodeOAuthEmailNotVerified:    {http.StatusUnprocessableEntity, "Votre adresse email n'est pas vérifiée par le fournisseur."},
+		CodeOAuthIdentityTaken:       {http.StatusConflict, "Ce compte fournisseur est déjà lié à un autre utilisateur."},
+		CodeLastLoginMethod:          {http.StatusConflict, "Impossible de retirer votre seule méthode de connexion."},
+		int32(1016):                  {http.StatusBadRequest, "Le lien d'invitation est invalide ou déjà utilisé."},
+		int32(1017):                  {http.StatusGone, "Le lien d'invitation a expiré."},
+		int32(1018):                  {http.StatusConflict, "Ce client est déjà lié à un compte."},
 	},
 	unavailableMessage: "Service d'authentification indisponible.",
 }
@@ -102,6 +112,25 @@ func AuthRoutes(r *gin.RouterGroup) *gin.RouterGroup {
 	r.POST("/refresh", func(c *gin.Context) { RefreshToken(c, client) })
 	r.POST("/logout", func(c *gin.Context) { Logout(c, client) })
 
+	// OAuth Authorization Code flow (public — user not yet authenticated).
+	providers := oauth.FromEnv()
+	oauthGrp := r.Group("/oauth")
+	oauthGrp.GET("/:provider", func(c *gin.Context) { OAuthBegin(c, providers) })
+	oauthGrp.GET("/:provider/callback", func(c *gin.Context) { OAuthCallback(c, providers, client) })
+
+	// Linking a provider to an already-authenticated account. These live under a
+	// distinct prefix (not /oauth/*) to avoid a router wildcard conflict with the
+	// public /oauth/:provider routes. The callback is shared with the public flow
+	// above; the link context lives in the signed state.
+	linkGrp := r.Group("/oauth-link")
+	linkGrp.Use(middleware.AuthRequired())
+	linkGrp.GET("/:provider", func(c *gin.Context) { OAuthLinkBegin(c, providers) })
+
+	identities := r.Group("/oauth-identities")
+	identities.Use(middleware.AuthRequired())
+	identities.GET("", func(c *gin.Context) { ListOAuthIdentities(c, client) })
+	identities.DELETE("/:provider", func(c *gin.Context) { UnlinkOAuthIdentity(c, client) })
+
 	me := r.Group("/me")
 	me.Use(middleware.AuthRequired())
 	me.GET("", AuthContextMe)
@@ -115,9 +144,11 @@ func AuthRoutes(r *gin.RouterGroup) *gin.RouterGroup {
 
 	email := r.Group("/email")
 	email.POST("/verify", func(c *gin.Context) { VerifyEmail(c, client) })
+	email.POST("/confirm-change", func(c *gin.Context) { ConfirmEmailChange(c, client) })
 	emailAuth := email.Group("")
 	emailAuth.Use(middleware.AuthRequired())
 	emailAuth.POST("/resend-verification", func(c *gin.Context) { ResendEmailVerification(c, client) })
+	emailAuth.POST("/request-change", func(c *gin.Context) { RequestEmailChange(c, client) })
 
 	return r
 }
@@ -128,6 +159,7 @@ func AuthContextMe(c *gin.Context) {
 	role, _ := c.Get(middleware.CtxRole)
 	status, _ := c.Get(middleware.CtxAccountStatus)
 	tier, _ := c.Get(middleware.CtxSubscriptionTier)
+	emailVerified, _ := c.Get(middleware.CtxEmailVerified)
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
@@ -137,6 +169,7 @@ func AuthContextMe(c *gin.Context) {
 			"role":              role,
 			"account_status":    status,
 			"subscription_tier": tier,
+			"email_verified":    emailVerified,
 		},
 	})
 }

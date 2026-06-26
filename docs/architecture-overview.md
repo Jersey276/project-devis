@@ -8,7 +8,7 @@ Le projet implémente une architecture microservices orientée domaine:
 
 - Frontend Next.js (App Router)
 - Gateway HTTP (Gin) qui expose l'API REST
-- Services metier gRPC (auth, users, quote, template, schedule, export)
+- Services metier gRPC (auth, users, quote, template, schedule, export, invoice, audit, project)
 - Postgres mutualise (1 cluster, plusieurs bases)
 - Gotenberg pour la generation PDF
 
@@ -25,12 +25,18 @@ flowchart LR
   G -->|gRPC 50054| E[Export Service]
   G -->|gRPC 50055| T[Template Service]
   G -->|gRPC 50056| S[Schedule Service]
+  G -->|gRPC 50059| IN[Invoice Service]
+  G -->|gRPC 50060| AU[Audit Service]
+  G -->|gRPC 50061| PR[Project Service]
 
   A --> P[(Postgres)]
   US --> P
   Q --> P
   T --> P
   S --> P
+  IN --> P
+  AU --> P
+  PR --> P
 
   E -->|HTTP| GT[Gotenberg]
   E -->|gRPC| US
@@ -85,6 +91,20 @@ Les points suivants sont identifies et assumes temporairement:
 - Service template absent du compose production.
 - Incoherences ponctuelles de code d'erreur HTTP sur certains handlers auth.
 
+## Mode customer (vue client)
+
+Le frontend expose deux modes d'interface pilotes par `ModeProvider`
+(`front/lib/mode-context.tsx`) :
+
+- **provider** (defaut) : acces complet aux outils de gestion.
+- **customer** : vue allégée, lecture seule, sidebar reduite au seul menu Devis.
+
+Le mode est persiste dans le cookie `user-mode` (SameSite=Lax, 1 an). Un bouton
+`data-slot="mode-toggle"` dans le footer de la sidebar permet la bascule. Aucun
+changement d'authentification n'est requis.
+
+Voir ADR 0005 pour les details de l'implementation et les limitations connues.
+
 ## Conventions d'API
 
 - Reponse standard: `success`, `message`, `code` (selon endpoint)
@@ -101,4 +121,7 @@ Les points suivants sont identifies et assumes temporairement:
 - `backend/template/`: templates et lignes de template
 - `backend/schedule/`: echeanciers de facturation et grille mensuelle associee
 - `backend/export/`: generation PDF via Gotenberg
+- `backend/invoice/`: factures et avoirs (port 50059)
+- `backend/audit/`: journal d'activite admin (port 50060)
+- `backend/project/`: regroupement metier de devis en projets (port 50061)
 - `docs/`: documentation technique et exploitation

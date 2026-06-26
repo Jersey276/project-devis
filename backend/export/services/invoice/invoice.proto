@@ -1,0 +1,266 @@
+syntax = "proto3";
+
+package invoice;
+
+option go_package = "project-devis-export/services/invoice";
+
+service InvoiceService {
+    rpc CreateInvoiceFromSchedule(CreateInvoiceFromScheduleRequest) returns (CreateInvoiceResponse);
+    rpc CreateInvoiceFromQuote(CreateInvoiceFromQuoteRequest) returns (CreateInvoiceResponse);
+    rpc IssueInvoice(IssueInvoiceRequest) returns (CreateInvoiceResponse);
+    rpc MarkInvoicePaid(MarkInvoicePaidRequest) returns (GenericResponse);
+    rpc GetInvoice(GetInvoiceRequest) returns (GetInvoiceResponse);
+    rpc ListInvoices(ListInvoicesRequest) returns (ListInvoicesResponse);
+
+    // Credit notes (avoirs). Crediting replaces invoice cancellation: it
+    // neutralises part or all of an issued invoice without changing its status.
+    rpc CreateCreditNote(CreateCreditNoteRequest) returns (CreateCreditNoteResponse);
+    rpc GetCreditNote(GetCreditNoteRequest) returns (GetCreditNoteResponse);
+    rpc ListCreditNotes(ListCreditNotesRequest) returns (ListCreditNotesResponse);
+
+    // Inalterability: recompute and verify the issuer's seal chain.
+    rpc VerifyChain(VerifyChainRequest) returns (VerifyChainResponse);
+}
+
+message GenericResponse {
+    bool  success = 1;
+    int32 code    = 2;
+}
+
+message ValidationError {
+    string field   = 1;
+    string message = 2;
+}
+
+// ─── Create / Issue ──────────────────────────────────────────────────────────
+
+message CreateInvoiceFromScheduleRequest {
+    string user_id              = 1;
+    string schedule_id          = 2;
+    repeated int32 month_indexes = 3;
+    string sale_date            = 4;  // YYYY-MM-DD, optional (defaults to issue date)
+    int32  due_in_days          = 5;  // optional (defaults to 30)
+    bool   issue_now            = 6;  // if true, issue immediately after creation
+}
+
+message CreateInvoiceFromQuoteRequest {
+    string user_id     = 1;
+    string quote_id    = 2;
+    string sale_date   = 3;
+    int32  due_in_days = 4;
+    bool   issue_now   = 5;
+}
+
+message CreateInvoiceResponse {
+    bool   success        = 1;
+    int32  code           = 2;
+    string invoice_id     = 3;
+    string invoice_number = 4;  // populated only when issued
+    repeated ValidationError validation_errors = 5;
+}
+
+message IssueInvoiceRequest {
+    string invoice_id = 1;
+    string user_id    = 2;
+}
+
+message MarkInvoicePaidRequest {
+    string invoice_id = 1;
+    string user_id    = 2;
+}
+
+// ─── Read ────────────────────────────────────────────────────────────────────
+
+message GetInvoiceRequest {
+    string invoice_id = 1;
+    string user_id    = 2;
+}
+
+message InvoiceParty {
+    string company           = 1;
+    string first_name        = 2;
+    string last_name         = 3;
+    string siren             = 4;
+    string vat               = 5;
+    string email             = 6;
+    string phone             = 7;
+    string logo_url          = 8;
+    string street            = 9;
+    string additional_street = 10;
+    string zip_code          = 11;
+    string city              = 12;
+    // country_code is the party's frozen ISO 3166-1 alpha-2 country code at issue
+    // time ('' for legacy). Issuer code on the issuer party, client code on the
+    // client party; drives the Factur-X buyer/seller country (BT-40 / BT-55).
+    string country_code      = 13;
+    // Issuer payment instructions (BG-16). Field numbers must match the invoice
+    // service proto (16/17) to map across the wire — 14/15 are unused here.
+    string iban              = 16;
+    string bic               = 17;
+    // siret: 14-digit establishment id (SIREN + NIC), frozen at issue time. Field
+    // number must match the invoice service proto (18). Emitted as the legal
+    // registration id (BT-30/BT-47, scheme 0009) in preference to SIREN.
+    string siret             = 18;
+}
+
+message InvoiceLine {
+    string quote_line_id   = 1;
+    string name            = 2;
+    string unit            = 3;
+    string quantity        = 4;
+    int64  unit_price_cents = 5;
+    int64  line_ht_cents   = 6;
+    int32  tax_id          = 7;
+    string tax_rate        = 8;
+    string tax_label       = 9;
+}
+
+message InvoiceVatLine {
+    string tax_rate      = 1;
+    int64  base_ht_cents = 2;
+    int64  vat_cents     = 3;
+}
+
+message InvoiceDetails {
+    string invoice_id            = 1;
+    string user_id               = 2;
+    string quote_id              = 3;
+    string schedule_id           = 4;
+    repeated int32 billed_month_indexes = 5;
+    string status                = 6;
+    string invoice_number        = 7;
+    string issued_at             = 8;
+    string sale_date             = 9;
+    string due_date              = 10;
+    InvoiceParty issuer          = 11;
+    InvoiceParty client          = 12;
+    repeated InvoiceLine lines   = 13;
+    repeated InvoiceVatLine vat_breakdown = 14;
+    int64  total_ht_cents        = 15;
+    int64  total_vat_cents       = 16;
+    int64  total_ttc_cents       = 17;
+    bool   vat_exempt            = 18;
+    // Line positions already credited by an existing credit note (ISSUED/PAID
+    // invoices only). The UI greys these out in the credit-note dialog.
+    repeated int32 credited_positions = 19;
+    // oss_applied is the frozen OSS distance-selling flag: when true, every line
+    // was taxed at the client's destination-country VAT rate (declared via the
+    // EU One-Stop-Shop), which drives the OSS legal mention on the PDF.
+    bool   oss_applied           = 20;
+}
+
+message GetInvoiceResponse {
+    bool           success = 1;
+    int32          code    = 2;
+    InvoiceDetails invoice = 3;
+}
+
+message ListInvoicesRequest {
+    string user_id  = 1;
+    string quote_id = 2;  // optional filter
+}
+
+message InvoiceSummary {
+    string invoice_id      = 1;
+    string invoice_number  = 2;
+    string status          = 3;
+    string quote_id        = 4;
+    string schedule_id     = 5;
+    string issued_at       = 6;
+    string due_date        = 7;
+    int64  total_ttc_cents = 8;
+}
+
+message ListInvoicesResponse {
+    bool                    success  = 1;
+    int32                   code     = 2;
+    repeated InvoiceSummary invoices = 3;
+}
+
+// ─── Credit notes (avoirs) ───────────────────────────────────────────────────
+
+message CreateCreditNoteRequest {
+    string user_id    = 1;
+    string invoice_id = 2;
+    repeated int32 positions = 3;  // invoice_line_snapshots positions; empty = total of the remainder
+    string reason     = 4;         // optional
+}
+
+message CreateCreditNoteResponse {
+    bool   success            = 1;
+    int32  code               = 2;
+    string credit_note_id     = 3;
+    string credit_note_number = 4;
+    repeated ValidationError validation_errors = 5;
+}
+
+message GetCreditNoteRequest {
+    string credit_note_id = 1;
+    string user_id        = 2;
+}
+
+message CreditNoteDetails {
+    string credit_note_id     = 1;
+    string user_id            = 2;
+    string invoice_id         = 3;
+    string invoice_number     = 4;   // origin invoice number (legal reference)
+    string credit_note_number = 5;
+    string issued_at          = 6;
+    string reason             = 7;
+    bool   is_total           = 8;
+    InvoiceParty issuer       = 9;
+    InvoiceParty client       = 10;
+    repeated InvoiceLine lines = 11;  // amounts positive; negated at render
+    repeated InvoiceVatLine vat_breakdown = 12;
+    int64  total_ht_cents     = 13;
+    int64  total_vat_cents    = 14;
+    int64  total_ttc_cents    = 15;
+    bool   vat_exempt         = 16;
+    // oss_applied is inherited from the origin invoice: drives the OSS legal
+    // mention on the credit-note PDF.
+    bool   oss_applied        = 17;
+}
+
+message GetCreditNoteResponse {
+    bool              success     = 1;
+    int32             code        = 2;
+    CreditNoteDetails credit_note = 3;
+}
+
+message ListCreditNotesRequest {
+    string user_id    = 1;
+    string invoice_id = 2;  // optional filter
+}
+
+message CreditNoteSummary {
+    string credit_note_id     = 1;
+    string credit_note_number = 2;
+    string invoice_id         = 3;
+    string invoice_number     = 4;
+    string issued_at          = 5;
+    bool   is_total           = 6;
+    int64  total_ttc_cents    = 7;
+}
+
+message ListCreditNotesResponse {
+    bool                       success      = 1;
+    int32                      code         = 2;
+    repeated CreditNoteSummary credit_notes = 3;
+}
+
+// ─── Inalterability ──────────────────────────────────────────────────────────
+
+message VerifyChainRequest {
+    string user_id = 1;
+}
+
+message VerifyChainResponse {
+    bool   success         = 1;
+    int32  code            = 2;
+    bool   ok              = 3;  // chain intact
+    int64  checked         = 4;  // number of links verified
+    string broken_doc_id   = 5;  // first broken link (empty if ok)
+    string broken_doc_type = 6;
+    int64  broken_index    = 7;
+    string reason          = 8;
+}

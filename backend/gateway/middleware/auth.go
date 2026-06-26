@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"gateway/auth"
+	auth "gateway/auth"
 	"gateway/authcookie"
 	"gateway/authz"
 
@@ -22,6 +22,7 @@ const (
 	CtxAccountStatus             = "account_status"
 	CtxSubscriptionTier          = "subscription_tier"
 	CtxSessionVersion            = "session_version"
+	CtxEmailVerified             = "email_verified"
 	codeSessionInvalidated int32 = 1008
 )
 
@@ -112,6 +113,7 @@ func AuthRequired() gin.HandlerFunc {
 		c.Set(CtxAccountStatus, ctx.GetAccountStatus())
 		c.Set(CtxSubscriptionTier, ctx.GetSubscriptionTier())
 		c.Set(CtxSessionVersion, ctx.GetSessionVersion())
+		c.Set(CtxEmailVerified, ctx.GetEmailVerified())
 
 		action := authz.ActionRead
 		if isWriteMethod(c.Request.Method) {

@@ -21,13 +21,14 @@ import (
 )
 
 const (
-	QuoteCodeNotFound        int32 = 1001
-	QuoteCodeAlreadyExists   int32 = 1002
-	QuoteCodeInvalidInput    int32 = 1003
-	QuoteCodeInvalidLineType int32 = 1004
-	QuoteCodeInvalidLineData int32 = 1005
-	QuoteCodeFinalized       int32 = 1006
-	QuoteCodeInternalError   int32 = 2001
+	QuoteCodeNotFound         int32 = 1001
+	QuoteCodeAlreadyExists    int32 = 1002
+	QuoteCodeInvalidInput     int32 = 1003
+	QuoteCodeInvalidLineType  int32 = 1004
+	QuoteCodeInvalidLineData  int32 = 1005
+	QuoteCodeFinalized        int32 = 1006
+	QuoteCodeCommentForbidden int32 = 1007
+	QuoteCodeInternalError    int32 = 2001
 )
 
 func quoteValidationErrors(errs []*quote.ValidationError) []FieldError {
@@ -40,13 +41,14 @@ func quoteValidationErrors(errs []*quote.ValidationError) []FieldError {
 
 var quoteErrors = &serviceErrors{
 	codes: map[int32]codeMapping{
-		QuoteCodeNotFound:        {http.StatusNotFound, "Devis introuvable."},
-		QuoteCodeAlreadyExists:   {http.StatusConflict, "Cette ressource existe déjà."},
-		QuoteCodeInvalidInput:    {http.StatusBadRequest, "Données invalides."},
-		QuoteCodeInvalidLineType: {http.StatusBadRequest, "Type de ligne invalide."},
-		QuoteCodeInvalidLineData: {http.StatusBadRequest, "Données de ligne invalides."},
-		QuoteCodeFinalized:       {http.StatusConflict, "Ce devis est finalisé et ne peut plus être modifié."},
-		QuoteCodeInternalError:   {http.StatusInternalServerError, "Une erreur interne est survenue."},
+		QuoteCodeNotFound:         {http.StatusNotFound, "Devis introuvable."},
+		QuoteCodeAlreadyExists:    {http.StatusConflict, "Cette ressource existe déjà."},
+		QuoteCodeInvalidInput:     {http.StatusBadRequest, "Données invalides."},
+		QuoteCodeInvalidLineType:  {http.StatusBadRequest, "Type de ligne invalide."},
+		QuoteCodeInvalidLineData:  {http.StatusBadRequest, "Données de ligne invalides."},
+		QuoteCodeFinalized:        {http.StatusConflict, "Ce devis est finalisé et ne peut plus être modifié."},
+		QuoteCodeCommentForbidden: {http.StatusForbidden, "Vous ne pouvez pas modifier ce commentaire."},
+		QuoteCodeInternalError:    {http.StatusInternalServerError, "Une erreur interne est survenue."},
 	},
 	unavailableMessage: "Service devis indisponible.",
 }
@@ -92,6 +94,13 @@ func QuotesRoutes(r *gin.RouterGroup, emailNotifier gatewaySvc.EmailNotifier) {
 	r.GET("", func(c *gin.Context) { ListQuotes(c, client, usersClient) })
 	r.POST("", func(c *gin.Context) { CreateQuote(c, client) })
 
+	// Customer-facing routes — must be registered before /:id to avoid wildcard clash.
+	r.GET("/me", func(c *gin.Context) { ListMyQuotes(c, client, usersClient) })
+	r.GET("/me/:id", func(c *gin.Context) { GetMyQuote(c, client, usersClient) })
+	r.PUT("/me/:id", func(c *gin.Context) { UpdateMyQuoteAddress(c, client, usersClient) })
+	r.POST("/me/:id/accept", func(c *gin.Context) { AcceptMyQuote(c, client, usersClient) })
+	r.POST("/me/:id/refuse", func(c *gin.Context) { RefuseMyQuote(c, client, usersClient) })
+
 	archive := r.Group("/archive")
 	archive.DELETE("/trash", func(c *gin.Context) { TrashQuotes(c, client) })
 
@@ -103,7 +112,10 @@ func QuotesRoutes(r *gin.RouterGroup, emailNotifier gatewaySvc.EmailNotifier) {
 	one.POST("/restore", func(c *gin.Context) { RestoreQuote(c, client) })
 	one.POST("/drop", func(c *gin.Context) { DropQuote(c, client) })
 	one.POST("/continue", func(c *gin.Context) { ContinueQuote(c, client) })
-	one.POST("/send", func(c *gin.Context) { SendQuote(c, client, usersClient, exportClient, emailNotifier) })
+	one.POST("/validate", func(c *gin.Context) { ValidateQuote(c, client) })
+	one.POST("/negociate", func(c *gin.Context) {
+		NegociateQuote(c, client, usersClient, exportClient, emailNotifier)
+	})
 
 	lines := one.Group("/lines")
 	lines.GET("", func(c *gin.Context) { ListQuoteLines(c, client) })
@@ -111,13 +123,25 @@ func QuotesRoutes(r *gin.RouterGroup, emailNotifier gatewaySvc.EmailNotifier) {
 	lines.GET("/:lineId", func(c *gin.Context) { GetQuoteLine(c, client) })
 	lines.PUT("/:lineId", func(c *gin.Context) { UpdateQuoteLine(c, client) })
 	lines.DELETE("/:lineId", func(c *gin.Context) { DeleteQuoteLine(c, client) })
+
+	comments := lines.Group("/:lineId/comments")
+	comments.GET("", func(c *gin.Context) { ListQuoteLineComments(c, client) })
+	comments.POST("", func(c *gin.Context) { CreateQuoteLineComment(c, client) })
+	comments.PUT("/:commentId", func(c *gin.Context) { UpdateQuoteLineComment(c, client) })
+	comments.DELETE("/:commentId", func(c *gin.Context) { DeleteQuoteLineComment(c, client) })
 }
 
 // ─── Quote handlers ──────────────────────────────────────────────────────────
 
 func ListQuotes(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
-	includeArchived := c.Query("archived") == "true"
 	userID := userIDFromCtx(c)
+	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 32)
+	pageSize, _ := strconv.ParseInt(c.DefaultQuery("page_size", "20"), 10, 32)
+
+	var states []string
+	if raw := c.Query("states"); raw != "" {
+		states = strings.Split(raw, ",")
+	}
 
 	var (
 		quotesResp *quote.ListQuotesResponse
@@ -128,7 +152,16 @@ func ListQuotes(c *gin.Context, client quote.QuoteServiceClient, usersClient use
 	g.Go(func() error {
 		resp, err := client.ListQuotes(gctx, &quote.ListQuotesRequest{
 			UserId:          userID,
-			IncludeArchived: includeArchived,
+			IncludeArchived: c.Query("archived") == "true",
+			Page:            int32(page),
+			PageSize:        int32(pageSize),
+			Filters: &quote.QuoteFilters{
+				Search:   c.Query("search"),
+				States:   states,
+				ClientId: c.Query("client_id"),
+			},
+			SortBy:        c.DefaultQuery("sort_by", "created_at"),
+			SortDirection: c.DefaultQuery("sort_direction", "desc"),
 		})
 		if err != nil {
 			return err
@@ -139,7 +172,7 @@ func ListQuotes(c *gin.Context, client quote.QuoteServiceClient, usersClient use
 	g.Go(func() error {
 		resp, err := client.ListUserQuoteLines(gctx, &quote.ListUserQuoteLinesRequest{
 			UserId:          userID,
-			IncludeArchived: includeArchived,
+			IncludeArchived: c.Query("archived") == "true",
 		})
 		if err != nil {
 			return err
@@ -178,7 +211,7 @@ func ListQuotes(c *gin.Context, client quote.QuoteServiceClient, usersClient use
 		m["option_total_ttc"] = totals[q.QuoteId].option
 		out = append(out, m)
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "quotes": out})
+	c.JSON(http.StatusOK, gin.H{"success": true, "quotes": out, "total": quotesResp.Total})
 }
 
 func distinctTaxIds(lines []*quote.QuoteLine) []int32 {
@@ -330,6 +363,225 @@ func computeQuoteTotals(lines []*quote.QuoteLine, taxes []*users.Tax) map[string
 	return totals
 }
 
+// ─── Customer /quotes/me routes ──────────────────────────────────────────────
+
+// ListMyQuotes returns quotes for the authenticated customer, scoped to their
+// linked client_id and the provider's user_id.
+func ListMyQuotes(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
+	linked := resolveMyClient(c, usersClient)
+	if linked == nil {
+		return
+	}
+
+	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 32)
+	pageSize, _ := strconv.ParseInt(c.DefaultQuery("page_size", "20"), 10, 32)
+
+	var states []string
+	if raw := c.Query("states"); raw != "" {
+		states = strings.Split(raw, ",")
+	}
+
+	var (
+		quotesResp *quote.ListQuotesResponse
+		linesResp  *quote.ListUserQuoteLinesResponse
+	)
+
+	g, gctx := errgroup.WithContext(c.Request.Context())
+	g.Go(func() error {
+		resp, err := client.ListQuotes(gctx, &quote.ListQuotesRequest{
+			UserId:          linked.UserId,
+			IncludeArchived: c.Query("archived") == "true",
+			Page:            int32(page),
+			PageSize:        int32(pageSize),
+			Filters: &quote.QuoteFilters{
+				Search:   c.Query("search"),
+				States:   states,
+				ClientId: linked.ClientId,
+			},
+			SortBy:        c.DefaultQuery("sort_by", "created_at"),
+			SortDirection: c.DefaultQuery("sort_direction", "desc"),
+		})
+		if err != nil {
+			return err
+		}
+		quotesResp = resp
+		return nil
+	})
+	g.Go(func() error {
+		resp, err := client.ListUserQuoteLines(gctx, &quote.ListUserQuoteLinesRequest{
+			UserId:          linked.UserId,
+			IncludeArchived: c.Query("archived") == "true",
+		})
+		if err != nil {
+			return err
+		}
+		linesResp = resp
+		return nil
+	})
+	if err := g.Wait(); err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !quotesResp.Success {
+		quoteErrors.reply(c, quotesResp.Code)
+		return
+	}
+
+	taxesResp, err := usersClient.ListTaxesForUser(c.Request.Context(), &users.ListTaxesForUserRequest{
+		UserId:     linked.UserId,
+		IncludeIds: distinctTaxIds(linesResp.Lines),
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+
+	totals := computeQuoteTotals(linesResp.Lines, taxesResp.Taxes)
+
+	out := make([]gin.H, 0, len(quotesResp.Quotes))
+	for _, q := range quotesResp.Quotes {
+		m := marshalQuote(q)
+		m["total_ttc"] = totals[q.QuoteId].principal
+		m["option_total_ttc"] = totals[q.QuoteId].option
+		out = append(out, m)
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "quotes": out, "total": quotesResp.Total})
+}
+
+// GetMyQuote returns a single quote for the authenticated customer, scoped to
+// their linked client_id.
+func GetMyQuote(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
+	linked := resolveMyClient(c, usersClient)
+	if linked == nil {
+		return
+	}
+
+	resp, err := client.GetQuote(c.Request.Context(), &quote.GetQuoteRequest{
+		QuoteId: c.Param("id"),
+		UserId:  linked.UserId,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	// Ensure the quote belongs to this customer's client record.
+	if resp.Quote != nil && resp.Quote.ClientId != linked.ClientId {
+		quoteErrors.reply(c, QuoteCodeNotFound)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"quote":   marshalQuote(resp.Quote),
+		"lines":   marshalLines(resp.Lines),
+	})
+}
+
+// resolveMyClientQuote resolves the linked client and verifies the quote belongs
+// to that client. Returns (linked, quoteResp, true) on success, or writes the
+// error response and returns (nil, nil, false).
+func resolveMyClientQuote(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) (*users.Client, *quote.GetQuoteResponse, bool) {
+	linked := resolveMyClient(c, usersClient)
+	if linked == nil {
+		return nil, nil, false
+	}
+	getResp, err := client.GetQuote(c.Request.Context(), &quote.GetQuoteRequest{
+		QuoteId: c.Param("id"),
+		UserId:  linked.UserId,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return nil, nil, false
+	}
+	if !getResp.Success {
+		quoteErrors.reply(c, getResp.Code)
+		return nil, nil, false
+	}
+	if getResp.Quote == nil || getResp.Quote.ClientId != linked.ClientId {
+		quoteErrors.reply(c, QuoteCodeNotFound)
+		return nil, nil, false
+	}
+	return linked, getResp, true
+}
+
+// UpdateMyQuoteAddress allows a customer to update only the client address on
+// one of their quotes. All other fields are ignored.
+func UpdateMyQuoteAddress(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
+	var input struct {
+		AddressID int32 `json:"address_id" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+
+	linked, getResp, ok := resolveMyClientQuote(c, client, usersClient)
+	if !ok {
+		return
+	}
+
+	resp, err := client.UpdateQuote(c.Request.Context(), &quote.UpdateQuoteRequest{
+		QuoteId:   c.Param("id"),
+		UserId:    linked.UserId,
+		Name:      getResp.Quote.Name,
+		AddressId: input.AddressID,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// AcceptMyQuote allows a linked customer to accept a quote in 'negociation' state.
+func AcceptMyQuote(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
+	linked, _, ok := resolveMyClientQuote(c, client, usersClient)
+	if !ok {
+		return
+	}
+	resp, err := client.AcceptQuote(c.Request.Context(), &quote.AcceptQuoteRequest{
+		QuoteId: c.Param("id"),
+		UserId:  linked.UserId,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// RefuseMyQuote allows a linked customer to refuse a quote in 'negociation' state.
+func RefuseMyQuote(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
+	linked, _, ok := resolveMyClientQuote(c, client, usersClient)
+	if !ok {
+		return
+	}
+	resp, err := client.RefuseQuote(c.Request.Context(), &quote.RefuseQuoteRequest{
+		QuoteId: c.Param("id"),
+		UserId:  linked.UserId,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
 func CreateQuote(c *gin.Context, client quote.QuoteServiceClient) {
 	var input struct {
 		Name          string `json:"name" binding:"required"`
@@ -389,6 +641,8 @@ func UpdateQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		ClientID      string `json:"client_id"`
 		AddressID     int32  `json:"address_id"`
 		UserAddressID int32  `json:"user_address_id"`
+		ValidUntil    string `json:"valid_until"`
+		PaymentTerms  string `json:"payment_terms"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
@@ -401,6 +655,8 @@ func UpdateQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		ClientId:      input.ClientID,
 		AddressId:     input.AddressID,
 		UserAddressId: input.UserAddressID,
+		ValidUntil:    input.ValidUntil,
+		PaymentTerms:  input.PaymentTerms,
 	})
 	if err != nil {
 		quoteErrors.unavailable(c)
@@ -509,6 +765,77 @@ func ContinueQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		quoteErrors.reply(c, resp.Code)
 		return
 	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func ValidateQuote(c *gin.Context, client quote.QuoteServiceClient) {
+	resp, err := client.ValidateQuote(c.Request.Context(), &quote.ValidateQuoteRequest{
+		QuoteId: c.Param("id"),
+		UserId:  userIDFromCtx(c),
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// NegociateQuote moves a quote into negotiation and sends it to the client by
+// email with the PDF attached — entering negotiation is the act of sending.
+func NegociateQuote(
+	c *gin.Context,
+	quoteClient quote.QuoteServiceClient,
+	usersClient users.UserServiceClient,
+	exportClient export.ExportServiceClient,
+	emailNotifier gatewaySvc.EmailNotifier,
+) {
+	userID := userIDFromCtx(c)
+	quoteID := c.Param("id")
+
+	resp, err := quoteClient.NegociateQuote(c.Request.Context(), &quote.NegociateQuoteRequest{
+		QuoteId: quoteID,
+		UserId:  userID,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+
+	clientResp, err := usersClient.GetClient(c.Request.Context(), &users.GetClientRequest{
+		ClientId: resp.ClientId,
+		UserId:   userID,
+	})
+	if err != nil || !clientResp.Success {
+		log.Printf("NegociateQuote: could not fetch client %s: %v", resp.ClientId, err)
+		c.JSON(http.StatusOK, gin.H{"success": true})
+		return
+	}
+	client := clientResp.Client
+
+	var pdfBytes []byte
+	exportResp, exportErr := exportClient.ExportQuote(c.Request.Context(), &export.ExportQuoteRequest{
+		QuoteId: quoteID,
+		UserId:  userID,
+	})
+	if exportErr != nil || !exportResp.Success {
+		log.Printf("NegociateQuote: PDF generation failed for quote %s: %v", quoteID, exportErr)
+	} else {
+		pdfBytes = exportResp.Pdf
+	}
+
+	clientName := strings.TrimSpace(client.FirstName + " " + client.LastName)
+	if err := emailNotifier.SendQuoteEmail(c.Request.Context(), userID, quoteID, client.Email, clientName, resp.Name, pdfBytes); err != nil {
+		log.Printf("NegociateQuote: email send failed for quote %s: %v", quoteID, err)
+	}
+
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
@@ -661,6 +988,9 @@ func marshalQuote(q *quote.Quote) gin.H {
 		"client_id":       q.ClientId,
 		"address_id":      q.AddressId,
 		"user_address_id": q.UserAddressId,
+		"issued_at":       q.IssuedAt,
+		"valid_until":     q.ValidUntil,
+		"payment_terms":   q.PaymentTerms,
 	}
 }
 
@@ -668,12 +998,18 @@ func stateToLower(s quote.QuoteState) string {
 	switch s {
 	case quote.QuoteState_QUOTE_STATE_DRAFT:
 		return "draft"
+	case quote.QuoteState_QUOTE_STATE_NEGOCIATION:
+		return "negociation"
 	case quote.QuoteState_QUOTE_STATE_SENT:
 		return "sent"
 	case quote.QuoteState_QUOTE_STATE_VALIDATED:
 		return "validated"
 	case quote.QuoteState_QUOTE_STATE_DROP:
 		return "drop"
+	case quote.QuoteState_QUOTE_STATE_ACCEPTED:
+		return "accepted"
+	case quote.QuoteState_QUOTE_STATE_REFUSED:
+		return "refused"
 	default:
 		return "draft"
 	}
@@ -721,55 +1057,114 @@ func marshalLines(lines []*quote.QuoteLine) []gin.H {
 	return out
 }
 
-func SendQuote(
-	c *gin.Context,
-	quoteClient quote.QuoteServiceClient,
-	usersClient users.UserServiceClient,
-	exportClient export.ExportServiceClient,
-	emailNotifier gatewaySvc.EmailNotifier,
-) {
-	userID := userIDFromCtx(c)
-	quoteID := c.Param("id")
+// ─── Comment handlers ─────────────────────────────────────────────────────────
 
-	sendResp, err := quoteClient.SendQuote(c.Request.Context(), &quote.SendQuoteRequest{
-		QuoteId: quoteID,
-		UserId:  userID,
+func marshalComment(c *quote.QuoteLineComment) gin.H {
+	if c == nil {
+		return nil
+	}
+	return gin.H{
+		"comment_id":  c.CommentId,
+		"line_id":     c.LineId,
+		"quote_id":    c.QuoteId,
+		"author_id":   c.AuthorId,
+		"author_name": c.AuthorName,
+		"body":        c.Body,
+		"created_at":  c.CreatedAt,
+		"updated_at":  c.UpdatedAt,
+	}
+}
+
+func ListQuoteLineComments(c *gin.Context, client quote.QuoteServiceClient) {
+	resp, err := client.ListComments(c.Request.Context(), &quote.ListCommentsRequest{
+		LineId: c.Param("lineId"),
+	})
+	if err != nil {
+		log.Printf("ListComments gRPC error: %v", err)
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	out := make([]gin.H, 0, len(resp.Comments))
+	for _, cm := range resp.Comments {
+		out = append(out, marshalComment(cm))
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "comments": out})
+}
+
+func CreateQuoteLineComment(c *gin.Context, client quote.QuoteServiceClient) {
+	var input struct {
+		Body       string `json:"body" binding:"required"`
+		AuthorName string `json:"author_name"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+
+	authorName := strings.TrimSpace(input.AuthorName)
+	if authorName == "" {
+		authorName = "Inconnu"
+	}
+
+	resp, err := client.CreateComment(c.Request.Context(), &quote.CreateCommentRequest{
+		LineId:     c.Param("lineId"),
+		QuoteId:    c.Param("id"),
+		AuthorId:   userIDFromCtx(c),
+		AuthorName: authorName,
+		Body:       input.Body,
 	})
 	if err != nil {
 		quoteErrors.unavailable(c)
 		return
 	}
-	if !sendResp.Success {
-		quoteErrors.reply(c, sendResp.Code)
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"success": true, "comment": marshalComment(resp.Comment)})
+}
+
+func UpdateQuoteLineComment(c *gin.Context, client quote.QuoteServiceClient) {
+	var input struct {
+		Body string `json:"body" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
 		return
 	}
 
-	clientResp, err := usersClient.GetClient(c.Request.Context(), &users.GetClientRequest{
-		ClientId: sendResp.ClientId,
-		UserId:   userID,
+	resp, err := client.UpdateComment(c.Request.Context(), &quote.UpdateCommentRequest{
+		CommentId: c.Param("commentId"),
+		AuthorId:  userIDFromCtx(c),
+		Body:      input.Body,
 	})
-	if err != nil || !clientResp.Success {
-		log.Printf("SendQuote: could not fetch client %s: %v", sendResp.ClientId, err)
-		c.JSON(http.StatusOK, gin.H{"success": true})
+	if err != nil {
+		quoteErrors.unavailable(c)
 		return
 	}
-	client := clientResp.Client
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "comment": marshalComment(resp.Comment)})
+}
 
-	var pdfBytes []byte
-	exportResp, exportErr := exportClient.ExportQuote(c.Request.Context(), &export.ExportQuoteRequest{
-		QuoteId: quoteID,
-		UserId:  userID,
+func DeleteQuoteLineComment(c *gin.Context, client quote.QuoteServiceClient) {
+	resp, err := client.DeleteComment(c.Request.Context(), &quote.DeleteCommentRequest{
+		CommentId: c.Param("commentId"),
+		AuthorId:  userIDFromCtx(c),
 	})
-	if exportErr != nil || !exportResp.Success {
-		log.Printf("SendQuote: PDF generation failed for quote %s: %v", quoteID, exportErr)
-	} else {
-		pdfBytes = exportResp.Pdf
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
 	}
-
-	clientName := strings.TrimSpace(client.FirstName + " " + client.LastName)
-	if err := emailNotifier.SendQuoteEmail(c.Request.Context(), userID, quoteID, client.Email, clientName, sendResp.Name, pdfBytes); err != nil {
-		log.Printf("SendQuote: email send failed for quote %s: %v", quoteID, err)
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
 	}
-
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
