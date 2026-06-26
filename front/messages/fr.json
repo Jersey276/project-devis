@@ -907,6 +907,14 @@
       "loading": "Vérification des droits administrateur...",
       "forbidden": "Accès refusé. Cette section est réservée aux super administrateurs actifs."
     },
+    "analytics": {
+      "noData": "Aucune donnée disponible.",
+      "totalActive": "Abonnements actifs",
+      "totalRevenue": "Revenus cumulés",
+      "monthRevenue": "Revenus ce mois",
+      "planDistribution": "Répartition par plan",
+      "monthlyRevenue": "Revenus mensuels"
+    },
     "countries": {
       "tabs": {
         "countries": "Pays",
