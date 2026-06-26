@@ -197,7 +197,7 @@ services:
     secrets:
       - db_password
     entrypoint: ["/docker-entrypoint-initdb.d/init.sh"]
-    restart: "no"
+    restart: on-failure
 
 secrets:
   db_password:

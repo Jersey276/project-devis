@@ -17,6 +17,8 @@ create_user_and_db() {
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '$user') THEN
                 CREATE ROLE "$user" LOGIN PASSWORD '$DB_PASSWORD';
+            ELSE
+                ALTER ROLE "$user" PASSWORD '$DB_PASSWORD';
             END IF;
         END
         \$\$;
@@ -41,6 +43,8 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "postgres" <<-EOSQL
     BEGIN
         IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'devis-audit-purge') THEN
             CREATE ROLE "devis-audit-purge" LOGIN PASSWORD '$DB_PASSWORD';
+        ELSE
+            ALTER ROLE "devis-audit-purge" PASSWORD '$DB_PASSWORD';
         END IF;
     END
     \$\$;
