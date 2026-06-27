@@ -187,7 +187,8 @@ services:
   # Idempotent DB/role provisioning. Runs on every compose up against the
   # live cluster, so adding a new database does not require wiping the volume.
   postgres-init:
-    build: *postgres-build
+    image: ${IMAGE_PREFIX}/postgres:${IMAGE_TAG:-latest}
+    pull_policy: always
     depends_on:
       postgres:
         condition: service_healthy

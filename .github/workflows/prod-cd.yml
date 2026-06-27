@@ -62,6 +62,10 @@ jobs:
             context: ./backend
             dockerfile: ./backend/Dockerfile
             build_args: "SERVICE_NAME=email"
+          - name: postgres
+            context: ./backend
+            dockerfile: ./backend/Dockerfile.postgres
+            build_args: ""
     steps:
       - uses: actions/checkout@v6
 
