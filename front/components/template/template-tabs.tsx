@@ -32,10 +32,8 @@ import EditQuoteTemplateDialog from "@/components/template/edit-quote-template-d
 export default function TemplateTabs() {
   const t = useTranslations("templates");
 
-  const [lineTemplates, setLineTemplates] = useState<BackendTemplate[]>([]);
-  const [quoteTemplates, setQuoteTemplates] = useState<BackendTemplate[]>([]);
-  const [loadingLines, setLoadingLines] = useState(true);
-  const [loadingQuotes, setLoadingQuotes] = useState(true);
+  const [lineTemplates, setLineTemplates] = useState<BackendTemplate[] | null>(null);
+  const [quoteTemplates, setQuoteTemplates] = useState<BackendTemplate[] | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const [availableTaxes, setAvailableTaxes] = useState<BackendTax[]>([]);
 
@@ -56,60 +54,60 @@ export default function TemplateTabs() {
   }, []);
 
   useEffect(() => {
-    setLoadingLines(true);
+    let cancelled = false;
     listTemplates({ type: "quote_line", archived: showArchived }).then(({ ok, body }) => {
-      setLoadingLines(false);
+      if (cancelled) return;
       if (ok && Array.isArray(body.templates)) {
         setLineTemplates(body.templates as BackendTemplate[]);
       } else {
+        setLineTemplates([]);
         toast.error(t("list.loadFailedToast"));
       }
     });
+    return () => { cancelled = true; };
   }, [t, showArchived]);
 
   useEffect(() => {
-    setLoadingQuotes(true);
+    let cancelled = false;
     listTemplates({ type: "quote_document", archived: showArchived }).then(({ ok, body }) => {
-      setLoadingQuotes(false);
+      if (cancelled) return;
       if (ok && Array.isArray(body.templates)) {
         setQuoteTemplates(body.templates as BackendTemplate[]);
       } else {
+        setQuoteTemplates([]);
         toast.error(t("list.loadFailedToast"));
       }
     });
+    return () => { cancelled = true; };
   }, [t, showArchived]);
 
   function handleLineSaved(updated: BackendTemplate) {
     setLineTemplates((prev) =>
-      prev.map((tpl) =>
-        tpl.template_id === updated.template_id ? updated : tpl,
-      ),
+      prev?.map((tpl) => (tpl.template_id === updated.template_id ? updated : tpl)) ?? prev,
     );
   }
 
   function handleQuoteSaved(updated: BackendTemplate) {
     setQuoteTemplates((prev) =>
-      prev.map((tpl) =>
-        tpl.template_id === updated.template_id ? updated : tpl,
-      ),
+      prev?.map((tpl) => (tpl.template_id === updated.template_id ? updated : tpl)) ?? prev,
     );
   }
 
-  async function handleArchive(id: string, setter: React.Dispatch<React.SetStateAction<BackendTemplate[]>>) {
+  async function handleArchive(id: string, setter: React.Dispatch<React.SetStateAction<BackendTemplate[] | null>>) {
     const { ok, body } = await archiveTemplate(id);
     if (ok && body.success) {
       toast.success(t("list.archiveSuccessToast"));
-      setter((prev) => prev.filter((tpl) => tpl.template_id !== id));
+      setter((prev) => prev?.filter((tpl) => tpl.template_id !== id) ?? prev);
     } else {
       toast.error((body.message as string) ?? t("list.archiveFailedToast"));
     }
   }
 
-  async function handleRestore(id: string, setter: React.Dispatch<React.SetStateAction<BackendTemplate[]>>) {
+  async function handleRestore(id: string, setter: React.Dispatch<React.SetStateAction<BackendTemplate[] | null>>) {
     const { ok, body } = await restoreTemplate(id);
     if (ok && body.success) {
       toast.success(t("list.restoreSuccessToast"));
-      setter((prev) => prev.filter((tpl) => tpl.template_id !== id));
+      setter((prev) => prev?.filter((tpl) => tpl.template_id !== id) ?? prev);
     } else {
       toast.error((body.message as string) ?? t("list.restoreFailedToast"));
     }
@@ -121,7 +119,11 @@ export default function TemplateTabs() {
         <Checkbox
           id="template-archived"
           checked={showArchived}
-          onCheckedChange={(checked) => setShowArchived(!!checked)}
+          onCheckedChange={(checked) => {
+            setLineTemplates(null);
+            setQuoteTemplates(null);
+            setShowArchived(!!checked);
+          }}
         />
         <Label htmlFor="template-archived">{t("list.showArchivedLabel")}</Label>
       </div>
@@ -134,8 +136,8 @@ export default function TemplateTabs() {
 
         <TabsContent value="quote_line" className="mt-4">
           <TemplateTable
-            templates={lineTemplates}
-            loading={loadingLines}
+            templates={lineTemplates ?? []}
+            loading={lineTemplates === null}
             onEdit={(id) => setEditLineId(id)}
             onArchive={(id) => handleArchive(id, setLineTemplates)}
             onRestore={(id) => handleRestore(id, setLineTemplates)}
@@ -144,8 +146,8 @@ export default function TemplateTabs() {
 
         <TabsContent value="quote_document" className="mt-4">
           <TemplateTable
-            templates={quoteTemplates}
-            loading={loadingQuotes}
+            templates={quoteTemplates ?? []}
+            loading={quoteTemplates === null}
             onEdit={(id) => setEditQuoteId(id)}
             onArchive={(id) => handleArchive(id, setQuoteTemplates)}
             onRestore={(id) => handleRestore(id, setQuoteTemplates)}
