@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { AUTH_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "@/lib/auth-constants";
 import { NEXT_PARAM } from "@/lib/auth-utils";
 
-const REFRESH_TIMEOUT_MS = 5000;
-
 const PUBLIC_PATHS = new Set([
   "/login",
   "/register",
@@ -27,36 +25,11 @@ export async function proxy(request: NextRequest) {
     return redirectToLogin(request);
   }
 
-  const refreshResponse = await fetch(
-    new URL("/api/auth/refresh", request.url),
-    {
-      method: "POST",
-      headers: {
-        cookie: request.headers.get("cookie") ?? "",
-        accept: "application/json",
-      },
-      signal: AbortSignal.timeout(REFRESH_TIMEOUT_MS),
-    },
-  ).catch(() => null);
-
-  if (!refreshResponse?.ok) {
-    return redirectToLogin(request);
-  }
-
-  const refreshed = (await refreshResponse.json().catch(() => null)) as {
-    token?: string;
-    refresh_token?: string;
-  } | null;
-  if (refreshed?.token && refreshed?.refresh_token) {
-    request.cookies.set(AUTH_TOKEN_COOKIE, refreshed.token);
-    request.cookies.set(REFRESH_TOKEN_COOKIE, refreshed.refresh_token);
-  }
-
-  const response = NextResponse.next({ request });
-  for (const setCookie of refreshResponse.headers.getSetCookie()) {
-    response.headers.append("set-cookie", setCookie);
-  }
-  return response;
+  // Access token absent but refresh token present: let the SSR layout handle
+  // the refresh via tryRefreshSSR(). Doing it here too would consume the
+  // refresh token before the layout reads it, causing a double-refresh race
+  // that ends in a spurious redirect to /login.
+  return NextResponse.next();
 }
 
 function redirectToLogin(request: NextRequest) {
