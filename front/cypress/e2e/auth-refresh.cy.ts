@@ -1,3 +1,8 @@
+// NOTE: The SSR silent-refresh path (access token missing + valid refresh token)
+// cannot be exercised here because cy.intercept only captures browser-side
+// requests, not server-to-gateway fetch calls. That path is covered by the
+// e2e test suite that runs against the full stack.
+
 describe("Auth middleware - SSR refresh on missing access token", () => {
   it("redirects to /login with next= when no auth cookies are present", () => {
     cy.clearCookies();
