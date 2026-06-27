@@ -365,7 +365,9 @@
         "statusEmpty": "Aucun statut trouvé.",
         "clientLabel": "Client",
         "clientPlaceholder": "Sélectionner un client…",
-        "clientEmpty": "Aucun client trouvé."
+        "clientEmpty": "Aucun client trouvé.",
+        "archivedLabel": "Archivage",
+        "archivedCheckbox": "Inclure les devis archivés"
       }
     },
     "form": {
@@ -528,6 +530,7 @@
         "invite": "Inviter"
       },
       "linked": "Lié",
+      "archived": "Archivé",
       "linkedTooltip": "Ce client a lié son compte. Ses informations ne peuvent être modifiées que par lui.",
       "loadFailedToast": "Impossible de charger les clients.",
       "deleteSuccessToast": "Client supprimé.",
@@ -536,7 +539,9 @@
         "searchPlaceholder": "Rechercher un client…",
         "typeLabel": "Type de client",
         "typePlaceholder": "Sélectionner un type…",
-        "typeEmpty": "Aucun type trouvé."
+        "typeEmpty": "Aucun type trouvé.",
+        "archivedLabel": "Archivage",
+        "archivedCheckbox": "Inclure les clients archivés"
       },
       "pagination": {
         "total_one": "{{count}} client",
@@ -1349,7 +1354,9 @@
         "title": "Supprimer ce frais ?",
         "description": "Le frais ne sera plus proposé dans les devis. Les devis existants conservent leur valeur."
       },
-      "deleteSuccessToast": "Frais supprimé."
+      "deleteSuccessToast": "Frais supprimé.",
+      "showArchivedLabel": "Inclure les frais archivés",
+      "archivedBadge": "Archivé"
     },
     "dialog": {
       "createTitle": "Nouveau frais",
@@ -1392,8 +1399,16 @@
         "actions": "Actions"
       },
       "actions": {
-        "edit": "Modifier"
+        "edit": "Modifier",
+        "archive": "Archiver",
+        "restore": "Restaurer"
       },
+      "showArchivedLabel": "Inclure les templates archivés",
+      "archivedBadge": "Archivé",
+      "archiveSuccessToast": "Template archivé.",
+      "archiveFailedToast": "Impossible d'archiver le template.",
+      "restoreSuccessToast": "Template restauré.",
+      "restoreFailedToast": "Impossible de restaurer le template.",
       "loadFailedToast": "Impossible de charger les templates."
     },
     "create": {

@@ -8,6 +8,18 @@ Gerer des templates reutilisables de devis:
 - archivage/restauration
 - gestion des lignes de template
 
+## Archivage
+
+| Champ DB | Comportement |
+| --- | --- |
+| `archived_at TIMESTAMPTZ` | NULL = actif, timestamp = archive |
+
+- `ArchiveTemplate` : `SET archived_at = now()` — uniquement si non deja archive
+- `RestoreTemplate` : `SET archived_at = NULL` — uniquement si archive
+- `ListTemplates` : exclut les archives par defaut ; passer `include_archived=true` (param HTTP `?archived=true`) pour les inclure
+- L'interface expose une checkbox "Inclure les templates archives" au-dessus des onglets (s'applique aux deux types : `quote_line` et `quote_document`)
+- Un template archive affiche un badge "Archivé" ; l'action "Modifier" est masquee, seule "Restaurer" est proposee dans le menu
+
 ## Point d'entree
 
 - `backend/template/main.go`

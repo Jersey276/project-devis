@@ -183,6 +183,53 @@ describe("Fees page", () => {
     });
   });
 
+  describe("Archive filter", () => {
+    it("excludes archived fees by default", () => {
+      cy.login();
+      cy.intercept("GET", "/api/fees**", (req) => {
+        expect(req.url).to.not.include("archived=true");
+        req.reply({ statusCode: 200, body: { success: true, fees: [] } });
+      }).as("listDefault");
+      cy.intercept("GET", "/api/users/taxes/available**", {
+        statusCode: 200,
+        body: { success: true, taxes: [] },
+      });
+
+      cy.visit("/fees");
+      cy.wait("@listDefault");
+    });
+
+    it("shows archived fees with a badge when the toggle is checked", () => {
+      stubFeesPage();
+      cy.intercept("GET", "/api/fees?archived=true", {
+        statusCode: 200,
+        body: {
+          success: true,
+          fees: [
+            {
+              fee_id: "fee-arch",
+              category: "service",
+              name: "Frais archivé",
+              unit: "h",
+              unit_price: 3000,
+              tax_id: null,
+              archived: true,
+            },
+          ],
+        },
+      }).as("listArchived");
+
+      cy.visit("/fees");
+      cy.wait("@getFees");
+
+      cy.get("label[for='fee-archived']").click();
+      cy.wait("@listArchived");
+
+      cy.contains("td", "Frais archivé").should("be.visible");
+      cy.contains("Archivé").should("be.visible");
+    });
+  });
+
   describe("Delete", () => {
     beforeEach(() => stubFeesPage());
 

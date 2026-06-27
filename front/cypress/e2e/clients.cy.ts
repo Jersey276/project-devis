@@ -288,6 +288,47 @@ describe("Clients", () => {
     });
   });
 
+  describe("Archive filter", () => {
+    it("excludes archived clients by default", () => {
+      cy.login();
+      cy.intercept("GET", /^\/api\/users\/clients(\?.*)?$/, (req) => {
+        expect(req.url).to.not.include("archived=true");
+        req.reply({ statusCode: 200, body: { success: true, clients: [] } });
+      }).as("listDefault");
+
+      cy.visit("/clients");
+      cy.wait("@listDefault");
+    });
+
+    it("includes archived clients when the filter is toggled", () => {
+      cy.login();
+      cy.intercept("GET", /^\/api\/users\/clients(\?.*)?$/, {
+        statusCode: 200,
+        body: { success: true, clients: [] },
+      }).as("listFirst");
+
+      cy.visit("/clients");
+      cy.wait("@listFirst");
+
+      cy.intercept("GET", /\/api\/users\/clients\?.*archived=true/, {
+        statusCode: 200,
+        body: {
+          success: true,
+          clients: [
+            client({ client_id: "c-arch", first_name: "Client", last_name: "Archivé", archived: true }),
+          ],
+        },
+      }).as("listArchived");
+
+      cy.contains("button", "Filtres").click();
+      cy.contains("label", "Inclure les clients archivés").click();
+      cy.wait("@listArchived");
+
+      cy.contains("td", "Client").should("be.visible");
+      cy.contains("Archivé").should("be.visible");
+    });
+  });
+
   describe("Archive from list", () => {
     it("archives a client and reloads the list", () => {
       cy.login();

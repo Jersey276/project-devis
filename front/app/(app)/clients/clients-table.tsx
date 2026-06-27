@@ -13,7 +13,7 @@ import {
   DataTableSortableHead,
 } from "@/components/custom/data-table";
 import type { DataTableRowAction } from "@/components/custom/data-table";
-import { EyeIcon, LinkIcon, MailIcon, TrashIcon } from "lucide-react";
+import { ArchiveIcon, EyeIcon, LinkIcon, MailIcon, TrashIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { archiveClient, sendClientInvitation } from "@/lib/services/clients";
@@ -130,8 +130,18 @@ export function ClientsTable({ data, onArchived }: ClientsTableProps) {
         </DataTableHeader>
         <DataTableBodyRows<BackendClient>
           render={(client) => (
-            <DataTableRow key={client.client_id}>
-              <DataTableCell>{client.first_name}</DataTableCell>
+            <DataTableRow key={client.client_id} className={client.archived ? "opacity-60" : undefined}>
+              <DataTableCell>
+                <span className="flex items-center gap-2">
+                  {client.first_name}
+                  {client.archived && (
+                    <Badge variant="secondary" className="gap-1 text-xs">
+                      <ArchiveIcon className="size-3" />
+                      {t("archived")}
+                    </Badge>
+                  )}
+                </span>
+              </DataTableCell>
               <DataTableCell>{client.last_name}</DataTableCell>
               <DataTableCell>{client.email}</DataTableCell>
               <DataTableCell>
