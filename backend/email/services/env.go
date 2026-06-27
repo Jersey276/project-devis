@@ -17,8 +17,10 @@ const (
 	DBPassword              EnvKey = "DB_PASSWORD"
 	DBPasswordFile          EnvKey = "DB_PASSWORD_FILE"
 	DBName                  EnvKey = "DB_NAME"
-	ResendAPIKey            EnvKey = "RESEND_API_KEY"
-	EmailFrom               EnvKey = "EMAIL_FROM"
+	ResendAPIKey     EnvKey = "RESEND_API_KEY"
+	ResendAPIKeyFile EnvKey = "RESEND_API_KEY_FILE"
+	EmailFrom        EnvKey = "EMAIL_FROM"
+	EmailFromFile    EnvKey = "EMAIL_FROM_FILE"
 )
 
 func (key EnvKey) GetValue() string {

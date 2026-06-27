@@ -108,11 +108,11 @@ func (s *logSender) SendScheduleEmail(toEmail, toName, quoteName, status string)
 // ─── Factory ─────────────────────────────────────────────────────────────────
 
 func NewEmailSenderFromEnv() EmailSender {
-	apiKey := ResendAPIKey.GetValue()
+	apiKey := ReadSecret(ResendAPIKey, ResendAPIKeyFile)
 	if apiKey == "" {
 		return &logSender{}
 	}
-	from := EmailFrom.GetValue()
+	from := ReadSecret(EmailFrom, EmailFromFile)
 	if from == "" {
 		from = "no-reply@project-devis.local"
 	}
