@@ -57,6 +57,10 @@ services:
       EXPORT_SERVICE_ADDRESS: devis-export:50054
       TEMPLATE_SERVICE_ADDRESS: devis-template:50055
       SUBSCRIPTION_SERVICE_ADDRESS: devis-subscription:50057
+      AUDIT_SERVICE_ADDRESS: devis-audit:50060
+      EMAIL_SERVICE_ADDRESS: devis-email:50058
+      INVOICE_SERVICE_ADDRESS: devis-invoice:50059
+      PROJECT_SERVICE_ADDRESS: devis-project:50061
       OAUTH_GITHUB_CLIENT_ID: ${OAUTH_GITHUB_CLIENT_ID}
       OAUTH_GITHUB_CLIENT_SECRET: ${OAUTH_GITHUB_CLIENT_SECRET}
       OAUTH_GITHUB_REDIRECT_URL: ${OAUTH_GITHUB_REDIRECT_URL}
@@ -78,6 +82,10 @@ services:
       - devis-export
       - devis-template
       - devis-subscription
+      - devis-audit
+      - devis-email
+      - devis-invoice
+      - devis-project
 
   devis-auth:
     <<: *db-service
@@ -141,6 +149,64 @@ services:
       - db_password
       - stripe_secret_key
       - stripe_webhook_secret
+
+  devis-audit:
+    <<: *db-service
+    image: ${IMAGE_PREFIX}/audit:${IMAGE_TAG:-latest}
+    environment:
+      <<: *db-common-env
+      DB_USER: devis-audit
+      DB_NAME: ${AUDIT_DB_NAME:-audit}
+      PURGE_DB_USER: devis-audit-purge
+      PURGE_DB_PASSWORD_FILE: /run/secrets/db_password
+      PURGE_DB_NAME: ${AUDIT_DB_NAME:-audit}
+
+  devis-email:
+    <<: *db-service
+    image: ${IMAGE_PREFIX}/email:${IMAGE_TAG:-latest}
+    environment:
+      <<: *db-common-env
+      DB_USER: devis-email
+      DB_NAME: ${EMAIL_DB_NAME:-email}
+      RESEND_API_KEY_FILE: /run/secrets/resend_api_key
+      EMAIL_FROM_FILE: /run/secrets/email_from
+    secrets:
+      - db_password
+      - resend_api_key
+      - email_from
+
+  devis-invoice:
+    <<: *service-defaults
+    image: ${IMAGE_PREFIX}/invoice:${IMAGE_TAG:-latest}
+    environment:
+      <<: *db-common-env
+      DB_USER: devis-invoice
+      DB_NAME: ${INVOICE_DB_NAME:-invoice}
+      QUOTE_SERVICE_ADDRESS: devis-quote:50053
+      USER_SERVICE_ADDRESS: devis-user:50052
+      SCHEDULE_SERVICE_ADDRESS: devis-schedule:50056
+      EXPORT_SERVICE_ADDRESS: devis-export:50054
+    secrets:
+      - db_password
+    depends_on:
+      postgres-init:
+        condition: service_completed_successfully
+      devis-quote:
+        condition: service_started
+      devis-user:
+        condition: service_started
+      devis-schedule:
+        condition: service_started
+      devis-export:
+        condition: service_started
+
+  devis-project:
+    <<: *db-service
+    image: ${IMAGE_PREFIX}/project:${IMAGE_TAG:-latest}
+    environment:
+      <<: *db-common-env
+      DB_USER: devis-project
+      DB_NAME: ${PROJECT_DB_NAME:-project}
 
   devis-export:
     <<: *service-defaults
@@ -207,6 +273,10 @@ secrets:
     file: backend/secrets/stripe_secret_key.txt
   stripe_webhook_secret:
     file: backend/secrets/stripe_webhook_secret.txt
+  resend_api_key:
+    file: backend/secrets/resend_api_key.txt
+  email_from:
+    file: backend/secrets/email_from.txt
 
 volumes:
   postgres:
