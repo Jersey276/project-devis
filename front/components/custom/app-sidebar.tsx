@@ -75,6 +75,7 @@ const items: SidebarItem[] = [
     key: "dashboard",
     url: "/",
     icon: LayoutDashboardIcon,
+    modes: ["provider"],
   },
   {
     key: "project",

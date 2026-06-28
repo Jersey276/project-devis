@@ -11,18 +11,17 @@ import QuoteStepBasicInfo from "@/components/quote/steps/quote-step-basic-info";
 import QuoteStepItems from "@/components/quote/steps/quote-step-items";
 import QuoteStepSummary from "@/components/quote/steps/quote-step-summary";
 import {
-  acceptMyQuote,
+  acceptQuote,
   createLine,
   createQuote,
-  getMyQuote,
   getQuote,
   negociateQuote,
-  refuseMyQuote,
-  updateMyQuoteAddress,
+  refuseQuote,
   updateQuote,
 } from "@/lib/services/quotes";
 import { exportQuotePdf } from "@/lib/services/export";
 import { listTemplateLines } from "@/lib/services/templates";
+import { getMyClients } from "@/lib/services/clients";
 import { apiFetch, fieldErrorsFromBody, type FieldErrors } from "@/lib/api";
 import { useMode } from "@/lib/mode-context";
 import {
@@ -109,7 +108,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   useEffect(() => {
     if (!quoteId) return;
     let cancelled = false;
-    const fetch = isCustomer ? getMyQuote(quoteId) : getQuote(quoteId);
+    const fetch = getQuote(quoteId);
     fetch.then(({ ok, body }) => {
       if (cancelled) return;
       if (!ok || !body.success) {
@@ -146,7 +145,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     (async () => {
       if (isCustomer) {
         const [clientsRes, meRes] = await Promise.all([
-          apiFetch("/api/users/clients/me"),
+          getMyClients(),
           apiFetch("/api/auth/me"),
         ]);
         if (cancelled) return;
@@ -187,7 +186,6 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
   const {
     clients,
     userId,
-    myClientId,
     userAddresses,
     addresses,
     availableTaxes,
@@ -389,7 +387,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       setErrors((prev) => ({ ...prev, address_id: [] }));
       if (!quoteId || value == null) return;
       if (isCustomer) {
-        void updateMyQuoteAddress(quoteId, value, myClientId || undefined).then(
+        void updateQuote(quoteId, { name: projectName, addressId: value }).then(
           ({ ok, body }) => {
             if (!ok || !body.success) {
               toast.error(
@@ -420,7 +418,6 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       handleRevertedToDraft,
       isCustomer,
       isReadonly,
-      myClientId,
       quoteId,
       quoteState,
       t,
@@ -504,23 +501,23 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
 
   const handleAccept = useCallback(async () => {
     if (!quoteId) return;
-    const { ok, body } = await acceptMyQuote(quoteId, myClientId || undefined);
+    const { ok, body } = await acceptQuote(quoteId);
     if (ok && body.success) {
       setQuoteState("accepted");
     } else {
       toast.error((body.message as string) ?? tCommon("errors.generic"));
     }
-  }, [quoteId, myClientId, tCommon]);
+  }, [quoteId, tCommon]);
 
   const handleRefuse = useCallback(async () => {
     if (!quoteId) return;
-    const { ok, body } = await refuseMyQuote(quoteId, myClientId || undefined);
+    const { ok, body } = await refuseQuote(quoteId);
     if (ok && body.success) {
       setQuoteState("refused");
     } else {
       toast.error((body.message as string) ?? tCommon("errors.generic"));
     }
-  }, [quoteId, myClientId, tCommon]);
+  }, [quoteId, tCommon]);
 
   // ────────────────────────────────────────────────────────────
   // Render

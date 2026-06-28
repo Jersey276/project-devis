@@ -1,0 +1,53 @@
+@startuml project-db
+' MCD — Service Project (DB : project)
+' Date : 2026-06-27
+
+skinparam linetype ortho
+hide empty methods
+
+' Mise en page A4 portrait
+scale 2
+skinparam defaultFontSize 14
+skinparam EntityFontSize 14
+skinparam EntityHeaderFontSize 15
+skinparam EntityHeaderFontStyle bold
+skinparam noteFontSize 13
+skinparam ArrowFontSize 13
+
+entity "projects" as P {
+  * id : SERIAL <<PK>>
+  --
+  * project_id : TEXT <<UNIQUE>>
+  * user_id : TEXT
+  * name : TEXT
+  client_id : TEXT
+  * status : TEXT (active | ...)
+  archived_at : TIMESTAMP
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+entity "project_quotes" as PQ {
+  * project_id : TEXT <<FK>>
+  * quote_id : TEXT <<UNIQUE>>
+  --
+  * added_at : TIMESTAMP
+  --
+  <<PK (project_id, quote_id)>>
+}
+
+P ||--o{ PQ : "project_id"
+
+note right of P
+  user_id, client_id : références logiques cross-service
+  vers Users svc.
+  Fonctionnalité subscription-gated.
+end note
+
+note right of PQ
+  quote_id UNIQUE : un devis appartient
+  à au plus un projet.
+  Référence logique vers Quote svc.
+end note
+
+@enduml

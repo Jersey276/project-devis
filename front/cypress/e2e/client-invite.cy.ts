@@ -84,7 +84,7 @@ describe("Client invitation", () => {
           headers: { "Set-Cookie": "auth-token=new-token; Path=/; HttpOnly" },
         });
       }).as("acceptNew");
-      cy.intercept("GET", "/api/users/clients/me", {
+      cy.intercept("GET", /\/api\/users\/clients\/_/, {
         statusCode: 200,
         body: { success: true, clients: [clientLinked] },
       }).as("getMyClient");
@@ -118,7 +118,7 @@ describe("Client invitation", () => {
           headers: { "Set-Cookie": "auth-token=new-token; Path=/; HttpOnly" },
         });
       }).as("acceptLogin");
-      cy.intercept("GET", "/api/users/clients/me", {
+      cy.intercept("GET", /\/api\/users\/clients\/_/, {
         statusCode: 200,
         body: { success: true, clients: [clientLinked] },
       }).as("getMyClient");
@@ -156,7 +156,7 @@ describe("Client invitation", () => {
         statusCode: 200,
         body: { success: true },
       }).as("acceptLinked");
-      cy.intercept("GET", "/api/users/clients/me", {
+      cy.intercept("GET", /\/api\/users\/clients\/_/, {
         statusCode: 200,
         body: { success: true, clients: [clientLinked] },
       }).as("getMyClient");
@@ -176,7 +176,7 @@ describe("Client invitation", () => {
   describe("/client-profile — customer mode", () => {
     beforeEach(() => {
       cy.login();
-      cy.intercept("GET", "/api/users/clients/me", {
+      cy.intercept("GET", /\/api\/users\/clients\/_/, {
         statusCode: 200,
         body: { success: true, clients: [clientLinked] },
       }).as("getMyClient");
@@ -195,7 +195,7 @@ describe("Client invitation", () => {
     });
 
     it("saves client profile", () => {
-      cy.intercept("PUT", /\/api\/users\/clients\/me/, {
+      cy.intercept("PUT", /\/api\/users\/clients\/_/, {
         statusCode: 200,
         body: { success: true, clients: [clientLinked] },
       }).as("updateMyClient");
@@ -217,7 +217,7 @@ describe("Client invitation", () => {
     });
 
     it("shows no link message when client is not linked", () => {
-      cy.intercept("GET", "/api/users/clients/me", {
+      cy.intercept("GET", /\/api\/users\/clients\/_/, {
         statusCode: 404,
         body: { success: false },
       }).as("getMyClientNotFound");
@@ -228,7 +228,7 @@ describe("Client invitation", () => {
     });
 
     it("affiche les erreurs de validation 422 lors de la sauvegarde", () => {
-      cy.intercept("PUT", /\/api\/users\/clients\/me/, {
+      cy.intercept("PUT", /\/api\/users\/clients\/_/, {
         statusCode: 422,
         body: {
           success: false,
@@ -265,7 +265,7 @@ describe("Client invitation", () => {
 
     beforeEach(() => {
       cy.login();
-      cy.intercept("GET", "/api/users/clients/me", {
+      cy.intercept("GET", /\/api\/users\/clients\/_/, {
         statusCode: 200,
         body: { success: true, clients: [clientLinked] },
       }).as("getMyClient");

@@ -33,7 +33,7 @@ import ProjectStatusBadge from "@/components/project/project-status-badge";
 import EditProjectDialog, { type EditableProject } from "@/components/project/edit-project-dialog";
 import CreateProjectDialog from "@/components/project/create-project-dialog";
 import { listProjects, deleteProject } from "@/lib/services/projects";
-import { listClients, getMyClientProfiles } from "@/lib/services/clients";
+import { listClients } from "@/lib/services/clients";
 import { clientName, PROJECT_STATUS_ITEMS } from "@/lib/project-utils";
 import { toast } from "sonner";
 import type { BackendClient, BackendProject, ProjectStatus } from "@/types/backend";
@@ -85,16 +85,6 @@ function ProjectListTableInner() {
   const [editProject, setEditProject] = useState<EditableProject | null>(null);
   const [busy, setBusy] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [myClientId, setMyClientId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isCustomer) return;
-    getMyClientProfiles().then(({ ok, body }) => {
-      if (ok && Array.isArray(body.clients) && body.clients.length > 0) {
-        setMyClientId((body.clients[0] as { client_id: string }).client_id);
-      }
-    });
-  }, [isCustomer]);
 
   function pushParams(p: {
     page?: number;
@@ -130,7 +120,6 @@ function ProjectListTableInner() {
     });
     if (search) params.set("search", search);
     if (status) params.set("status", status);
-    if (isCustomer && myClientId) params.set("client_id", myClientId);
 
     listProjects(params.toString(), controller.signal).then(({ ok, body }) => {
       if (!ok) { setError(body?.message ?? "Erreur de chargement."); return; }
@@ -140,7 +129,7 @@ function ProjectListTableInner() {
     }).catch(() => {});
 
     return () => controller.abort();
-  }, [page, search, status, sortBy, sortDirection, refreshKey, isCustomer, myClientId]);
+  }, [page, search, status, sortBy, sortDirection, refreshKey, isCustomer]);
 
   const activeFilterCount = useMemo(() => [search, status].filter(Boolean).length, [search, status]);
 

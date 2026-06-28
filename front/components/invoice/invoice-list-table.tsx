@@ -36,7 +36,7 @@ import {
   markInvoicePaid,
   readInvoicesFromBody,
 } from "@/lib/services/invoices";
-import { listClients, getMyClientProfiles } from "@/lib/services/clients";
+import { listClients } from "@/lib/services/clients";
 import { listQuotes } from "@/lib/services/quotes";
 import { useMode } from "@/lib/mode-context";
 import { exportInvoicePdf } from "@/lib/services/export";
@@ -118,17 +118,6 @@ function InvoiceListTableInner() {
   const [error, setError] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [myClientId, setMyClientId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isCustomer) return;
-    getMyClientProfiles().then(({ ok, body }) => {
-      if (ok && Array.isArray(body.clients) && body.clients.length > 0) {
-        setMyClientId((body.clients[0] as { client_id: string }).client_id);
-      }
-    });
-  }, [isCustomer]);
-
   function pushParams(p: {
     statuses?: string[];
     lifecycleStatuses?: string[];
@@ -186,8 +175,7 @@ function InvoiceListTableInner() {
     if (issuedTo) params.set("issued_to", issuedTo);
     if (dueFrom) params.set("due_from", dueFrom);
     if (dueTo) params.set("due_to", dueTo);
-    const effectiveClientId = isCustomer ? (myClientId ?? "") : clientId;
-    if (effectiveClientId) params.set("client_id", effectiveClientId);
+    if (!isCustomer && clientId) params.set("client_id", clientId);
     if (!isCustomer && quoteIdFilter) params.set("quote_id_filter", quoteIdFilter);
     params.set("sort_by", sortBy);
     params.set("sort_direction", sortDirection);
@@ -202,7 +190,7 @@ function InvoiceListTableInner() {
     setItems(toRows(readInvoicesFromBody(body)));
     setTotal((body.total ?? 0) as number);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, myClientId]);
+  }, [searchParams]);
 
   useEffect(() => {
     const controller = new AbortController();

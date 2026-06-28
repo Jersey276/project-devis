@@ -54,19 +54,23 @@ export async function sendClientInvitation(clientId: string): Promise<ApiResult>
   });
 }
 
-export async function getMyClientProfiles(): Promise<ApiResult> {
-  return apiFetch("/api/users/clients/me");
+// In customer mode (X-Client-Mode: customer header sent automatically), the
+// backend ignores the clientId param and returns the caller's linked clients.
+export async function getMyClients(): Promise<ApiResult> {
+  return apiFetch("/api/users/clients/_");
 }
 
-export async function updateMyClientProfile(clientId: string, payload: ClientPayload): Promise<ApiResult> {
-  return apiFetch(`/api/users/clients/me?client_id=${encodeURIComponent(clientId)}`, {
+// In customer mode, the backend ignores clientId and updates the caller's linked client.
+export async function updateMyClient(payload: ClientPayload): Promise<ApiResult> {
+  return apiFetch("/api/users/clients/_", {
     method: "PUT",
     body: JSON.stringify(payload),
   });
 }
 
-export async function getMyClientAddresses(clientId: string): Promise<ApiResult> {
-  return apiFetch(`/api/users/clients/me/addresses?client_id=${encodeURIComponent(clientId)}`);
+// In customer mode, the backend ignores query params and returns the caller's client addresses.
+export async function getMyClientAddresses(): Promise<ApiResult> {
+  return apiFetch("/api/users/addresses");
 }
 
 export type { BackendClient, ClientType };

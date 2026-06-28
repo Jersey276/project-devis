@@ -105,10 +105,6 @@ func UserRoutes(r *gin.RouterGroup) {
 	clients := r.Group("/clients")
 	clients.GET("", func(c *gin.Context) { ListClients(c, client) })
 	clients.POST("", func(c *gin.Context) { CreateClient(c, client) })
-	// /me routes must be registered before /:clientId to avoid the wildcard matching "me"
-	clients.GET("/me", func(c *gin.Context) { GetMyClient(c, client) })
-	clients.PUT("/me", func(c *gin.Context) { UpdateMyClient(c, client) })
-	clients.GET("/me/addresses", func(c *gin.Context) { ListMyClientAddresses(c, client) })
 	clients.GET("/:clientId", func(c *gin.Context) { GetClient(c, client) })
 	clients.PUT("/:clientId", func(c *gin.Context) { UpdateClient(c, client) })
 	clients.DELETE("/:clientId", func(c *gin.Context) { ArchiveClient(c, client) })
@@ -438,6 +434,27 @@ func ownerTypeToString(t users.OwnerType) string {
 }
 
 func ListAddresses(c *gin.Context, client users.UserServiceClient) {
+	if c.GetHeader("X-Client-Mode") == "customer" {
+		linked := resolveMyClient(c, client)
+		if linked == nil {
+			return
+		}
+		resp, err := client.ListAddresses(c.Request.Context(), &users.ListAddressesRequest{
+			OwnerType:  users.OwnerType_OWNER_TYPE_CLIENT,
+			OwnerId:    linked.ClientId,
+			AuthUserId: linked.UserId,
+		})
+		if err != nil {
+			usersErrors.unavailable(c)
+			return
+		}
+		if !resp.Success {
+			usersErrors.reply(c, resp.Code)
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"success": true, "addresses": marshalAddresses(resp.Addresses)})
+		return
+	}
 	ownerType, ok := parseOwnerType(c.Query("owner_type"))
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "owner_type invalide."})
@@ -818,6 +835,25 @@ func CreateClient(c *gin.Context, client users.UserServiceClient) {
 }
 
 func GetClient(c *gin.Context, client users.UserServiceClient) {
+	if c.GetHeader("X-Client-Mode") == "customer" {
+		resp, err := client.GetClientsByLinkedUser(c.Request.Context(), &users.GetClientByLinkedUserRequest{
+			LinkedUserId: userIDFromCtx(c),
+		})
+		if err != nil {
+			usersErrors.unavailable(c)
+			return
+		}
+		if !resp.Success {
+			usersErrors.reply(c, resp.Code)
+			return
+		}
+		out := make([]gin.H, len(resp.Clients))
+		for i, cl := range resp.Clients {
+			out[i] = marshalClient(cl)
+		}
+		c.JSON(http.StatusOK, gin.H{"success": true, "clients": out})
+		return
+	}
 	resp, err := client.GetClient(c.Request.Context(), &users.GetClientRequest{
 		ClientId: c.Param("clientId"),
 		UserId:   userIDFromCtx(c),
@@ -839,9 +875,22 @@ func UpdateClient(c *gin.Context, client users.UserServiceClient) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
 		return
 	}
+
+	clientID := c.Param("clientId")
+	userID := userIDFromCtx(c)
+
+	if c.GetHeader("X-Client-Mode") == "customer" {
+		linked := resolveMyClient(c, client)
+		if linked == nil {
+			return
+		}
+		clientID = linked.ClientId
+		userID = linked.UserId
+	}
+
 	resp, err := client.UpdateClient(c.Request.Context(), &users.UpdateClientRequest{
-		ClientId:   c.Param("clientId"),
-		UserId:     userIDFromCtx(c),
+		ClientId:   clientID,
+		UserId:     userID,
 		FirstName:  input.FirstName,
 		LastName:   input.LastName,
 		Email:      input.Email,
@@ -883,28 +932,6 @@ func ArchiveClient(c *gin.Context, client users.UserServiceClient) {
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
-// ─── Customer /clients/me routes ─────────────────────────────────────────────
-
-// GetMyClients returns all client records linked to the authenticated user (one per provider).
-func GetMyClient(c *gin.Context, client users.UserServiceClient) {
-	resp, err := client.GetClientsByLinkedUser(c.Request.Context(), &users.GetClientByLinkedUserRequest{
-		LinkedUserId: userIDFromCtx(c),
-	})
-	if err != nil {
-		usersErrors.unavailable(c)
-		return
-	}
-	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
-		return
-	}
-	out := make([]gin.H, len(resp.Clients))
-	for i, cl := range resp.Clients {
-		out[i] = marshalClient(cl)
-	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "clients": out})
-}
-
 // resolveMyClient finds the linked client for the current user, optionally
 // scoped to a specific client_id via query param (required when multiple providers).
 func resolveMyClient(c *gin.Context, client users.UserServiceClient) *users.Client {
@@ -940,68 +967,6 @@ func resolveMyClient(c *gin.Context, client users.UserServiceClient) *users.Clie
 	}
 	usersErrors.reply(c, UsersCodeNotFound)
 	return nil
-}
-
-func UpdateMyClient(c *gin.Context, client users.UserServiceClient) {
-	var input clientInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
-		return
-	}
-
-	linked := resolveMyClient(c, client)
-	if linked == nil {
-		return
-	}
-
-	resp, err := client.UpdateClient(c.Request.Context(), &users.UpdateClientRequest{
-		ClientId:   linked.ClientId,
-		UserId:     linked.UserId,
-		FirstName:  input.FirstName,
-		LastName:   input.LastName,
-		Email:      input.Email,
-		Phone:      input.Phone,
-		Company:    input.Company,
-		Siren:      input.Siren,
-		Vat:        input.Vat,
-		Siret:      input.Siret,
-		ClientType: clientTypeFromInput(input.ClientType),
-	})
-	if err != nil {
-		usersErrors.unavailable(c)
-		return
-	}
-	if !resp.Success {
-		if len(resp.ValidationErrors) > 0 {
-			usersErrors.replyWithValidation(c, resp.Code, usersValidationErrors(resp.ValidationErrors))
-		} else {
-			usersErrors.reply(c, resp.Code)
-		}
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"success": true})
-}
-
-func ListMyClientAddresses(c *gin.Context, client users.UserServiceClient) {
-	linked := resolveMyClient(c, client)
-	if linked == nil {
-		return
-	}
-
-	resp, err := client.ListAddresses(c.Request.Context(), &users.ListAddressesRequest{
-		OwnerType:  users.OwnerType_OWNER_TYPE_CLIENT,
-		OwnerId:    linked.ClientId,
-		AuthUserId: linked.UserId,
-	})
-	if err != nil {
-		usersErrors.unavailable(c)
-		return
-	}
-	if !resp.Success {
-		usersErrors.reply(c, resp.Code)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "addresses": marshalAddresses(resp.Addresses)})
 }
 
 func ListCountries(c *gin.Context, client users.UserServiceClient) {

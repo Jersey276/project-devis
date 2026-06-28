@@ -17,8 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { FilterSidebar, FilterSidebarSection } from "@/components/ui/filter-sidebar";
 import { SelectCombobox } from "@/components/ui/select-combobox";
-import { listQuotes, listMyQuotes, getQuote } from "@/lib/services/quotes";
-import { getMyClientProfiles } from "@/lib/services/clients";
+import { listQuotes, getQuote } from "@/lib/services/quotes";
 import { listClients } from "@/lib/services/clients";
 import { exportQuotePdf } from "@/lib/services/export";
 import {
@@ -79,7 +78,6 @@ function QuoteListTableInner() {
   const [items, setItems] = useState<QuoteListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [clients, setClients] = useState<BackendClient[]>([]);
-  const [myClientId, setMyClientId] = useState<string | null>(null);
   const [saveTemplateQuoteId, setSaveTemplateQuoteId] = useState<string | null>(null);
   const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false);
   const [scheduleQuoteId, setScheduleQuoteId] = useState<string | null>(null);
@@ -104,17 +102,6 @@ function QuoteListTableInner() {
     router.push(`${pathname}?${next.toString()}`);
   }
 
-  // Resolve customer's client_id once
-  useEffect(() => {
-    if (!isCustomer) return;
-    getMyClientProfiles().then(({ ok, body }) => {
-      if (ok && Array.isArray(body.clients) && body.clients.length > 0) {
-        const clients = body.clients as BackendClient[];
-        setMyClientId(clients[0].client_id);
-      }
-    });
-  }, [isCustomer]);
-
   // Load clients once for the combobox
   useEffect(() => {
     if (isCustomer) return;
@@ -127,24 +114,6 @@ function QuoteListTableInner() {
     const params = new URLSearchParams({ page: String(page), page_size: String(PAGE_SIZE) });
     params.set("sort_by", sortBy);
     params.set("sort_direction", sortDirection);
-
-    if (isCustomer) {
-      if (!myClientId) return;
-      params.set("client_id", myClientId);
-      const { ok, body } = await listMyQuotes(params.toString(), signal);
-      if (signal.aborted) return;
-      if (ok && Array.isArray(body.quotes)) {
-        const quotes = body.quotes as BackendQuote[];
-        setItems(quotes.map((q) => ({
-          id: q.quote_id,
-          projectName: q.name,
-          status: quoteListState(q),
-          totalTtc: q.total_ttc ?? 0,
-        })));
-        setTotal((body.total ?? 0) as number);
-      }
-      return;
-    }
 
     if (search) params.set("search", search);
     if (states.length > 0) params.set("states", states.join(","));
@@ -164,7 +133,7 @@ function QuoteListTableInner() {
       setTotal((body.total ?? 0) as number);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, isCustomer, myClientId]);
+  }, [searchParams, isCustomer]);
 
   useEffect(() => {
     const controller = new AbortController();
