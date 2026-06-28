@@ -19,16 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SubscriptionService_ListPlans_FullMethodName           = "/subscription.SubscriptionService/ListPlans"
-	SubscriptionService_GetPlan_FullMethodName             = "/subscription.SubscriptionService/GetPlan"
-	SubscriptionService_GetUserSubscription_FullMethodName = "/subscription.SubscriptionService/GetUserSubscription"
-	SubscriptionService_ListSubscriptions_FullMethodName   = "/subscription.SubscriptionService/ListSubscriptions"
-	SubscriptionService_AssignPlan_FullMethodName          = "/subscription.SubscriptionService/AssignPlan"
-	SubscriptionService_CreatePaymentIntent_FullMethodName = "/subscription.SubscriptionService/CreatePaymentIntent"
-	SubscriptionService_HandleStripeWebhook_FullMethodName = "/subscription.SubscriptionService/HandleStripeWebhook"
-	SubscriptionService_CancelSubscription_FullMethodName  = "/subscription.SubscriptionService/CancelSubscription"
-	SubscriptionService_GetAdminStats_FullMethodName       = "/subscription.SubscriptionService/GetAdminStats"
-	SubscriptionService_UpdatePlan_FullMethodName          = "/subscription.SubscriptionService/UpdatePlan"
+	SubscriptionService_ListPlans_FullMethodName              = "/subscription.SubscriptionService/ListPlans"
+	SubscriptionService_GetPlan_FullMethodName                = "/subscription.SubscriptionService/GetPlan"
+	SubscriptionService_GetUserSubscription_FullMethodName    = "/subscription.SubscriptionService/GetUserSubscription"
+	SubscriptionService_ListSubscriptions_FullMethodName      = "/subscription.SubscriptionService/ListSubscriptions"
+	SubscriptionService_AssignPlan_FullMethodName             = "/subscription.SubscriptionService/AssignPlan"
+	SubscriptionService_CreatePaymentIntent_FullMethodName    = "/subscription.SubscriptionService/CreatePaymentIntent"
+	SubscriptionService_HandleStripeWebhook_FullMethodName    = "/subscription.SubscriptionService/HandleStripeWebhook"
+	SubscriptionService_CancelSubscription_FullMethodName     = "/subscription.SubscriptionService/CancelSubscription"
+	SubscriptionService_ChangePlan_FullMethodName             = "/subscription.SubscriptionService/ChangePlan"
+	SubscriptionService_ReactivateSubscription_FullMethodName = "/subscription.SubscriptionService/ReactivateSubscription"
+	SubscriptionService_GetAdminStats_FullMethodName          = "/subscription.SubscriptionService/GetAdminStats"
+	SubscriptionService_UpdatePlan_FullMethodName             = "/subscription.SubscriptionService/UpdatePlan"
 )
 
 // SubscriptionServiceClient is the client API for SubscriptionService service.
@@ -43,6 +45,8 @@ type SubscriptionServiceClient interface {
 	CreatePaymentIntent(ctx context.Context, in *CreatePaymentIntentRequest, opts ...grpc.CallOption) (*CreatePaymentIntentResponse, error)
 	HandleStripeWebhook(ctx context.Context, in *HandleStripeWebhookRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	CancelSubscription(ctx context.Context, in *CancelSubscriptionRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	ChangePlan(ctx context.Context, in *ChangePlanRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	ReactivateSubscription(ctx context.Context, in *ReactivateSubscriptionRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	GetAdminStats(ctx context.Context, in *GetAdminStatsRequest, opts ...grpc.CallOption) (*AdminStatsResponse, error)
 	UpdatePlan(ctx context.Context, in *UpdatePlanRequest, opts ...grpc.CallOption) (*GetPlanResponse, error)
 }
@@ -135,6 +139,26 @@ func (c *subscriptionServiceClient) CancelSubscription(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *subscriptionServiceClient) ChangePlan(ctx context.Context, in *ChangePlanRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, SubscriptionService_ChangePlan_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *subscriptionServiceClient) ReactivateSubscription(ctx context.Context, in *ReactivateSubscriptionRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, SubscriptionService_ReactivateSubscription_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *subscriptionServiceClient) GetAdminStats(ctx context.Context, in *GetAdminStatsRequest, opts ...grpc.CallOption) (*AdminStatsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AdminStatsResponse)
@@ -167,6 +191,8 @@ type SubscriptionServiceServer interface {
 	CreatePaymentIntent(context.Context, *CreatePaymentIntentRequest) (*CreatePaymentIntentResponse, error)
 	HandleStripeWebhook(context.Context, *HandleStripeWebhookRequest) (*GenericResponse, error)
 	CancelSubscription(context.Context, *CancelSubscriptionRequest) (*GenericResponse, error)
+	ChangePlan(context.Context, *ChangePlanRequest) (*GenericResponse, error)
+	ReactivateSubscription(context.Context, *ReactivateSubscriptionRequest) (*GenericResponse, error)
 	GetAdminStats(context.Context, *GetAdminStatsRequest) (*AdminStatsResponse, error)
 	UpdatePlan(context.Context, *UpdatePlanRequest) (*GetPlanResponse, error)
 	mustEmbedUnimplementedSubscriptionServiceServer()
@@ -202,6 +228,12 @@ func (UnimplementedSubscriptionServiceServer) HandleStripeWebhook(context.Contex
 }
 func (UnimplementedSubscriptionServiceServer) CancelSubscription(context.Context, *CancelSubscriptionRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CancelSubscription not implemented")
+}
+func (UnimplementedSubscriptionServiceServer) ChangePlan(context.Context, *ChangePlanRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ChangePlan not implemented")
+}
+func (UnimplementedSubscriptionServiceServer) ReactivateSubscription(context.Context, *ReactivateSubscriptionRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReactivateSubscription not implemented")
 }
 func (UnimplementedSubscriptionServiceServer) GetAdminStats(context.Context, *GetAdminStatsRequest) (*AdminStatsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetAdminStats not implemented")
@@ -374,6 +406,42 @@ func _SubscriptionService_CancelSubscription_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SubscriptionService_ChangePlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangePlanRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubscriptionServiceServer).ChangePlan(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SubscriptionService_ChangePlan_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubscriptionServiceServer).ChangePlan(ctx, req.(*ChangePlanRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SubscriptionService_ReactivateSubscription_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReactivateSubscriptionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubscriptionServiceServer).ReactivateSubscription(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SubscriptionService_ReactivateSubscription_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubscriptionServiceServer).ReactivateSubscription(ctx, req.(*ReactivateSubscriptionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SubscriptionService_GetAdminStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetAdminStatsRequest)
 	if err := dec(in); err != nil {
@@ -448,6 +516,14 @@ var SubscriptionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CancelSubscription",
 			Handler:    _SubscriptionService_CancelSubscription_Handler,
+		},
+		{
+			MethodName: "ChangePlan",
+			Handler:    _SubscriptionService_ChangePlan_Handler,
+		},
+		{
+			MethodName: "ReactivateSubscription",
+			Handler:    _SubscriptionService_ReactivateSubscription_Handler,
 		},
 		{
 			MethodName: "GetAdminStats",

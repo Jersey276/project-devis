@@ -9,6 +9,8 @@ import {
   getMySubscription,
   listPlans,
   cancelSubscription,
+  changePlan,
+  reactivateSubscription,
 } from "@/lib/services/subscriptions";
 import PaymentDialog from "./payment-dialog";
 import type { BackendSubscription, BackendPlan } from "@/types/backend";
@@ -80,6 +82,8 @@ export default function SubscriptionTab({
   const [selectedPlan, setSelectedPlan] = useState<BackendPlan | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [changingPlanId, setChangingPlanId] = useState<number | null>(null);
+  const [reactivating, setReactivating] = useState(false);
 
   const reload = () => setReloadKey((k) => k + 1);
 
@@ -116,12 +120,40 @@ export default function SubscriptionTab({
     }
   }
 
+  async function handleChangePlan(planId: number) {
+    setChangingPlanId(planId);
+    const { ok, body } = await changePlan(planId);
+    setChangingPlanId(null);
+    if (ok && body.success) {
+      toast.success(t("tab.changePlanSuccess"));
+      reload();
+    } else {
+      toast.error(body.message ?? t("tab.changePlanError"));
+    }
+  }
+
+  async function handleReactivate() {
+    setReactivating(true);
+    const { ok, body } = await reactivateSubscription();
+    setReactivating(false);
+    if (ok && body.success) {
+      toast.success(t("tab.reactivateSuccess"));
+      reload();
+    } else {
+      toast.error(body.message ?? t("tab.reactivateError"));
+    }
+  }
+
   function openPaymentDialog(plan: BackendPlan) {
     setSelectedPlan(plan);
     setDialogOpen(true);
   }
 
   const currentTier = subscription?.tier ?? "free";
+
+  const pendingPlan = subscription?.pending_plan_id
+    ? plans.find((p) => p.plan_id === subscription.pending_plan_id)
+    : null;
 
   const currentPlanInfo = () => {
     if (!subscription || currentTier === "free") {
@@ -131,19 +163,41 @@ export default function SubscriptionTab({
     }
     if (subscription.cancel_at_period_end) {
       return (
-        <p className="text-sm text-amber-600">
-          {t("tab.cancelPending", {
-            date: formatDate(subscription.current_period_end),
-          })}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="text-sm text-amber-600">
+            {t("tab.cancelPending", {
+              date: formatDate(subscription.current_period_end),
+            })}
+          </p>
+          {!readOnly && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleReactivate}
+              disabled={reactivating}
+            >
+              {reactivating ? tCommon("actions.saving") : t("tab.reactivateCta")}
+            </Button>
+          )}
+        </div>
       );
     }
     return (
-      <p className="text-sm text-muted-foreground">
-        {t("tab.renewsOn", {
-          date: formatDate(subscription.current_period_end),
-        })}
-      </p>
+      <div className="flex flex-col gap-1">
+        <p className="text-sm text-muted-foreground">
+          {t("tab.renewsOn", {
+            date: formatDate(subscription.current_period_end),
+          })}
+        </p>
+        {pendingPlan && (
+          <p className="text-sm text-primary">
+            {t("tab.pendingPlanInfo", {
+              name: pendingPlan.name,
+              date: formatDate(subscription.current_period_end),
+            })}
+          </p>
+        )}
+      </div>
     );
   };
 
@@ -246,9 +300,12 @@ export default function SubscriptionTab({
               <td className="py-4 pl-4 pr-2" />
               {plans.map((plan) => {
                 const isCurrent = plan.tier === currentTier;
-                const isUpgrade =
-                  (currentTier === "free" && plan.tier !== "free") ||
-                  (currentTier === "pro" && plan.tier === "enterprise");
+                const isPending = plan.plan_id === subscription?.pending_plan_id;
+                const isAlreadySubscribed =
+                  currentTier !== "free" && subscription?.status === "active";
+                const isChangeable = !isCurrent && !readOnly && !subscription?.cancel_at_period_end;
+                const isUpgradeFromFree =
+                  currentTier === "free" && plan.tier !== "free";
                 return (
                   <td
                     key={plan.plan_id}
@@ -258,7 +315,23 @@ export default function SubscriptionTab({
                       <Badge variant="outline" className="text-xs">
                         {t("tab.currentPlanBadge")}
                       </Badge>
-                    ) : isUpgrade && !readOnly ? (
+                    ) : isPending ? (
+                      <Badge variant="secondary" className="text-xs">
+                        {t("tab.pendingPlanBadge")}
+                      </Badge>
+                    ) : isChangeable && isAlreadySubscribed ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => handleChangePlan(plan.plan_id)}
+                        disabled={changingPlanId === plan.plan_id}
+                      >
+                        {changingPlanId === plan.plan_id
+                          ? tCommon("actions.saving")
+                          : t("tab.changePlanCta")}
+                      </Button>
+                    ) : isUpgradeFromFree && !readOnly ? (
                       <Button
                         size="sm"
                         className="w-full"

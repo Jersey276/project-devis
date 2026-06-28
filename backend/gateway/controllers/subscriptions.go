@@ -62,6 +62,8 @@ func SubscriptionsRoutes(r *gin.RouterGroup) {
 	r.GET("/me", func(c *gin.Context) { GetMySubscription(c, client) })
 	r.POST("/payment-intent", func(c *gin.Context) { CreatePaymentIntent(c, client) })
 	r.POST("/cancel", func(c *gin.Context) { CancelSubscription(c, client) })
+	r.POST("/change-plan", func(c *gin.Context) { ChangePlan(c, client) })
+	r.POST("/reactivate", func(c *gin.Context) { ReactivateSubscription(c, client) })
 	r.GET("/admin", middleware.RequireAdminResource(authz.ResourceAdminSubscriptions), func(c *gin.Context) { ListSubscriptionsAdmin(c, client) })
 	r.GET("/admin/stats", middleware.RequireAdminResource(authz.ResourceAdminSubscriptions), func(c *gin.Context) { GetAdminStats(c, client) })
 	r.POST("/admin/:userId/plan", middleware.RequireAdminResource(authz.ResourceAdminSubscriptions), func(c *gin.Context) { AssignPlan(c, client) })
@@ -192,6 +194,7 @@ func GetMySubscription(c *gin.Context, client sub.SubscriptionServiceClient) {
 			"current_period_end":     s.CurrentPeriodEnd,
 			"cancel_at_period_end":   s.CancelAtPeriodEnd,
 			"stripe_subscription_id": s.StripeSubscriptionId,
+			"pending_plan_id":        s.PendingPlanId,
 			"updated_at":             s.UpdatedAt,
 		},
 	})
@@ -322,6 +325,44 @@ func HandleStripeWebhook(c *gin.Context, client sub.SubscriptionServiceClient) {
 
 func CancelSubscription(c *gin.Context, client sub.SubscriptionServiceClient) {
 	resp, err := client.CancelSubscription(c.Request.Context(), &sub.CancelSubscriptionRequest{
+		UserId: userIDFromCtx(c),
+	})
+	if err != nil {
+		subscriptionErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		subscriptionErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func ChangePlan(c *gin.Context, client sub.SubscriptionServiceClient) {
+	var input struct {
+		PlanID int32 `json:"plan_id" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+		return
+	}
+	resp, err := client.ChangePlan(c.Request.Context(), &sub.ChangePlanRequest{
+		UserId: userIDFromCtx(c),
+		PlanId: input.PlanID,
+	})
+	if err != nil {
+		subscriptionErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		subscriptionErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func ReactivateSubscription(c *gin.Context, client sub.SubscriptionServiceClient) {
+	resp, err := client.ReactivateSubscription(c.Request.Context(), &sub.ReactivateSubscriptionRequest{
 		UserId: userIDFromCtx(c),
 	})
 	if err != nil {

@@ -74,14 +74,14 @@ func (x *GenericResponse) GetCode() int32 {
 }
 
 type Plan struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PlanId        int32                  `protobuf:"varint,1,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Tier          string                 `protobuf:"bytes,3,opt,name=tier,proto3" json:"tier,omitempty"`
-	PriceCents    int32                  `protobuf:"varint,4,opt,name=price_cents,json=priceCents,proto3" json:"price_cents,omitempty"`
-	BillingCycle  string                 `protobuf:"bytes,5,opt,name=billing_cycle,json=billingCycle,proto3" json:"billing_cycle,omitempty"`
-	Features      string                 `protobuf:"bytes,6,opt,name=features,proto3" json:"features,omitempty"`
-	Active        bool                   `protobuf:"varint,7,opt,name=active,proto3" json:"active,omitempty"`
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	PlanId          int32                  `protobuf:"varint,1,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	Name            string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Tier            string                 `protobuf:"bytes,3,opt,name=tier,proto3" json:"tier,omitempty"`
+	PriceCents      int32                  `protobuf:"varint,4,opt,name=price_cents,json=priceCents,proto3" json:"price_cents,omitempty"`
+	BillingCycle    string                 `protobuf:"bytes,5,opt,name=billing_cycle,json=billingCycle,proto3" json:"billing_cycle,omitempty"`
+	Features        string                 `protobuf:"bytes,6,opt,name=features,proto3" json:"features,omitempty"`
+	Active          bool                   `protobuf:"varint,7,opt,name=active,proto3" json:"active,omitempty"`
 	StripePriceId   string                 `protobuf:"bytes,8,opt,name=stripe_price_id,json=stripePriceId,proto3" json:"stripe_price_id,omitempty"`
 	StripeProductId string                 `protobuf:"bytes,9,opt,name=stripe_product_id,json=stripeProductId,proto3" json:"stripe_product_id,omitempty"`
 	unknownFields   protoimpl.UnknownFields
@@ -194,6 +194,7 @@ type Subscription struct {
 	UpdatedAt            string                 `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	CancelAtPeriodEnd    bool                   `protobuf:"varint,10,opt,name=cancel_at_period_end,json=cancelAtPeriodEnd,proto3" json:"cancel_at_period_end,omitempty"`
 	StripeSubscriptionId string                 `protobuf:"bytes,11,opt,name=stripe_subscription_id,json=stripeSubscriptionId,proto3" json:"stripe_subscription_id,omitempty"`
+	PendingPlanId        int32                  `protobuf:"varint,12,opt,name=pending_plan_id,json=pendingPlanId,proto3" json:"pending_plan_id,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -303,6 +304,13 @@ func (x *Subscription) GetStripeSubscriptionId() string {
 		return x.StripeSubscriptionId
 	}
 	return ""
+}
+
+func (x *Subscription) GetPendingPlanId() int32 {
+	if x != nil {
+		return x.PendingPlanId
+	}
+	return 0
 }
 
 type ListPlansRequest struct {
@@ -1073,6 +1081,102 @@ func (x *CancelSubscriptionRequest) GetUserId() string {
 	return ""
 }
 
+type ChangePlanRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	PlanId        int32                  `protobuf:"varint,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangePlanRequest) Reset() {
+	*x = ChangePlanRequest{}
+	mi := &file_subscription_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangePlanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangePlanRequest) ProtoMessage() {}
+
+func (x *ChangePlanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_subscription_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangePlanRequest.ProtoReflect.Descriptor instead.
+func (*ChangePlanRequest) Descriptor() ([]byte, []int) {
+	return file_subscription_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ChangePlanRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *ChangePlanRequest) GetPlanId() int32 {
+	if x != nil {
+		return x.PlanId
+	}
+	return 0
+}
+
+type ReactivateSubscriptionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReactivateSubscriptionRequest) Reset() {
+	*x = ReactivateSubscriptionRequest{}
+	mi := &file_subscription_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReactivateSubscriptionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReactivateSubscriptionRequest) ProtoMessage() {}
+
+func (x *ReactivateSubscriptionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_subscription_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReactivateSubscriptionRequest.ProtoReflect.Descriptor instead.
+func (*ReactivateSubscriptionRequest) Descriptor() ([]byte, []int) {
+	return file_subscription_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ReactivateSubscriptionRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
 type GetAdminStatsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1081,7 +1185,7 @@ type GetAdminStatsRequest struct {
 
 func (x *GetAdminStatsRequest) Reset() {
 	*x = GetAdminStatsRequest{}
-	mi := &file_subscription_proto_msgTypes[17]
+	mi := &file_subscription_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1093,7 +1197,7 @@ func (x *GetAdminStatsRequest) String() string {
 func (*GetAdminStatsRequest) ProtoMessage() {}
 
 func (x *GetAdminStatsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_subscription_proto_msgTypes[17]
+	mi := &file_subscription_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1106,7 +1210,7 @@ func (x *GetAdminStatsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAdminStatsRequest.ProtoReflect.Descriptor instead.
 func (*GetAdminStatsRequest) Descriptor() ([]byte, []int) {
-	return file_subscription_proto_rawDescGZIP(), []int{17}
+	return file_subscription_proto_rawDescGZIP(), []int{19}
 }
 
 type UpdatePlanRequest struct {
@@ -1123,7 +1227,7 @@ type UpdatePlanRequest struct {
 
 func (x *UpdatePlanRequest) Reset() {
 	*x = UpdatePlanRequest{}
-	mi := &file_subscription_proto_msgTypes[18]
+	mi := &file_subscription_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1135,7 +1239,7 @@ func (x *UpdatePlanRequest) String() string {
 func (*UpdatePlanRequest) ProtoMessage() {}
 
 func (x *UpdatePlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_subscription_proto_msgTypes[18]
+	mi := &file_subscription_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1148,7 +1252,7 @@ func (x *UpdatePlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdatePlanRequest.ProtoReflect.Descriptor instead.
 func (*UpdatePlanRequest) Descriptor() ([]byte, []int) {
-	return file_subscription_proto_rawDescGZIP(), []int{18}
+	return file_subscription_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *UpdatePlanRequest) GetPlanId() int32 {
@@ -1203,7 +1307,7 @@ type PlanDistributionEntry struct {
 
 func (x *PlanDistributionEntry) Reset() {
 	*x = PlanDistributionEntry{}
-	mi := &file_subscription_proto_msgTypes[19]
+	mi := &file_subscription_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1215,7 +1319,7 @@ func (x *PlanDistributionEntry) String() string {
 func (*PlanDistributionEntry) ProtoMessage() {}
 
 func (x *PlanDistributionEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_subscription_proto_msgTypes[19]
+	mi := &file_subscription_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1228,7 +1332,7 @@ func (x *PlanDistributionEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanDistributionEntry.ProtoReflect.Descriptor instead.
 func (*PlanDistributionEntry) Descriptor() ([]byte, []int) {
-	return file_subscription_proto_rawDescGZIP(), []int{19}
+	return file_subscription_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *PlanDistributionEntry) GetTier() string {
@@ -1255,7 +1359,7 @@ type MonthlyRevenueEntry struct {
 
 func (x *MonthlyRevenueEntry) Reset() {
 	*x = MonthlyRevenueEntry{}
-	mi := &file_subscription_proto_msgTypes[20]
+	mi := &file_subscription_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1267,7 +1371,7 @@ func (x *MonthlyRevenueEntry) String() string {
 func (*MonthlyRevenueEntry) ProtoMessage() {}
 
 func (x *MonthlyRevenueEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_subscription_proto_msgTypes[20]
+	mi := &file_subscription_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1280,7 +1384,7 @@ func (x *MonthlyRevenueEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MonthlyRevenueEntry.ProtoReflect.Descriptor instead.
 func (*MonthlyRevenueEntry) Descriptor() ([]byte, []int) {
-	return file_subscription_proto_rawDescGZIP(), []int{20}
+	return file_subscription_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *MonthlyRevenueEntry) GetMonth() string {
@@ -1311,7 +1415,7 @@ type AdminStatsResponse struct {
 
 func (x *AdminStatsResponse) Reset() {
 	*x = AdminStatsResponse{}
-	mi := &file_subscription_proto_msgTypes[21]
+	mi := &file_subscription_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1323,7 +1427,7 @@ func (x *AdminStatsResponse) String() string {
 func (*AdminStatsResponse) ProtoMessage() {}
 
 func (x *AdminStatsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_subscription_proto_msgTypes[21]
+	mi := &file_subscription_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1336,7 +1440,7 @@ func (x *AdminStatsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AdminStatsResponse.ProtoReflect.Descriptor instead.
 func (*AdminStatsResponse) Descriptor() ([]byte, []int) {
-	return file_subscription_proto_rawDescGZIP(), []int{21}
+	return file_subscription_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *AdminStatsResponse) GetSuccess() bool {
@@ -1388,7 +1492,7 @@ const file_subscription_proto_rawDesc = "" +
 	"\x12subscription.proto\x12\fsubscription\"?\n" +
 	"\x0fGenericResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\x05R\x04code\"\xe9\x01\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\"\x95\x02\n" +
 	"\x04Plan\x12\x17\n" +
 	"\aplan_id\x18\x01 \x01(\x05R\x06planId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
@@ -1398,7 +1502,8 @@ const file_subscription_proto_rawDesc = "" +
 	"\rbilling_cycle\x18\x05 \x01(\tR\fbillingCycle\x12\x1a\n" +
 	"\bfeatures\x18\x06 \x01(\tR\bfeatures\x12\x16\n" +
 	"\x06active\x18\a \x01(\bR\x06active\x12&\n" +
-	"\x0fstripe_price_id\x18\b \x01(\tR\rstripePriceId\"\x9a\x03\n" +
+	"\x0fstripe_price_id\x18\b \x01(\tR\rstripePriceId\x12*\n" +
+	"\x11stripe_product_id\x18\t \x01(\tR\x0fstripeProductId\"\xc2\x03\n" +
 	"\fSubscription\x12'\n" +
 	"\x0fsubscription_id\x18\x01 \x01(\tR\x0esubscriptionId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x17\n" +
@@ -1413,7 +1518,8 @@ const file_subscription_proto_rawDesc = "" +
 	"updated_at\x18\t \x01(\tR\tupdatedAt\x12/\n" +
 	"\x14cancel_at_period_end\x18\n" +
 	" \x01(\bR\x11cancelAtPeriodEnd\x124\n" +
-	"\x16stripe_subscription_id\x18\v \x01(\tR\x14stripeSubscriptionId\"=\n" +
+	"\x16stripe_subscription_id\x18\v \x01(\tR\x14stripeSubscriptionId\x12&\n" +
+	"\x0fpending_plan_id\x18\f \x01(\x05R\rpendingPlanId\"=\n" +
 	"\x10ListPlansRequest\x12)\n" +
 	"\x10include_inactive\x18\x01 \x01(\bR\x0fincludeInactive\"k\n" +
 	"\x11ListPlansResponse\x12\x18\n" +
@@ -1460,6 +1566,11 @@ const file_subscription_proto_rawDesc = "" +
 	"\apayload\x18\x01 \x01(\fR\apayload\x12)\n" +
 	"\x10stripe_signature\x18\x02 \x01(\tR\x0fstripeSignature\"4\n" +
 	"\x19CancelSubscriptionRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"E\n" +
+	"\x11ChangePlanRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x17\n" +
+	"\aplan_id\x18\x02 \x01(\x05R\x06planId\"8\n" +
+	"\x1dReactivateSubscriptionRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\"\x16\n" +
 	"\x14GetAdminStatsRequest\"\xca\x01\n" +
 	"\x11UpdatePlanRequest\x12\x17\n" +
@@ -1482,7 +1593,7 @@ const file_subscription_proto_rawDesc = "" +
 	"\x1atotal_active_subscriptions\x18\x03 \x01(\x05R\x18totalActiveSubscriptions\x12.\n" +
 	"\x13total_revenue_cents\x18\x04 \x01(\x03R\x11totalRevenueCents\x12P\n" +
 	"\x11plan_distribution\x18\x05 \x03(\v2#.subscription.PlanDistributionEntryR\x10planDistribution\x12J\n" +
-	"\x0fmonthly_revenue\x18\x06 \x03(\v2!.subscription.MonthlyRevenueEntryR\x0emonthlyRevenue2\x9d\a\n" +
+	"\x0fmonthly_revenue\x18\x06 \x03(\v2!.subscription.MonthlyRevenueEntryR\x0emonthlyRevenue2\xd1\b\n" +
 	"\x13SubscriptionService\x12L\n" +
 	"\tListPlans\x12\x1e.subscription.ListPlansRequest\x1a\x1f.subscription.ListPlansResponse\x12F\n" +
 	"\aGetPlan\x12\x1c.subscription.GetPlanRequest\x1a\x1d.subscription.GetPlanResponse\x12j\n" +
@@ -1492,10 +1603,13 @@ const file_subscription_proto_rawDesc = "" +
 	"AssignPlan\x12\x1f.subscription.AssignPlanRequest\x1a .subscription.AssignPlanResponse\x12j\n" +
 	"\x13CreatePaymentIntent\x12(.subscription.CreatePaymentIntentRequest\x1a).subscription.CreatePaymentIntentResponse\x12^\n" +
 	"\x13HandleStripeWebhook\x12(.subscription.HandleStripeWebhookRequest\x1a\x1d.subscription.GenericResponse\x12\\\n" +
-	"\x12CancelSubscription\x12'.subscription.CancelSubscriptionRequest\x1a\x1d.subscription.GenericResponse\x12U\n" +
+	"\x12CancelSubscription\x12'.subscription.CancelSubscriptionRequest\x1a\x1d.subscription.GenericResponse\x12L\n" +
+	"\n" +
+	"ChangePlan\x12\x1f.subscription.ChangePlanRequest\x1a\x1d.subscription.GenericResponse\x12d\n" +
+	"\x16ReactivateSubscription\x12+.subscription.ReactivateSubscriptionRequest\x1a\x1d.subscription.GenericResponse\x12U\n" +
 	"\rGetAdminStats\x12\".subscription.GetAdminStatsRequest\x1a .subscription.AdminStatsResponse\x12L\n" +
 	"\n" +
-	"UpdatePlan\x12\x1f.subscription.UpdatePlanRequest\x1a\x1d.subscription.GetPlanResponseB\x16Z\x14gateway/subscriptionb\x06proto3"
+	"UpdatePlan\x12\x1f.subscription.UpdatePlanRequest\x1a\x1d.subscription.GetPlanResponseB*Z(project-devis-subscription/services/grpcb\x06proto3"
 
 var (
 	file_subscription_proto_rawDescOnce sync.Once
@@ -1509,38 +1623,40 @@ func file_subscription_proto_rawDescGZIP() []byte {
 	return file_subscription_proto_rawDescData
 }
 
-var file_subscription_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_subscription_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_subscription_proto_goTypes = []any{
-	(*GenericResponse)(nil),             // 0: subscription.GenericResponse
-	(*Plan)(nil),                        // 1: subscription.Plan
-	(*Subscription)(nil),                // 2: subscription.Subscription
-	(*ListPlansRequest)(nil),            // 3: subscription.ListPlansRequest
-	(*ListPlansResponse)(nil),           // 4: subscription.ListPlansResponse
-	(*GetPlanRequest)(nil),              // 5: subscription.GetPlanRequest
-	(*GetPlanResponse)(nil),             // 6: subscription.GetPlanResponse
-	(*GetUserSubscriptionRequest)(nil),  // 7: subscription.GetUserSubscriptionRequest
-	(*GetUserSubscriptionResponse)(nil), // 8: subscription.GetUserSubscriptionResponse
-	(*ListSubscriptionsRequest)(nil),    // 9: subscription.ListSubscriptionsRequest
-	(*ListSubscriptionsResponse)(nil),   // 10: subscription.ListSubscriptionsResponse
-	(*AssignPlanRequest)(nil),           // 11: subscription.AssignPlanRequest
-	(*AssignPlanResponse)(nil),          // 12: subscription.AssignPlanResponse
-	(*CreatePaymentIntentRequest)(nil),  // 13: subscription.CreatePaymentIntentRequest
-	(*CreatePaymentIntentResponse)(nil), // 14: subscription.CreatePaymentIntentResponse
-	(*HandleStripeWebhookRequest)(nil),  // 15: subscription.HandleStripeWebhookRequest
-	(*CancelSubscriptionRequest)(nil),   // 16: subscription.CancelSubscriptionRequest
-	(*GetAdminStatsRequest)(nil),        // 17: subscription.GetAdminStatsRequest
-	(*UpdatePlanRequest)(nil),           // 18: subscription.UpdatePlanRequest
-	(*PlanDistributionEntry)(nil),       // 19: subscription.PlanDistributionEntry
-	(*MonthlyRevenueEntry)(nil),         // 20: subscription.MonthlyRevenueEntry
-	(*AdminStatsResponse)(nil),          // 21: subscription.AdminStatsResponse
+	(*GenericResponse)(nil),               // 0: subscription.GenericResponse
+	(*Plan)(nil),                          // 1: subscription.Plan
+	(*Subscription)(nil),                  // 2: subscription.Subscription
+	(*ListPlansRequest)(nil),              // 3: subscription.ListPlansRequest
+	(*ListPlansResponse)(nil),             // 4: subscription.ListPlansResponse
+	(*GetPlanRequest)(nil),                // 5: subscription.GetPlanRequest
+	(*GetPlanResponse)(nil),               // 6: subscription.GetPlanResponse
+	(*GetUserSubscriptionRequest)(nil),    // 7: subscription.GetUserSubscriptionRequest
+	(*GetUserSubscriptionResponse)(nil),   // 8: subscription.GetUserSubscriptionResponse
+	(*ListSubscriptionsRequest)(nil),      // 9: subscription.ListSubscriptionsRequest
+	(*ListSubscriptionsResponse)(nil),     // 10: subscription.ListSubscriptionsResponse
+	(*AssignPlanRequest)(nil),             // 11: subscription.AssignPlanRequest
+	(*AssignPlanResponse)(nil),            // 12: subscription.AssignPlanResponse
+	(*CreatePaymentIntentRequest)(nil),    // 13: subscription.CreatePaymentIntentRequest
+	(*CreatePaymentIntentResponse)(nil),   // 14: subscription.CreatePaymentIntentResponse
+	(*HandleStripeWebhookRequest)(nil),    // 15: subscription.HandleStripeWebhookRequest
+	(*CancelSubscriptionRequest)(nil),     // 16: subscription.CancelSubscriptionRequest
+	(*ChangePlanRequest)(nil),             // 17: subscription.ChangePlanRequest
+	(*ReactivateSubscriptionRequest)(nil), // 18: subscription.ReactivateSubscriptionRequest
+	(*GetAdminStatsRequest)(nil),          // 19: subscription.GetAdminStatsRequest
+	(*UpdatePlanRequest)(nil),             // 20: subscription.UpdatePlanRequest
+	(*PlanDistributionEntry)(nil),         // 21: subscription.PlanDistributionEntry
+	(*MonthlyRevenueEntry)(nil),           // 22: subscription.MonthlyRevenueEntry
+	(*AdminStatsResponse)(nil),            // 23: subscription.AdminStatsResponse
 }
 var file_subscription_proto_depIdxs = []int32{
 	1,  // 0: subscription.ListPlansResponse.plans:type_name -> subscription.Plan
 	1,  // 1: subscription.GetPlanResponse.plan:type_name -> subscription.Plan
 	2,  // 2: subscription.GetUserSubscriptionResponse.subscription:type_name -> subscription.Subscription
 	2,  // 3: subscription.ListSubscriptionsResponse.subscriptions:type_name -> subscription.Subscription
-	19, // 4: subscription.AdminStatsResponse.plan_distribution:type_name -> subscription.PlanDistributionEntry
-	20, // 5: subscription.AdminStatsResponse.monthly_revenue:type_name -> subscription.MonthlyRevenueEntry
+	21, // 4: subscription.AdminStatsResponse.plan_distribution:type_name -> subscription.PlanDistributionEntry
+	22, // 5: subscription.AdminStatsResponse.monthly_revenue:type_name -> subscription.MonthlyRevenueEntry
 	3,  // 6: subscription.SubscriptionService.ListPlans:input_type -> subscription.ListPlansRequest
 	5,  // 7: subscription.SubscriptionService.GetPlan:input_type -> subscription.GetPlanRequest
 	7,  // 8: subscription.SubscriptionService.GetUserSubscription:input_type -> subscription.GetUserSubscriptionRequest
@@ -1549,20 +1665,24 @@ var file_subscription_proto_depIdxs = []int32{
 	13, // 11: subscription.SubscriptionService.CreatePaymentIntent:input_type -> subscription.CreatePaymentIntentRequest
 	15, // 12: subscription.SubscriptionService.HandleStripeWebhook:input_type -> subscription.HandleStripeWebhookRequest
 	16, // 13: subscription.SubscriptionService.CancelSubscription:input_type -> subscription.CancelSubscriptionRequest
-	17, // 14: subscription.SubscriptionService.GetAdminStats:input_type -> subscription.GetAdminStatsRequest
-	18, // 15: subscription.SubscriptionService.UpdatePlan:input_type -> subscription.UpdatePlanRequest
-	4,  // 16: subscription.SubscriptionService.ListPlans:output_type -> subscription.ListPlansResponse
-	6,  // 17: subscription.SubscriptionService.GetPlan:output_type -> subscription.GetPlanResponse
-	8,  // 18: subscription.SubscriptionService.GetUserSubscription:output_type -> subscription.GetUserSubscriptionResponse
-	10, // 19: subscription.SubscriptionService.ListSubscriptions:output_type -> subscription.ListSubscriptionsResponse
-	12, // 20: subscription.SubscriptionService.AssignPlan:output_type -> subscription.AssignPlanResponse
-	14, // 21: subscription.SubscriptionService.CreatePaymentIntent:output_type -> subscription.CreatePaymentIntentResponse
-	0,  // 22: subscription.SubscriptionService.HandleStripeWebhook:output_type -> subscription.GenericResponse
-	0,  // 23: subscription.SubscriptionService.CancelSubscription:output_type -> subscription.GenericResponse
-	21, // 24: subscription.SubscriptionService.GetAdminStats:output_type -> subscription.AdminStatsResponse
-	6,  // 25: subscription.SubscriptionService.UpdatePlan:output_type -> subscription.GetPlanResponse
-	16, // [16:26] is the sub-list for method output_type
-	6,  // [6:16] is the sub-list for method input_type
+	17, // 14: subscription.SubscriptionService.ChangePlan:input_type -> subscription.ChangePlanRequest
+	18, // 15: subscription.SubscriptionService.ReactivateSubscription:input_type -> subscription.ReactivateSubscriptionRequest
+	19, // 16: subscription.SubscriptionService.GetAdminStats:input_type -> subscription.GetAdminStatsRequest
+	20, // 17: subscription.SubscriptionService.UpdatePlan:input_type -> subscription.UpdatePlanRequest
+	4,  // 18: subscription.SubscriptionService.ListPlans:output_type -> subscription.ListPlansResponse
+	6,  // 19: subscription.SubscriptionService.GetPlan:output_type -> subscription.GetPlanResponse
+	8,  // 20: subscription.SubscriptionService.GetUserSubscription:output_type -> subscription.GetUserSubscriptionResponse
+	10, // 21: subscription.SubscriptionService.ListSubscriptions:output_type -> subscription.ListSubscriptionsResponse
+	12, // 22: subscription.SubscriptionService.AssignPlan:output_type -> subscription.AssignPlanResponse
+	14, // 23: subscription.SubscriptionService.CreatePaymentIntent:output_type -> subscription.CreatePaymentIntentResponse
+	0,  // 24: subscription.SubscriptionService.HandleStripeWebhook:output_type -> subscription.GenericResponse
+	0,  // 25: subscription.SubscriptionService.CancelSubscription:output_type -> subscription.GenericResponse
+	0,  // 26: subscription.SubscriptionService.ChangePlan:output_type -> subscription.GenericResponse
+	0,  // 27: subscription.SubscriptionService.ReactivateSubscription:output_type -> subscription.GenericResponse
+	23, // 28: subscription.SubscriptionService.GetAdminStats:output_type -> subscription.AdminStatsResponse
+	6,  // 29: subscription.SubscriptionService.UpdatePlan:output_type -> subscription.GetPlanResponse
+	18, // [18:30] is the sub-list for method output_type
+	6,  // [6:18] is the sub-list for method input_type
 	6,  // [6:6] is the sub-list for extension type_name
 	6,  // [6:6] is the sub-list for extension extendee
 	0,  // [0:6] is the sub-list for field type_name
@@ -1579,7 +1699,7 @@ func file_subscription_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_subscription_proto_rawDesc), len(file_subscription_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   22,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

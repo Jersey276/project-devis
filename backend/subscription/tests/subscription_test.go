@@ -272,3 +272,75 @@ func TestUpdatePlan_InvalidInput_BadJSON(t *testing.T) {
 		t.Fatalf("expected CodeInvalidInput (%d), got %d", actions.CodeInvalidInput, resp.Code)
 	}
 }
+
+// ─── ChangePlan ───────────────────────────────────────────────────────────────
+
+func TestChangePlan_InvalidInput_MissingUserId(t *testing.T) {
+	srv, _ := setupServer(t)
+
+	resp, err := srv.ChangePlan(context.Background(), &subGrpc.ChangePlanRequest{UserId: "", PlanId: 3})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for empty user_id")
+	}
+	if resp.Code != actions.CodeInvalidInput {
+		t.Fatalf("expected CodeInvalidInput (%d), got %d", actions.CodeInvalidInput, resp.Code)
+	}
+}
+
+func TestChangePlan_InvalidInput_MissingPlanId(t *testing.T) {
+	srv, _ := setupServer(t)
+
+	resp, err := srv.ChangePlan(context.Background(), &subGrpc.ChangePlanRequest{UserId: "user-1", PlanId: 0})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for plan_id = 0")
+	}
+	if resp.Code != actions.CodeInvalidInput {
+		t.Fatalf("expected CodeInvalidInput (%d), got %d", actions.CodeInvalidInput, resp.Code)
+	}
+}
+
+// ─── ReactivateSubscription ───────────────────────────────────────────────────
+
+func TestReactivateSubscription_InvalidInput_MissingUserId(t *testing.T) {
+	srv, _ := setupServer(t)
+
+	resp, err := srv.ReactivateSubscription(context.Background(), &subGrpc.ReactivateSubscriptionRequest{UserId: ""})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for empty user_id")
+	}
+	if resp.Code != actions.CodeInvalidInput {
+		t.Fatalf("expected CodeInvalidInput (%d), got %d", actions.CodeInvalidInput, resp.Code)
+	}
+}
+
+func TestReactivateSubscription_NotCancelling(t *testing.T) {
+	srv, mock := setupServer(t)
+
+	mock.ExpectQuery(`SELECT stripe_subscription_id, cancel_at_period_end FROM subscriptions WHERE user_id`).
+		WithArgs("user-1").
+		WillReturnRows(sqlmock.NewRows([]string{"stripe_subscription_id", "cancel_at_period_end"}).
+			AddRow("sub_stripe_123", false))
+
+	resp, err := srv.ReactivateSubscription(context.Background(), &subGrpc.ReactivateSubscriptionRequest{UserId: "user-1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure when cancel_at_period_end is false")
+	}
+	if resp.Code != actions.CodeInvalidInput {
+		t.Fatalf("expected CodeInvalidInput (%d), got %d", actions.CodeInvalidInput, resp.Code)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}

@@ -13,6 +13,8 @@ service SubscriptionService {
     rpc CreatePaymentIntent(CreatePaymentIntentRequest) returns (CreatePaymentIntentResponse);
     rpc HandleStripeWebhook(HandleStripeWebhookRequest) returns (GenericResponse);
     rpc CancelSubscription(CancelSubscriptionRequest) returns (GenericResponse);
+    rpc ChangePlan(ChangePlanRequest) returns (GenericResponse);
+    rpc ReactivateSubscription(ReactivateSubscriptionRequest) returns (GenericResponse);
     rpc GetAdminStats(GetAdminStatsRequest) returns (AdminStatsResponse);
     rpc UpdatePlan(UpdatePlanRequest) returns (GetPlanResponse);
 }
@@ -46,6 +48,7 @@ message Subscription {
     string updated_at             = 9;
     bool   cancel_at_period_end   = 10;
     string stripe_subscription_id = 11;
+    int32  pending_plan_id        = 12;
 }
 
 message ListPlansRequest {
@@ -120,6 +123,15 @@ message HandleStripeWebhookRequest {
 }
 
 message CancelSubscriptionRequest {
+    string user_id = 1;
+}
+
+message ChangePlanRequest {
+    string user_id = 1;
+    int32  plan_id = 2;
+}
+
+message ReactivateSubscriptionRequest {
     string user_id = 1;
 }
 
