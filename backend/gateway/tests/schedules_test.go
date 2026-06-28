@@ -64,6 +64,19 @@ func (s *mockScheduleServer) GetSchedule(_ context.Context, req *schedule.GetSch
 	}, nil
 }
 
+func (s *mockScheduleServer) GetScheduleCells(_ context.Context, req *schedule.GetScheduleCellsRequest) (*schedule.GetScheduleCellsResponse, error) {
+	if req.ScheduleId == "not-found" {
+		return &schedule.GetScheduleCellsResponse{Success: false, Code: 1001}, nil
+	}
+	return &schedule.GetScheduleCellsResponse{
+		Success: true,
+		Cells: []*schedule.ScheduleCell{
+			{QuoteLineId: "l-001", MonthIndex: 1, AmountCents: 300},
+			{QuoteLineId: "l-001", MonthIndex: 2, AmountCents: 200},
+		},
+	}, nil
+}
+
 func (s *mockScheduleServer) UpdateScheduleCell(_ context.Context, req *schedule.UpdateScheduleCellRequest) (*schedule.GenericResponse, error) {
 	if req.ScheduleId == "finalized" {
 		return &schedule.GenericResponse{Success: false, Code: 1006}, nil
@@ -453,6 +466,14 @@ func TestGetSchedule_Success(t *testing.T) {
 	lines := sch["lines"].([]any)
 	if len(lines) != 1 {
 		t.Errorf("expected 1 line, got %d", len(lines))
+	}
+	cells := sch["cells"].([]any)
+	if len(cells) != 2 {
+		t.Errorf("expected 2 cells, got %d", len(cells))
+	}
+	cell0 := cells[0].(map[string]any)
+	if cell0["quote_line_id"] != "l-001" || cell0["month_index"].(float64) != 1 || cell0["amount_cents"].(float64) != 300 {
+		t.Errorf("unexpected cell[0]: %v", cell0)
 	}
 }
 
