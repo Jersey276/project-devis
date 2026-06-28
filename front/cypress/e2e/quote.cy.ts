@@ -70,6 +70,56 @@ describe("Quote", () => {
       cy.contains("th", "Total TTC").should("be.visible");
     });
 
+    it("excludes archived quotes by default", () => {
+      cy.login();
+      cy.intercept("GET", "/api/quotes**", (req) => {
+        expect(req.url).to.not.include("archived=true");
+        req.reply({
+          statusCode: 200,
+          body: { success: true, quotes: [], total: 0 },
+        });
+      }).as("listQuotesDefault");
+
+      cy.visit("/quote");
+      cy.wait("@listQuotesDefault");
+      cy.contains("Aucun devis pour le moment.").should("be.visible");
+    });
+
+    it("includes archived quotes when the filter is toggled", () => {
+      cy.login();
+      // First call without filter
+      cy.intercept("GET", "/api/quotes**", {
+        statusCode: 200,
+        body: { success: true, quotes: [], total: 0 },
+      }).as("listQuotesFirst");
+
+      cy.visit("/quote");
+      cy.wait("@listQuotesFirst");
+
+      // Stub the second call that must include archived=true
+      cy.intercept("GET", "/api/quotes**archived=true**", {
+        statusCode: 200,
+        body: {
+          success: true,
+          quotes: [
+            quote({
+              quote_id: "q-arch",
+              name: "Devis archivé",
+              archived_at: "2026-05-01T00:00:00Z",
+            }),
+          ],
+          total: 1,
+        },
+      }).as("listQuotesArchived");
+
+      cy.contains("button", "Filtres").click();
+      cy.contains("label", "Inclure les devis archivés").click();
+      cy.wait("@listQuotesArchived");
+
+      cy.contains("td", "Devis archivé").should("be.visible");
+      cy.contains("td", "Archivé").should("be.visible");
+    });
+
     it("shows the empty state when no quotes are returned", () => {
       cy.login();
       cy.intercept("GET", "/api/quotes**", {

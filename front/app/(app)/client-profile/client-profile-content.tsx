@@ -25,8 +25,8 @@ import ClientForm, {
 import AddressesTable from "@/components/address/addresses-table";
 import { fieldErrorsFromBody, type FieldErrors } from "@/lib/api";
 import {
-  getMyClientProfiles,
-  updateMyClientProfile,
+  getMyClients,
+  updateMyClient,
 } from "@/lib/services/clients";
 import type { BackendClient } from "@/types/backend";
 
@@ -62,7 +62,7 @@ export default function ClientProfileContent() {
 
   useEffect(() => {
     let cancelled = false;
-    getMyClientProfiles().then(({ ok, body }) => {
+    getMyClients().then(({ ok, body }) => {
       if (cancelled) return;
       setLoading(false);
       if (ok && body.success && Array.isArray(body.clients) && body.clients.length > 0) {
@@ -90,7 +90,7 @@ export default function ClientProfileContent() {
     setFieldErrors({});
     setSubmitting(true);
     try {
-      const { ok, body } = await updateMyClientProfile(selectedId, form);
+      const { ok, body } = await updateMyClient(form);
       if (ok && body.success) {
         toast.success(t("saveSuccess"));
       } else {

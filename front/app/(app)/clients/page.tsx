@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { FilterSidebar, FilterSidebarSection } from "@/components/ui/filter-sidebar";
 import { SelectCombobox } from "@/components/ui/select-combobox";
 import { ClientsTable } from "./clients-table";
@@ -29,16 +31,18 @@ function ClientIndex() {
   const clientTypes = searchParams.get("client_types")
     ? searchParams.get("client_types")!.split(",")
     : [];
+  const showArchived = searchParams.get("archived") === "true";
 
   const [clients, setClients] = useState<BackendClient[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  function pushParams(newSearch: string, newTypes: string[], newPage: number) {
+  function pushParams(newSearch: string, newTypes: string[], newPage: number, newArchived?: boolean) {
     const p = new URLSearchParams();
     if (newPage > 1) p.set("page", String(newPage));
     if (newSearch) p.set("search", newSearch);
     if (newTypes.length > 0) p.set("client_types", newTypes.join(","));
+    if (newArchived ?? showArchived) p.set("archived", "true");
     router.push(`${pathname}?${p.toString()}`);
   }
 
@@ -50,6 +54,7 @@ function ClientIndex() {
     });
     if (search) params.set("search", search);
     if (clientTypes.length > 0) params.set("client_types", clientTypes.join(","));
+    if (showArchived) params.set("archived", "true");
 
     const { ok, body } = await listClients(params.toString());
     if (ok && Array.isArray(body.clients)) {
@@ -67,7 +72,7 @@ function ClientIndex() {
 
   const reload = useCallback(() => { void fetchClients(); }, [fetchClients]);
 
-  const activeFilterCount = (search ? 1 : 0) + (clientTypes.length > 0 ? 1 : 0);
+  const activeFilterCount = (search ? 1 : 0) + (clientTypes.length > 0 ? 1 : 0) + (showArchived ? 1 : 0);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const tForm = useTranslations("client.form.clientType");
@@ -102,7 +107,7 @@ function ClientIndex() {
             title={tCommon("title")}
             resetLabel={tCommon("reset")}
             activeCount={activeFilterCount - (search ? 1 : 0)}
-            onReset={() => pushParams(search, [], 1)}
+            onReset={() => pushParams(search, [], 1, false)}
           >
             <FilterSidebarSection label={t("filters.typeLabel")}>
               <SelectCombobox
@@ -113,6 +118,16 @@ function ClientIndex() {
                 placeholder={t("filters.typePlaceholder")}
                 emptyLabel={t("filters.typeEmpty")}
               />
+            </FilterSidebarSection>
+            <FilterSidebarSection label={t("filters.archivedLabel")}>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="client-archived"
+                  checked={showArchived}
+                  onCheckedChange={(checked) => pushParams(search, clientTypes, 1, !!checked)}
+                />
+                <Label htmlFor="client-archived">{t("filters.archivedCheckbox")}</Label>
+              </div>
             </FilterSidebarSection>
           </FilterSidebar>
         </div>

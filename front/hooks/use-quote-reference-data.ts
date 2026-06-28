@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api";
-import { listClients, getMyClientProfiles, getMyClientAddresses } from "@/lib/services/clients";
+import { listClients, getMyClients, getMyClientAddresses } from "@/lib/services/clients";
 import { listAddresses } from "@/lib/services/addresses";
 import { listAvailableTaxesForUser } from "@/lib/services/taxes";
 import type { BackendAddress, BackendClient, BackendTax } from "@/types/backend";
@@ -25,7 +25,6 @@ export function useQuoteReferenceData({
 }: UseQuoteReferenceDataParams) {
   const [clients, setClients] = useState<BackendClient[]>([]);
   const [userId, setUserId] = useState("");
-  const [myClientId, setMyClientId] = useState("");
   const [userAddresses, setUserAddresses] = useState<BackendAddress[]>([]);
   const [addresses, setAddresses] = useState<BackendAddress[]>([]);
   const [availableTaxes, setAvailableTaxes] = useState<BackendTax[]>([]);
@@ -34,12 +33,10 @@ export function useQuoteReferenceData({
   useEffect(() => {
     let cancelled = false;
     if (isCustomer) {
-      getMyClientProfiles().then(({ ok, body }) => {
+      getMyClients().then(({ ok, body }) => {
         if (cancelled) return;
         if (ok && Array.isArray(body.clients) && body.clients.length > 0) {
-          const linked = body.clients as BackendClient[];
-          setClients(linked);
-          setMyClientId(linked[0].client_id);
+          setClients(body.clients as BackendClient[]);
         }
       });
     } else {
@@ -73,8 +70,7 @@ export function useQuoteReferenceData({
   useEffect(() => {
     let cancelled = false;
     if (isCustomer) {
-      if (!myClientId) return;
-      getMyClientAddresses(myClientId).then(({ ok, body }) => {
+      getMyClientAddresses().then(({ ok, body }) => {
         if (cancelled) return;
         setAddresses(ok && Array.isArray(body.addresses) ? (body.addresses as BackendAddress[]) : []);
       });
@@ -86,7 +82,7 @@ export function useQuoteReferenceData({
       });
     }
     return () => { cancelled = true; };
-  }, [clientId, isCustomer, myClientId]);
+  }, [clientId, isCustomer]);
 
   const clientAddresses = useMemo(() => (clientId ? addresses : []), [clientId, addresses]);
 
@@ -131,7 +127,7 @@ export function useQuoteReferenceData({
 
   const refreshClients = useCallback(async () => {
     if (isCustomer) {
-      const { ok, body } = await getMyClientProfiles();
+      const { ok, body } = await getMyClients();
       if (ok && Array.isArray(body.clients)) setClients(body.clients as BackendClient[]);
     } else {
       const { ok, body } = await listClients();
@@ -147,20 +143,18 @@ export function useQuoteReferenceData({
 
   const refreshClientAddresses = useCallback(async () => {
     if (isCustomer) {
-      if (!myClientId) return;
-      const { ok, body } = await getMyClientAddresses(myClientId);
+      const { ok, body } = await getMyClientAddresses();
       if (ok && Array.isArray(body.addresses)) setAddresses(body.addresses as BackendAddress[]);
     } else {
       if (!clientId) return;
       const { ok, body } = await listAddresses({ type: "client", clientId });
       if (ok && Array.isArray(body.addresses)) setAddresses(body.addresses as BackendAddress[]);
     }
-  }, [clientId, isCustomer, myClientId]);
+  }, [clientId, isCustomer]);
 
   return {
     clients,
     userId,
-    myClientId,
     userAddresses,
     addresses: clientAddresses,
     availableTaxes,

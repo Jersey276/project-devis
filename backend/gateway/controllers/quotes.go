@@ -94,25 +94,20 @@ func QuotesRoutes(r *gin.RouterGroup, emailNotifier gatewaySvc.EmailNotifier) {
 	r.GET("", func(c *gin.Context) { ListQuotes(c, client, usersClient) })
 	r.POST("", func(c *gin.Context) { CreateQuote(c, client) })
 
-	// Customer-facing routes — must be registered before /:id to avoid wildcard clash.
-	r.GET("/me", func(c *gin.Context) { ListMyQuotes(c, client, usersClient) })
-	r.GET("/me/:id", func(c *gin.Context) { GetMyQuote(c, client, usersClient) })
-	r.PUT("/me/:id", func(c *gin.Context) { UpdateMyQuoteAddress(c, client, usersClient) })
-	r.POST("/me/:id/accept", func(c *gin.Context) { AcceptMyQuote(c, client, usersClient) })
-	r.POST("/me/:id/refuse", func(c *gin.Context) { RefuseMyQuote(c, client, usersClient) })
-
 	archive := r.Group("/archive")
 	archive.DELETE("/trash", func(c *gin.Context) { TrashQuotes(c, client) })
 
 	one := r.Group("/:id")
-	one.GET("", func(c *gin.Context) { GetQuote(c, client) })
-	one.PUT("", func(c *gin.Context) { UpdateQuote(c, client) })
+	one.GET("", func(c *gin.Context) { GetQuote(c, client, usersClient) })
+	one.PUT("", func(c *gin.Context) { UpdateQuote(c, client, usersClient) })
 	one.DELETE("", func(c *gin.Context) { DeleteQuote(c, client) })
 	one.POST("/archive", func(c *gin.Context) { ArchiveQuote(c, client) })
 	one.POST("/restore", func(c *gin.Context) { RestoreQuote(c, client) })
 	one.POST("/drop", func(c *gin.Context) { DropQuote(c, client) })
 	one.POST("/continue", func(c *gin.Context) { ContinueQuote(c, client) })
 	one.POST("/validate", func(c *gin.Context) { ValidateQuote(c, client) })
+	one.POST("/accept", func(c *gin.Context) { AcceptQuote(c, client, usersClient) })
+	one.POST("/refuse", func(c *gin.Context) { RefuseQuote(c, client, usersClient) })
 	one.POST("/negociate", func(c *gin.Context) {
 		NegociateQuote(c, client, usersClient, exportClient, emailNotifier)
 	})
@@ -135,6 +130,17 @@ func QuotesRoutes(r *gin.RouterGroup, emailNotifier gatewaySvc.EmailNotifier) {
 
 func ListQuotes(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
 	userID := userIDFromCtx(c)
+	clientID := c.Query("client_id")
+
+	if c.GetHeader("X-Client-Mode") == "customer" {
+		linked := resolveMyClient(c, usersClient)
+		if linked == nil {
+			return
+		}
+		userID = linked.UserId
+		clientID = linked.ClientId
+	}
+
 	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 32)
 	pageSize, _ := strconv.ParseInt(c.DefaultQuery("page_size", "20"), 10, 32)
 
@@ -158,7 +164,7 @@ func ListQuotes(c *gin.Context, client quote.QuoteServiceClient, usersClient use
 			Filters: &quote.QuoteFilters{
 				Search:   c.Query("search"),
 				States:   states,
-				ClientId: c.Query("client_id"),
+				ClientId: clientID,
 			},
 			SortBy:        c.DefaultQuery("sort_by", "created_at"),
 			SortDirection: c.DefaultQuery("sort_direction", "desc"),
@@ -363,126 +369,6 @@ func computeQuoteTotals(lines []*quote.QuoteLine, taxes []*users.Tax) map[string
 	return totals
 }
 
-// ─── Customer /quotes/me routes ──────────────────────────────────────────────
-
-// ListMyQuotes returns quotes for the authenticated customer, scoped to their
-// linked client_id and the provider's user_id.
-func ListMyQuotes(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
-	linked := resolveMyClient(c, usersClient)
-	if linked == nil {
-		return
-	}
-
-	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 32)
-	pageSize, _ := strconv.ParseInt(c.DefaultQuery("page_size", "20"), 10, 32)
-
-	var states []string
-	if raw := c.Query("states"); raw != "" {
-		states = strings.Split(raw, ",")
-	}
-
-	var (
-		quotesResp *quote.ListQuotesResponse
-		linesResp  *quote.ListUserQuoteLinesResponse
-	)
-
-	g, gctx := errgroup.WithContext(c.Request.Context())
-	g.Go(func() error {
-		resp, err := client.ListQuotes(gctx, &quote.ListQuotesRequest{
-			UserId:          linked.UserId,
-			IncludeArchived: c.Query("archived") == "true",
-			Page:            int32(page),
-			PageSize:        int32(pageSize),
-			Filters: &quote.QuoteFilters{
-				Search:   c.Query("search"),
-				States:   states,
-				ClientId: linked.ClientId,
-			},
-			SortBy:        c.DefaultQuery("sort_by", "created_at"),
-			SortDirection: c.DefaultQuery("sort_direction", "desc"),
-		})
-		if err != nil {
-			return err
-		}
-		quotesResp = resp
-		return nil
-	})
-	g.Go(func() error {
-		resp, err := client.ListUserQuoteLines(gctx, &quote.ListUserQuoteLinesRequest{
-			UserId:          linked.UserId,
-			IncludeArchived: c.Query("archived") == "true",
-		})
-		if err != nil {
-			return err
-		}
-		linesResp = resp
-		return nil
-	})
-	if err := g.Wait(); err != nil {
-		quoteErrors.unavailable(c)
-		return
-	}
-	if !quotesResp.Success {
-		quoteErrors.reply(c, quotesResp.Code)
-		return
-	}
-
-	taxesResp, err := usersClient.ListTaxesForUser(c.Request.Context(), &users.ListTaxesForUserRequest{
-		UserId:     linked.UserId,
-		IncludeIds: distinctTaxIds(linesResp.Lines),
-	})
-	if err != nil {
-		quoteErrors.unavailable(c)
-		return
-	}
-
-	totals := computeQuoteTotals(linesResp.Lines, taxesResp.Taxes)
-
-	out := make([]gin.H, 0, len(quotesResp.Quotes))
-	for _, q := range quotesResp.Quotes {
-		m := marshalQuote(q)
-		m["total_ttc"] = totals[q.QuoteId].principal
-		m["option_total_ttc"] = totals[q.QuoteId].option
-		out = append(out, m)
-	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "quotes": out, "total": quotesResp.Total})
-}
-
-// GetMyQuote returns a single quote for the authenticated customer, scoped to
-// their linked client_id.
-func GetMyQuote(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
-	linked := resolveMyClient(c, usersClient)
-	if linked == nil {
-		return
-	}
-
-	resp, err := client.GetQuote(c.Request.Context(), &quote.GetQuoteRequest{
-		QuoteId: c.Param("id"),
-		UserId:  linked.UserId,
-	})
-	if err != nil {
-		quoteErrors.unavailable(c)
-		return
-	}
-	if !resp.Success {
-		quoteErrors.reply(c, resp.Code)
-		return
-	}
-	// Ensure the quote belongs to this customer's client record.
-	if resp.Quote != nil && resp.Quote.ClientId != linked.ClientId {
-		quoteErrors.reply(c, QuoteCodeNotFound)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"quote":   marshalQuote(resp.Quote),
-		"lines":   marshalLines(resp.Lines),
-	})
-}
-
-// resolveMyClientQuote resolves the linked client and verifies the quote belongs
-// to that client. Returns (linked, quoteResp, true) on success, or writes the
-// error response and returns (nil, nil, false).
 func resolveMyClientQuote(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) (*users.Client, *quote.GetQuoteResponse, bool) {
 	linked := resolveMyClient(c, usersClient)
 	if linked == nil {
@@ -505,81 +391,6 @@ func resolveMyClientQuote(c *gin.Context, client quote.QuoteServiceClient, users
 		return nil, nil, false
 	}
 	return linked, getResp, true
-}
-
-// UpdateMyQuoteAddress allows a customer to update only the client address on
-// one of their quotes. All other fields are ignored.
-func UpdateMyQuoteAddress(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
-	var input struct {
-		AddressID int32 `json:"address_id" binding:"required"`
-	}
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
-		return
-	}
-
-	linked, getResp, ok := resolveMyClientQuote(c, client, usersClient)
-	if !ok {
-		return
-	}
-
-	resp, err := client.UpdateQuote(c.Request.Context(), &quote.UpdateQuoteRequest{
-		QuoteId:   c.Param("id"),
-		UserId:    linked.UserId,
-		Name:      getResp.Quote.Name,
-		AddressId: input.AddressID,
-	})
-	if err != nil {
-		quoteErrors.unavailable(c)
-		return
-	}
-	if !resp.Success {
-		quoteErrors.reply(c, resp.Code)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"success": true})
-}
-
-// AcceptMyQuote allows a linked customer to accept a quote in 'negociation' state.
-func AcceptMyQuote(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
-	linked, _, ok := resolveMyClientQuote(c, client, usersClient)
-	if !ok {
-		return
-	}
-	resp, err := client.AcceptQuote(c.Request.Context(), &quote.AcceptQuoteRequest{
-		QuoteId: c.Param("id"),
-		UserId:  linked.UserId,
-	})
-	if err != nil {
-		quoteErrors.unavailable(c)
-		return
-	}
-	if !resp.Success {
-		quoteErrors.reply(c, resp.Code)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"success": true})
-}
-
-// RefuseMyQuote allows a linked customer to refuse a quote in 'negociation' state.
-func RefuseMyQuote(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
-	linked, _, ok := resolveMyClientQuote(c, client, usersClient)
-	if !ok {
-		return
-	}
-	resp, err := client.RefuseQuote(c.Request.Context(), &quote.RefuseQuoteRequest{
-		QuoteId: c.Param("id"),
-		UserId:  linked.UserId,
-	})
-	if err != nil {
-		quoteErrors.unavailable(c)
-		return
-	}
-	if !resp.Success {
-		quoteErrors.reply(c, resp.Code)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
 func CreateQuote(c *gin.Context, client quote.QuoteServiceClient) {
@@ -615,10 +426,22 @@ func CreateQuote(c *gin.Context, client quote.QuoteServiceClient) {
 	c.JSON(http.StatusCreated, gin.H{"success": true, "quote_id": resp.QuoteId})
 }
 
-func GetQuote(c *gin.Context, client quote.QuoteServiceClient) {
+func GetQuote(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
+	userID := userIDFromCtx(c)
+	var linkedClientID string
+
+	if c.GetHeader("X-Client-Mode") == "customer" {
+		linked := resolveMyClient(c, usersClient)
+		if linked == nil {
+			return
+		}
+		userID = linked.UserId
+		linkedClientID = linked.ClientId
+	}
+
 	resp, err := client.GetQuote(c.Request.Context(), &quote.GetQuoteRequest{
 		QuoteId: c.Param("id"),
-		UserId:  userIDFromCtx(c),
+		UserId:  userID,
 	})
 	if err != nil {
 		quoteErrors.unavailable(c)
@@ -628,6 +451,10 @@ func GetQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		quoteErrors.reply(c, resp.Code)
 		return
 	}
+	if linkedClientID != "" && (resp.Quote == nil || resp.Quote.ClientId != linkedClientID) {
+		quoteErrors.reply(c, QuoteCodeNotFound)
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"quote":   marshalQuote(resp.Quote),
@@ -635,7 +462,38 @@ func GetQuote(c *gin.Context, client quote.QuoteServiceClient) {
 	})
 }
 
-func UpdateQuote(c *gin.Context, client quote.QuoteServiceClient) {
+func UpdateQuote(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
+	if c.GetHeader("X-Client-Mode") == "customer" {
+		// Customer can only update the delivery address on their quote.
+		var input struct {
+			AddressID int32 `json:"address_id" binding:"required"`
+		}
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
+			return
+		}
+		linked, getResp, ok := resolveMyClientQuote(c, client, usersClient)
+		if !ok {
+			return
+		}
+		resp, err := client.UpdateQuote(c.Request.Context(), &quote.UpdateQuoteRequest{
+			QuoteId:   c.Param("id"),
+			UserId:    linked.UserId,
+			Name:      getResp.Quote.Name,
+			AddressId: input.AddressID,
+		})
+		if err != nil {
+			quoteErrors.unavailable(c)
+			return
+		}
+		if !resp.Success {
+			quoteErrors.reply(c, resp.Code)
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"success": true})
+		return
+	}
+
 	var input struct {
 		Name          string `json:"name" binding:"required"`
 		ClientID      string `json:"client_id"`
@@ -668,6 +526,46 @@ func UpdateQuote(c *gin.Context, client quote.QuoteServiceClient) {
 		} else {
 			quoteErrors.reply(c, resp.Code)
 		}
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func AcceptQuote(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
+	linked, _, ok := resolveMyClientQuote(c, client, usersClient)
+	if !ok {
+		return
+	}
+	resp, err := client.AcceptQuote(c.Request.Context(), &quote.AcceptQuoteRequest{
+		QuoteId: c.Param("id"),
+		UserId:  linked.UserId,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func RefuseQuote(c *gin.Context, client quote.QuoteServiceClient, usersClient users.UserServiceClient) {
+	linked, _, ok := resolveMyClientQuote(c, client, usersClient)
+	if !ok {
+		return
+	}
+	resp, err := client.RefuseQuote(c.Request.Context(), &quote.RefuseQuoteRequest{
+		QuoteId: c.Param("id"),
+		UserId:  linked.UserId,
+	})
+	if err != nil {
+		quoteErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		quoteErrors.reply(c, resp.Code)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})

@@ -22,7 +22,6 @@ import type { BackendScheduleSummary } from "@/types/backend";
 import CreateScheduleDialog from "@/components/schedule/create-schedule-dialog";
 import ScheduleStatusSelect from "@/components/schedule/schedule-status-select";
 import { useMode } from "@/lib/mode-context";
-import { getMyClientProfiles } from "@/lib/services/clients";
 
 const PAGE_SIZE = 20;
 
@@ -72,17 +71,6 @@ function ScheduleListTableInner() {
   const [total, setTotal] = useState(0);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [myClientId, setMyClientId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isCustomer) return;
-    getMyClientProfiles().then(({ ok, body }) => {
-      if (ok && Array.isArray(body.clients) && body.clients.length > 0) {
-        setMyClientId((body.clients[0] as { client_id: string }).client_id);
-      }
-    });
-  }, [isCustomer]);
-
   function pushParams(p: { statuses?: string[]; startFrom?: string; startTo?: string; page?: number; sortBy?: string; sortDirection?: string }) {
     const next = new URLSearchParams();
     const st = p.statuses ?? statuses;
@@ -107,8 +95,6 @@ function ScheduleListTableInner() {
     if (startTo) params.set("start_to", startTo);
     params.set("sort_by", sortBy);
     params.set("sort_direction", sortDirection);
-    if (isCustomer && myClientId) params.set("client_id", myClientId);
-
     let ok: boolean, body: Awaited<ReturnType<typeof listSchedules>>["body"];
     try {
       ({ ok, body } = await listSchedules(params.toString(), signal));
@@ -126,7 +112,7 @@ function ScheduleListTableInner() {
     setItems(toRows(body.schedules as BackendScheduleSummary[]));
     setTotal((body.total ?? 0) as number);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, myClientId]);
+  }, [searchParams]);
 
   const refreshSchedules = useCallback(() => {
     const controller = new AbortController();

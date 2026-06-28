@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { EllipsisVerticalIcon, Loader2Icon } from "lucide-react";
+import { ArchiveIcon, EllipsisVerticalIcon, Loader2Icon, RotateCcwIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -19,8 +19,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { listTemplates } from "@/lib/services/templates";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { listTemplates, archiveTemplate, restoreTemplate } from "@/lib/services/templates";
 import { listAvailableTaxesForUser } from "@/lib/services/taxes";
 import type { BackendTax, BackendTemplate } from "@/types/backend";
 import EditLineTemplateDialog from "@/components/template/edit-line-template-dialog";
@@ -29,10 +32,9 @@ import EditQuoteTemplateDialog from "@/components/template/edit-quote-template-d
 export default function TemplateTabs() {
   const t = useTranslations("templates");
 
-  const [lineTemplates, setLineTemplates] = useState<BackendTemplate[]>([]);
-  const [quoteTemplates, setQuoteTemplates] = useState<BackendTemplate[]>([]);
-  const [loadingLines, setLoadingLines] = useState(true);
-  const [loadingQuotes, setLoadingQuotes] = useState(true);
+  const [lineTemplates, setLineTemplates] = useState<BackendTemplate[] | null>(null);
+  const [quoteTemplates, setQuoteTemplates] = useState<BackendTemplate[] | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
   const [availableTaxes, setAvailableTaxes] = useState<BackendTax[]>([]);
 
   const [editLineId, setEditLineId] = useState<string | null>(null);
@@ -52,46 +54,81 @@ export default function TemplateTabs() {
   }, []);
 
   useEffect(() => {
-    listTemplates({ type: "quote_line" }).then(({ ok, body }) => {
-      setLoadingLines(false);
+    let cancelled = false;
+    listTemplates({ type: "quote_line", archived: showArchived }).then(({ ok, body }) => {
+      if (cancelled) return;
       if (ok && Array.isArray(body.templates)) {
         setLineTemplates(body.templates as BackendTemplate[]);
       } else {
+        setLineTemplates([]);
         toast.error(t("list.loadFailedToast"));
       }
     });
-  }, [t]);
+    return () => { cancelled = true; };
+  }, [t, showArchived]);
 
   useEffect(() => {
-    listTemplates({ type: "quote_document" }).then(({ ok, body }) => {
-      setLoadingQuotes(false);
+    let cancelled = false;
+    listTemplates({ type: "quote_document", archived: showArchived }).then(({ ok, body }) => {
+      if (cancelled) return;
       if (ok && Array.isArray(body.templates)) {
         setQuoteTemplates(body.templates as BackendTemplate[]);
       } else {
+        setQuoteTemplates([]);
         toast.error(t("list.loadFailedToast"));
       }
     });
-  }, [t]);
+    return () => { cancelled = true; };
+  }, [t, showArchived]);
 
   function handleLineSaved(updated: BackendTemplate) {
     setLineTemplates((prev) =>
-      prev.map((tpl) =>
-        tpl.template_id === updated.template_id ? updated : tpl,
-      ),
+      prev?.map((tpl) => (tpl.template_id === updated.template_id ? updated : tpl)) ?? prev,
     );
   }
 
   function handleQuoteSaved(updated: BackendTemplate) {
     setQuoteTemplates((prev) =>
-      prev.map((tpl) =>
-        tpl.template_id === updated.template_id ? updated : tpl,
-      ),
+      prev?.map((tpl) => (tpl.template_id === updated.template_id ? updated : tpl)) ?? prev,
     );
+  }
+
+  async function handleArchive(id: string, setter: React.Dispatch<React.SetStateAction<BackendTemplate[] | null>>) {
+    const { ok, body } = await archiveTemplate(id);
+    if (ok && body.success) {
+      toast.success(t("list.archiveSuccessToast"));
+      setter((prev) => prev?.filter((tpl) => tpl.template_id !== id) ?? prev);
+    } else {
+      toast.error((body.message as string) ?? t("list.archiveFailedToast"));
+    }
+  }
+
+  async function handleRestore(id: string, setter: React.Dispatch<React.SetStateAction<BackendTemplate[] | null>>) {
+    const { ok, body } = await restoreTemplate(id);
+    if (ok && body.success) {
+      toast.success(t("list.restoreSuccessToast"));
+      setter((prev) => prev?.filter((tpl) => tpl.template_id !== id) ?? prev);
+    } else {
+      toast.error((body.message as string) ?? t("list.restoreFailedToast"));
+    }
   }
 
   return (
     <>
-      <Tabs defaultValue="quote_line" className="mt-2">
+      <div className="flex items-center gap-2 mt-2 mb-4">
+        <Checkbox
+          id="template-archived"
+          checked={showArchived}
+          onCheckedChange={(checked) => {
+            setLineTemplates(null);
+            setQuoteTemplates(null);
+            setShowArchived(!!checked);
+          }}
+        />
+        <Label htmlFor="template-archived">{t("list.showArchivedLabel")}</Label>
+      </div>
+
+      <Tabs defaultValue="quote_line">
         <TabsList>
           <TabsTrigger value="quote_line">{t("tabs.lines")}</TabsTrigger>
           <TabsTrigger value="quote_document">{t("tabs.quotes")}</TabsTrigger>
@@ -99,17 +136,21 @@ export default function TemplateTabs() {
 
         <TabsContent value="quote_line" className="mt-4">
           <TemplateTable
-            templates={lineTemplates}
-            loading={loadingLines}
+            templates={lineTemplates ?? []}
+            loading={lineTemplates === null}
             onEdit={(id) => setEditLineId(id)}
+            onArchive={(id) => handleArchive(id, setLineTemplates)}
+            onRestore={(id) => handleRestore(id, setLineTemplates)}
           />
         </TabsContent>
 
         <TabsContent value="quote_document" className="mt-4">
           <TemplateTable
-            templates={quoteTemplates}
-            loading={loadingQuotes}
+            templates={quoteTemplates ?? []}
+            loading={quoteTemplates === null}
             onEdit={(id) => setEditQuoteId(id)}
+            onArchive={(id) => handleArchive(id, setQuoteTemplates)}
+            onRestore={(id) => handleRestore(id, setQuoteTemplates)}
           />
         </TabsContent>
       </Tabs>
@@ -147,9 +188,11 @@ type TemplateTableProps = {
   templates: BackendTemplate[];
   loading: boolean;
   onEdit: (id: string) => void;
+  onArchive: (id: string) => void;
+  onRestore: (id: string) => void;
 };
 
-function TemplateTable({ templates, loading, onEdit }: TemplateTableProps) {
+function TemplateTable({ templates, loading, onEdit, onArchive, onRestore }: TemplateTableProps) {
   const t = useTranslations("templates");
   if (loading) {
     return (
@@ -177,32 +220,58 @@ function TemplateTable({ templates, loading, onEdit }: TemplateTableProps) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {templates.map((tpl) => (
-          <TableRow key={tpl.template_id}>
-            <TableCell className="font-medium">{tpl.name}</TableCell>
-            <TableCell className="text-muted-foreground text-sm">
-              {new Date(tpl.created_at).toLocaleDateString("fr-FR")}
-            </TableCell>
-            <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={t("list.columns.actions")}
-                  >
-                    <EllipsisVerticalIcon className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onEdit(tpl.template_id)}>
-                    {t("list.actions.edit")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
-          </TableRow>
-        ))}
+        {templates.map((tpl) => {
+          const isArchived = !!tpl.archived_at;
+          return (
+            <TableRow key={tpl.template_id} className={isArchived ? "opacity-60" : undefined}>
+              <TableCell className="font-medium">
+                <span className="flex items-center gap-2">
+                  {tpl.name}
+                  {isArchived && (
+                    <Badge variant="secondary" className="gap-1 text-xs">
+                      <ArchiveIcon className="size-3" />
+                      {t("list.archivedBadge")}
+                    </Badge>
+                  )}
+                </span>
+              </TableCell>
+              <TableCell className="text-muted-foreground text-sm">
+                {new Date(tpl.created_at).toLocaleDateString("fr-FR")}
+              </TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={t("list.columns.actions")}
+                    >
+                      <EllipsisVerticalIcon className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {!isArchived && (
+                      <DropdownMenuItem onClick={() => onEdit(tpl.template_id)}>
+                        {t("list.actions.edit")}
+                      </DropdownMenuItem>
+                    )}
+                    {!isArchived ? (
+                      <DropdownMenuItem onClick={() => onArchive(tpl.template_id)}>
+                        <ArchiveIcon className="size-4" />
+                        {t("list.actions.archive")}
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem onClick={() => onRestore(tpl.template_id)}>
+                        <RotateCcwIcon className="size-4" />
+                        {t("list.actions.restore")}
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );

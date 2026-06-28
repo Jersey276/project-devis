@@ -65,6 +65,13 @@ Les clients sont les tiers (B2C ou B2B) pour lesquels un prestataire cree des de
 - `siret` (14 chiffres) est l'identifiant d'etablissement ; distinct de `siren` (9 chiffres, identifiant entreprise).
 - `GetClient` exclut les clients archives ; pour les voir, passer `include_archived=true` a `ListClients`.
 - L'update est un full-replace : omettre un champ le met a NULL cote serveur.
+- L'archivage client est **definitif** (pas de RPC restore) : le client disparait de toutes les listes actives.
+- L'interface expose une checkbox "Inclure les clients archives" dans la FilterSidebar du tableau des clients ; les lignes archivees sont affichees avec un badge "Archivé" et une opacite reduite.
+
+### Adresses
+
+- `archived_at TIMESTAMP` present sur la table `addresses` ; l'archivage est definitif (pas de restore expose).
+- `ListAddresses` filtre toujours `archived_at IS NULL` — les adresses archivees sont invisibles par design (historique conserve en DB uniquement).
 
 ## Notes gateway
 

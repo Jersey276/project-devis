@@ -17,8 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { FilterSidebar, FilterSidebarSection } from "@/components/ui/filter-sidebar";
 import { SelectCombobox } from "@/components/ui/select-combobox";
-import { listQuotes, listMyQuotes, getQuote } from "@/lib/services/quotes";
-import { getMyClientProfiles } from "@/lib/services/clients";
+import { listQuotes, getQuote } from "@/lib/services/quotes";
 import { listClients } from "@/lib/services/clients";
 import { exportQuotePdf } from "@/lib/services/export";
 import {
@@ -41,6 +40,9 @@ import {
   DownloadIcon,
   PencilIcon,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import SaveTemplateDialog from "@/components/template/save-template-dialog";
 import CreateScheduleDialog from "@/components/schedule/create-schedule-dialog";
@@ -69,23 +71,24 @@ function QuoteListTableInner() {
   const search = searchParams.get("search") ?? "";
   const states = searchParams.get("states") ? searchParams.get("states")!.split(",") : [];
   const clientId = searchParams.get("client_id") ?? "";
+  const showArchived = searchParams.get("archived") === "true";
   const sortBy = searchParams.get("sort_by") ?? "created_at";
   const sortDirection = (searchParams.get("sort_direction") ?? "desc") as "asc" | "desc";
 
   const [items, setItems] = useState<QuoteListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [clients, setClients] = useState<BackendClient[]>([]);
-  const [myClientId, setMyClientId] = useState<string | null>(null);
   const [saveTemplateQuoteId, setSaveTemplateQuoteId] = useState<string | null>(null);
   const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false);
   const [scheduleQuoteId, setScheduleQuoteId] = useState<string | null>(null);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
 
-  function pushParams(p: { search?: string; states?: string[]; clientId?: string; page?: number; sortBy?: string; sortDirection?: string }) {
+  function pushParams(p: { search?: string; states?: string[]; clientId?: string; archived?: boolean; page?: number; sortBy?: string; sortDirection?: string }) {
     const next = new URLSearchParams();
     const s = p.search ?? search;
     const st = p.states ?? states;
     const cid = p.clientId ?? clientId;
+    const arc = p.archived ?? showArchived;
     const pg = p.page ?? 1;
     const sb = p.sortBy ?? sortBy;
     const sd = p.sortDirection ?? sortDirection;
@@ -93,21 +96,11 @@ function QuoteListTableInner() {
     if (s) next.set("search", s);
     if (st.length > 0) next.set("states", st.join(","));
     if (cid) next.set("client_id", cid);
+    if (arc) next.set("archived", "true");
     if (sb !== "created_at") next.set("sort_by", sb);
     if (sd !== "desc") next.set("sort_direction", sd);
     router.push(`${pathname}?${next.toString()}`);
   }
-
-  // Resolve customer's client_id once
-  useEffect(() => {
-    if (!isCustomer) return;
-    getMyClientProfiles().then(({ ok, body }) => {
-      if (ok && Array.isArray(body.clients) && body.clients.length > 0) {
-        const clients = body.clients as BackendClient[];
-        setMyClientId(clients[0].client_id);
-      }
-    });
-  }, [isCustomer]);
 
   // Load clients once for the combobox
   useEffect(() => {
@@ -122,27 +115,10 @@ function QuoteListTableInner() {
     params.set("sort_by", sortBy);
     params.set("sort_direction", sortDirection);
 
-    if (isCustomer) {
-      if (!myClientId) return;
-      params.set("client_id", myClientId);
-      const { ok, body } = await listMyQuotes(params.toString(), signal);
-      if (signal.aborted) return;
-      if (ok && Array.isArray(body.quotes)) {
-        const quotes = body.quotes as BackendQuote[];
-        setItems(quotes.map((q) => ({
-          id: q.quote_id,
-          projectName: q.name,
-          status: quoteListState(q),
-          totalTtc: q.total_ttc ?? 0,
-        })));
-        setTotal((body.total ?? 0) as number);
-      }
-      return;
-    }
-
     if (search) params.set("search", search);
     if (states.length > 0) params.set("states", states.join(","));
     if (clientId) params.set("client_id", clientId);
+    if (showArchived) params.set("archived", "true");
 
     const { ok, body } = await listQuotes(params.toString(), signal);
     if (signal.aborted) return;
@@ -157,7 +133,7 @@ function QuoteListTableInner() {
       setTotal((body.total ?? 0) as number);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, isCustomer, myClientId]);
+  }, [searchParams, isCustomer]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -234,13 +210,14 @@ function QuoteListTableInner() {
 
   const visibleItems = items;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const activeFilterCount = (states.length > 0 ? 1 : 0) + (clientId ? 1 : 0);
+  const activeFilterCount = (states.length > 0 ? 1 : 0) + (clientId ? 1 : 0) + (showArchived ? 1 : 0);
 
   const QUOTE_STATE_ITEMS = [
     { value: "draft", label: tStatus("draft") },
     { value: "negociation", label: tStatus("negociation") },
     { value: "validated", label: tStatus("validated") },
     { value: "drop", label: tStatus("drop") },
+    { value: "archived", label: tStatus("archived") },
   ];
 
   const clientItems = clients.map((c) => ({
@@ -263,7 +240,7 @@ function QuoteListTableInner() {
             title={tCommon("title")}
             resetLabel={tCommon("reset")}
             activeCount={activeFilterCount}
-            onReset={() => pushParams({ states: [], clientId: "" })}
+            onReset={() => pushParams({ states: [], clientId: "", archived: false })}
           >
             <FilterSidebarSection label={tFilters("statusLabel")}>
               <SelectCombobox
@@ -283,6 +260,16 @@ function QuoteListTableInner() {
                 placeholder={tFilters("clientPlaceholder")}
                 emptyLabel={tFilters("clientEmpty")}
               />
+            </FilterSidebarSection>
+            <FilterSidebarSection label={tFilters("archivedLabel")}>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="quote-archived"
+                  checked={showArchived}
+                  onCheckedChange={(checked) => pushParams({ archived: !!checked, page: 1 })}
+                />
+                <Label htmlFor="quote-archived">{tFilters("archivedCheckbox")}</Label>
+              </div>
             </FilterSidebarSection>
           </FilterSidebar>
         </div>
@@ -308,10 +295,17 @@ function QuoteListTableInner() {
           emptyColSpan={5}
           empty={<span className="text-muted-foreground">{t("empty")}</span>}
           render={(quote) => (
-            <DataTableRow key={quote.id}>
+            <DataTableRow key={quote.id} className={quote.status === "archived" ? "opacity-60" : undefined}>
               <DataTableCell>{quote.id}</DataTableCell>
               <DataTableCell>{quote.projectName}</DataTableCell>
-              <DataTableCell>{tStatus(quote.status)}</DataTableCell>
+              <DataTableCell>
+                <span className="flex items-center gap-2">
+                  {tStatus(quote.status)}
+                  {quote.status === "archived" && (
+                    <Badge variant="secondary">{tStatus("archived")}</Badge>
+                  )}
+                </span>
+              </DataTableCell>
               <DataTableCell className="tabular-nums">{formatEurosFromCents(quote.totalTtc)}</DataTableCell>
               <DataTableCell><DataTableRowActions id={quote.id} row={quote} /></DataTableCell>
             </DataTableRow>

@@ -9,6 +9,29 @@ Gerer le cycle de vie des devis:
 - lignes de devis
 - transitions d'etat metier
 
+## Archivage (devis et frais)
+
+### Devis
+
+| Champ DB | Comportement |
+| --- | --- |
+| `archived_at TIMESTAMP` | NULL = actif, timestamp = archive |
+
+- `ArchiveQuote` : `SET archived_at = NOW()` — uniquement si non deja archive
+- `RestoreQuote` : `SET archived_at = NULL` — uniquement si archive
+- `ListQuotes` : exclut les archives par defaut ; passer `include_archived=true` (param HTTP `?archived=true`) pour les inclure
+- L'interface expose une checkbox "Inclure les devis archives" dans la FilterSidebar du tableau de devis
+
+### Frais (`fees`)
+
+| Champ DB | Comportement |
+| --- | --- |
+| `archived_at TIMESTAMP` | NULL = actif, timestamp = archive (definitif) |
+
+- `ArchiveFee` : soft-delete sans restore — les lignes de devis existantes conservent leur snapshot
+- `ListFees` : exclut les archives par defaut ; passer `include_archived=true` pour les inclure
+- L'interface expose une checkbox "Inclure les frais archives" directement au-dessus du tableau des frais
+
 ## Point d'entree
 
 - `backend/quote/main.go`

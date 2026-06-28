@@ -65,13 +65,9 @@ Cypress.Commands.add("login", (opts: LoginOptions | string = {}) => {
     statusCode: 200,
     body: { success: true, clients: [] },
   });
-  cy.intercept("GET", "/api/users/clients/me", {
+  cy.intercept("GET", /\/api\/users\/clients\/_/, {
     statusCode: 200,
     body: { success: true, clients: [] },
-  });
-  cy.intercept("GET", /\/api\/users\/clients\/me\/addresses/, {
-    statusCode: 200,
-    body: { success: true, addresses: [] },
   });
   cy.intercept("GET", /^\/api\/users\/addresses(\?.*)?$/, {
     statusCode: 200,

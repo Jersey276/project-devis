@@ -83,8 +83,21 @@ export function SelectCombobox(props: SelectComboboxProps) {
   const [lastPropJson, setLastPropJson] = React.useState(incomingJson);
   const [mountKey, setMountKey] = React.useState(0);
 
+  // Track whether the current value(s) were resolvable at last mount.
+  // If items arrive later (async load) and a value was unresolvable before,
+  // force a remount so base-ui picks up the correct label.
+  const valueIsResolvable = !props.multiple
+    ? !props.value || items.some((i) => i.value === props.value)
+    : true;
+  const [lastResolvable, setLastResolvable] = React.useState(valueIsResolvable);
+
   if (incomingJson !== lastPropJson) {
     setLastPropJson(incomingJson);
+    setLastResolvable(valueIsResolvable);
+    setMountKey((k) => k + 1);
+  } else if (!lastResolvable && valueIsResolvable) {
+    // Items loaded after mount — value can now be resolved, remount to show label.
+    setLastResolvable(true);
     setMountKey((k) => k + 1);
   }
 

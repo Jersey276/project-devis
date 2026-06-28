@@ -17,8 +17,8 @@ export async function listTemplates(
   options: { archived?: boolean; type?: BackendTemplateType } = {},
 ): Promise<ApiResult> {
   const params = new URLSearchParams();
-  if (options.archived) params.set("archived", "true");
   if (options.type) params.set("type", options.type);
+  if (options.archived) params.set("archived", "true");
   const qs = params.toString();
   return apiFetch(`/api/templates${qs ? `?${qs}` : ""}`);
 }

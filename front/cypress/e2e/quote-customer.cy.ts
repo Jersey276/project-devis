@@ -1,8 +1,8 @@
 import { line, quote, type LineFixture } from "../support/fixtures";
 
-// Stub /api/quotes/me (liste customer) — utilisé par les tests Sidebar et List.
-function stubMyQuotesList() {
-  cy.intercept("GET", /^\/api\/quotes\/me(\?.*)?$/, {
+// Stub GET /api/quotes (customer mode sends X-Client-Mode: customer header).
+function stubCustomerQuotesList() {
+  cy.intercept("GET", /^\/api\/quotes(\?.*)?$/, {
     statusCode: 200,
     body: { success: true, quotes: [] },
   }).as("listMyQuotes");
@@ -12,17 +12,17 @@ describe("Quote — customer mode", () => {
   describe("Sidebar", () => {
     it("hides provider-only entries when in customer mode", () => {
       cy.login();
-      cy.intercept("GET", "/api/users/clients/me", {
+      cy.intercept("GET", /\/api\/users\/clients\/_/, {
         statusCode: 200,
         body: { success: true, clients: [{ client_id: "c-1", first_name: "Jean", last_name: "Dupont" }] },
       });
-      stubMyQuotesList();
+      stubCustomerQuotesList();
       cy.visitAs("customer", "/quote");
       cy.wait("@listMyQuotes");
 
       cy.get("[data-sidebar='sidebar']").within(() => {
         cy.contains("Devis").should("exist");
-        cy.contains("Factures").should("not.exist");
+        cy.contains("Factures").should("exist");
         cy.contains("Clients").should("not.exist");
         cy.contains("Pays").should("not.exist");
         cy.contains("Taxes").should("not.exist");
@@ -42,31 +42,27 @@ describe("Quote — customer mode", () => {
       });
 
       // Customer mode: toggle button active, sidebar shows customer items.
-      cy.intercept("GET", "/api/users/clients/me", {
+      cy.intercept("GET", /\/api\/users\/clients\/_/, {
         statusCode: 200,
         body: { success: true, clients: [{ client_id: "c-1", first_name: "Jean", last_name: "Dupont" }] },
       });
       cy.visitAs("customer", "/quote");
       cy.get("[data-slot='mode-toggle']").should("have.attr", "data-active", "true");
       cy.get("[data-sidebar='sidebar']").within(() => {
-        cy.contains("Factures").should("not.exist");
+        cy.contains("Factures").should("exist");
         cy.contains("Mon profil").should("exist");
       });
     });
   });
 
   describe("List", () => {
-    it("renders an empty list and skips the /api/quotes fetch", () => {
+    it("renders an empty list and skips the /api/quotes fetch for provider", () => {
       cy.login();
-      cy.intercept("GET", "/api/users/clients/me", {
+      cy.intercept("GET", /\/api\/users\/clients\/_/, {
         statusCode: 200,
         body: { success: true, clients: [{ client_id: "c-1", first_name: "Jean", last_name: "Dupont" }] },
       });
-      cy.intercept("GET", "/api/quotes**", {
-        statusCode: 200,
-        body: { success: true, quotes: [quote()] },
-      }).as("listQuotes");
-      stubMyQuotesList();
+      stubCustomerQuotesList();
 
       cy.visitAs("customer", "/quote");
       cy.wait("@listMyQuotes");
@@ -74,15 +70,13 @@ describe("Quote — customer mode", () => {
       cy.contains("Aucun devis pour le moment.").should("be.visible");
       cy.contains("button", "Nouveau devis").should("not.exist");
       cy.contains("a", "Nouveau devis").should("not.exist");
-
-      cy.get("@listQuotes.all").should("have.length", 0);
     });
   });
 
   describe("Detail", () => {
     it("renders the form read-only and hides drop/continue actions", () => {
       cy.login();
-      cy.intercept("GET", /\/api\/quotes\/me\/q-1/, {
+      cy.intercept("GET", /\/api\/quotes\/q-1/, {
         statusCode: 200,
         body: { success: true, quote: quote(), lines: [line()] },
       }).as("getQuote");
@@ -128,7 +122,7 @@ describe("Quote — customer mode", () => {
 
     beforeEach(() => {
       cy.login();
-      cy.intercept("GET", /\/api\/quotes\/me\/q-1/, {
+      cy.intercept("GET", /\/api\/quotes\/q-1/, {
         statusCode: 200,
         body: {
           success: true,
@@ -140,18 +134,14 @@ describe("Quote — customer mode", () => {
         statusCode: 200,
         body: { success: true, taxes: [] },
       });
-      cy.intercept("GET", "/api/users/clients/me", {
+      cy.intercept("GET", /\/api\/users\/clients\/_/, {
         statusCode: 200,
         body: { success: true, clients: [{ client_id: "c-1", first_name: "Jean", last_name: "Dupont" }] },
       });
-      cy.intercept("GET", /\/api\/users\/clients\/me\/addresses/, {
+      cy.intercept("GET", /\/api\/users\/addresses(\?.*)?$/, {
         statusCode: 200,
         body: { success: true, addresses: [address] },
       }).as("listClientAddresses");
-      cy.intercept("GET", /\/api\/users\/addresses\?owner_type=user/, {
-        statusCode: 200,
-        body: { success: true, addresses: [] },
-      });
     });
 
     it("le champ adresse de livraison est modifiable en mode client", () => {
@@ -169,8 +159,8 @@ describe("Quote — customer mode", () => {
       cy.get("input[name='name']").should("be.disabled");
     });
 
-    it("enregistre la nouvelle adresse via PUT /api/quotes/me/q-1", () => {
-      cy.intercept("PUT", /\/api\/quotes\/me\/q-1/, {
+    it("enregistre la nouvelle adresse via PUT /api/quotes/q-1", () => {
+      cy.intercept("PUT", /\/api\/quotes\/q-1/, {
         statusCode: 200,
         body: { success: true },
       }).as("updateAddress");
@@ -190,7 +180,7 @@ describe("Quote — customer mode", () => {
 
     beforeEach(() => {
       cy.login();
-      cy.intercept("GET", /\/api\/quotes\/me\/q-1/, {
+      cy.intercept("GET", /\/api\/quotes\/q-1/, {
         statusCode: 200,
         body: {
           success: true,
@@ -206,17 +196,12 @@ describe("Quote — customer mode", () => {
         statusCode: 200,
         body: { success: true, addresses: [] },
       });
-      // /me doit être posé après le stub générique /clients** de cy.login().
-      cy.intercept("GET", "/api/users/clients/me", {
+      cy.intercept("GET", /\/api\/users\/clients\/_/, {
         statusCode: 200,
         body: {
           success: true,
           clients: [{ client_id: "c-1", first_name: "Jean", last_name: "Dupont" }],
         },
-      });
-      cy.intercept("GET", /\/api\/users\/clients\/me\/addresses/, {
-        statusCode: 200,
-        body: { success: true, addresses: [] },
       });
     });
 

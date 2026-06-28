@@ -25,8 +25,11 @@ import {
   DataTableSortableHead,
   type DataTableRowAction,
 } from "@/components/custom/data-table";
-import { Trash2Icon, PencilIcon, PlusIcon } from "lucide-react";
+import { ArchiveIcon, Trash2Icon, PencilIcon, PlusIcon } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { listFees, archiveFee } from "@/lib/services/fees";
 import FeeDialog from "./fee-dialog";
 import type { BackendFee } from "@/types/backend";
@@ -37,13 +40,14 @@ export default function FeesTable() {
   const tCommon = useTranslations("common");
   const { key: reloadKey, reload } = useReloadKey();
   const [fees, setFees] = useState<BackendFee[]>([]);
+  const [showArchived, setShowArchived] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<BackendFee | null>(null);
   const [pendingDelete, setPendingDelete] = useState<BackendFee | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    listFees().then(({ ok, body }) => {
+    listFees(showArchived).then(({ ok, body }) => {
       if (cancelled) return;
       if (ok && Array.isArray(body.fees)) {
         setFees(body.fees as BackendFee[]);
@@ -52,7 +56,7 @@ export default function FeesTable() {
     return () => {
       cancelled = true;
     };
-  }, [reloadKey]);
+  }, [reloadKey, showArchived]);
 
   function openCreate() {
     setEditing(null);
@@ -97,7 +101,15 @@ export default function FeesTable() {
 
   return (
     <div className="grid gap-4">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="fee-archived"
+            checked={showArchived}
+            onCheckedChange={(checked) => setShowArchived(!!checked)}
+          />
+          <Label htmlFor="fee-archived">{t("showArchivedLabel")}</Label>
+        </div>
         <Button type="button" onClick={openCreate}>
           <PlusIcon />
           {t("newButton")}
@@ -126,8 +138,18 @@ export default function FeesTable() {
           emptyColSpan={5}
           empty={<span className="text-muted-foreground">{t("empty")}</span>}
           render={(fee) => (
-            <DataTableRow key={fee.fee_id}>
-              <DataTableCell>{fee.name}</DataTableCell>
+            <DataTableRow key={fee.fee_id} className={fee.archived ? "opacity-60" : undefined}>
+              <DataTableCell>
+                <span className="flex items-center gap-2">
+                  {fee.name}
+                  {fee.archived && (
+                    <Badge variant="secondary" className="gap-1 text-xs">
+                      <ArchiveIcon className="size-3" />
+                      {t("archivedBadge")}
+                    </Badge>
+                  )}
+                </span>
+              </DataTableCell>
               <DataTableCell>{tCategories(fee.category)}</DataTableCell>
               <DataTableCell>{fee.unit || "—"}</DataTableCell>
               <DataTableCell>{formatPrice(fee.unit_price)}</DataTableCell>

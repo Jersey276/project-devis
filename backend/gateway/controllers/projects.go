@@ -11,6 +11,7 @@ import (
 	project "gateway/project"
 	quote "gateway/quote"
 	schedule "gateway/schedule"
+	users "gateway/users"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/sync/errgroup"
@@ -55,6 +56,16 @@ func ProjectsRoutes(r *gin.RouterGroup) {
 	}
 	client := project.NewProjectServiceClient(conn)
 
+	usersAddr := os.Getenv("USERS_SERVICE_ADDRESS")
+	if usersAddr == "" {
+		usersAddr = "localhost:50052"
+	}
+	usersConn, err := grpc.NewClient(usersAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic("project: failed to connect to users service: " + err.Error())
+	}
+	usersClient := users.NewUserServiceClient(usersConn)
+
 	// Downstream clients for the aggregated detail endpoint
 	quoteAddr := os.Getenv("QUOTE_SERVICE_ADDRESS")
 	if quoteAddr == "" {
@@ -86,7 +97,7 @@ func ProjectsRoutes(r *gin.RouterGroup) {
 	}
 	invoiceClient := invoice.NewInvoiceServiceClient(invoiceConn)
 
-	r.GET("", func(c *gin.Context) { listProjects(c, client) })
+	r.GET("", func(c *gin.Context) { listProjects(c, client, usersClient) })
 	r.POST("", func(c *gin.Context) { createProject(c, client) })
 	r.GET("/:id", func(c *gin.Context) { getProject(c, client) })
 	r.PUT("/:id", func(c *gin.Context) { updateProject(c, client) })
@@ -98,10 +109,20 @@ func ProjectsRoutes(r *gin.RouterGroup) {
 	})
 }
 
-func listProjects(c *gin.Context, client project.ProjectServiceClient) {
+func listProjects(c *gin.Context, client project.ProjectServiceClient, usersClient users.UserServiceClient) {
 	userID := userIDFromCtx(c)
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
+
+	clientID := c.Query("client_id")
+	if c.GetHeader("X-Client-Mode") == "customer" {
+		linked := resolveMyClient(c, usersClient)
+		if linked == nil {
+			return
+		}
+		userID = linked.UserId
+		clientID = linked.ClientId
+	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
@@ -112,7 +133,7 @@ func listProjects(c *gin.Context, client project.ProjectServiceClient) {
 		PageSize:      int32(pageSize),
 		Search:        c.Query("search"),
 		Status:        c.Query("status"),
-		ClientId:      c.Query("client_id"),
+		ClientId:      clientID,
 		SortBy:        c.Query("sort_by"),
 		SortDirection: c.Query("sort_direction"),
 	})
