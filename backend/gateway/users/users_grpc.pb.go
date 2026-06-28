@@ -29,6 +29,7 @@ const (
 	UserService_UpdateAdminAccount_FullMethodName       = "/users.UserService/UpdateAdminAccount"
 	UserService_SuspendAdminAccount_FullMethodName      = "/users.UserService/SuspendAdminAccount"
 	UserService_TouchUserLastLogin_FullMethodName       = "/users.UserService/TouchUserLastLogin"
+	UserService_UpdateUserEmail_FullMethodName          = "/users.UserService/UpdateUserEmail"
 	UserService_CreateClient_FullMethodName             = "/users.UserService/CreateClient"
 	UserService_GetClient_FullMethodName                = "/users.UserService/GetClient"
 	UserService_ListClients_FullMethodName              = "/users.UserService/ListClients"
@@ -77,6 +78,7 @@ type UserServiceClient interface {
 	UpdateAdminAccount(ctx context.Context, in *UpdateAdminAccountRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	SuspendAdminAccount(ctx context.Context, in *SuspendAdminAccountRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	TouchUserLastLogin(ctx context.Context, in *TouchUserLastLoginRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	UpdateUserEmail(ctx context.Context, in *UpdateUserEmailRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	// Client
 	CreateClient(ctx context.Context, in *CreateClientRequest, opts ...grpc.CallOption) (*CreateClientResponse, error)
 	GetClient(ctx context.Context, in *GetClientRequest, opts ...grpc.CallOption) (*GetClientResponse, error)
@@ -217,6 +219,16 @@ func (c *userServiceClient) TouchUserLastLogin(ctx context.Context, in *TouchUse
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GenericResponse)
 	err := c.cc.Invoke(ctx, UserService_TouchUserLastLogin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) UpdateUserEmail(ctx context.Context, in *UpdateUserEmailRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, UserService_UpdateUserEmail_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -548,6 +560,7 @@ type UserServiceServer interface {
 	UpdateAdminAccount(context.Context, *UpdateAdminAccountRequest) (*GenericResponse, error)
 	SuspendAdminAccount(context.Context, *SuspendAdminAccountRequest) (*GenericResponse, error)
 	TouchUserLastLogin(context.Context, *TouchUserLastLoginRequest) (*GenericResponse, error)
+	UpdateUserEmail(context.Context, *UpdateUserEmailRequest) (*GenericResponse, error)
 	// Client
 	CreateClient(context.Context, *CreateClientRequest) (*CreateClientResponse, error)
 	GetClient(context.Context, *GetClientRequest) (*GetClientResponse, error)
@@ -623,6 +636,9 @@ func (UnimplementedUserServiceServer) SuspendAdminAccount(context.Context, *Susp
 }
 func (UnimplementedUserServiceServer) TouchUserLastLogin(context.Context, *TouchUserLastLoginRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method TouchUserLastLogin not implemented")
+}
+func (UnimplementedUserServiceServer) UpdateUserEmail(context.Context, *UpdateUserEmailRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateUserEmail not implemented")
 }
 func (UnimplementedUserServiceServer) CreateClient(context.Context, *CreateClientRequest) (*CreateClientResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateClient not implemented")
@@ -914,6 +930,24 @@ func _UserService_TouchUserLastLogin_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).TouchUserLastLogin(ctx, req.(*TouchUserLastLoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_UpdateUserEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUserEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UpdateUserEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_UpdateUserEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UpdateUserEmail(ctx, req.(*UpdateUserEmailRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1522,6 +1556,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "TouchUserLastLogin",
 			Handler:    _UserService_TouchUserLastLogin_Handler,
+		},
+		{
+			MethodName: "UpdateUserEmail",
+			Handler:    _UserService_UpdateUserEmail_Handler,
 		},
 		{
 			MethodName: "CreateClient",

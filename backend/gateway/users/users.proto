@@ -16,6 +16,7 @@ service UserService {
     rpc UpdateAdminAccount(UpdateAdminAccountRequest) returns (GenericResponse);
     rpc SuspendAdminAccount(SuspendAdminAccountRequest) returns (GenericResponse);
     rpc TouchUserLastLogin(TouchUserLastLoginRequest) returns (GenericResponse);
+    rpc UpdateUserEmail(UpdateUserEmailRequest) returns (GenericResponse);
 
     // Client
     rpc CreateClient(CreateClientRequest) returns (CreateClientResponse);
@@ -89,6 +90,7 @@ message User {
 
 message CreateUserRequest {
     string email = 1;
+    bool is_admin = 2;
 }
 
 message CreateUserResponse {
@@ -118,6 +120,8 @@ message UpdateUserRequest {
     string iban = 8;
     string bic = 9;
     string siret = 10;
+    string first_name = 11;
+    string last_name = 12;
 }
 
 message UpdateUserResponse {
@@ -160,12 +164,14 @@ message AdminAccount {
     string company = 10;
     string siren = 11;
     string vat = 12;
+    string created_at = 13;
 }
 
 message ListAdminAccountsRequest {
     string search = 1;
     repeated string roles = 2;
     repeated string statuses = 3;
+    string user_id = 4;
 }
 
 message ListAdminAccountsResponse {
@@ -193,6 +199,11 @@ message SuspendAdminAccountRequest {
 
 message TouchUserLastLoginRequest {
     string user_id = 1;
+}
+
+message UpdateUserEmailRequest {
+    string user_id   = 1;
+    string new_email = 2;
 }
 
 // ─── Client ──────────────────────────────────────────────────────────────────
