@@ -132,7 +132,6 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quoteId, t]);
 
   useEffect(() => {
@@ -387,7 +386,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       setErrors((prev) => ({ ...prev, address_id: [] }));
       if (!quoteId || value == null) return;
       if (isCustomer) {
-        void updateQuote(quoteId, { name: projectName, addressId: value }).then(
+        void updateQuote(quoteId, { name: projectNameRef.current, addressId: value }).then(
           ({ ok, body }) => {
             if (!ok || !body.success) {
               toast.error(

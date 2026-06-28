@@ -88,7 +88,6 @@ export default function PlansTable() {
   const [formName, setFormName] = useState("");
   const [formPriceEuros, setFormPriceEuros] = useState("");
   const [formBillingCycle, setFormBillingCycle] = useState<string>("none");
-  const [formStripePriceId, setFormStripePriceId] = useState("");
   const [formFeatures, setFormFeatures] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -109,7 +108,6 @@ export default function PlansTable() {
     setFormName(plan.name);
     setFormPriceEuros(centsToEuros(plan.price_cents));
     setFormBillingCycle(plan.billing_cycle);
-    setFormStripePriceId(plan.stripe_price_id ?? "");
     const parsed = parsePlanFeatures(plan.features);
     const initialFeatures: Record<string, number> = {};
     for (const key of PLAN_FEATURE_KEYS) {
@@ -128,7 +126,6 @@ export default function PlansTable() {
         name: formName,
         price_cents: eurosToCents(formPriceEuros),
         billing_cycle: formBillingCycle,
-        stripe_price_id: formStripePriceId,
         features: JSON.stringify(formFeatures),
       });
       if (ok && body.success) {
@@ -264,15 +261,10 @@ export default function PlansTable() {
               </Select>
             </Field>
             <Field>
-              <FieldLabel htmlFor="plan_stripe_price_id">
-                {t("editDialog.stripePriceIdLabel")}
-              </FieldLabel>
-              <Input
-                id="plan_stripe_price_id"
-                placeholder="price_xxx"
-                value={formStripePriceId}
-                onChange={(e) => setFormStripePriceId(e.target.value)}
-              />
+              <FieldLabel>{t("editDialog.stripePriceIdLabel")}</FieldLabel>
+              <p className="font-mono text-xs text-muted-foreground">
+                {editing?.stripe_price_id || "—"}
+              </p>
               <FieldDescription>
                 {t("editDialog.stripePriceIdHint")}
               </FieldDescription>

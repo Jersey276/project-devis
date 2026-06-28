@@ -48,7 +48,18 @@ const PRO_SUB = {
   current_period_end: "2026-07-01T00:00:00Z",
   cancel_at_period_end: false,
   stripe_subscription_id: "sub_stripe_123",
+  pending_plan_id: null as number | null,
   updated_at: "2026-01-01T00:00:00Z",
+};
+
+const PRO_SUB_CANCELLING = {
+  ...PRO_SUB,
+  cancel_at_period_end: true,
+};
+
+const PRO_SUB_PENDING_ENTERPRISE = {
+  ...PRO_SUB,
+  pending_plan_id: 3,
 };
 
 function stubSubscriptionTab(subscription = FREE_SUB) {
@@ -152,5 +163,67 @@ describe("Profile — Subscription tab", () => {
     cy.contains("button", "S'abonner").first().click();
     cy.wait("@createIntent");
     cy.contains("Passer au plan").should("be.visible");
+  });
+
+  it("pro user sees 'Passer à ce plan' button instead of S'abonner for Enterprise", () => {
+    stubSubscriptionTab(PRO_SUB);
+    cy.visit("/profile?tab=abonnement");
+    cy.wait("@getMySub");
+    cy.wait("@getPlans");
+
+    cy.contains("button", "Passer à ce plan").should("be.visible");
+    cy.contains("button", "S'abonner").should("not.exist");
+  });
+
+  it("'Passer à ce plan' calls change-plan and shows success toast", () => {
+    stubSubscriptionTab(PRO_SUB);
+    cy.intercept("POST", "/api/subscriptions/change-plan", {
+      statusCode: 200,
+      body: { success: true },
+    }).as("changePlan");
+
+    cy.visit("/profile?tab=abonnement");
+    cy.wait("@getMySub");
+    cy.wait("@getPlans");
+
+    cy.contains("button", "Passer à ce plan").click();
+    cy.wait("@changePlan");
+    cy.contains("Changement de plan programmé.").should("be.visible");
+  });
+
+  it("cancelling user sees 'Annuler la résiliation' button", () => {
+    stubSubscriptionTab(PRO_SUB_CANCELLING);
+    cy.visit("/profile?tab=abonnement");
+    cy.wait("@getMySub");
+    cy.wait("@getPlans");
+
+    cy.contains("Résiliation en cours").should("be.visible");
+    cy.contains("button", "Annuler la résiliation").should("be.visible");
+  });
+
+  it("'Annuler la résiliation' calls reactivate and shows success toast", () => {
+    stubSubscriptionTab(PRO_SUB_CANCELLING);
+    cy.intercept("POST", "/api/subscriptions/reactivate", {
+      statusCode: 200,
+      body: { success: true },
+    }).as("reactivate");
+
+    cy.visit("/profile?tab=abonnement");
+    cy.wait("@getMySub");
+    cy.wait("@getPlans");
+
+    cy.contains("button", "Annuler la résiliation").click();
+    cy.wait("@reactivate");
+    cy.contains("Abonnement réactivé.").should("be.visible");
+  });
+
+  it("pending plan badge shown when pending_plan_id is set", () => {
+    stubSubscriptionTab(PRO_SUB_PENDING_ENTERPRISE);
+    cy.visit("/profile?tab=abonnement");
+    cy.wait("@getMySub");
+    cy.wait("@getPlans");
+
+    cy.contains("Changement prévu").should("be.visible");
+    cy.contains("Passage à Enterprise prévu le").should("be.visible");
   });
 });

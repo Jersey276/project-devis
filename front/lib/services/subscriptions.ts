@@ -33,6 +33,17 @@ export async function cancelSubscription(): Promise<ApiResult> {
   return apiFetch("/api/subscriptions/cancel", { method: "POST" });
 }
 
+export async function changePlan(planId: number): Promise<ApiResult> {
+  return apiFetch("/api/subscriptions/change-plan", {
+    method: "POST",
+    body: JSON.stringify({ plan_id: planId }),
+  });
+}
+
+export async function reactivateSubscription(): Promise<ApiResult> {
+  return apiFetch("/api/subscriptions/reactivate", { method: "POST" });
+}
+
 export async function getAdminStats(): Promise<ApiResult> {
   return apiFetch("/api/subscriptions/admin/stats");
 }
@@ -47,7 +58,6 @@ export async function updatePlan(
     name: string;
     price_cents: number;
     billing_cycle: string;
-    stripe_price_id: string;
     features: string;
   },
 ): Promise<ApiResult> {
