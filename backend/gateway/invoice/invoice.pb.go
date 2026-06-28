@@ -3245,7 +3245,7 @@ const file_invoice_invoice_proto_rawDesc = "" +
 	"\n" +
 	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1b\n" +
-	"\tclient_id\x18\x03 \x01(\tR\bclientId\"\xf3\x03\n" +
+	"\tclient_id\x18\x03 \x01(\tR\bclientId\"\xd8\x03\n" +
 	"\fInvoiceParty\x12\x18\n" +
 	"\acompany\x18\x01 \x01(\tR\acompany\x12\x1d\n" +
 	"\n" +
@@ -3254,8 +3254,7 @@ const file_invoice_invoice_proto_rawDesc = "" +
 	"\x05siren\x18\x04 \x01(\tR\x05siren\x12\x10\n" +
 	"\x03vat\x18\x05 \x01(\tR\x03vat\x12\x14\n" +
 	"\x05email\x18\x06 \x01(\tR\x05email\x12\x14\n" +
-	"\x05phone\x18\a \x01(\tR\x05phone\x12\x19\n" +
-	"\blogo_url\x18\b \x01(\tR\alogoUrl\x12\x16\n" +
+	"\x05phone\x18\a \x01(\tR\x05phone\x12\x16\n" +
 	"\x06street\x18\t \x01(\tR\x06street\x12+\n" +
 	"\x11additional_street\x18\n" +
 	" \x01(\tR\x10additionalStreet\x12\x19\n" +
