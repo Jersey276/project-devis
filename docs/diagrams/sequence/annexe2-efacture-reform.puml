@@ -1,0 +1,60 @@
+@startuml annexe2-efacture-reform
+' Annexe 2 — Réforme facturation électronique (France, 2026)
+' Acteurs : Prestataire (émetteur), Client B2B (destinataire), PA/PDP, DGFiP
+' Date : 2026-06-28
+
+skinparam sequenceArrowThickness 1.5
+skinparam participantPadding 10
+skinparam defaultFontSize 12
+skinparam noteFontSize 11
+skinparam backgroundColor white
+
+scale max 2480*3508
+
+actor "Prestataire\n(émetteur)" as EMIT
+participant "Quotinvoice\n(service facture)" as APP
+participant "PDP / PA\n(ex. Iopole)" as PDP
+participant "PPF\n(Portail Public\nde Facturation)" as PPF
+participant "DGFiP\n(administration fiscale)" as DGFIP
+actor "Client B2B\n(destinataire)" as RECV
+
+== Émission d'une facture B2B (via PDP/PA) ==
+
+EMIT -> APP : Émettre la facture
+APP -> APP : Générer Factur-X\n(PDF/A-3 + XML EN 16931)
+APP -> PDP : Déposer la facture\n(SubmitInvoice)
+note right of PDP
+  La PDP valide le format
+  et route vers le PPF
+end note
+PDP -> PPF : Transmission\n(annuaire SIREN destinataire)
+PPF -> RECV : Mise à disposition\nde la facture
+
+== Données de transaction transmises à l'État ==
+
+PDP -> DGFIP : e-reporting\n(transactions B2B / B2C)
+note right of DGFIP
+  Déclaration mensuelle
+  des totaux HT + TVA
+end note
+
+== Accusés de réception (lifecycle) ==
+
+RECV -> PPF : Accusé de réception\n(RECEIVED)
+PPF -> PDP : Mise à jour statut
+PDP -> APP : Callback statut\nRECEIVED → APPROVED / REJECTED
+
+APP --> EMIT : Notification statut\nfacture e-invoicing
+
+== Cas particulier : B2C (particuliers) ==
+
+note over APP, DGFIP
+  Facturation B2C (particuliers) :
+  pas de transmission directe vers le client.
+  L'émetteur produit un Factur-X pour archive,
+  et déclare ses totaux en e-reporting mensuel.
+  Régime OSS applicable pour la TVA UE
+  au-delà de 10 000 €/an.
+end note
+
+@enduml

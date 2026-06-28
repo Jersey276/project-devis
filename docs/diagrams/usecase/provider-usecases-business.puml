@@ -1,0 +1,66 @@
+@startuml provider-usecases-business
+' Cas d'utilisation — Prestataire : Clients, Devis, Frais & Templates
+' <<subscription>> = fonctionnalité soumise à abonnement payant
+' Date : 2026-06-27
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam defaultFontSize 12
+
+actor "Prestataire" as P
+
+package "Gestion clients" {
+  usecase "Créer un client\n(B2C individuel ou B2B entreprise)" as UC_CREATE_CLIENT
+  usecase "Modifier / archiver un client" as UC_EDIT_CLIENT
+  usecase "Consulter la liste des clients" as UC_LIST_CLIENT
+  usecase "Gérer les adresses d'un client" as UC_CLIENT_ADDR
+  usecase "Inviter un client\n(envoie un lien d'invitation)" as UC_INVITE_CLIENT
+}
+
+package "Gestion des devis" {
+  usecase "Créer un devis" as UC_CREATE_QUOTE
+  usecase "Modifier un devis\n(info, lignes, taxes)" as UC_EDIT_QUOTE
+  usecase "Consulter la liste des devis" as UC_LIST_QUOTE
+  usecase "Valider un devis" as UC_VALIDATE_QUOTE
+  usecase "Envoyer en négociation\n(export PDF + email client)" as UC_NEGO_QUOTE
+  usecase "Archiver / restaurer un devis" as UC_ARCHIVE_QUOTE
+  usecase "Abandonner un devis" as UC_DROP_QUOTE
+  usecase "Commenter une ligne de devis" as UC_COMMENT_QUOTE
+  usecase "Exporter un devis en PDF" as UC_EXPORT_QUOTE
+}
+
+package "Catalogue de frais\n<<subscription>>" {
+  usecase "Créer / modifier un frais" as UC_FEE
+  usecase "Utiliser un frais dans un devis" as UC_USE_FEE
+}
+
+package "Templates\n<<subscription>>" {
+  usecase "Créer un template de lignes\nou de devis" as UC_CREATE_TPL
+  usecase "Appliquer un template à un devis" as UC_USE_TPL
+}
+
+P --> UC_CREATE_CLIENT
+P --> UC_EDIT_CLIENT
+P --> UC_LIST_CLIENT
+P --> UC_CLIENT_ADDR
+P --> UC_INVITE_CLIENT
+
+P --> UC_CREATE_QUOTE
+P --> UC_EDIT_QUOTE
+P --> UC_LIST_QUOTE
+P --> UC_VALIDATE_QUOTE
+P --> UC_NEGO_QUOTE
+P --> UC_ARCHIVE_QUOTE
+P --> UC_DROP_QUOTE
+P --> UC_COMMENT_QUOTE
+P --> UC_EXPORT_QUOTE
+
+P --> UC_FEE
+P --> UC_USE_FEE
+
+P --> UC_CREATE_TPL
+P --> UC_USE_TPL
+
+UC_NEGO_QUOTE ..> UC_EXPORT_QUOTE : <<include>>
+
+@enduml

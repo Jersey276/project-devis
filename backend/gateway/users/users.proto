@@ -83,6 +83,8 @@ message User {
     string iban = 10;
     string bic = 11;
     string siret = 12;
+    string first_name = 13;
+    string last_name = 14;
 }
 
 message CreateUserRequest {

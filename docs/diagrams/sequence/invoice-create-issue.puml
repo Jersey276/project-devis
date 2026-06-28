@@ -7,7 +7,7 @@ skinparam participantPadding 10
 skinparam boxPadding 10
 
 ' Mise en page A4 portrait
-scale max 794*1122
+scale max 2480*3508
 skinparam defaultFontSize 12
 
 actor "Prestataire" as User

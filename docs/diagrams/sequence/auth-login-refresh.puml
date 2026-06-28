@@ -6,7 +6,7 @@ skinparam sequenceArrowThickness 1.5
 skinparam participantPadding 10
 
 ' Mise en page A4 portrait
-scale max 794*1122
+scale max 2480*3508
 skinparam defaultFontSize 12
 
 actor "Utilisateur" as User
