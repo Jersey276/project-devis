@@ -24,8 +24,8 @@ func Update(ctx context.Context, db *sql.DB, req *usersGrpc.UpdateUserRequest) (
 	}
 
 	res, err := db.ExecContext(ctx,
-		`UPDATE users SET phone=$1, company=$2, siren=$3, vat=$4, logo_url=$5, oss_enabled=$6, iban=$7, bic=$8, siret=$9, first_name=$10, last_name=$11, updated_at=NOW() WHERE user_id=$12`,
-		sqlutil.NullableStr(req.Phone), sqlutil.NullableStr(req.Company), sqlutil.NullableStr(req.Siren), sqlutil.NullableStr(req.Vat), sqlutil.NullableStr(req.LogoUrl), req.OssEnabled, sqlutil.NullableStr(req.Iban), sqlutil.NullableStr(req.Bic), sqlutil.NullableStr(sqlutil.NormalizeSIRET(req.Siret)), sqlutil.NullableStr(req.FirstName), sqlutil.NullableStr(req.LastName), req.UserId,
+		`UPDATE users SET phone=$1, company=$2, siren=$3, vat=$4, oss_enabled=$5, iban=$6, bic=$7, siret=$8, first_name=$9, last_name=$10, updated_at=NOW() WHERE user_id=$11`,
+		sqlutil.NullableStr(req.Phone), sqlutil.NullableStr(req.Company), sqlutil.NullableStr(req.Siren), sqlutil.NullableStr(req.Vat), req.OssEnabled, sqlutil.NullableStr(req.Iban), sqlutil.NullableStr(req.Bic), sqlutil.NullableStr(sqlutil.NormalizeSIRET(req.Siret)), sqlutil.NullableStr(req.FirstName), sqlutil.NullableStr(req.LastName), req.UserId,
 	)
 	if err != nil {
 		return &usersGrpc.UpdateUserResponse{Success: false, Code: codes.InternalError}, err

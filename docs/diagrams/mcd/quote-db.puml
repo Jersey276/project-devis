@@ -1,0 +1,101 @@
+@startuml quote-db
+' MCD — Service Quote (DB : quote)
+' Date : 2026-06-27
+
+skinparam linetype ortho
+hide empty methods
+
+' Mise en page A4 portrait
+scale 2
+skinparam defaultFontSize 14
+skinparam EntityFontSize 14
+skinparam EntityHeaderFontSize 15
+skinparam EntityHeaderFontStyle bold
+skinparam noteFontSize 13
+skinparam ArrowFontSize 13
+
+entity "quotes" as Q {
+  * id : SERIAL <<PK>>
+  --
+  * quote_id : TEXT <<UNIQUE>>
+  * user_id : TEXT
+  * name : TEXT
+  * state : TEXT\n  (DRAFT | VALIDATED | NEGOCIATION\n   | ACCEPTED | REFUSED | DROP)
+  client_id : TEXT
+  address_id : TEXT
+  user_address_id : TEXT
+  * issued_at : TIMESTAMPTZ
+  valid_until : DATE
+  payment_terms : TEXT
+  archived_at : TIMESTAMP
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+entity "quote_lines" as QL {
+  * id : SERIAL <<PK>>
+  --
+  * line_id : TEXT <<UNIQUE>>
+  * quote_id : TEXT <<FK>>
+  * type : TEXT (simple | multiple)
+  * name : TEXT
+  * quantity : DECIMAL(12,3)
+  unit : TEXT
+  * unit_price : BIGINT (centimes)
+  * data : JSONB
+  * position : INTEGER
+  tax_id : INTEGER
+  fee_id : TEXT
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+entity "quote_line_comments" as QLC {
+  * comment_id : UUID <<PK>>
+  --
+  * line_id : TEXT <<FK>>
+  * quote_id : TEXT
+  * author_id : TEXT
+  * author_name : TEXT
+  * body : TEXT
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+
+entity "fees" as F {
+  * id : SERIAL <<PK>>
+  --
+  * fee_id : TEXT <<UNIQUE>>
+  * user_id : TEXT
+  * category : TEXT (fixed | service)
+  * name : TEXT
+  unit : TEXT
+  * unit_price : BIGINT (centimes)
+  tax_id : INTEGER
+  archived_at : TIMESTAMP
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+Q ||--o{ QL : "quote_id"
+QL ||--o{ QLC : "line_id"
+F ||--o{ QL : "fee_id (optionnel)"
+
+note right of Q
+  user_id, client_id, address_id, user_address_id :
+  références logiques cross-service vers
+  Users svc (pas de FK réelle inter-DB).
+end note
+
+note right of QL
+  data (JSONB) : sous-lignes pour type=multiple.
+  unit_price en centimes (BIGINT).
+  tax_id : référence logique vers taxes (Users svc).
+end note
+
+note bottom of F
+  Catalogue de frais par prestataire (user_id).
+  Fonctionnalité subscription-gated.
+end note
+
+@enduml

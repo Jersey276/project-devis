@@ -1,0 +1,94 @@
+@startuml invoice-create-issue
+' Service : Invoice — Création et émission d'une facture
+' Date : 2026-06-27
+
+skinparam sequenceArrowThickness 1.5
+skinparam participantPadding 10
+skinparam boxPadding 10
+
+' Mise en page A4 portrait
+scale max 794*1122
+skinparam defaultFontSize 12
+
+actor "Prestataire" as User
+participant "Browser\n(Next.js)" as Browser
+participant "Gateway\n:8080" as GW
+participant "Invoice svc\n:50059" as INV
+participant "Quote svc\n:50053" as QUOTE
+participant "Users svc\n:50052" as USERS
+participant "Schedule svc\n:50056" as SCHED
+participant "Export svc\n:50054" as EXPORT
+database "DB invoice" as DB
+
+== Création de la facture ==
+
+User -> Browser : POST /invoice/create\n(from-quote ou from-schedule)
+Browser -> GW : POST /api/invoices/from-quote\n{ quote_id, sale_date, due_in_days, issue_now }
+GW -> GW : JWT middleware\n(IntrospectToken → Auth svc)
+GW -> INV : CreateInvoiceFromQuote(quote_id, sale_date, due_in_days, issue_now)
+
+INV -> QUOTE : GetQuote(quote_id)
+QUOTE --> INV : Quote + QuoteLines (avec tax_id, unit_price_cents)
+
+INV -> USERS : GetUser(user_id)
+USERS --> INV : User (company, siren, vat, iban, bic, oss_enabled, siret)
+
+INV -> USERS : GetClient(client_id)
+USERS --> INV : Client (type, company, country_id, siren, vat, siret)
+
+INV -> DB : INSERT INTO invoices\n(invoice_id, user_id, quote_id, status='DRAFT',\ntotal_ht_cents, total_vat_cents, total_ttc_cents,\nsale_date, due_date)
+DB --> INV : OK
+
+alt issue_now = true
+  INV -> INV : IssueInvoice(invoice_id)
+end
+
+== Émission (IssueInvoice) ==
+
+INV -> DB : BEGIN TRANSACTION\nSELECT FROM invoice_number_sequences\n  WHERE user_id AND year FOR UPDATE
+DB --> INV : last_value (ou 0 si première facture de l'année)
+INV -> DB : INSERT / UPDATE invoice_number_sequences\n  SET last_value = last_value + 1
+INV -> DB : UPDATE invoices\n  SET status='ISSUED',\n  invoice_number='YYYY-NNNN',\n  issued_at=NOW()
+
+note right of DB
+  Numérotation séquentielle gap-free
+  (art. 289 CGI)
+end note
+
+== Snapshot légal ==
+
+INV -> DB : INSERT INTO invoice_party_snapshots\n(issuer_*, client_*, oss_applied)
+INV -> DB : INSERT INTO invoice_line_snapshots\n(position, name, quantity, unit_price_cents,\nline_ht_cents, tax_rate, tax_label)
+INV -> DB : INSERT INTO invoice_vat_breakdown_snapshots\n(tax_rate, base_ht_cents, vat_cents)
+
+== Scellement cryptographique (NF203) ==
+
+INV -> DB : SELECT FROM chain_heads\n  WHERE user_id FOR UPDATE
+DB --> INV : last_index, last_hash
+INV -> INV : content_hash = SHA256(contenu légal)\nchain_hash = SHA256(prev_hash || content_hash || index)
+INV -> DB : INSERT INTO document_seals\n(user_id, doc_type='INVOICE', doc_id,\nchain_index, content_hash, prev_hash, chain_hash)
+INV -> DB : UPDATE chain_heads\nCOMMIT
+DB --> INV : OK
+
+INV --> GW : CreateInvoiceResponse(invoice_id, invoice_number)
+GW --> Browser : 201 { invoice_id, invoice_number }
+Browser --> User : Facture émise (n° YYYY-NNNN)
+
+== Export PDF (optionnel) ==
+
+User -> Browser : GET /export/invoices/:id
+Browser -> GW : GET /api/export/invoices/:id[?facturx=true]
+GW -> EXPORT : ExportInvoice(invoice_id, user_id, facturx)
+EXPORT -> INV : GetInvoice(invoice_id)
+INV --> EXPORT : InvoiceDetails (snapshot inclus)
+EXPORT -> EXPORT : Render HTML → Gotenberg PDF
+note right of EXPORT
+  Si facturx=true :
+  PDF/A-3 + XML EN 16931
+  embarqué (Factur-X)
+end note
+EXPORT --> GW : bytes (PDF), filename
+GW --> Browser : 200 application/pdf
+Browser --> User : Téléchargement PDF
+
+@enduml

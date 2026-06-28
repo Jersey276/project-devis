@@ -79,7 +79,6 @@ message User {
     string company = 4;
     string siren = 5;
     string vat = 6;
-    string logo_url = 7;
     bool suspended = 8;
     // oss_enabled: seller opted into the OSS distance-selling regime. When true,
     // B2C invoices to EU (non-FR) clients apply destination-country VAT.
@@ -125,7 +124,6 @@ message UpdateUserRequest {
     string company = 3;
     string siren = 4;
     string vat = 5;
-    string logo_url = 6;
     bool oss_enabled = 7;
     string iban = 8;
     string bic = 9;

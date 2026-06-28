@@ -555,7 +555,6 @@ func invoicePartyToJSON(p *invoice.InvoiceParty) gin.H {
 		"vat":               p.Vat,
 		"email":             p.Email,
 		"phone":             p.Phone,
-		"logo_url":          p.LogoUrl,
 		"street":            p.Street,
 		"additional_street": p.AdditionalStreet,
 		"zip_code":          p.ZipCode,

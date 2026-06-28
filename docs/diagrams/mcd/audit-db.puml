@@ -1,0 +1,44 @@
+@startuml audit-db
+' MCD — Service Audit (DB : audit)
+' Date : 2026-06-27
+
+skinparam linetype ortho
+hide empty methods
+
+' Mise en page A4 portrait
+scale 2
+skinparam defaultFontSize 14
+skinparam EntityFontSize 14
+skinparam EntityHeaderFontSize 15
+skinparam EntityHeaderFontStyle bold
+skinparam noteFontSize 13
+skinparam ArrowFontSize 13
+
+entity "activity_logs" as AL {
+  * id : BIGSERIAL <<PK>>
+  --
+  user_id : TEXT
+  * method : TEXT (GET | POST | PUT | DELETE | PATCH)
+  * url : TEXT
+  * duration_ms : INTEGER
+  req_body : TEXT
+  * resp_body : TEXT
+  * resp_status : INTEGER
+  * created_at : TIMESTAMPTZ
+}
+
+note right of AL
+  Append-only par contrainte PostgreSQL :
+  rôle "devis-audit" = INSERT + SELECT uniquement.
+  Rôle "devis-audit-purge" = DELETE uniquement
+  (purge planifiée après 6 mois).
+
+  Exigence réglementaire française :
+  les logs d'activité API ne peuvent pas
+  être modifiés après écriture.
+
+  user_id nullable : endpoints publics (login,
+  register) avant authentification.
+end note
+
+@enduml

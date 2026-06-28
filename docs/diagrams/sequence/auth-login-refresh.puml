@@ -1,0 +1,114 @@
+@startuml auth-login-refresh
+' Service : Auth — Inscription, connexion, refresh, déconnexion
+' Date : 2026-06-27
+
+skinparam sequenceArrowThickness 1.5
+skinparam participantPadding 10
+
+' Mise en page A4 portrait
+scale max 794*1122
+skinparam defaultFontSize 12
+
+actor "Utilisateur" as User
+participant "Browser\n(Next.js)" as Browser
+participant "Gateway\n:8080" as GW
+participant "Auth svc\n:50051" as AUTH
+participant "Users svc\n:50052" as USERS
+participant "Email svc\n:50058" as EMAIL
+database "DB auth" as DBA
+database "DB users" as DBU
+
+== Inscription ==
+
+User -> Browser : Formulaire d'inscription
+Browser -> GW : POST /api/auth/register\n{ email, password }
+GW -> AUTH : Register(email, password)
+AUTH -> DBA : SELECT FROM auth WHERE email (unicité)
+AUTH -> DBA : INSERT INTO auth\n(user_id, email, password_hash,\nrole='free_user', account_status='active',\nsubscription_tier='free', email_verified=false,\nsession_version=1)
+AUTH -> USERS : CreateUser(user_id, email)
+USERS -> DBU : INSERT INTO users(user_id, email)
+AUTH -> EMAIL : SendVerificationEmail(user_id, email)
+EMAIL -> DBA : INSERT INTO email_verification_tokens\n(user_id, token_hash, expires_at)
+AUTH --> GW : FormGenericResponse
+GW --> Browser : 201
+Browser --> User : "Vérifiez votre email"
+
+== Vérification email ==
+
+User -> Browser : Clic lien email (/verify-email?token=...)
+Browser -> GW : POST /api/auth/verify-email\n{ email, token }
+GW -> AUTH : VerifyEmail(email, token)
+AUTH -> DBA : SELECT FROM email_verification_tokens\n  WHERE token_hash AND expires_at > NOW()
+AUTH -> DBA : UPDATE auth SET email_verified=true\nUPDATE email_verification_tokens SET used_at=NOW()
+AUTH --> GW : OK
+GW --> Browser : 200
+Browser --> User : Email vérifié → redirection login
+
+== Connexion ==
+
+User -> Browser : Formulaire de connexion
+Browser -> GW : POST /api/auth/login\n{ email, password, remember_me }
+GW -> AUTH : Login(email, password, remember_me)
+AUTH -> DBA : SELECT FROM auth WHERE email
+AUTH -> AUTH : Vérification bcrypt(password, hash)
+AUTH -> AUTH : Génération access_token (JWT, ~2 min)\n+ refresh_token (7j / 60j si remember_me)
+AUTH -> DBA : INSERT INTO refresh_tokens\n(user_id, token_hash, expires_at, remember_me)
+AUTH -> USERS : TouchUserLastLogin(user_id)
+AUTH --> GW : LoginResponse\n(access_token, refresh_token)
+GW --> Browser : 200 + Set-Cookie (refresh_token httpOnly)
+Browser --> User : Connecté → Dashboard
+
+== Appel API protégé ==
+
+Browser -> GW : GET /api/quotes\n(Authorization: Bearer access_token)
+GW -> AUTH : IntrospectToken(access_token)
+AUTH -> AUTH : Vérification JWT (signature + expiry)\n+ vérifie session_version
+AUTH --> GW : AccessContext\n{ user_id, email, role, account_status,\n  subscription_tier, session_version,\n  email_verified }
+GW -> GW : Contrôle d'autorisation (authz)
+note right of GW : Autorisé → proxy vers Quote svc
+
+== Refresh automatique (401) ==
+
+Browser -> GW : GET /api/quotes (access_token expiré)
+GW -> AUTH : IntrospectToken(access_token)
+AUTH --> GW : Erreur 1004 (token invalide)
+GW --> Browser : 401
+
+note over Browser
+  apiFetch() dans front/lib/api.ts
+  intercepte le 401 et déclenche
+  automatiquement le refresh
+end note
+
+Browser -> GW : POST /api/auth/refresh\n(refresh_token depuis cookie)
+GW -> AUTH : RefreshToken(refresh_token)
+AUTH -> DBA : SELECT FROM refresh_tokens\n  WHERE token_hash AND expires_at > NOW()
+AUTH -> AUTH : Génération nouveau access_token\n(+ rotation refresh_token)
+AUTH -> DBA : DELETE ancien refresh_token\nINSERT nouveau refresh_token
+AUTH --> GW : LoginResponse (nouveaux tokens)
+GW --> Browser : 200 + Set-Cookie (nouveau refresh_token)
+
+Browser -> GW : Rejoue GET /api/quotes\n(nouveau access_token)
+GW --> Browser : 200
+
+== Déconnexion ==
+
+User -> Browser : "Se déconnecter"
+Browser -> GW : POST /api/auth/logout
+GW -> AUTH : Logout(refresh_token)
+AUTH -> DBA : DELETE FROM refresh_tokens WHERE token_hash
+AUTH --> GW : OK
+GW --> Browser : 200 + Clear-Cookie
+Browser --> User : Redirigé vers /login
+
+== Invalidation de session (changement de rôle/tier) ==
+
+note over AUTH, DBA
+  Lors d'un UpdateSubscriptionTier ou UpdateRole :
+  ALTER TABLE auth SET session_version = session_version + 1
+  → tous les refresh_tokens existants sont invalidés
+  → IntrospectToken échoue avec code 1008 (SESSION_INVALIDATED)
+  → front redirige vers /login
+end note
+
+@enduml

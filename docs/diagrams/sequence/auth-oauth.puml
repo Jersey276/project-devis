@@ -1,0 +1,108 @@
+@startuml auth-oauth
+' Service : Auth — OAuth et invitation client
+' Date : 2026-06-27
+
+skinparam sequenceArrowThickness 1.5
+skinparam participantPadding 10
+
+' Mise en page A4 portrait
+scale max 794*1122
+skinparam defaultFontSize 12
+
+actor "Utilisateur" as User
+participant "Browser\n(Next.js)" as Browser
+participant "Gateway\n:8080" as GW
+participant "Auth svc\n:50051" as AUTH
+participant "Users svc\n:50052" as USERS
+participant "Provider OAuth\n(Google/GitHub/\nMicrosoft)" as OAUTH
+database "DB auth" as DBA
+
+== Connexion OAuth (nouveau compte) ==
+
+User -> Browser : Clic "Connexion avec Google"
+Browser -> OAUTH : Redirection OAuth (authorize)
+OAUTH --> Browser : Code d'autorisation
+Browser -> GW : POST /api/auth/oauth/google/callback\n{ code, state }
+GW -> AUTH : OAuthLogin(provider='google', code)
+
+AUTH -> OAUTH : Échange code → access_token
+OAUTH --> AUTH : access_token + profil\n(provider_user_id, email, name)
+
+AUTH -> DBA : SELECT FROM oauth_identities\n  WHERE provider='google' AND provider_user_id
+alt Identité inconnue — création de compte
+  AUTH -> DBA : INSERT INTO auth\n(user_id, email, password=NULL,\nemail_verified=true)
+  AUTH -> USERS : CreateUser(user_id, email, is_admin=false)
+  AUTH -> DBA : INSERT INTO oauth_identities\n(provider, provider_user_id, user_id, email)
+else Identité connue — connexion directe
+  AUTH -> DBA : SELECT FROM auth WHERE user_id
+end
+
+AUTH -> AUTH : Génération access_token + refresh_token
+AUTH -> DBA : INSERT INTO refresh_tokens
+AUTH --> GW : LoginResponse
+GW --> Browser : 200 + Set-Cookie
+Browser --> User : Connecté
+
+== Liaison d'une identité OAuth (compte existant) ==
+
+User -> Browser : "Lier mon compte Google"\n(dans Profil > Connexion)
+Browser -> OAUTH : Flux OAuth (authorize)
+OAUTH --> Browser : Code
+Browser -> GW : POST /api/auth/oauth/link\n{ provider, code }
+GW -> AUTH : LinkOAuthIdentity(user_id, provider, code)
+
+AUTH -> OAUTH : Échange code → profil
+OAUTH --> AUTH : { provider_user_id, email }
+
+AUTH -> DBA : SELECT FROM oauth_identities\n  WHERE provider AND provider_user_id\n  (vérifie que pas déjà lié à un autre compte)
+AUTH -> DBA : INSERT INTO oauth_identities\n(provider, provider_user_id, user_id, email)
+AUTH --> GW : OK
+GW --> Browser : 200
+Browser --> User : Compte Google lié
+
+== Déliaison d'une identité OAuth ==
+
+User -> Browser : "Délier Google"
+Browser -> GW : POST /api/auth/oauth/unlink\n{ provider }
+GW -> AUTH : UnlinkOAuthIdentity(user_id, provider)
+AUTH -> DBA : SELECT FROM oauth_identities WHERE user_id\n(vérifie qu'il reste au moins un moyen de connexion :\npassword non null OU autre oauth)
+AUTH -> DBA : DELETE FROM oauth_identities\n  WHERE user_id AND provider
+AUTH --> GW : OK
+GW --> Browser : 200
+Browser --> User : Google délié
+
+== Invitation client ==
+
+User -> Browser : "Inviter un client"\n(depuis fiche client)
+Browser -> GW : POST /api/auth/invite/send\n{ client_id, client_email, client_name }
+GW -> AUTH : SendClientInvitation(provider_id=user_id,\nclient_id, client_email)
+AUTH -> DBA : INSERT INTO client_invitation_tokens\n(client_id, provider_id, token_hash, expires_at)
+AUTH -> GW : (Email envoyé via Email svc)
+AUTH --> GW : OK
+GW --> Browser : 200
+Browser --> User : Invitation envoyée
+
+alt Client sans compte existant
+  User -> Browser : Clic lien invitation → /accept-invitation
+  Browser -> GW : POST /api/auth/invite/accept/new\n{ token, email, password }
+  GW -> AUTH : AcceptClientInvitationNew(token, email, password)
+  AUTH -> DBA : SELECT FROM client_invitation_tokens\n  WHERE token_hash AND expires_at > NOW()
+  AUTH -> DBA : INSERT INTO auth (nouveau user_id)
+  AUTH -> USERS : CreateUser + LinkClientUser(client_id, user_id)
+  AUTH -> DBA : UPDATE client_invitation_tokens SET used_at
+  AUTH --> GW : AcceptClientInvitationResponse\n(access_token, refresh_token)
+  GW --> Browser : 200
+  Browser --> User : Compte créé et connecté
+
+else Client avec compte existant
+  User -> Browser : Clic lien + connexion → /accept-invitation
+  Browser -> GW : POST /api/auth/invite/accept/linked\n{ token, user_id }
+  GW -> AUTH : AcceptClientInvitationLinked(token, user_id)
+  AUTH -> USERS : LinkClientUser(client_id, user_id)
+  AUTH -> DBA : UPDATE client_invitation_tokens SET used_at
+  AUTH --> GW : AcceptClientInvitationResponse
+  GW --> Browser : 200
+  Browser --> User : Compte lié
+end
+
+@enduml

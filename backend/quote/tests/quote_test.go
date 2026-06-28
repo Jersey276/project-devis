@@ -222,11 +222,11 @@ func TestListQuotes_ExcludesArchivedByDefault(t *testing.T) {
 		WithArgs("user-1").
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(2))
 
-	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at, state, client_id, address_id, COALESCE\(user_address_id, 0\)\s+FROM quotes WHERE user_id = \$1 AND archived_at IS NULL ORDER BY created_at DESC LIMIT \$2 OFFSET \$3`).
+	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at, state, client_id, address_id, COALESCE\(user_address_id, 0\), valid_until FROM quotes WHERE user_id = \$1 AND archived_at IS NULL ORDER BY created_at DESC LIMIT \$2 OFFSET \$3`).
 		WithArgs("user-1", int32(20), int32(0)).
-		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at", "state", "client_id", "address_id", "user_address_id"}).
-			AddRow("q-1", "user-1", "A", nil, "draft", "client-1", int32(1), int32(2)).
-			AddRow("q-2", "user-1", "B", nil, "draft", "client-1", int32(1), int32(2)))
+		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at", "state", "client_id", "address_id", "user_address_id", "valid_until"}).
+			AddRow("q-1", "user-1", "A", nil, "draft", "client-1", int32(1), int32(2), nil).
+			AddRow("q-2", "user-1", "B", nil, "draft", "client-1", int32(1), int32(2), nil))
 
 	resp, err := srv.ListQuotes(context.Background(), &quoteGrpc.ListQuotesRequest{UserId: "user-1"})
 	if err != nil {
@@ -251,11 +251,11 @@ func TestListQuotes_IncludeArchived(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(2))
 
 	// When include_archived=true, the WHERE clause must NOT contain archived_at IS NULL
-	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at, state, client_id, address_id, COALESCE\(user_address_id, 0\)\s+FROM quotes WHERE user_id = \$1 ORDER BY created_at DESC LIMIT \$2 OFFSET \$3`).
+	mock.ExpectQuery(`SELECT quote_id, user_id, name, archived_at, state, client_id, address_id, COALESCE\(user_address_id, 0\), valid_until FROM quotes WHERE user_id = \$1 ORDER BY created_at DESC LIMIT \$2 OFFSET \$3`).
 		WithArgs("user-1", int32(20), int32(0)).
-		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at", "state", "client_id", "address_id", "user_address_id"}).
-			AddRow("q-1", "user-1", "A", nil, "draft", "client-1", int32(1), int32(2)).
-			AddRow("q-2", "user-1", "B", time.Now(), "draft", "client-1", int32(1), int32(2)))
+		WillReturnRows(sqlmock.NewRows([]string{"quote_id", "user_id", "name", "archived_at", "state", "client_id", "address_id", "user_address_id", "valid_until"}).
+			AddRow("q-1", "user-1", "A", nil, "draft", "client-1", int32(1), int32(2), nil).
+			AddRow("q-2", "user-1", "B", time.Now(), "draft", "client-1", int32(1), int32(2), nil))
 
 	resp, err := srv.ListQuotes(context.Background(), &quoteGrpc.ListQuotesRequest{
 		UserId:          "user-1",

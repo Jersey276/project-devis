@@ -1,0 +1,128 @@
+@startuml quote-lifecycle
+' Service : Quote — Cycle de vie d'un devis
+' Date : 2026-06-27
+
+skinparam sequenceArrowThickness 1.5
+skinparam participantPadding 10
+
+' Mise en page A4 portrait
+scale max 794*1122
+skinparam defaultFontSize 12
+
+actor "Prestataire" as Provider
+actor "Client" as Client
+participant "Browser" as Browser
+participant "Gateway\n:8080" as GW
+participant "Quote svc\n:50053" as QUOTE
+participant "Export svc\n:50054" as EXPORT
+participant "Email svc\n:50058" as EMAIL
+database "DB quote" as DB
+
+note over QUOTE
+  États : DRAFT → VALIDATED → NEGOCIATION → ACCEPTED / REFUSED
+                            ↘ DROP
+  Archive possible depuis tout état non terminal
+end note
+
+== Création du devis ==
+
+Provider -> Browser : "Nouveau devis"
+Browser -> GW : POST /api/quotes\n{ name, client_id, address_id, user_address_id,\n  valid_until, payment_terms }
+GW -> QUOTE : CreateQuote(user_id, name, client_id, ...)
+QUOTE -> DB : INSERT INTO quotes\n(quote_id, user_id, name, state='DRAFT',\nclient_id, address_id, issued_at, valid_until, payment_terms)
+QUOTE --> GW : CreateQuoteResponse(quote_id)
+GW --> Browser : 201 { quote_id }
+
+== Ajout des lignes ==
+
+loop Chaque ligne / prestation
+  Provider -> Browser : Ajouter une ligne
+  Browser -> GW : POST /api/quotes/:id/lines\n{ type, name, quantity, unit, unit_price, tax_id, position }
+  GW -> QUOTE : CreateQuoteLine(quote_id, ...)
+  QUOTE -> DB : INSERT INTO quote_lines\n(line_id, quote_id, type, name, quantity,\nunit, unit_price, data, position, tax_id)
+  QUOTE --> GW : OK
+end
+
+== Validation interne ==
+
+Provider -> Browser : "Valider le devis"
+Browser -> GW : POST /api/quotes/:id/validate
+GW -> QUOTE : ValidateQuote(quote_id, user_id)
+QUOTE -> DB : UPDATE quotes SET state='VALIDATED'
+QUOTE --> GW : OK
+GW --> Browser : 200
+Browser --> Provider : Devis validé
+
+== Envoi en négociation (→ client) ==
+
+Provider -> Browser : "Envoyer au client"
+Browser -> GW : POST /api/quotes/:id/negociate
+GW -> QUOTE : NegociateQuote(quote_id, user_id)
+QUOTE -> DB : UPDATE quotes SET state='NEGOCIATION'
+DB --> QUOTE : OK
+QUOTE -> QUOTE : Récupère client_id, name pour l'email
+
+QUOTE --> GW : NegociateQuoteResponse\n(client_id, client_name, quote_name)
+GW -> EXPORT : ExportQuote(quote_id, user_id)
+EXPORT --> GW : bytes (PDF)
+GW -> EMAIL : SendQuoteEmail(client_email, pdf_bytes, quote_name)
+EMAIL --> GW : OK
+GW --> Browser : 200
+Browser --> Provider : Devis envoyé au client
+
+== Acceptation ou refus (côté client) ==
+
+Client -> Browser : Consulte devis\n(mode customer ou lien email)
+Browser -> GW : GET /api/quotes/me/:id
+GW -> QUOTE : GetQuote(quote_id)\n(vérifie client_id = user lié)
+QUOTE --> GW : Quote + Lines
+GW --> Browser : 200
+
+alt Client accepte
+  Client -> Browser : "Accepter"
+  Browser -> GW : POST /api/quotes/me/:id/accept
+  GW -> QUOTE : AcceptQuote(quote_id, client_user_id)
+  QUOTE -> DB : UPDATE quotes SET state='ACCEPTED'
+  QUOTE --> GW : OK
+  GW --> Browser : 200
+  Browser --> Client : Devis accepté
+
+else Client refuse
+  Client -> Browser : "Refuser"
+  Browser -> GW : POST /api/quotes/me/:id/refuse
+  GW -> QUOTE : RefuseQuote(quote_id, client_user_id)
+  QUOTE -> DB : UPDATE quotes SET state='REFUSED'
+  QUOTE --> GW : OK
+  GW --> Browser : 200
+  Browser --> Client : Devis refusé
+end
+
+== Abandon / archivage ==
+
+Provider -> Browser : "Abandonner le devis"
+Browser -> GW : POST /api/quotes/:id/drop
+GW -> QUOTE : DropQuote(quote_id, user_id)
+QUOTE -> DB : UPDATE quotes SET state='DROP'
+QUOTE --> GW : OK
+
+Provider -> Browser : "Archiver le devis"
+Browser -> GW : POST /api/quotes/:id/archive
+GW -> QUOTE : ArchiveQuote(quote_id, user_id)
+QUOTE -> DB : UPDATE quotes SET archived_at=NOW()
+QUOTE --> GW : OK
+
+Provider -> Browser : "Restaurer"
+Browser -> GW : POST /api/quotes/:id/restore
+GW -> QUOTE : RestoreQuote(quote_id, user_id)
+QUOTE -> DB : UPDATE quotes SET archived_at=NULL
+QUOTE --> GW : OK
+
+== Commentaires sur les lignes ==
+
+Provider -> Browser : Ajouter un commentaire sur une ligne
+Browser -> GW : POST /api/quotes/:id/lines/:lineId/comments\n{ body }
+GW -> QUOTE : CreateComment(line_id, quote_id, author_id, body)
+QUOTE -> DB : INSERT INTO quote_line_comments\n(comment_id, line_id, quote_id, author_id,\nauthor_name, body)
+QUOTE --> GW : OK
+
+@enduml

@@ -24,7 +24,6 @@ type partySnapshot struct {
 	issuerVat             string
 	issuerEmail           string
 	issuerPhone           string
-	issuerLogoURL         string
 	issuerStreet          string
 	issuerAdditional      string
 	issuerZip             string
@@ -363,7 +362,6 @@ func buildPartySnapshot(user *usersGrpc.User, userAddr *usersGrpc.Address, clien
 		p.issuerVat = user.GetVat()
 		p.issuerEmail = user.GetEmail()
 		p.issuerPhone = user.GetPhone()
-		p.issuerLogoURL = user.GetLogoUrl()
 		p.issuerIban = user.GetIban()
 		p.issuerBic = user.GetBic()
 	}

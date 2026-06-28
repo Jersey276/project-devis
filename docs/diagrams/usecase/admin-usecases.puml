@@ -1,0 +1,93 @@
+@startuml admin-usecases
+' Cas d'utilisation — Acteur Administrateur (role=super_admin)
+' Date : 2026-06-27
+
+left to right direction
+skinparam packageStyle rectangle
+
+scale max 794*1122
+skinparam defaultFontSize 10
+skinparam usecase {
+  BackgroundColor White
+  BorderColor #555555
+}
+skinparam padding 4
+skinparam ArrowColor #555555
+
+actor "Administrateur\n(super_admin)" as A
+
+package "Gestion des utilisateurs" as PKG_USERS {
+  usecase "Lister les utilisateurs" as UC_LIST_USERS
+  usecase "Consulter le profil\nd'un utilisateur" as UC_VIEW_USER
+  usecase "Modifier un compte\n(rôle, tier)" as UC_EDIT_USER
+  usecase "Suspendre / réactiver\nun compte" as UC_SUSPEND
+  usecase "Voir les devis / factures\nd'un utilisateur" as UC_USER_DOCS
+}
+
+package "Configuration géographique" as PKG_GEO {
+  usecase "Gérer les pays\n(créer / modifier / supprimer)" as UC_COUNTRIES
+  usecase "Gérer les groupes de pays\n(zones TVA)" as UC_COUNTRY_GROUPS
+  usecase "Attacher / détacher un pays\nd'un groupe" as UC_ATTACH_COUNTRY
+}
+
+package "Configuration fiscale" as PKG_TAX {
+  usecase "Créer une taxe\n(taux, groupe pays)" as UC_CREATE_TAX
+  usecase "Mettre à jour une taxe\n(nouvelle version)" as UC_UPDATE_TAX
+  usecase "Supprimer une taxe" as UC_DELETE_TAX
+}
+
+package "Abonnements & plans" as PKG_SUBS {
+  usecase "Lister les abonnements" as UC_LIST_SUBS
+  usecase "Modifier le plan\nd'un utilisateur" as UC_CHANGE_PLAN
+  usecase "Gérer les plans disponibles" as UC_MANAGE_PLANS
+}
+
+package "Logs & supervision" as PKG_LOGS {
+  usecase "Consulter les logs d'activité API" as UC_LOGS
+  usecase "Filtrer les logs\n(url, status, date, user)" as UC_FILTER_LOGS
+  usecase "Exporter les logs en CSV\n(envoi par email)" as UC_EXPORT_LOGS
+  usecase "Statistiques d'activité\n(par date / status)" as UC_LOG_STATS
+  usecase "Consulter les logs d'emails" as UC_EMAIL_LOGS
+}
+
+' Liens cachés pour forcer l'empilement vertical des packages
+PKG_USERS -[hidden]-> PKG_GEO
+PKG_GEO -[hidden]-> PKG_TAX
+PKG_TAX -[hidden]-> PKG_SUBS
+PKG_SUBS -[hidden]-> PKG_LOGS
+
+A --> UC_LIST_USERS
+A --> UC_VIEW_USER
+A --> UC_EDIT_USER
+A --> UC_SUSPEND
+A --> UC_USER_DOCS
+
+A --> UC_COUNTRIES
+A --> UC_COUNTRY_GROUPS
+A --> UC_ATTACH_COUNTRY
+
+A --> UC_CREATE_TAX
+A --> UC_UPDATE_TAX
+A --> UC_DELETE_TAX
+
+A --> UC_LIST_SUBS
+A --> UC_CHANGE_PLAN
+A --> UC_MANAGE_PLANS
+
+A --> UC_LOGS
+A --> UC_FILTER_LOGS
+A --> UC_EXPORT_LOGS
+A --> UC_LOG_STATS
+A --> UC_EMAIL_LOGS
+
+UC_FILTER_LOGS ..> UC_LOGS : <<extend>>
+UC_EXPORT_LOGS ..> UC_LOGS : <<extend>>
+
+note bottom of A
+  Accès conditionné par role='super_admin'
+  vérifié dans le middleware Gateway (authz).
+  Dashboard : métriques inscriptions,
+  courbes API, état abonnements.
+end note
+
+@enduml

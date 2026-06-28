@@ -284,7 +284,6 @@ export type BackendInvoiceParty = {
   vat: string;
   email: string;
   phone: string;
-  logo_url: string;
   street: string;
   additional_street: string;
   zip_code: string;
@@ -410,6 +409,7 @@ export type BackendPlan = {
   features: Record<string, number>;
   active: boolean;
   stripe_price_id?: string | null;
+  stripe_product_id?: string | null;
 };
 
 export type BackendSubscription = {
@@ -422,6 +422,7 @@ export type BackendSubscription = {
   current_period_end: string | null;
   cancel_at_period_end: boolean;
   stripe_subscription_id: string | null;
+  pending_plan_id: number | null;
   updated_at: string;
 };
 

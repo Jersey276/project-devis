@@ -1,0 +1,39 @@
+@startuml email-db
+' MCD — Service Email (DB : email)
+' Date : 2026-06-28
+
+skinparam linetype ortho
+hide empty methods
+
+' Mise en page A4 portrait
+scale 2
+skinparam defaultFontSize 14
+skinparam EntityFontSize 14
+skinparam EntityHeaderFontSize 15
+skinparam EntityHeaderFontStyle bold
+skinparam noteFontSize 13
+skinparam ArrowFontSize 13
+
+entity "email_logs" as EL {
+  * id : SERIAL <<PK>>
+  --
+  user_id : TEXT
+  * to_email : TEXT
+  * type : TEXT
+  reference_name : TEXT
+  subject : TEXT
+  * status : TEXT (sent | ...)
+  resend_id : TEXT
+  opened_at : TIMESTAMP
+  clicked_at : TIMESTAMP
+  * created_at : TIMESTAMP
+}
+
+note right of EL
+  user_id : référence logique cross-service vers Users svc.
+  resend_id : identifiant retourné par l'API Resend.
+  type : catégorie d'email (ex. quote_sent, invite, ...).
+  reference_name : nom du document associé (devis, ...).
+end note
+
+@enduml

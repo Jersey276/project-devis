@@ -1,0 +1,114 @@
+@startuml schedule-lifecycle
+' Service : Schedule — Cycle de vie d'un échéancier
+' Date : 2026-06-27
+
+skinparam sequenceArrowThickness 1.5
+skinparam participantPadding 10
+
+' Mise en page A4 portrait
+scale max 794*1122
+skinparam defaultFontSize 12
+
+actor "Prestataire" as User
+participant "Browser\n(Next.js)" as Browser
+participant "Gateway\n:8080" as GW
+participant "Schedule svc\n:50056" as SCHED
+participant "Quote svc\n:50053" as QUOTE
+participant "Email svc\n:50058" as EMAIL
+database "DB schedule" as DB
+
+note over SCHED
+  États : DRAFT → NEGOCIATE → VALID / DENIED
+  Contrainte : un seul VALID par quote_id
+end note
+
+== Création de l'échéancier ==
+
+User -> Browser : "Créer un échéancier"\n(depuis un devis VALIDATED)
+Browser -> GW : POST /api/schedules\n{ quote_id, name, start_month, duration_months }
+GW -> SCHED : CreateSchedule(quote_id, name, start_month, duration_months, client_id)
+
+SCHED -> QUOTE : GetQuote(quote_id)
+QUOTE --> SCHED : Quote (vérifie state=VALIDATED)
+
+SCHED -> DB : INSERT INTO schedules\n(schedule_id, quote_id, user_id, name,\nstatus='DRAFT', start_month, duration_months, currency='EUR')
+
+SCHED -> QUOTE : ListQuoteLines(quote_id)
+QUOTE --> SCHED : [QuoteLine] (line_id, unit_price_cents, ...)
+
+SCHED -> DB : INSERT INTO schedule_cells\nPour chaque (quote_line_id × month_index)\n  amount_cents=0
+
+SCHED --> GW : CreateScheduleResponse(schedule_id)
+GW --> Browser : 201 { schedule_id }
+Browser --> User : Échéancier créé (statut DRAFT)
+
+== Remplissage des cellules ==
+
+loop Pour chaque ligne × mois
+  User -> Browser : Saisir montant dans la cellule
+  Browser -> GW : PATCH /api/schedules/:id/cells\n{ quote_line_id, month_index, amount_cents }
+  GW -> SCHED : UpdateScheduleCell(schedule_id, quote_line_id, month_index, amount_cents)
+  SCHED -> DB : UPDATE schedule_cells\nSET amount_cents=:amount\nWHERE schedule_id AND quote_line_id AND month_index
+  DB --> SCHED : OK
+  SCHED --> GW : OK
+  GW --> Browser : 200
+end
+
+== Consultation / résumé ==
+
+User -> Browser : Voir l'échéancier
+Browser -> GW : GET /api/schedules/:id
+GW -> SCHED : GetSchedule(schedule_id)
+SCHED -> DB : SELECT schedules JOIN schedule_cells
+DB --> SCHED : ScheduleDetails\n(line summaries, column totals,\nquote_total_cents, planned_total_cents)
+SCHED --> GW : ScheduleDetails
+GW --> Browser : 200
+
+== Validation → envoi au client ==
+
+User -> Browser : "Valider l'échéancier"
+Browser -> GW : PATCH /api/schedules/:id/status\n{ status: 'NEGOCIATE' }
+GW -> SCHED : ValidateSchedule(schedule_id)
+
+SCHED -> DB : UPDATE schedules SET status='NEGOCIATE'
+SCHED -> EMAIL : SendScheduleEmail(client_id, schedule_id)
+EMAIL --> SCHED : OK
+
+SCHED --> GW : OK
+GW --> Browser : 200
+Browser --> User : Échéancier envoyé au client (NEGOCIATE)
+
+== Acceptation ou refus ==
+
+alt Client accepte
+  User -> Browser : "Marquer comme validé"
+  Browser -> GW : PATCH /api/schedules/:id/status\n{ status: 'VALID' }
+  GW -> SCHED : ValidateSchedule(schedule_id)
+  SCHED -> DB : UPDATE schedules\n  SET status='VALID', validated_at=NOW()
+  note right of DB
+    Contrainte unique :
+    UN SEUL VALID par quote_id
+  end note
+  SCHED --> GW : OK
+
+else Client refuse
+  User -> Browser : "Refuser l'échéancier"
+  Browser -> GW : PATCH /api/schedules/:id/status\n{ status: 'DENIED' }
+  GW -> SCHED : ValidateSchedule(schedule_id)
+  SCHED -> DB : UPDATE schedules SET status='DENIED'
+  SCHED --> GW : OK
+end
+
+GW --> Browser : 200
+Browser --> User : Statut mis à jour
+
+== Utilisation par la facturation ==
+
+note over SCHED, DB
+  GetScheduleCells(schedule_id) est appelé par Invoice svc
+  lors de CreateInvoiceFromSchedule pour retrouver
+  les (quote_line_id, month_index, amount_cents)
+  correspondant aux mois à facturer (billed_month_indexes)
+end note
+
+@enduml

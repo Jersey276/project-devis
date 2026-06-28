@@ -201,6 +201,43 @@ describe("Admin Subscriptions page", () => {
     cy.contains("Facturation B2B").scrollIntoView().should("be.visible");
   });
 
+  it("edit plan dialog: stripe_price_id is read-only and form submits without it", () => {
+    stubAdminSubscriptionsPage();
+
+    cy.intercept("PUT", "/api/plans/2", (req) => {
+      req.reply({ statusCode: 200, body: { success: true, plan: { ...PLANS[1], name: "Pro Updated" } } });
+    }).as("updatePlan");
+
+    cy.visit("/subscriptions");
+    cy.wait("@getAuthMe");
+    cy.wait("@getAllPlans");
+
+    cy.get("table").first().contains("td", "Pro")
+      .closest("tr")
+      .within(() => {
+        cy.get("button.h-8.w-8").click({ force: true });
+      });
+
+    cy.contains("Modifier le plan").click({ force: true });
+
+    // wait for the dialog to be fully open
+    cy.get("#plan_name").should("be.visible");
+
+    // stripe_price_id should NOT be an editable input
+    cy.get("#plan_stripe_price_id").should("not.exist");
+
+    // update the name
+    cy.get("#plan_name").focus().clear().type("Pro Updated");
+
+    cy.contains("button", "Enregistrer").click();
+
+    cy.wait("@updatePlan").then(({ request }) => {
+      // stripe_price_id must NOT be in the request body
+      expect(request.body).not.to.have.property("stripe_price_id");
+      expect(request.body.name).to.equal("Pro Updated");
+    });
+  });
+
   it("blocks access for non-admin users", () => {
     cy.login();
     cy.intercept("GET", "/api/auth/me", {

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Loader2Icon } from "lucide-react";
 import QuoteStepBasicInfo from "@/components/quote/steps/quote-step-basic-info";
@@ -132,7 +133,6 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quoteId, t]);
 
   useEffect(() => {
@@ -387,7 +387,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       setErrors((prev) => ({ ...prev, address_id: [] }));
       if (!quoteId || value == null) return;
       if (isCustomer) {
-        void updateQuote(quoteId, { name: projectName, addressId: value }).then(
+        void updateQuote(quoteId, { name: projectNameRef.current, addressId: value }).then(
           ({ ok, body }) => {
             if (!ok || !body.success) {
               toast.error(
@@ -559,6 +559,13 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         onAccept={handleAccept}
         onRefuse={handleRefuse}
       />
+
+      {!isCustomer && validUntil && validUntil < new Date().toISOString().slice(0, 10) && (
+        <Alert variant="destructive" className="mx-6 mt-6 w-auto">
+          <AlertTitle>{t("expiredAlertTitle")}</AlertTitle>
+          <AlertDescription>{t("expiredAlertDescription", { date: validUntil })}</AlertDescription>
+        </Alert>
+      )}
 
       <CardContent className="space-y-6">
         <div className="grid gap-2 sm:grid-cols-2">

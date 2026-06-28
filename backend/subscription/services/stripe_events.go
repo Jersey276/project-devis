@@ -37,6 +37,7 @@ func ApplyStripeSubscriptionUpdate(ctx context.Context, db *sql.DB, sub stripe.S
 		             current_period_start   = to_timestamp($4),
 		             current_period_end     = to_timestamp($5),
 		             cancel_at_period_end   = $6,
+		             pending_plan_id        = NULL,
 		             updated_at             = NOW()
 		         WHERE stripe_customer_id = $7
 		         RETURNING (SELECT tier FROM plans WHERE plan_id = $3)`
@@ -48,6 +49,7 @@ func ApplyStripeSubscriptionUpdate(ctx context.Context, db *sql.DB, sub stripe.S
 		             current_period_start   = to_timestamp($3),
 		             current_period_end     = to_timestamp($4),
 		             cancel_at_period_end   = $5,
+		             pending_plan_id        = NULL,
 		             updated_at             = NOW()
 		         WHERE stripe_customer_id = $6
 		         RETURNING (SELECT tier FROM plans WHERE plan_id = subscriptions.plan_id)`

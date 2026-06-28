@@ -1,0 +1,136 @@
+@startuml users-db
+' MCD — Service Users (DB : users)
+' Date : 2026-06-27
+
+skinparam linetype ortho
+hide empty methods
+
+' Mise en page A4 portrait
+scale 2
+skinparam defaultFontSize 14
+skinparam EntityFontSize 14
+skinparam EntityHeaderFontSize 15
+skinparam EntityHeaderFontStyle bold
+skinparam noteFontSize 13
+skinparam ArrowFontSize 13
+
+entity "users" as U {
+  * id : SERIAL <<PK>>
+  --
+  * user_id : TEXT <<UNIQUE>>
+  * email : TEXT <<UNIQUE>>
+  phone : TEXT
+  company : TEXT
+  siren : TEXT
+  vat : TEXT
+  oss_enabled : BOOLEAN
+  iban : TEXT
+  bic : TEXT
+  siret : TEXT
+  first_name : TEXT
+  last_name : TEXT
+  * role : TEXT (user | admin)
+  * plan : TEXT
+  last_login_at : TIMESTAMP
+  * suspended : BOOLEAN
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+entity "clients" as C {
+  * id : SERIAL <<PK>>
+  --
+  * client_id : TEXT <<UNIQUE>>
+  * user_id : TEXT <<FK>>
+  * first_name : TEXT
+  * last_name : TEXT
+  email : TEXT
+  phone : TEXT
+  company : TEXT
+  siren : TEXT
+  vat : TEXT
+  siret : TEXT
+  client_type : TEXT (individual | business)
+  linked_user_id : TEXT <<UNIQUE nullable>>
+  archived_at : TIMESTAMP
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+entity "addresses" as A {
+  * id : SERIAL <<PK>>
+  --
+  owner_type : TEXT (USER | CLIENT)
+  owner_id : TEXT
+  * name : TEXT
+  * street : TEXT
+  additional_street : TEXT
+  * city : TEXT
+  * zip_code : TEXT
+  * country_id : INTEGER <<FK>>
+  email : TEXT
+  phone : TEXT
+  archived_at : TIMESTAMP
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+entity "countries" as CO {
+  * id : SERIAL <<PK>>
+  --
+  * code : CHAR(2) <<UNIQUE>>
+  * name : TEXT
+  * is_eu : BOOLEAN
+}
+
+entity "country_groups" as CG {
+  * id : SERIAL <<PK>>
+  --
+  * name : TEXT
+  * created_at : TIMESTAMP
+}
+
+entity "country_group_countries" as CGC {
+  * country_group_id : INTEGER <<FK>>
+  * country_id : INTEGER <<FK>>
+  --
+  <<PK (country_group_id, country_id)>>
+}
+
+entity "taxes" as T {
+  * id : SERIAL <<PK>>
+  --
+  * name : TEXT
+  * rate : DECIMAL(5,2)
+  * country_group_id : INTEGER <<FK>>
+  is_default : BOOLEAN
+  original_tax_id : INTEGER <<FK nullable>>
+  * version : INTEGER
+  superseded_at : TIMESTAMP
+  superseded_by : INTEGER <<FK nullable>>
+  * created_at : TIMESTAMP
+}
+
+U ||--o{ C : "user_id"
+U ||--o{ A : "owner_id (owner_type=USER)"
+C ||--o{ A : "owner_id (owner_type=CLIENT)"
+A }o--|| CO : "country_id"
+CO ||--o{ CGC : "country_id"
+CG ||--o{ CGC : "country_group_id"
+CG ||--o{ T : "country_group_id"
+T }o--o| T : "original_tax_id / superseded_by\n(versioning)"
+
+note right of T
+  Versioning : UpdateTax crée une nouvelle
+  ligne (version N+1) et marque la précédente
+  avec superseded_at/superseded_by.
+  original_tax_id pointe vers la version 1.
+end note
+
+note right of C
+  linked_user_id : référence logique au user_id
+  du service Auth (cross-service, pas de FK réelle).
+  Permet le mode client (customer mode).
+end note
+
+@enduml

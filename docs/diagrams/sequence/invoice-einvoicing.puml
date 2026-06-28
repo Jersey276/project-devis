@@ -1,0 +1,91 @@
+@startuml invoice-einvoicing
+' Service : Invoice — Cycle e-invoicing B2B (réforme française)
+' Date : 2026-06-27
+
+skinparam sequenceArrowThickness 1.5
+skinparam participantPadding 10
+
+' Mise en page A4 portrait
+scale max 794*1122
+skinparam defaultFontSize 12
+
+actor "Prestataire" as User
+participant "Browser\n(Next.js)" as Browser
+participant "Gateway\n:8080" as GW
+participant "Invoice svc\n:50059" as INV
+participant "PDP Provider\n(Iopole/noop)" as PDP
+database "DB invoice" as DB
+
+note over INV, PDP
+  Statuts lifecycle (orthogonaux au statut financier) :
+  NONE → DEPOSITED → RECEIVED → APPROVED / REJECTED → COLLECTED
+end note
+
+== Dépôt sur la plateforme (B6) ==
+
+User -> Browser : Action "Déposer la facture"
+Browser -> GW : POST /api/invoices/:id/issue-lifecycle\n{ action: 'deposit' }
+GW -> INV : DepositInvoice(invoice_id, user_id)
+
+INV -> DB : SELECT invoices WHERE invoice_id\n(vérifie status=ISSUED, lifecycle_status=NONE)
+DB --> INV : OK
+
+INV -> PDP : SubmitInvoice(invoice_id, facturx_payload)
+note right of PDP
+  Adaptateur neutre :
+  - Iopole (prod)
+  - noop (dev/test)
+end note
+PDP --> INV : pdp_submission_id, recipient_routing_id
+
+INV -> DB : UPDATE invoices\n  SET lifecycle_status='DEPOSITED',\n  pdp_submission_id=...,\n  recipient_routing_id=...
+
+INV -> DB : INSERT INTO invoice_lifecycle_events\n(invoice_id, user_id, status='DEPOSITED', note, created_at)
+
+INV --> GW : OK
+GW --> Browser : 200
+Browser --> User : Statut : Déposée
+
+== Avancement manuel du statut (B3 — avant B6) ==
+
+User -> Browser : Changer statut e-invoicing
+Browser -> GW : POST /api/invoices/:id/lifecycle\n{ status: 'RECEIVED' | 'APPROVED' | 'REJECTED' | 'COLLECTED', note }
+GW -> INV : SetInvoiceLifecycleStatus(invoice_id, status, note)
+
+INV -> DB : UPDATE invoices SET lifecycle_status=:status
+INV -> DB : INSERT INTO invoice_lifecycle_events\n(invoice_id, user_id, status, note, created_at)
+
+INV --> GW : OK
+GW --> Browser : 200
+Browser --> User : Statut mis à jour
+
+== Consultation de l'historique ==
+
+User -> Browser : Voir timeline e-invoicing
+Browser -> GW : GET /api/invoices/:id/lifecycle-history
+GW -> INV : ListInvoiceLifecycleEvents(invoice_id)
+
+INV -> DB : SELECT FROM invoice_lifecycle_events\nWHERE invoice_id ORDER BY created_at
+DB --> INV : [{ status, note, created_at }]
+
+INV --> GW : ListInvoiceLifecycleEventsResponse
+GW --> Browser : 200 [{ status, note, created_at }]
+Browser --> User : Timeline affichée
+
+== E-reporting périodique (B5/C5) ==
+
+User -> Browser : Soumettre le rapport mensuel
+Browser -> GW : POST /api/invoices/reports\n{ kind: 'TRANSACTION' | 'CROSS_BORDER_B2C',\n  year, month }
+GW -> INV : SubmitInvoiceReport(kind, period_year, period_month)
+
+INV -> DB : Agrégation totaux HT/TVA\npour la période
+INV -> PDP : SubmitReport(kind, period, totals)
+PDP --> INV : report_id
+
+INV -> DB : INSERT / ON CONFLICT UPDATE invoice_reports\n(user_id, kind, period_year, period_month,\nstatus='DEPOSITED', total_ht_cents, total_vat_cents, report_id)
+
+INV --> GW : OK
+GW --> Browser : 200
+Browser --> User : Rapport soumis
+
+@enduml

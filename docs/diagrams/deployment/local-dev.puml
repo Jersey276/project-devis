@@ -1,0 +1,145 @@
+@startuml local-dev
+' Diagramme de déploiement — Environnement de développement local
+' Orchestré par backend/docker-compose.yml + npm run dev (front)
+' Date : 2026-06-27
+
+skinparam componentStyle rectangle
+skinparam nodeStyle rectangle
+
+' Mise en page A4 paysage (dense : 12 services)
+scale max 1122*794
+skinparam defaultFontSize 12
+
+node "Poste développeur" {
+
+  node "Next.js\n:3000" as FRONT {
+    component "App Router\n(TypeScript)" as NEXTAPP
+  }
+
+  node "Gateway\n:8080" as GW {
+    component "Gin HTTP\n(JWT middleware,\nAudit middleware,\nAuthz)" as GIN
+  }
+
+  node "Auth svc\n:50051" as AUTH {
+    component "gRPC Auth" as GAUTH
+  }
+
+  node "Users svc\n:50052" as USERS {
+    component "gRPC Users" as GUSERS
+  }
+
+  node "Quote svc\n:50053" as QUOTE {
+    component "gRPC Quote" as GQUOTE
+  }
+
+  node "Export svc\n:50054" as EXPORT {
+    component "gRPC Export\n(no DB)" as GEXPORT
+  }
+
+  node "Template svc\n:50055" as TPL {
+    component "gRPC Template" as GTPL
+  }
+
+  node "Schedule svc\n:50056" as SCHED {
+    component "gRPC Schedule" as GSCHED
+  }
+
+  node "Subscription svc\n:50057" as SUB {
+    component "gRPC Subscription" as GSUB
+  }
+
+  node "Email svc\n:50058" as EMAIL {
+    component "gRPC Email" as GEMAIL
+  }
+
+  node "Invoice svc\n:50059" as INV {
+    component "gRPC Invoice" as GINV
+  }
+
+  node "Audit svc\n:50060" as AUDIT {
+    component "gRPC Audit\n(purge worker)" as GAUDIT
+  }
+
+  node "Project svc\n:50061" as PROJ {
+    component "gRPC Project" as GPROJ
+  }
+
+  node "PostgreSQL\n:5432" as PG {
+    database "DB auth" as DBA
+    database "DB users" as DBU
+    database "DB quote" as DBQ
+    database "DB schedule" as DBS
+    database "DB template" as DBT
+    database "DB invoice" as DBI
+    database "DB subscription" as DBSUB
+    database "DB email" as DBE
+    database "DB audit" as DBAUD
+    database "DB project" as DBP
+    note right : Volume persistent\n"postgres:"
+  }
+
+  node "Gotenberg\n:3000" as GOT {
+    component "Chrome (headless)\nPDF/A-3 rendering" as CHROME
+  }
+
+  node "Mailpit\n:1025 (SMTP)\n:8025 (Web UI)" as MAIL {
+    component "SMTP mock" as SMTP
+  }
+
+}
+
+' ── Flux réseau ─────────────────────────────────────────────────────
+
+FRONT -down-> GW : "HTTP rewrites /api/*\n→ localhost:8080"
+GW -down-> AUTH : gRPC
+GW -down-> USERS : gRPC
+GW -down-> QUOTE : gRPC
+GW -down-> EXPORT : gRPC
+GW -down-> TPL : gRPC
+GW -down-> SCHED : gRPC
+GW -down-> SUB : gRPC
+GW -down-> EMAIL : gRPC
+GW -down-> INV : gRPC
+GW -down-> AUDIT : gRPC
+GW -down-> PROJ : gRPC
+
+INV -right-> QUOTE : gRPC (GetQuote,\nListQuoteLines)
+INV -right-> USERS : gRPC (GetUser, GetClient)
+INV -right-> SCHED : gRPC (GetScheduleCells)
+INV -right-> EXPORT : gRPC (ExportInvoice)
+EXPORT -right-> QUOTE : gRPC
+EXPORT -right-> USERS : gRPC
+EXPORT -right-> SCHED : gRPC
+EXPORT -right-> INV : gRPC
+EXPORT -right-> GOT : HTTP (render PDF)
+AUTH -right-> USERS : gRPC (CreateUser,\nTouchUserLastLogin)
+AUTH -right-> EMAIL : gRPC (SendVerificationEmail)
+SCHED -right-> QUOTE : gRPC (GetQuote)
+AUDIT -right-> EMAIL : gRPC (ExportLogs)
+
+AUTH -down-> PG : Postgres (DB auth)
+USERS -down-> PG : Postgres (DB users)
+QUOTE -down-> PG : Postgres (DB quote)
+SCHED -down-> PG : Postgres (DB schedule)
+TPL -down-> PG : Postgres (DB template)
+INV -down-> PG : Postgres (DB invoice)
+SUB -down-> PG : Postgres (DB subscription)
+EMAIL -down-> PG : Postgres (DB email)
+AUDIT -down-> PG : Postgres (DB audit)
+PROJ -down-> PG : Postgres (DB project)
+
+AUTH -right-> MAIL : SMTP :1025\n(emails dev)
+EMAIL -right-> MAIL : SMTP :1025
+
+note bottom of MAIL
+  Mailpit remplace Resend en local.
+  Interface web sur :8025.
+end note
+
+note bottom of GOT
+  SSRF deny-list activé.
+  Partagé par Export svc
+  pour tous les PDFs.
+end note
+
+@enduml
