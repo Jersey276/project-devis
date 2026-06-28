@@ -64,7 +64,6 @@ message User {
     string company = 4;
     string siren = 5;
     string vat = 6;
-    string logo_url = 7;
     string siret = 12;
 }
 
@@ -97,7 +96,6 @@ message UpdateUserRequest {
     string company = 3;
     string siren = 4;
     string vat = 5;
-    string logo_url = 6;
 }
 
 message UpdateUserResponse {

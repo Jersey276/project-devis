@@ -226,7 +226,6 @@ describe("Quote", () => {
             company: "",
             siren: "",
             vat: "",
-            logo_url: "",
           },
         },
       }).as("getMe");

@@ -15,9 +15,8 @@ import (
 var invoiceTpl = template.Must(template.New("invoice.html").Parse(string(templates.InvoiceHTML)))
 
 type partyView struct {
-	LogoURL string
-	Title   string
-	Lines   []string
+	Title string
+	Lines []string
 }
 
 type lineView struct {
@@ -134,7 +133,6 @@ func buildIssuer(p *invoicepb.InvoiceParty) partyView {
 	if p == nil {
 		return v
 	}
-	v.LogoURL = p.GetLogoUrl()
 	v.Title = p.GetCompany()
 	v.Lines = appendAddressLines(v.Lines, p)
 	if p.GetEmail() != "" {

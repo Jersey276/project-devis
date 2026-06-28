@@ -132,7 +132,6 @@ type User struct {
 	Company       string                 `protobuf:"bytes,4,opt,name=company,proto3" json:"company,omitempty"`
 	Siren         string                 `protobuf:"bytes,5,opt,name=siren,proto3" json:"siren,omitempty"`
 	Vat           string                 `protobuf:"bytes,6,opt,name=vat,proto3" json:"vat,omitempty"`
-	LogoUrl       string                 `protobuf:"bytes,7,opt,name=logo_url,json=logoUrl,proto3" json:"logo_url,omitempty"`
 	Siret         string                 `protobuf:"bytes,12,opt,name=siret,proto3" json:"siret,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -206,13 +205,6 @@ func (x *User) GetSiren() string {
 func (x *User) GetVat() string {
 	if x != nil {
 		return x.Vat
-	}
-	return ""
-}
-
-func (x *User) GetLogoUrl() string {
-	if x != nil {
-		return x.LogoUrl
 	}
 	return ""
 }
@@ -442,7 +434,6 @@ type UpdateUserRequest struct {
 	Company       string                 `protobuf:"bytes,3,opt,name=company,proto3" json:"company,omitempty"`
 	Siren         string                 `protobuf:"bytes,4,opt,name=siren,proto3" json:"siren,omitempty"`
 	Vat           string                 `protobuf:"bytes,5,opt,name=vat,proto3" json:"vat,omitempty"`
-	LogoUrl       string                 `protobuf:"bytes,6,opt,name=logo_url,json=logoUrl,proto3" json:"logo_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -508,13 +499,6 @@ func (x *UpdateUserRequest) GetSiren() string {
 func (x *UpdateUserRequest) GetVat() string {
 	if x != nil {
 		return x.Vat
-	}
-	return ""
-}
-
-func (x *UpdateUserRequest) GetLogoUrl() string {
-	if x != nil {
-		return x.LogoUrl
 	}
 	return ""
 }

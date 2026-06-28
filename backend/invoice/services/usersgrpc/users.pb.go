@@ -235,7 +235,6 @@ type User struct {
 	Company       string                 `protobuf:"bytes,4,opt,name=company,proto3" json:"company,omitempty"`
 	Siren         string                 `protobuf:"bytes,5,opt,name=siren,proto3" json:"siren,omitempty"`
 	Vat           string                 `protobuf:"bytes,6,opt,name=vat,proto3" json:"vat,omitempty"`
-	LogoUrl       string                 `protobuf:"bytes,7,opt,name=logo_url,json=logoUrl,proto3" json:"logo_url,omitempty"`
 	Suspended     bool                   `protobuf:"varint,8,opt,name=suspended,proto3" json:"suspended,omitempty"`
 	OssEnabled    bool                   `protobuf:"varint,9,opt,name=oss_enabled,json=ossEnabled,proto3" json:"oss_enabled,omitempty"`
 	Iban          string                 `protobuf:"bytes,10,opt,name=iban,proto3" json:"iban,omitempty"`
@@ -313,13 +312,6 @@ func (x *User) GetSiren() string {
 func (x *User) GetVat() string {
 	if x != nil {
 		return x.Vat
-	}
-	return ""
-}
-
-func (x *User) GetLogoUrl() string {
-	if x != nil {
-		return x.LogoUrl
 	}
 	return ""
 }
@@ -594,7 +586,6 @@ type UpdateUserRequest struct {
 	Company       string                 `protobuf:"bytes,3,opt,name=company,proto3" json:"company,omitempty"`
 	Siren         string                 `protobuf:"bytes,4,opt,name=siren,proto3" json:"siren,omitempty"`
 	Vat           string                 `protobuf:"bytes,5,opt,name=vat,proto3" json:"vat,omitempty"`
-	LogoUrl       string                 `protobuf:"bytes,6,opt,name=logo_url,json=logoUrl,proto3" json:"logo_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -660,13 +651,6 @@ func (x *UpdateUserRequest) GetSiren() string {
 func (x *UpdateUserRequest) GetVat() string {
 	if x != nil {
 		return x.Vat
-	}
-	return ""
-}
-
-func (x *UpdateUserRequest) GetLogoUrl() string {
-	if x != nil {
-		return x.LogoUrl
 	}
 	return ""
 }

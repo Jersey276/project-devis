@@ -284,7 +284,6 @@ export type BackendInvoiceParty = {
   vat: string;
   email: string;
   phone: string;
-  logo_url: string;
   street: string;
   additional_street: string;
   zip_code: string;

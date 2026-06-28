@@ -47,7 +47,6 @@
 <body>
   <section class="parties">
     <div class="party left">
-      {{if .Issuer.LogoURL}}<img class="logo" src="{{.Issuer.LogoURL}}" alt="">{{end}}
       {{if .Issuer.Title}}<div class="name">{{.Issuer.Title}}</div>{{end}}
       {{range .Issuer.Lines}}<div class="row">{{.}}</div>{{end}}
     </div>

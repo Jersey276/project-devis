@@ -3,7 +3,6 @@ package controllers
 import (
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -152,18 +151,6 @@ func userIDFromCtx(c *gin.Context) string {
 	return s
 }
 
-// Rejects javascript:, data:, file:, etc. — defense in depth against
-// injecting an unsafe value into the PDF template's <img src>.
-func validHTTPURL(s string) bool {
-	if s == "" {
-		return true
-	}
-	u, err := url.ParseRequestURI(s)
-	if err != nil {
-		return false
-	}
-	return (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
-}
 
 func paramInt32(c *gin.Context, name string) (int32, bool) {
 	v, err := strconv.ParseInt(c.Param(name), 10, 32)
@@ -216,17 +203,12 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 		Siren      string `json:"siren"`
 		Vat        string `json:"vat"`
 		Siret      string `json:"siret"`
-		LogoURL    string `json:"logo_url"`
 		OssEnabled bool   `json:"oss_enabled"`
 		Iban       string `json:"iban"`
 		Bic        string `json:"bic"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Données invalides."})
-		return
-	}
-	if !validHTTPURL(input.LogoURL) {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "URL du logo invalide."})
 		return
 	}
 	resp, err := client.UpdateUser(c.Request.Context(), &users.UpdateUserRequest{
@@ -238,7 +220,6 @@ func UpdateMe(c *gin.Context, client users.UserServiceClient) {
 		Siren:      input.Siren,
 		Vat:        input.Vat,
 		Siret:      input.Siret,
-		LogoUrl:    input.LogoURL,
 		OssEnabled: input.OssEnabled,
 		Iban:       input.Iban,
 		Bic:        input.Bic,
@@ -743,7 +724,6 @@ func marshalUser(u *users.User) gin.H {
 		"siren":       u.Siren,
 		"vat":         u.Vat,
 		"siret":       u.Siret,
-		"logo_url":    u.LogoUrl,
 		"suspended":   u.Suspended,
 		"oss_enabled": u.OssEnabled,
 		"iban":        u.Iban,

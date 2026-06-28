@@ -588,7 +588,6 @@ type InvoiceParty struct {
 	Vat              string                 `protobuf:"bytes,5,opt,name=vat,proto3" json:"vat,omitempty"`
 	Email            string                 `protobuf:"bytes,6,opt,name=email,proto3" json:"email,omitempty"`
 	Phone            string                 `protobuf:"bytes,7,opt,name=phone,proto3" json:"phone,omitempty"`
-	LogoUrl          string                 `protobuf:"bytes,8,opt,name=logo_url,json=logoUrl,proto3" json:"logo_url,omitempty"`
 	Street           string                 `protobuf:"bytes,9,opt,name=street,proto3" json:"street,omitempty"`
 	AdditionalStreet string                 `protobuf:"bytes,10,opt,name=additional_street,json=additionalStreet,proto3" json:"additional_street,omitempty"`
 	ZipCode          string                 `protobuf:"bytes,11,opt,name=zip_code,json=zipCode,proto3" json:"zip_code,omitempty"`
@@ -690,13 +689,6 @@ func (x *InvoiceParty) GetEmail() string {
 func (x *InvoiceParty) GetPhone() string {
 	if x != nil {
 		return x.Phone
-	}
-	return ""
-}
-
-func (x *InvoiceParty) GetLogoUrl() string {
-	if x != nil {
-		return x.LogoUrl
 	}
 	return ""
 }

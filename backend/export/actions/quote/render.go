@@ -71,9 +71,8 @@ type viewModel struct {
 }
 
 type partyView struct {
-	LogoURL string
-	Title   string
-	Lines   []string
+	Title string
+	Lines []string
 }
 
 // lineData mirrors the QuoteLineData TypeScript type stored as JSON in QuoteLine.Data.
@@ -273,7 +272,6 @@ func buildViewModel(in renderInput) viewModel {
 func buildSender(u *users.User, a *users.Address) partyView {
 	v := partyView{}
 	if u != nil {
-		v.LogoURL = u.LogoUrl
 		v.Title = u.Company
 	}
 	v.Lines = appendAddressLines(v.Lines, a)
