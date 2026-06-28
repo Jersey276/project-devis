@@ -91,14 +91,12 @@ const items: SidebarItem[] = [
     key: "schedule",
     url: "/schedule",
     icon: QuoteIcon,
-    modes: ["provider"],
     premium: true,
   },
   {
     key: "invoices",
     url: "/invoice",
     icon: ReceiptEuroIcon,
-    modes: ["provider"],
     premium: true,
   },
   {
@@ -212,9 +210,11 @@ export default function AppSidebar() {
         (item) =>
           (!item.modes || item.modes.includes(mode)) &&
           (!item.adminOnly || isAdmin) &&
-          (!item.premium || isPremium),
+          // En mode customer, les items premium sont visibles car c'est le
+          // prestataire lié qui conditionne l'accès, pas le client lui-même.
+          (!item.premium || isPremium || isCustomer),
       ),
-    [mode, isAdmin, isPremium],
+    [mode, isAdmin, isPremium, isCustomer],
   );
 
   const userItems = useMemo(
