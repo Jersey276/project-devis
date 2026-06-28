@@ -6,6 +6,9 @@ COPY . /app
 
 RUN npm install
 
+ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+
 RUN npm run build
 
 COPY .docker/next/entrypoint.sh /usr/local/bin/entrypoint.sh

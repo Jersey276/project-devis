@@ -102,7 +102,9 @@ jobs:
           context: ${{ matrix.image.context }}
           file: ${{ matrix.image.dockerfile }}
           push: true
-          build-args: ${{ matrix.image.build_args }}
+          build-args: |
+            ${{ matrix.image.build_args }}
+            ${{ matrix.image.name == 'front' && format('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY={0}', secrets.STRIPE_PUBLISHABLE_KEY) || '' }}
           tags: |
             ${{ steps.img.outputs.ref }}:${{ github.sha }}
             ${{ steps.img.outputs.ref }}:latest
