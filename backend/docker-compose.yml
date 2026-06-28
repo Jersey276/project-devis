@@ -250,7 +250,6 @@ services:
       - devis-quote
       - devis-user
       - devis-schedule
-      - devis-invoice
       - gotenberg
 
   gotenberg:
