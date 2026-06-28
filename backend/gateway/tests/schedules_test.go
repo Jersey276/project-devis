@@ -318,6 +318,9 @@ func (nopUsersClient) GetClientsByLinkedUser(context.Context, *users.GetClientBy
 func (nopUsersClient) LinkClientUser(context.Context, *users.LinkClientUserRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
 	return nil, nil
 }
+func (nopUsersClient) UpdateUserEmail(context.Context, *users.UpdateUserEmailRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
+	return nil, nil
+}
 
 type nopEmailNotifier struct{}
 
