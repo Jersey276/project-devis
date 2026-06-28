@@ -1,0 +1,60 @@
+@startuml provider-usecases-billing
+' Cas d'utilisation — Prestataire : Échéanciers, Projets & Facturation
+' <<subscription>> = fonctionnalité soumise à abonnement payant
+' Date : 2026-06-27
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam defaultFontSize 12
+
+actor "Prestataire" as P
+
+package "Échéanciers\n<<subscription>>" {
+  usecase "Créer un échéancier\n(depuis un devis validé)" as UC_CREATE_SCHED
+  usecase "Remplir les cellules\n(montant par ligne × mois)" as UC_FILL_SCHED
+  usecase "Valider et envoyer\nl'échéancier au client" as UC_VALIDATE_SCHED
+  usecase "Exporter l'échéancier en PDF" as UC_EXPORT_SCHED
+}
+
+package "Projets\n<<subscription>>" {
+  usecase "Créer / modifier un projet" as UC_CREATE_PROJ
+  usecase "Associer des devis à un projet" as UC_LINK_PROJ
+  usecase "Consulter l'avancement\net le chiffre d'affaires" as UC_VIEW_PROJ
+}
+
+package "Facturation\n<<subscription>>" {
+  usecase "Créer une facture\n(depuis devis ou échéancier)" as UC_CREATE_INV
+  usecase "Émettre la facture\n(numérotation YYYY-NNNN, snapshot)" as UC_ISSUE_INV
+  usecase "Marquer une facture comme payée" as UC_PAID_INV
+  usecase "Exporter en PDF / Factur-X" as UC_EXPORT_INV
+  usecase "Créer un avoir" as UC_CREDIT_NOTE
+  usecase "Consulter le statut OSS\n(seuil 10 000 €)" as UC_OSS
+  usecase "Avancer le statut e-invoicing\n(B2B : DEPOSITED → COLLECTED)" as UC_EINV
+  usecase "Déposer sur la plateforme PDP" as UC_DEPOSIT
+  usecase "Vérifier la chaîne\nd'inalterabilité (NF203)" as UC_VERIFY_CHAIN
+  usecase "Soumettre un e-rapport\n(mensuel)" as UC_REPORT
+}
+
+P --> UC_CREATE_SCHED
+P --> UC_FILL_SCHED
+P --> UC_VALIDATE_SCHED
+P --> UC_EXPORT_SCHED
+
+P --> UC_CREATE_PROJ
+P --> UC_LINK_PROJ
+P --> UC_VIEW_PROJ
+
+P --> UC_CREATE_INV
+P --> UC_ISSUE_INV
+P --> UC_PAID_INV
+P --> UC_EXPORT_INV
+P --> UC_CREDIT_NOTE
+P --> UC_OSS
+P --> UC_EINV
+P --> UC_DEPOSIT
+P --> UC_VERIFY_CHAIN
+P --> UC_REPORT
+
+UC_DEPOSIT ..> UC_EINV : <<include>>
+
+@enduml

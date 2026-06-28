@@ -1,0 +1,52 @@
+@startuml provider-usecases-identity
+' Cas d'utilisation — Prestataire : Identité & Compte
+' <<subscription>> = fonctionnalité soumise à abonnement payant
+' Date : 2026-06-27
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam defaultFontSize 12
+
+actor "Prestataire" as P
+
+package "Authentification" {
+  usecase "S'inscrire" as UC_REGISTER
+  usecase "Se connecter\n(email/password)" as UC_LOGIN
+  usecase "Se connecter via OAuth\n(Google, GitHub, Microsoft)" as UC_OAUTH
+  usecase "Vérifier son email" as UC_VERIFY_EMAIL
+  usecase "Réinitialiser son mot de passe" as UC_RESET_PWD
+  usecase "Lier / délier un compte OAuth" as UC_LINK_OAUTH
+  usecase "Changer son email" as UC_CHANGE_EMAIL
+  usecase "Changer son mot de passe" as UC_CHANGE_PWD
+  usecase "Se déconnecter" as UC_LOGOUT
+}
+
+package "Profil utilisateur" {
+  usecase "Modifier ses informations\n(nom, company, SIREN, TVA)" as UC_PROFILE
+  usecase "Gérer ses coordonnées bancaires\n(IBAN, BIC, SIRET)" as UC_BANKING
+  usecase "Gérer ses adresses" as UC_USER_ADDR
+}
+
+package "Abonnement" {
+  usecase "Consulter les plans disponibles" as UC_PLANS
+  usecase "Souscrire / changer de plan\n(paiement Stripe)" as UC_SUBSCRIBE
+}
+
+P --> UC_REGISTER
+P --> UC_LOGIN
+P --> UC_OAUTH
+P --> UC_VERIFY_EMAIL
+P --> UC_RESET_PWD
+P --> UC_LINK_OAUTH
+P --> UC_CHANGE_EMAIL
+P --> UC_CHANGE_PWD
+P --> UC_LOGOUT
+
+P --> UC_PROFILE
+P --> UC_BANKING
+P --> UC_USER_ADDR
+
+P --> UC_PLANS
+P --> UC_SUBSCRIBE
+
+@enduml

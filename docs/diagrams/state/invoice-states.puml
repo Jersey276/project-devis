@@ -1,0 +1,84 @@
+@startuml invoice-states
+' Diagramme d'état — Cycle de vie d'une facture
+' Deux axes orthogonaux : statut financier (vertical) + statut e-invoicing (horizontal, B2B uniquement)
+' Date : 2026-06-28
+
+skinparam defaultFontSize 12
+skinparam stateFontSize 12
+skinparam stateArrowFontSize 11
+skinparam backgroundColor white
+skinparam state {
+  BackgroundColor #F8F9FA
+  BorderColor #6C757D
+  ArrowColor #343A40
+  StartColor #343A40
+  EndColor #343A40
+}
+
+scale max 794*1122
+
+' ── Statut financier ──────────────────────────────────────────────
+
+state "**Statut financier**" as FINANCIAL {
+
+  [*] --> DRAFT
+
+  state "Brouillon\n(DRAFT)" as DRAFT
+  state "Émise\n(ISSUED)" as ISSUED
+  state "Payée\n(PAID)" as PAID
+  state "Annulée\n(CANCELLED)" as CANCELLED
+
+  DRAFT --> ISSUED    : Émettre\n(numérotation YYYY-NNNN\n+ snapshot légal + scellement)
+  DRAFT --> CANCELLED : Supprimer le brouillon
+
+  ISSUED --> PAID      : Marquer comme payée
+  ISSUED --> CANCELLED : Créer un avoir\n(facture rectificative)
+
+  PAID --> PAID : —
+
+  ISSUED -[hidden]-> PAID
+
+  CANCELLED --> [*]
+  PAID --> [*]
+}
+
+' ── Statut e-invoicing (B2B uniquement, orthogonal au statut financier) ──
+
+state "**Statut e-invoicing** *(B2B uniquement)*" as EINV {
+
+  [*] --> NONE
+
+  state "Non déposée\n(NONE)" as NONE
+  state "Déposée\n(DEPOSITED)" as DEPOSITED
+  state "Reçue\n(RECEIVED)" as RECEIVED
+  state "Approuvée\n(APPROVED)" as APPROVED
+  state "Collectée\n(COLLECTED)" as COLLECTED
+  state "Rejetée\n(REJECTED)" as REJECTED
+
+  NONE      --> DEPOSITED : Dépôt sur la PDP\n(Iopole)
+  DEPOSITED --> RECEIVED  : Accusé de réception\ndu destinataire
+  RECEIVED  --> APPROVED  : Validation\npar le destinataire
+  APPROVED  --> COLLECTED : Paiement collecté
+
+  DEPOSITED --> REJECTED  : Rejet
+  RECEIVED  --> REJECTED  : Rejet
+  APPROVED  --> REJECTED  : Rejet
+
+  COLLECTED --> [*]
+  REJECTED  --> [*]
+
+  note right of NONE
+    Disponible uniquement
+    lorsque la facture est
+    en statut ISSUED ou PAID.
+    Sans objet pour les
+    factures B2C.
+  end note
+}
+
+note bottom of FINANCIAL
+  Le statut financier et le statut e-invoicing sont indépendants.
+  Une facture peut être PAID et DEPOSITED simultanément.
+end note
+
+@enduml
