@@ -533,14 +533,17 @@ type InvoiceParty struct {
 	// country_code is the party's frozen ISO 3166-1 alpha-2 country code at issue
 	// time (” for legacy). Issuer code on the issuer party, client code on the
 	// client party; drives the Factur-X buyer/seller country (BT-40 / BT-55).
-	CountryCode string `protobuf:"bytes,13,opt,name=country_code,json=countryCode,proto3" json:"country_code,omitempty"`
-	// Issuer payment instructions (BG-16). Field numbers must match the invoice
-	// service proto (16/17) to map across the wire — 14/15 are unused here.
-	Iban string `protobuf:"bytes,16,opt,name=iban,proto3" json:"iban,omitempty"`
-	Bic  string `protobuf:"bytes,17,opt,name=bic,proto3" json:"bic,omitempty"`
-	// siret: 14-digit establishment id (SIREN + NIC), frozen at issue time. Field
-	// number must match the invoice service proto (18). Emitted as the legal
-	// registration id (BT-30/BT-47, scheme 0009) in preference to SIREN.
+	// client_type/client_country_id (13/14) are present in the invoice service
+	// proto and must be declared here to keep field numbers aligned on the wire,
+	// even though the export service does not use them for rendering.
+	ClientType      string `protobuf:"bytes,13,opt,name=client_type,json=clientType,proto3" json:"client_type,omitempty"`
+	ClientCountryId int32  `protobuf:"varint,14,opt,name=client_country_id,json=clientCountryId,proto3" json:"client_country_id,omitempty"`
+	// country_code is the party's frozen ISO 3166-1 alpha-2 country code at issue
+	// time (” for legacy). Drives Factur-X buyer/seller country (BT-40 / BT-55).
+	CountryCode string `protobuf:"bytes,15,opt,name=country_code,json=countryCode,proto3" json:"country_code,omitempty"`
+	// Issuer payment instructions (BG-16). Field numbers match the invoice service.
+	Iban          string `protobuf:"bytes,16,opt,name=iban,proto3" json:"iban,omitempty"`
+	Bic           string `protobuf:"bytes,17,opt,name=bic,proto3" json:"bic,omitempty"`
 	Siret         string `protobuf:"bytes,18,opt,name=siret,proto3" json:"siret,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -651,6 +654,20 @@ func (x *InvoiceParty) GetCity() string {
 		return x.City
 	}
 	return ""
+}
+
+func (x *InvoiceParty) GetClientType() string {
+	if x != nil {
+		return x.ClientType
+	}
+	return ""
+}
+
+func (x *InvoiceParty) GetClientCountryId() int32 {
+	if x != nil {
+		return x.ClientCountryId
+	}
+	return 0
 }
 
 func (x *InvoiceParty) GetCountryCode() string {
@@ -2143,7 +2160,7 @@ const file_invoice_proto_rawDesc = "" +
 	"\x11GetInvoiceRequest\x12\x1d\n" +
 	"\n" +
 	"invoice_id\x18\x01 \x01(\tR\tinvoiceId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"\x8b\x03\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xd8\x03\n" +
 	"\fInvoiceParty\x12\x18\n" +
 	"\acompany\x18\x01 \x01(\tR\acompany\x12\x1d\n" +
 	"\n" +
@@ -2157,8 +2174,11 @@ const file_invoice_proto_rawDesc = "" +
 	"\x11additional_street\x18\n" +
 	" \x01(\tR\x10additionalStreet\x12\x19\n" +
 	"\bzip_code\x18\v \x01(\tR\azipCode\x12\x12\n" +
-	"\x04city\x18\f \x01(\tR\x04city\x12!\n" +
-	"\fcountry_code\x18\r \x01(\tR\vcountryCode\x12\x12\n" +
+	"\x04city\x18\f \x01(\tR\x04city\x12\x1f\n" +
+	"\vclient_type\x18\r \x01(\tR\n" +
+	"clientType\x12*\n" +
+	"\x11client_country_id\x18\x0e \x01(\x05R\x0fclientCountryId\x12!\n" +
+	"\fcountry_code\x18\x0f \x01(\tR\vcountryCode\x12\x12\n" +
 	"\x04iban\x18\x10 \x01(\tR\x04iban\x12\x10\n" +
 	"\x03bic\x18\x11 \x01(\tR\x03bic\x12\x14\n" +
 	"\x05siret\x18\x12 \x01(\tR\x05siret\"\x92\x02\n" +
