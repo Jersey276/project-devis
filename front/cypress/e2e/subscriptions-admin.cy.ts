@@ -220,11 +220,14 @@ describe("Admin Subscriptions page", () => {
 
     cy.contains("Modifier le plan").click({ force: true });
 
+    // wait for the dialog to be fully open
+    cy.get("#plan_name").should("be.visible");
+
     // stripe_price_id should NOT be an editable input
     cy.get("#plan_stripe_price_id").should("not.exist");
 
     // update the name
-    cy.get("#plan_name").clear().type("Pro Updated");
+    cy.get("#plan_name").focus().clear().type("Pro Updated");
 
     cy.contains("button", "Enregistrer").click();
 
