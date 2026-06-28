@@ -358,6 +358,7 @@
       "saveAsTemplateSuccessToast": "Template enregistré.",
       "saveAsTemplateFailedToast": "Impossible d'enregistrer le template.",
       "empty": "Aucun devis pour le moment.",
+      "expiredBadge": "Expiré",
       "filters": {
         "searchPlaceholder": "Rechercher un devis…",
         "statusLabel": "Statut",
@@ -376,6 +377,8 @@
       "createDescription": "Complète les étapes pour générer un nouveau devis.",
       "editDescription": "Modification du devis.",
       "notFoundToast": "Devis introuvable.",
+      "expiredAlertTitle": "Devis expiré",
+      "expiredAlertDescription": "La date de validité de ce devis ({date}) est dépassée.",
       "exportButton": "Exporter",
       "exportFailedToast": "Échec de l'export.",
       "saveAsTemplateButton": "Enregistrer comme template",

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Loader2Icon } from "lucide-react";
 import QuoteStepBasicInfo from "@/components/quote/steps/quote-step-basic-info";
@@ -558,6 +559,13 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
         onAccept={handleAccept}
         onRefuse={handleRefuse}
       />
+
+      {!isCustomer && validUntil && validUntil < new Date().toISOString().slice(0, 10) && (
+        <Alert variant="destructive" className="mx-6 mt-6 w-auto">
+          <AlertTitle>{t("expiredAlertTitle")}</AlertTitle>
+          <AlertDescription>{t("expiredAlertDescription", { date: validUntil })}</AlertDescription>
+        </Alert>
+      )}
 
       <CardContent className="space-y-6">
         <div className="grid gap-2 sm:grid-cols-2">

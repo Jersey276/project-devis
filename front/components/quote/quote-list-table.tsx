@@ -54,6 +54,7 @@ type QuoteListItem = {
   projectName: string;
   status: QuoteListState;
   totalTtc: number;
+  validUntil?: string;
 };
 
 function QuoteListTableInner() {
@@ -129,6 +130,7 @@ function QuoteListTableInner() {
         projectName: q.name,
         status: quoteListState(q),
         totalTtc: q.total_ttc ?? 0,
+        validUntil: q.valid_until ?? undefined,
       })));
       setTotal((body.total ?? 0) as number);
     }
@@ -303,6 +305,9 @@ function QuoteListTableInner() {
                   {tStatus(quote.status)}
                   {quote.status === "archived" && (
                     <Badge variant="secondary">{tStatus("archived")}</Badge>
+                  )}
+                  {!isCustomer && quote.validUntil && quote.validUntil < new Date().toISOString().slice(0, 10) && (
+                    <Badge variant="destructive">{t("expiredBadge")}</Badge>
                   )}
                 </span>
               </DataTableCell>
