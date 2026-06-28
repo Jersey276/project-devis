@@ -37,7 +37,7 @@ func List(ctx context.Context, db *sql.DB, req *quoteGrpc.ListQuotesRequest) (*q
 	args = append(args, pageSize, offset)
 	n := len(args)
 	query := fmt.Sprintf(
-		`SELECT quote_id, user_id, name, archived_at, state, client_id, address_id, COALESCE(user_address_id, 0)
+		`SELECT quote_id, user_id, name, archived_at, state, client_id, address_id, COALESCE(user_address_id, 0), valid_until
 		 FROM quotes%s ORDER BY %s LIMIT $%d OFFSET $%d`,
 		where, orderBy, n-1, n,
 	)
@@ -59,9 +59,14 @@ func List(ctx context.Context, db *sql.DB, req *quoteGrpc.ListQuotesRequest) (*q
 			clientID      string
 			addressID     int32
 			userAddressID int32
+			validUntil    sql.NullTime
 		)
-		if err := rows.Scan(&quoteID, &userID, &name, &archivedAt, &state, &clientID, &addressID, &userAddressID); err != nil {
+		if err := rows.Scan(&quoteID, &userID, &name, &archivedAt, &state, &clientID, &addressID, &userAddressID, &validUntil); err != nil {
 			return &quoteGrpc.ListQuotesResponse{Success: false, Code: codes.InternalError}, err
+		}
+		validUntilStr := ""
+		if validUntil.Valid {
+			validUntilStr = validUntil.Time.Format("2006-01-02")
 		}
 		quotes = append(quotes, &quoteGrpc.Quote{
 			QuoteId:       quoteID,
@@ -72,6 +77,7 @@ func List(ctx context.Context, db *sql.DB, req *quoteGrpc.ListQuotesRequest) (*q
 			ClientId:      clientID,
 			AddressId:     addressID,
 			UserAddressId: userAddressID,
+			ValidUntil:    validUntilStr,
 		})
 	}
 	if err := rows.Err(); err != nil {

@@ -253,7 +253,7 @@ func buildViewModel(in renderInput) viewModel {
 		ShortID:                 format.ShortID(in.Quote.QuoteId),
 		QuoteName:               in.Quote.Name,
 		IssuedAt:                format.Date(in.Quote.IssuedAt),
-		ValidUntil:              in.Quote.ValidUntil,
+		ValidUntil:              format.Date(in.Quote.ValidUntil),
 		PaymentTerms:            in.Quote.PaymentTerms,
 		Sender:                  buildSender(in.User, in.UserAddress),
 		Recipient:               buildRecipient(in.Client, in.ClientAddress),
