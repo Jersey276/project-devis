@@ -151,7 +151,6 @@ func userIDFromCtx(c *gin.Context) string {
 	return s
 }
 
-
 func paramInt32(c *gin.Context, name string) (int32, bool) {
 	v, err := strconv.ParseInt(c.Param(name), 10, 32)
 	if err != nil {

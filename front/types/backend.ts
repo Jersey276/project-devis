@@ -422,6 +422,7 @@ export type BackendSubscription = {
   current_period_end: string | null;
   cancel_at_period_end: boolean;
   stripe_subscription_id: string | null;
+  pending_plan_id: number | null;
   updated_at: string;
 };
 
