@@ -1,0 +1,66 @@
+@startuml client-usecases
+' Cas d'utilisation — Acteur Client (mode customer)
+' Le client accède via cookie user-mode=customer ou lien d'invitation
+' Date : 2026-06-27
+
+left to right direction
+skinparam packageStyle rectangle
+
+' Mise en page A4 portrait
+scale max 794*1122
+skinparam defaultFontSize 12
+
+actor "Client\n(mode customer)" as C
+
+package "Authentification" {
+  usecase "Accepter une invitation\n(créer un compte ou lier un compte existant)" as UC_ACCEPT_INV
+  usecase "Se connecter" as UC_LOGIN
+  usecase "Réinitialiser son mot de passe" as UC_RESET_PWD
+}
+
+package "Profil client" {
+  usecase "Consulter son profil client lié" as UC_VIEW_PROFILE
+  usecase "Modifier son profil client" as UC_EDIT_PROFILE
+  usecase "Consulter ses adresses" as UC_ADDRESSES
+}
+
+package "Devis reçus" {
+  usecase "Consulter la liste\nde ses devis" as UC_LIST_QUOTES
+  usecase "Consulter le détail\nd'un devis" as UC_VIEW_QUOTE
+  usecase "Mettre à jour son adresse\nsur un devis" as UC_UPDATE_ADDR
+  usecase "Accepter un devis" as UC_ACCEPT_QUOTE
+  usecase "Refuser un devis" as UC_REFUSE_QUOTE
+}
+
+package "Avoirs reçus" {
+  usecase "Consulter la liste\nde ses avoirs" as UC_LIST_CN
+  usecase "Consulter le détail\nd'un avoir" as UC_VIEW_CN
+}
+
+C --> UC_ACCEPT_INV
+C --> UC_LOGIN
+C --> UC_RESET_PWD
+
+C --> UC_VIEW_PROFILE
+C --> UC_EDIT_PROFILE
+C --> UC_ADDRESSES
+
+C --> UC_LIST_QUOTES
+C --> UC_VIEW_QUOTE
+C --> UC_UPDATE_ADDR
+C --> UC_ACCEPT_QUOTE
+C --> UC_REFUSE_QUOTE
+
+C --> UC_LIST_CN
+C --> UC_VIEW_CN
+
+note bottom of C
+  Le mode customer est activé via le cookie
+  user-mode=customer (ADR-0005).
+  L'interface est restreinte : sidebar réduite,
+  accès uniquement aux données du client lié.
+  Les routes /quotes/me et /credit-notes/me
+  filtrent automatiquement par client_id.
+end note
+
+@enduml

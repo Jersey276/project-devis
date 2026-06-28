@@ -1,0 +1,109 @@
+@startuml auth-db
+' MCD — Service Auth (DB : auth)
+' Date : 2026-06-27
+
+skinparam linetype ortho
+hide empty methods
+
+' Mise en page A4 portrait
+scale 2
+skinparam defaultFontSize 14
+skinparam EntityFontSize 14
+skinparam EntityHeaderFontSize 15
+skinparam EntityHeaderFontStyle bold
+skinparam noteFontSize 13
+skinparam ArrowFontSize 13
+
+entity "auth" as AUTH {
+  * id : SERIAL <<PK>>
+  --
+  * user_id : TEXT <<UNIQUE>>
+  * email : TEXT <<UNIQUE>>
+  password : TEXT <<nullable>>
+  * role : TEXT (free_user | super_admin)
+  * account_status : TEXT (active | suspended)
+  * subscription_tier : TEXT
+  * session_version : INTEGER
+  * email_verified : BOOLEAN
+  * created_at : TIMESTAMP
+}
+
+entity "refresh_tokens" as RT {
+  * id : SERIAL <<PK>>
+  --
+  * user_id : TEXT
+  * token_hash : TEXT
+  * expires_at : TIMESTAMP
+  remember_me : BOOLEAN
+  * created_at : TIMESTAMP
+}
+
+entity "password_reset_tokens" as PRT {
+  * id : SERIAL <<PK>>
+  --
+  * user_id : TEXT
+  * token_hash : TEXT <<UNIQUE>>
+  * expires_at : TIMESTAMP
+  used_at : TIMESTAMP
+  * created_at : TIMESTAMP
+}
+
+entity "email_verification_tokens" as EVT {
+  * id : SERIAL <<PK>>
+  --
+  * user_id : TEXT
+  * token_hash : TEXT <<UNIQUE>>
+  * expires_at : TIMESTAMP
+  used_at : TIMESTAMP
+  * created_at : TIMESTAMP
+}
+
+entity "email_change_tokens" as ECT {
+  * id : SERIAL <<PK>>
+  --
+  * user_id : TEXT
+  * new_email : TEXT
+  * token_hash : TEXT <<UNIQUE>>
+  * expires_at : TIMESTAMP
+  used_at : TIMESTAMP
+  * created_at : TIMESTAMP
+}
+
+entity "oauth_identities" as OI {
+  * id : SERIAL <<PK>>
+  --
+  * provider : TEXT (google | github | microsoft)
+  * provider_user_id : TEXT
+  * user_id : TEXT
+  * email : TEXT
+  * created_at : TIMESTAMP
+  --
+  <<UNIQUE (provider, provider_user_id)>>
+}
+
+entity "client_invitation_tokens" as CIT {
+  * id : SERIAL <<PK>>
+  --
+  * client_id : TEXT
+  * provider_id : TEXT
+  * token_hash : TEXT <<UNIQUE>>
+  * expires_at : TIMESTAMPTZ
+  used_at : TIMESTAMPTZ
+  * created_at : TIMESTAMPTZ
+}
+
+AUTH ||-down-o{ RT : "user_id"
+AUTH ||-down-o{ OI : "user_id"
+AUTH ||-right-o{ PRT : "user_id"
+AUTH ||-right-o{ EVT : "user_id"
+AUTH ||-left-o{ ECT : "user_id"
+AUTH ||-left-o{ CIT : "provider_id"
+
+note bottom of AUTH
+  session_version est incrémenté lors d'un
+  changement de rôle ou de subscription_tier,
+  invalidant tous les tokens existants.
+  password nullable = compte OAuth uniquement.
+end note
+
+@enduml

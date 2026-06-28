@@ -1,0 +1,158 @@
+@startuml provider-usecases
+' Cas d'utilisation — Acteur Prestataire (provider)
+' <<subscription>> = fonctionnalité soumise à abonnement payant
+' Date : 2026-06-27
+
+left to right direction
+skinparam packageStyle rectangle
+
+' Mise en page A4 portrait
+scale max 794*1122
+skinparam defaultFontSize 12
+
+actor "Prestataire" as P
+
+package "Authentification" {
+  usecase "S'inscrire" as UC_REGISTER
+  usecase "Se connecter\n(email/password)" as UC_LOGIN
+  usecase "Se connecter via OAuth\n(Google, GitHub, Microsoft)" as UC_OAUTH
+  usecase "Vérifier son email" as UC_VERIFY_EMAIL
+  usecase "Réinitialiser son mot de passe" as UC_RESET_PWD
+  usecase "Lier / délier un compte OAuth" as UC_LINK_OAUTH
+  usecase "Changer son email" as UC_CHANGE_EMAIL
+  usecase "Changer son mot de passe" as UC_CHANGE_PWD
+  usecase "Se déconnecter" as UC_LOGOUT
+}
+
+package "Profil utilisateur" {
+  usecase "Modifier ses informations\n(nom, company, SIREN, TVA)" as UC_PROFILE
+  usecase "Gérer ses coordonnées bancaires\n(IBAN, BIC, SIRET)" as UC_BANKING
+  usecase "Gérer son logo" as UC_LOGO
+  usecase "Gérer ses adresses" as UC_USER_ADDR
+}
+
+package "Abonnement" {
+  usecase "Consulter les plans disponibles" as UC_PLANS
+  usecase "Souscrire / changer de plan\n(paiement Stripe)" as UC_SUBSCRIBE
+}
+
+package "Gestion clients" {
+  usecase "Créer un client\n(B2C individuel ou B2B entreprise)" as UC_CREATE_CLIENT
+  usecase "Modifier / archiver un client" as UC_EDIT_CLIENT
+  usecase "Consulter la liste des clients" as UC_LIST_CLIENT
+  usecase "Gérer les adresses d'un client" as UC_CLIENT_ADDR
+  usecase "Inviter un client\n(envoie un lien d'invitation)" as UC_INVITE_CLIENT
+}
+
+package "Gestion des devis" {
+  usecase "Créer un devis" as UC_CREATE_QUOTE
+  usecase "Modifier un devis\n(info, lignes, taxes)" as UC_EDIT_QUOTE
+  usecase "Consulter la liste des devis" as UC_LIST_QUOTE
+  usecase "Valider un devis" as UC_VALIDATE_QUOTE
+  usecase "Envoyer en négociation\n(export PDF + email client)" as UC_NEGO_QUOTE
+  usecase "Archiver / restaurer un devis" as UC_ARCHIVE_QUOTE
+  usecase "Abandonner un devis" as UC_DROP_QUOTE
+  usecase "Commenter une ligne de devis" as UC_COMMENT_QUOTE
+  usecase "Exporter un devis en PDF" as UC_EXPORT_QUOTE
+}
+
+package "Catalogue de frais\n<<subscription>>" {
+  usecase "Créer / modifier un frais" as UC_FEE
+  usecase "Utiliser un frais dans un devis" as UC_USE_FEE
+}
+
+package "Templates\n<<subscription>>" {
+  usecase "Créer un template de lignes\nou de devis" as UC_CREATE_TPL
+  usecase "Appliquer un template à un devis" as UC_USE_TPL
+}
+
+package "Échéanciers\n<<subscription>>" {
+  usecase "Créer un échéancier\n(depuis un devis validé)" as UC_CREATE_SCHED
+  usecase "Remplir les cellules\n(montant par ligne × mois)" as UC_FILL_SCHED
+  usecase "Valider et envoyer\nl'échéancier au client" as UC_VALIDATE_SCHED
+  usecase "Exporter l'échéancier en PDF" as UC_EXPORT_SCHED
+}
+
+package "Projets\n<<subscription>>" {
+  usecase "Créer / modifier un projet" as UC_CREATE_PROJ
+  usecase "Associer des devis à un projet" as UC_LINK_PROJ
+  usecase "Consulter l'avancement\net le chiffre d'affaires" as UC_VIEW_PROJ
+}
+
+package "Facturation\n<<subscription>>" {
+  usecase "Créer une facture\n(depuis devis ou échéancier)" as UC_CREATE_INV
+  usecase "Émettre la facture\n(numérotation YYYY-NNNN, snapshot)" as UC_ISSUE_INV
+  usecase "Marquer une facture comme payée" as UC_PAID_INV
+  usecase "Exporter en PDF / Factur-X" as UC_EXPORT_INV
+  usecase "Créer un avoir" as UC_CREDIT_NOTE
+  usecase "Consulter le statut OSS\n(seuil 10 000 €)" as UC_OSS
+  usecase "Avancer le statut e-invoicing\n(B2B : DEPOSITED → COLLECTED)" as UC_EINV
+  usecase "Déposer sur la plateforme PDP" as UC_DEPOSIT
+  usecase "Vérifier la chaîne\nd'inalterabilité (NF203)" as UC_VERIFY_CHAIN
+  usecase "Soumettre un e-rapport\n(B5/C5 mensuel)" as UC_REPORT
+}
+
+P --> UC_REGISTER
+P --> UC_LOGIN
+P --> UC_OAUTH
+P --> UC_VERIFY_EMAIL
+P --> UC_RESET_PWD
+P --> UC_LINK_OAUTH
+P --> UC_CHANGE_EMAIL
+P --> UC_CHANGE_PWD
+P --> UC_LOGOUT
+
+P --> UC_PROFILE
+P --> UC_BANKING
+P --> UC_LOGO
+P --> UC_USER_ADDR
+
+P --> UC_PLANS
+P --> UC_SUBSCRIBE
+
+P --> UC_CREATE_CLIENT
+P --> UC_EDIT_CLIENT
+P --> UC_LIST_CLIENT
+P --> UC_CLIENT_ADDR
+P --> UC_INVITE_CLIENT
+
+P --> UC_CREATE_QUOTE
+P --> UC_EDIT_QUOTE
+P --> UC_LIST_QUOTE
+P --> UC_VALIDATE_QUOTE
+P --> UC_NEGO_QUOTE
+P --> UC_ARCHIVE_QUOTE
+P --> UC_DROP_QUOTE
+P --> UC_COMMENT_QUOTE
+P --> UC_EXPORT_QUOTE
+
+P --> UC_FEE
+P --> UC_USE_FEE
+
+P --> UC_CREATE_TPL
+P --> UC_USE_TPL
+
+P --> UC_CREATE_SCHED
+P --> UC_FILL_SCHED
+P --> UC_VALIDATE_SCHED
+P --> UC_EXPORT_SCHED
+
+P --> UC_CREATE_PROJ
+P --> UC_LINK_PROJ
+P --> UC_VIEW_PROJ
+
+P --> UC_CREATE_INV
+P --> UC_ISSUE_INV
+P --> UC_PAID_INV
+P --> UC_EXPORT_INV
+P --> UC_CREDIT_NOTE
+P --> UC_OSS
+P --> UC_EINV
+P --> UC_DEPOSIT
+P --> UC_VERIFY_CHAIN
+P --> UC_REPORT
+
+UC_NEGO_QUOTE ..> UC_EXPORT_QUOTE : <<include>>
+UC_DEPOSIT ..> UC_EINV : <<include>>
+
+@enduml

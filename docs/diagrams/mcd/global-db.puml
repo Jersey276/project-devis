@@ -1,0 +1,333 @@
+@startuml global-db
+' MCD Global — Vue cross-service (regroupement par service)
+' Flèches pleines  = FK réelles (intra-service)
+' Flèches pointillées ..> = références logiques cross-service (TEXT IDs, pas de FK inter-DB)
+' Date : 2026-06-27
+
+skinparam linetype ortho
+hide empty methods
+skinparam packageStyle rectangle
+
+' Mise en page A4 paysage
+scale 2
+skinparam defaultFontSize 11
+skinparam EntityFontSize 11
+skinparam EntityHeaderFontSize 12
+skinparam EntityHeaderFontStyle bold
+skinparam noteFontSize 10
+skinparam ArrowFontSize 10
+
+skinparam package {
+  BackgroundColor #FFFFFF
+}
+
+package "Auth Service\n(DB: auth)" #FFF3CD {
+  entity auth {
+    * user_id <<PK>>
+    --
+    email
+    role / account_status / subscription_tier
+    session_version / email_verified
+  }
+  entity refresh_tokens {
+    * id <<PK>>
+    --
+    user_id
+    token_hash / expires_at
+  }
+  entity oauth_identities {
+    * id <<PK>>
+    --
+    user_id
+    provider / provider_user_id
+  }
+  entity email_verification_tokens {
+    * id <<PK>>
+    --
+    user_id / token_hash
+  }
+  entity password_reset_tokens {
+    * id <<PK>>
+    --
+    user_id / token_hash
+  }
+  entity client_invitation_tokens {
+    * id <<PK>>
+    --
+    provider_id / client_id
+  }
+  entity email_change_tokens {
+    * id <<PK>>
+    --
+    user_id / new_email
+  }
+
+  auth ||--o{ refresh_tokens
+  auth ||--o{ oauth_identities
+  auth ||--o{ email_verification_tokens
+  auth ||--o{ password_reset_tokens
+  auth ||--o{ client_invitation_tokens
+  auth ||--o{ email_change_tokens
+}
+
+package "Users Service\n(DB: users)" #D1ECF1 {
+  entity users {
+    * user_id <<PK>>
+    --
+    email / company / siren / vat
+    oss_enabled / iban / bic / siret
+  }
+  entity clients {
+    * client_id <<PK>>
+    --
+    user_id <<FK>>
+    client_type / linked_user_id
+  }
+  entity addresses {
+    * id <<PK>>
+    --
+    owner_type / owner_id
+    country_id <<FK>>
+  }
+  entity countries {
+    * id <<PK>>
+    --
+    code / name / is_eu
+  }
+  entity country_groups {
+    * id <<PK>>
+    --
+    name
+  }
+  entity country_group_countries {
+    * country_group_id <<FK>>
+    * country_id <<FK>>
+  }
+  entity taxes {
+    * id <<PK>>
+    --
+    country_group_id <<FK>>
+    rate / version / superseded_at
+  }
+
+  users ||--o{ clients
+  users ||--o{ addresses
+  clients ||--o{ addresses
+  addresses }o--|| countries
+  countries ||--o{ country_group_countries
+  country_groups ||--o{ country_group_countries
+  country_groups ||--o{ taxes
+}
+
+package "Quote Service\n(DB: quote)" #D4EDDA {
+  entity quotes {
+    * quote_id <<PK>>
+    --
+    user_id / client_id
+    state / archived_at
+  }
+  entity quote_lines {
+    * line_id <<PK>>
+    --
+    quote_id <<FK>>
+    unit_price / tax_id / fee_id
+  }
+  entity quote_line_comments {
+    * comment_id <<PK>>
+    --
+    line_id <<FK>>
+    author_id / body
+  }
+  entity fees {
+    * fee_id <<PK>>
+    --
+    user_id / category
+    unit_price / tax_id
+  }
+
+  quotes ||--o{ quote_lines
+  quote_lines ||--o{ quote_line_comments
+  fees ||--o{ quote_lines
+}
+
+package "Schedule Service\n(DB: schedule)" #F8D7DA {
+  entity schedules {
+    * schedule_id <<PK>>
+    --
+    quote_id / user_id / client_id
+    status / start_month
+  }
+  entity schedule_cells {
+    * schedule_id <<FK>>
+    * quote_line_id
+    * month_index
+    --
+    amount_cents
+  }
+
+  schedules ||--o{ schedule_cells
+}
+
+package "Invoice Service\n(DB: invoice)" #E2D9F3 {
+  entity invoices {
+    * invoice_id <<PK>>
+    --
+    user_id / quote_id / schedule_id
+    status / lifecycle_status
+    invoice_number
+  }
+  entity invoice_party_snapshots {
+    * invoice_id <<PK, FK>>
+    --
+    issuer_* / client_* / oss_applied
+  }
+  entity invoice_line_snapshots {
+    * invoice_id <<FK>>
+    * position
+    --
+    name / quantity / tax_rate
+  }
+  entity invoice_lifecycle_events {
+    * id <<PK>>
+    --
+    invoice_id <<FK>>
+    status / note
+  }
+  entity document_seals {
+    * user_id
+    * doc_type
+    * doc_id
+    --
+    chain_index / chain_hash
+  }
+  entity chain_heads {
+    * user_id <<PK>>
+    --
+    last_index / last_hash
+  }
+  entity credit_notes {
+    * credit_note_id <<PK>>
+    --
+    invoice_id <<FK>>
+    credit_note_number
+  }
+  entity credit_note_lines {
+    * credit_note_id <<FK>>
+    * position
+    --
+    origin_invoice_id / origin_position
+  }
+  entity invoice_reports {
+    * id <<PK>>
+    --
+    user_id / kind
+    period_year / period_month
+  }
+
+  invoices ||--|| invoice_party_snapshots
+  invoices ||--o{ invoice_line_snapshots
+  invoices ||--o{ invoice_lifecycle_events
+  invoices ||--o{ credit_notes
+  credit_notes ||--o{ credit_note_lines
+  document_seals }o--|| chain_heads
+}
+
+package "Template Service\n(DB: template)" #FDEBD0 {
+  entity templates {
+    * template_id <<PK>>
+    --
+    user_id / target_resource
+    payload (JSONB)
+  }
+  entity template_lines {
+    * line_id <<PK>>
+    --
+    template_id <<FK>>
+    name / unit_price / tax_id
+  }
+
+  templates ||--o{ template_lines
+}
+
+package "Project Service\n(DB: project)" #D6EAF8 {
+  entity projects {
+    * project_id <<PK>>
+    --
+    user_id / client_id
+    name / status
+  }
+  entity project_quotes {
+    * project_id <<FK>>
+    * quote_id
+    --
+    added_at
+  }
+
+  projects ||--o{ project_quotes
+}
+
+package "Subscription Service\n(DB: subscription)" #E8F5E9 {
+  entity plans {
+    * plan_id <<PK>>
+    --
+    tier (free | pro | enterprise)
+    price_cents / billing_cycle
+    features (JSONB) / active
+    stripe_price_id
+  }
+  entity subscriptions {
+    * subscription_id <<PK>>
+    --
+    user_id (UNIQUE)
+    plan_id <<FK>>
+    status (active | cancelled | expired)
+    current_period_start / current_period_end
+    stripe_customer_id / stripe_subscription_id
+    cancel_at_period_end
+  }
+  entity subscription_events {
+    * event_id <<PK>>
+    --
+    user_id / event_type
+    stripe_event_id (UNIQUE)
+    payload (JSONB)
+  }
+
+  plans ||--o{ subscriptions
+  subscriptions ||--o{ subscription_events
+}
+
+package "Audit Service\n(DB: audit)" #F9EBEA {
+  entity activity_logs {
+    * id <<PK>>
+    --
+    user_id / method / url
+    resp_status / duration_ms
+  }
+}
+
+' ── Références logiques cross-service (TEXT IDs, pas de FK réelle) ──
+
+auth ..> users : "user_id"
+users ..> quotes : "user_id\n(prestataire)"
+clients ..> quotes : "client_id\n(destinataire)"
+quotes ..> schedules : "quote_id"
+quotes ..> invoices : "quote_id"
+schedules ..> invoices : "schedule_id"
+quote_lines ..> schedule_cells : "quote_line_id"
+quote_lines ..> invoice_line_snapshots : "quote_line_id\n(snapshot)"
+taxes ..> quote_lines : "tax_id"
+taxes ..> template_lines : "tax_id"
+clients ..> projects : "client_id"
+clients ..> schedules : "client_id"
+auth ..> subscriptions : "user_id\n(subscription_tier)"
+
+note as N1
+  Références logiques cross-service :
+  chaque service stocke les IDs externes
+  comme TEXT sans contrainte FK inter-DB.
+  La cohérence est assurée à l'application
+  (Gateway + actions handlers).
+end note
+
+@enduml

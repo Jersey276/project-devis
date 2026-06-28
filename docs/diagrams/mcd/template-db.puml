@@ -1,0 +1,58 @@
+@startuml template-db
+' MCD — Service Template (DB : template)
+' Date : 2026-06-27
+
+skinparam linetype ortho
+hide empty methods
+
+' Mise en page A4 portrait
+scale 2
+skinparam defaultFontSize 14
+skinparam EntityFontSize 14
+skinparam EntityHeaderFontSize 15
+skinparam EntityHeaderFontStyle bold
+skinparam noteFontSize 13
+skinparam ArrowFontSize 13
+
+entity "templates" as T {
+  * id : BIGSERIAL <<PK>>
+  --
+  * template_id : UUID <<UNIQUE>>
+  * user_id : TEXT
+  * template_type : TEXT
+  * target_resource : TEXT (invoice | schedule)
+  * name : TEXT
+  archived_at : TIMESTAMPTZ
+  * payload_version : INTEGER
+  * payload : JSONB
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+
+entity "template_lines" as TL {
+  * id : BIGSERIAL <<PK>>
+  --
+  * line_id : UUID <<UNIQUE>>
+  * template_id : UUID <<FK>>
+  * type : TEXT
+  * name : TEXT
+  * quantity : DECIMAL(12,3)
+  unit : TEXT
+  * unit_price : BIGINT (centimes)
+  * data : JSONB
+  * position : INTEGER
+  tax_id : INTEGER
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+
+T ||--o{ TL : "template_id"
+
+note right of T
+  user_id : référence logique cross-service.
+  payload (JSONB) : configuration du template
+  pour le rendu PDF (mise en page, etc.).
+  Fonctionnalité subscription-gated.
+end note
+
+@enduml

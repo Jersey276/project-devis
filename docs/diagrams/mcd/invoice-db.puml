@@ -1,0 +1,255 @@
+@startuml invoice-db
+' MCD — Service Invoice (DB : invoice)
+' Date : 2026-06-27
+
+skinparam linetype ortho
+hide empty methods
+
+' Mise en page A4 portrait
+scale 2
+skinparam defaultFontSize 14
+skinparam EntityFontSize 14
+skinparam EntityHeaderFontSize 15
+skinparam EntityHeaderFontStyle bold
+skinparam noteFontSize 13
+skinparam ArrowFontSize 13
+
+entity "invoice_number_sequences" as INS {
+  * user_id : TEXT <<PK>>
+  * year : INTEGER <<PK>>
+  --
+  * last_value : INTEGER (>= 0)
+  --
+  <<PK (user_id, year)>>
+}
+
+entity "invoices" as I {
+  * invoice_id : TEXT <<PK>>
+  --
+  * user_id : TEXT
+  * quote_id : TEXT
+  schedule_id : TEXT
+  * billed_month_indexes : INTEGER[]
+  * status : TEXT\n  (DRAFT | ISSUED | PAID | CANCELLED)
+  * currency : TEXT (EUR)
+  invoice_number : TEXT (YYYY-NNNN)
+  number_year : INTEGER
+  number_seq : INTEGER
+  * lifecycle_status : TEXT\n  (NONE | DEPOSITED | RECEIVED |\n   APPROVED | REJECTED | COLLECTED)
+  pdp_submission_id : TEXT
+  recipient_routing_id : TEXT
+  issued_at : TIMESTAMPTZ
+  sale_date : DATE
+  due_date : DATE
+  paid_at : TIMESTAMPTZ
+  cancelled_at : TIMESTAMPTZ
+  * total_ht_cents : BIGINT
+  * total_vat_cents : BIGINT
+  * total_ttc_cents : BIGINT
+  * vat_exempt : BOOLEAN
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+
+entity "invoice_party_snapshots" as IPS {
+  * invoice_id : TEXT <<PK, FK>>
+  --
+  * issuer_company : TEXT
+  * issuer_siren : TEXT
+  * issuer_vat : TEXT
+  * issuer_email : TEXT
+  * issuer_phone : TEXT
+  * issuer_street : TEXT
+  * issuer_zip : TEXT
+  * issuer_city : TEXT
+  * issuer_iban : TEXT
+  * issuer_bic : TEXT
+  * issuer_siret : TEXT
+  * issuer_country_code : TEXT
+  * client_first_name : TEXT
+  * client_last_name : TEXT
+  * client_company : TEXT
+  * client_email : TEXT
+  * client_street : TEXT
+  * client_zip : TEXT
+  * client_city : TEXT
+  * client_type : TEXT
+  * client_country_id : INTEGER
+  * client_country_code : TEXT
+  * client_siren : TEXT
+  * client_vat : TEXT
+  * client_siret : TEXT
+  * oss_applied : BOOLEAN
+}
+
+entity "invoice_line_snapshots" as ILS {
+  * invoice_id : TEXT <<FK>>
+  * position : INTEGER
+  --
+  * quote_line_id : TEXT
+  * name : TEXT
+  * unit : TEXT
+  * quantity : TEXT
+  * unit_price_cents : BIGINT
+  * line_ht_cents : BIGINT
+  * tax_id : INTEGER
+  * tax_rate : TEXT
+  * tax_label : TEXT
+  --
+  <<PK (invoice_id, position)>>
+}
+
+entity "invoice_vat_breakdown_snapshots" as IVB {
+  * invoice_id : TEXT <<FK>>
+  * tax_rate : TEXT
+  --
+  * base_ht_cents : BIGINT
+  * vat_cents : BIGINT
+  --
+  <<PK (invoice_id, tax_rate)>>
+}
+
+entity "document_seals" as DS {
+  * user_id : TEXT
+  * doc_type : TEXT (INVOICE | CREDIT_NOTE)
+  * doc_id : TEXT
+  --
+  * chain_index : BIGINT
+  * content_hash : TEXT (SHA256)
+  * prev_hash : TEXT
+  * chain_hash : TEXT (SHA256)
+  * sealed_at : TIMESTAMPTZ
+  --
+  <<PK (user_id, doc_type, doc_id)>>
+  <<UNIQUE (user_id, chain_index)>>
+}
+
+entity "chain_heads" as CH {
+  * user_id : TEXT <<PK>>
+  --
+  * last_index : BIGINT
+  * last_hash : TEXT
+}
+
+entity "invoice_lifecycle_events" as ILE {
+  * id : BIGINT <<PK>>
+  --
+  * invoice_id : TEXT <<FK>>
+  * user_id : TEXT
+  * status : TEXT\n  (DEPOSITED | RECEIVED |\n   APPROVED | REJECTED | COLLECTED)
+  * note : TEXT
+  * created_at : TIMESTAMPTZ
+}
+
+entity "credit_note_number_sequences" as CNS {
+  * user_id : TEXT <<PK>>
+  * year : INTEGER <<PK>>
+  --
+  * last_value : INTEGER (>= 0)
+}
+
+entity "credit_notes" as CN {
+  * credit_note_id : TEXT <<PK>>
+  --
+  * user_id : TEXT
+  * invoice_id : TEXT <<FK>>
+  * credit_note_number : TEXT (AV-YYYY-NNNN)
+  * number_year : INTEGER
+  * number_seq : INTEGER
+  * is_total : BOOLEAN
+  * reason : TEXT
+  * currency : TEXT (EUR)
+  * issued_at : TIMESTAMPTZ
+  * total_ht_cents : BIGINT
+  * total_vat_cents : BIGINT
+  * total_ttc_cents : BIGINT
+  * vat_exempt : BOOLEAN
+  * created_at : TIMESTAMPTZ
+}
+
+entity "credit_note_party_snapshots" as CNPS {
+  * credit_note_id : TEXT <<PK, FK>>
+  --
+  (mêmes colonnes que invoice_party_snapshots)
+}
+
+entity "credit_note_lines" as CNL {
+  * credit_note_id : TEXT <<FK>>
+  * position : INTEGER
+  --
+  * origin_invoice_id : TEXT
+  * origin_position : INTEGER
+  * quote_line_id : TEXT
+  * name : TEXT
+  * quantity : TEXT
+  * unit_price_cents : BIGINT
+  * line_ht_cents : BIGINT
+  * tax_rate : TEXT
+  * tax_label : TEXT
+  --
+  <<PK (credit_note_id, position)>>
+  <<UNIQUE (origin_invoice_id, origin_position)>>
+}
+
+entity "credit_note_vat_breakdown_snapshots" as CNVB {
+  * credit_note_id : TEXT <<FK>>
+  * tax_rate : TEXT
+  --
+  * base_ht_cents : BIGINT
+  * vat_cents : BIGINT
+  --
+  <<PK (credit_note_id, tax_rate)>>
+}
+
+entity "invoice_reports" as IR {
+  * id : BIGINT <<PK>>
+  --
+  * user_id : TEXT
+  * kind : TEXT\n  (TRANSACTION | CROSS_BORDER_B2C)
+  * period_year : INT
+  * period_month : INT
+  * status : TEXT
+  * total_ht_cents : BIGINT
+  * total_vat_cents : BIGINT
+  report_id : TEXT
+  * submitted_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+  --
+  <<UNIQUE (user_id, kind, period_year, period_month)>>
+}
+
+' Colonne gauche : invoices et ses dépendants
+I ||-down-|| IPS : "invoice_id"
+I ||-down-o{ ILS : "invoice_id"
+I ||-down-o{ IVB : "invoice_id"
+I ||-right-o{ ILE : "invoice_id"
+
+' Colonne droite : credit_notes et ses dépendants
+I ||-down-o{ CN : "invoice_id"
+CN ||-down-|| CNPS : "credit_note_id"
+CN ||-down-o{ CNL : "credit_note_id"
+CN ||-left-o{ CNVB : "credit_note_id"
+
+' Séquences en haut
+INS -right- I
+CNS -left- CN
+
+' Chaîne cryptographique en bas
+I ||-down-o{ DS : "doc_id (INVOICE)"
+CN ||-down-o{ DS : "doc_id (CREDIT_NOTE)"
+DS ||-down-|| CH : "user_id"
+
+note bottom of DS
+  Append-only (trigger immutabilité).
+  Chaîne cryptographique mixant factures
+  et avoirs dans l'ordre d'émission.
+  Conforme NF203 / anti-fraude.
+end note
+
+note right of IPS
+  Snapshot légal gelé à l'émission.
+  Triggers PostgreSQL bloquent tout
+  UPDATE/DELETE sur les snapshots.
+end note
+
+@enduml

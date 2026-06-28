@@ -1,0 +1,91 @@
+@startuml invoice-credit-note
+' Service : Invoice — Création d'un avoir (credit note)
+' Date : 2026-06-27
+
+skinparam sequenceArrowThickness 1.5
+skinparam participantPadding 10
+
+' Mise en page A4 portrait
+scale max 794*1122
+skinparam defaultFontSize 12
+
+actor "Prestataire" as User
+participant "Browser\n(Next.js)" as Browser
+participant "Gateway\n:8080" as GW
+participant "Invoice svc\n:50059" as INV
+database "DB invoice" as DB
+
+== Consultation du seuil OSS (contexte) ==
+
+Browser -> GW : GET /api/invoices/oss-status
+GW -> INV : GetOSSThresholdStatus(user_id)
+INV -> DB : Somme total_ht_cents des factures émises\nclient B2C intra-EU (hors FR) de l'année\nminus avoirs correspondants
+DB --> INV : cumulative_ht_cents
+INV --> GW : { cumulative_ht_cents, threshold=10000€,\n  oss_enabled, oss_active,\n  prev_year_exceeded (règle N-1) }
+GW --> Browser : 200
+
+note over Browser
+  Le banner OSS s'affiche
+  si cumul proche du seuil
+end note
+
+== Création de l'avoir ==
+
+User -> Browser : "Créer un avoir" sur facture
+Browser -> GW : POST /api/invoices/:id/credit-notes\n{ positions: [0, 2], reason: "..." }
+GW -> INV : CreateCreditNote(invoice_id, positions, reason)
+
+INV -> DB : SELECT invoices WHERE invoice_id\n(vérifie status IN ['ISSUED','PAID'])
+DB --> INV : Invoice
+
+INV -> DB : SELECT invoice_line_snapshots\nWHERE invoice_id AND position IN positions
+DB --> INV : Lignes sélectionnées
+
+INV -> DB : Vérifier unicité : SELECT credit_note_lines\nWHERE origin_invoice_id AND origin_position\n(contrainte UNIQUE — une ligne ne peut être\ncréditée qu'une fois)
+DB --> INV : OK (pas de doublon)
+
+== Numérotation de l'avoir ==
+
+INV -> DB : BEGIN TRANSACTION\nSELECT FROM credit_note_number_sequences\n  WHERE user_id AND year FOR UPDATE
+DB --> INV : last_value
+INV -> DB : UPDATE credit_note_number_sequences\n  SET last_value = last_value + 1
+note right of DB
+  Format : AV-YYYY-NNNN
+  (séquence séparée des factures)
+end note
+
+INV -> DB : INSERT INTO credit_notes\n(credit_note_id, invoice_id, credit_note_number,\nis_total, reason, total_ht_cents, total_vat_cents,\ntotal_ttc_cents, issued_at)
+
+== Snapshot de l'avoir ==
+
+INV -> DB : INSERT INTO credit_note_party_snapshots\n(re-copie des parties depuis invoice_party_snapshots)
+INV -> DB : INSERT INTO credit_note_lines\n(position, origin_invoice_id, origin_position,\nname, quantity, unit_price_cents, line_ht_cents,\ntax_rate, tax_label)
+INV -> DB : INSERT INTO credit_note_vat_breakdown_snapshots
+
+== Scellement (chaîne d'inalterabilité) ==
+
+INV -> DB : SELECT FROM chain_heads WHERE user_id FOR UPDATE
+INV -> INV : Calcul chain_hash (même algorithme que pour les factures)
+INV -> DB : INSERT INTO document_seals\n(doc_type='CREDIT_NOTE', doc_id=credit_note_id, ...)
+INV -> DB : UPDATE chain_heads\nCOMMIT
+
+INV --> GW : CreateCreditNoteResponse\n(credit_note_id, credit_note_number)
+GW --> Browser : 201 { credit_note_id, credit_note_number }
+Browser --> User : Avoir AV-YYYY-NNNN créé
+
+note over DB
+  Impact sur le seuil OSS :
+  GetOSSThresholdStatus agrège
+  total_ht_cents des avoirs
+  en déduction automatique
+end note
+
+== Export PDF de l'avoir ==
+
+User -> Browser : Télécharger l'avoir
+Browser -> GW : GET /api/export/credit-notes/:id[?facturx=true]
+GW -> INV : ExportCreditNote(credit_note_id, user_id, facturx)
+INV --> GW : bytes (PDF/A-3 si facturx)
+GW --> Browser : 200 application/pdf
+
+@enduml

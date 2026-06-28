@@ -1,0 +1,70 @@
+@startuml subscription-db
+' MCD — Service Subscription (DB : subscription)
+' Date : 2026-06-28
+
+skinparam linetype ortho
+hide empty methods
+
+' Mise en page A4 portrait
+scale 2
+skinparam defaultFontSize 14
+skinparam EntityFontSize 14
+skinparam EntityHeaderFontSize 15
+skinparam EntityHeaderFontStyle bold
+skinparam noteFontSize 13
+skinparam ArrowFontSize 13
+
+entity "plans" as P {
+  * plan_id : SERIAL <<PK>>
+  --
+  * name : TEXT (UNIQUE)
+  * tier : TEXT (UNIQUE)\n  (free | pro | enterprise)
+  * price_cents : INTEGER (>= 0)
+  * billing_cycle : TEXT\n  (monthly | yearly | none)
+  * features : JSONB\n  {max_schedules, max_templates,\n   b2b_invoicing, max_linked_clients,\n   fees_catalog, max_projects}
+  * active : BOOLEAN
+  stripe_price_id : TEXT
+  * created_at : TIMESTAMPTZ
+}
+
+entity "subscriptions" as S {
+  * subscription_id : TEXT <<PK>>
+  --
+  * user_id : TEXT (UNIQUE)
+  * plan_id : INTEGER <<FK>>
+  * status : TEXT\n  (active | cancelled | expired)
+  * current_period_start : TIMESTAMPTZ
+  current_period_end : TIMESTAMPTZ
+  stripe_customer_id : TEXT
+  stripe_subscription_id : TEXT
+  * cancel_at_period_end : BOOLEAN
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+
+entity "subscription_events" as SE {
+  * event_id : TEXT <<PK>>
+  --
+  * user_id : TEXT
+  stripe_event_id : TEXT (UNIQUE)
+  * event_type : TEXT
+  * payload : JSONB
+  * created_at : TIMESTAMPTZ
+}
+
+P ||-down-o{ S : "plan_id"
+S ||-right-o{ SE : "user_id"
+
+note bottom of P
+  Seuls 3 tiers possibles (free/pro/enterprise).
+  features JSONB : -1 = illimité.
+  stripe_price_id requis pour les tiers payants.
+end note
+
+note bottom of SE
+  Idempotence garantie par UNIQUE stripe_event_id.
+  Conserve les webhooks Stripe bruts (payload JSONB)
+  pour audit et rejeu.
+end note
+
+@enduml

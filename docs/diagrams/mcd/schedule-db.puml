@@ -1,0 +1,64 @@
+@startuml schedule-db
+' MCD — Service Schedule (DB : schedule)
+' Date : 2026-06-27
+
+skinparam linetype ortho
+hide empty methods
+
+' Mise en page A4 portrait
+scale 2
+skinparam defaultFontSize 14
+skinparam EntityFontSize 14
+skinparam EntityHeaderFontSize 15
+skinparam EntityHeaderFontStyle bold
+skinparam noteFontSize 13
+skinparam ArrowFontSize 13
+
+entity "schedules" as S {
+  * schedule_id : TEXT <<PK>>
+  --
+  * quote_id : TEXT
+  * user_id : TEXT
+  * name : TEXT
+  * status : TEXT\n  (DRAFT | NEGOCIATE | DENIED | VALID)
+  * start_month : DATE
+  * duration_months : INTEGER (> 0)
+  * currency : TEXT (EUR)
+  client_id : TEXT
+  validated_at : TIMESTAMPTZ
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+  --
+  <<UNIQUE (quote_id) WHERE status='VALID'>>
+}
+
+entity "schedule_cells" as SC {
+  * schedule_id : TEXT <<FK>>
+  * quote_line_id : TEXT
+  * month_index : INTEGER (>= 1)
+  --
+  * amount_cents : BIGINT (>= 0)
+  * updated_at : TIMESTAMPTZ
+  --
+  <<PK (schedule_id, quote_line_id, month_index)>>
+}
+
+S ||--o{ SC : "schedule_id"
+
+note right of S
+  Un seul VALID par quote_id (index unique partiel).
+  quote_id et user_id : références logiques
+  cross-service vers Quote svc.
+  client_id : référence logique vers Users svc.
+end note
+
+note right of SC
+  quote_line_id : référence logique vers
+  quote_lines.line_id (Quote svc, cross-DB).
+  month_index : 1 = start_month,
+  2 = start_month + 1 mois, etc.
+  amount_cents : montant planifié pour cette
+  ligne sur ce mois (en centimes).
+end note
+
+@enduml

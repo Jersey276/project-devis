@@ -1,0 +1,152 @@
+@startuml production
+' Diagramme de déploiement — Environnement de production
+' Orchestré par docker-compose.prod.yml sur serveur Linux
+' Images : GHCR (ghcr.io/jersey276/project-devis/*)
+' Date : 2026-06-27
+
+skinparam componentStyle rectangle
+skinparam nodeStyle rectangle
+
+' Mise en page A4 paysage (dense : 12 services)
+scale max 1122*794
+skinparam defaultFontSize 12
+
+node "Utilisateur\n(navigateur)" as BROWSER
+
+node "Reverse Proxy\n(TLS termination)\nNginx / Caddy / Traefik" as RP
+
+node "Front :3001\n[GHCR image]" as FRONT {
+  component "Next.js\nAPP_ENV=production" as NEXTAPP
+}
+
+node "Gateway :8080\n[GHCR image]" as GW {
+  component "Gin HTTP\nJWT + Authz + Audit\nOAuth: Google/GitHub/Microsoft" as GIN
+}
+
+node "Auth svc :50051" as AUTH {
+  component "gRPC Auth"
+}
+node "Users svc :50052" as USERS {
+  component "gRPC Users"
+}
+node "Quote svc :50053" as QUOTE {
+  component "gRPC Quote"
+}
+node "Export svc :50054" as EXPORT {
+  component "gRPC Export"
+}
+node "Template svc :50055" as TPL {
+  component "gRPC Template"
+}
+node "Schedule svc :50056" as SCHED {
+  component "gRPC Schedule"
+}
+node "Subscription svc :50057" as SUB {
+  component "gRPC Subscription\n(Stripe)"
+}
+node "Email svc :50058" as EMAIL {
+  component "gRPC Email\n(Resend)"
+}
+node "Invoice svc :50059" as INV {
+  component "gRPC Invoice\n(PDP: Iopole/noop)"
+}
+node "Audit svc :50060" as AUDIT {
+  component "gRPC Audit\n(purge worker)"
+}
+node "Project svc :50061" as PROJ {
+  component "gRPC Project"
+}
+
+node "Gotenberg :3000\n[image officielle]" as GOT {
+  component "Chrome headless\nSSRF deny-list" as CHROME
+}
+
+database "PostgreSQL :5432\n10 bases (auth, users, quote,\nschedule, template, invoice,\nsubscription, email, audit, project)\nVolume persistent — NE PAS down -v" as PG
+
+node "GitHub Actions\n(CI/CD)" as GHA
+node "GHCR\n(Container Registry)" as GHCR
+
+node "Resend API" as RESEND
+node "Stripe API" as STRIPE
+node "Iopole PDP\n(e-invoicing)" as IOPOLE
+node "OAuth Providers\n(Google / GitHub / Microsoft)" as OAUTH
+
+note as SECRETS_NOTE
+  Secrets Docker (fichiers montés) :
+  - db_password
+  - stripe_secret_key
+  - stripe_webhook_secret
+  - resend_api_key
+  - email_from
+end note
+
+' ── Flux utilisateur ──────────────────────────────────────────────────
+
+BROWSER -down-> RP : HTTPS
+RP --> FRONT : HTTP :3001
+RP --> GW : HTTP :8080
+FRONT --> GW : "/api/* → devis-gateway:8080"
+
+' ── Flux inter-services gRPC ─────────────────────────────────────────
+
+GW --> AUTH : gRPC
+GW --> USERS : gRPC
+GW --> QUOTE : gRPC
+GW --> EXPORT : gRPC
+GW --> TPL : gRPC
+GW --> SCHED : gRPC
+GW --> SUB : gRPC
+GW --> EMAIL : gRPC
+GW --> INV : gRPC
+GW --> AUDIT : gRPC
+GW --> PROJ : gRPC
+
+INV --> QUOTE : gRPC
+INV --> USERS : gRPC
+INV --> SCHED : gRPC
+INV --> EXPORT : gRPC
+EXPORT --> GOT : HTTP (render PDF)
+AUTH --> USERS : gRPC
+AUTH --> EMAIL : gRPC
+SCHED --> QUOTE : gRPC
+AUDIT --> EMAIL : gRPC
+
+' ── Bases de données ─────────────────────────────────────────────────
+
+AUTH --> PG : Postgres
+USERS --> PG : Postgres
+QUOTE --> PG : Postgres
+SCHED --> PG : Postgres
+TPL --> PG : Postgres
+INV --> PG : Postgres
+SUB --> PG : Postgres
+EMAIL --> PG : Postgres
+AUDIT --> PG : Postgres
+PROJ --> PG : Postgres
+
+' ── Services externes ────────────────────────────────────────────────
+
+EMAIL --> RESEND : HTTPS
+SUB --> STRIPE : HTTPS
+INV --> IOPOLE : HTTPS (B6)
+GW --> OAUTH : HTTPS OAuth2
+
+' ── CI/CD ────────────────────────────────────────────────────────────
+
+GHA --> GHCR : docker push\n(:latest + :sha)
+GHCR ..> FRONT : pull_policy: always
+GHCR ..> GW : pull_policy: always
+GHCR ..> AUTH : pull_policy: always
+GHA ..> GW : SSH deploy\ndocker compose pull && up
+
+note bottom of GHA
+  Pipeline :
+  1. front-quality (ESLint, build, Cypress)
+  2. back-quality (gofmt, vet, tests)
+  3. e2e-integration (stack réelle)
+  4. build-and-push (GHCR)
+  5. deploy (SSH)
+  6. auto-merge (squash master)
+end note
+
+@enduml
