@@ -383,6 +383,24 @@ func GetSchedule(c *gin.Context, client schedule.ScheduleServiceClient, quoteCli
 			"amount_cents": ct.AmountCents,
 		})
 	}
+
+	cellsResp, cellsErr := client.GetScheduleCells(c.Request.Context(), &schedule.GetScheduleCellsRequest{
+		ScheduleId: c.Param("id"),
+		UserId:     userIDFromCtx(c),
+	})
+	cells := make([]gin.H, 0)
+	if cellsErr == nil && cellsResp.GetSuccess() {
+		for _, cell := range cellsResp.GetCells() {
+			cells = append(cells, gin.H{
+				"quote_line_id": cell.QuoteLineId,
+				"month_index":   cell.MonthIndex,
+				"amount_cents":  cell.AmountCents,
+			})
+		}
+	} else if cellsErr != nil {
+		log.Printf("GetSchedule: GetScheduleCells failed for %s: %v", c.Param("id"), cellsErr)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"schedule": gin.H{
@@ -393,6 +411,7 @@ func GetSchedule(c *gin.Context, client schedule.ScheduleServiceClient, quoteCli
 			"start_month":         s.StartMonth,
 			"duration_months":     s.DurationMonths,
 			"lines":               lines,
+			"cells":               cells,
 			"column_totals":       cols,
 			"quote_total_cents":   s.QuoteTotalCents,
 			"planned_total_cents": s.PlannedTotalCents,
