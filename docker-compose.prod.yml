@@ -215,10 +215,14 @@ services:
       <<: *common-env
       QUOTE_SERVICE_ADDRESS: devis-quote:50053
       USER_SERVICE_ADDRESS: devis-user:50052
+      SCHEDULE_SERVICE_ADDRESS: devis-schedule:50056
+      INVOICE_SERVICE_ADDRESS: devis-invoice:50059
       GOTENBERG_ADDRESS: http://gotenberg:3000
     depends_on:
       - devis-quote
       - devis-user
+      - devis-schedule
+      - devis-invoice
       - gotenberg
 
   gotenberg:
