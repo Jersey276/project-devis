@@ -91,14 +91,17 @@ message InvoiceParty {
     // country_code is the party's frozen ISO 3166-1 alpha-2 country code at issue
     // time ('' for legacy). Issuer code on the issuer party, client code on the
     // client party; drives the Factur-X buyer/seller country (BT-40 / BT-55).
-    string country_code      = 13;
-    // Issuer payment instructions (BG-16). Field numbers must match the invoice
-    // service proto (16/17) to map across the wire — 14/15 are unused here.
+    // client_type/client_country_id (13/14) are present in the invoice service
+    // proto and must be declared here to keep field numbers aligned on the wire,
+    // even though the export service does not use them for rendering.
+    string client_type       = 13;
+    int32  client_country_id = 14;
+    // country_code is the party's frozen ISO 3166-1 alpha-2 country code at issue
+    // time ('' for legacy). Drives Factur-X buyer/seller country (BT-40 / BT-55).
+    string country_code      = 15;
+    // Issuer payment instructions (BG-16). Field numbers match the invoice service.
     string iban              = 16;
     string bic               = 17;
-    // siret: 14-digit establishment id (SIREN + NIC), frozen at issue time. Field
-    // number must match the invoice service proto (18). Emitted as the legal
-    // registration id (BT-30/BT-47, scheme 0009) in preference to SIREN.
     string siret             = 18;
 }
 
