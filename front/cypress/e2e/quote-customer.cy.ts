@@ -22,7 +22,7 @@ describe("Quote — customer mode", () => {
 
       cy.get("[data-sidebar='sidebar']").within(() => {
         cy.contains("Devis").should("exist");
-        cy.contains("Factures").should("not.exist");
+        cy.contains("Factures").should("exist");
         cy.contains("Clients").should("not.exist");
         cy.contains("Pays").should("not.exist");
         cy.contains("Taxes").should("not.exist");
@@ -49,7 +49,7 @@ describe("Quote — customer mode", () => {
       cy.visitAs("customer", "/quote");
       cy.get("[data-slot='mode-toggle']").should("have.attr", "data-active", "true");
       cy.get("[data-sidebar='sidebar']").within(() => {
-        cy.contains("Factures").should("not.exist");
+        cy.contains("Factures").should("exist");
         cy.contains("Mon profil").should("exist");
       });
     });
