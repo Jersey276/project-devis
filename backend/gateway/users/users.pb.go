@@ -594,8 +594,6 @@ type UpdateUserRequest struct {
 	Iban          string                 `protobuf:"bytes,8,opt,name=iban,proto3" json:"iban,omitempty"`
 	Bic           string                 `protobuf:"bytes,9,opt,name=bic,proto3" json:"bic,omitempty"`
 	Siret         string                 `protobuf:"bytes,10,opt,name=siret,proto3" json:"siret,omitempty"`
-	FirstName     string                 `protobuf:"bytes,11,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
-	LastName      string                 `protobuf:"bytes,12,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -689,20 +687,6 @@ func (x *UpdateUserRequest) GetBic() string {
 func (x *UpdateUserRequest) GetSiret() string {
 	if x != nil {
 		return x.Siret
-	}
-	return ""
-}
-
-func (x *UpdateUserRequest) GetFirstName() string {
-	if x != nil {
-		return x.FirstName
-	}
-	return ""
-}
-
-func (x *UpdateUserRequest) GetLastName() string {
-	if x != nil {
-		return x.LastName
 	}
 	return ""
 }
@@ -997,7 +981,6 @@ type AdminAccount struct {
 	Company       string                 `protobuf:"bytes,10,opt,name=company,proto3" json:"company,omitempty"`
 	Siren         string                 `protobuf:"bytes,11,opt,name=siren,proto3" json:"siren,omitempty"`
 	Vat           string                 `protobuf:"bytes,12,opt,name=vat,proto3" json:"vat,omitempty"`
-	CreatedAt     string                 `protobuf:"bytes,13,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1116,19 +1099,11 @@ func (x *AdminAccount) GetVat() string {
 	return ""
 }
 
-func (x *AdminAccount) GetCreatedAt() string {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return ""
-}
-
 type ListAdminAccountsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Search        string                 `protobuf:"bytes,1,opt,name=search,proto3" json:"search,omitempty"`
 	Roles         []string               `protobuf:"bytes,2,rep,name=roles,proto3" json:"roles,omitempty"`
 	Statuses      []string               `protobuf:"bytes,3,rep,name=statuses,proto3" json:"statuses,omitempty"`
-	UserId        string                 `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1182,13 +1157,6 @@ func (x *ListAdminAccountsRequest) GetStatuses() []string {
 		return x.Statuses
 	}
 	return nil
-}
-
-func (x *ListAdminAccountsRequest) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
 }
 
 type ListAdminAccountsResponse struct {
@@ -5199,22 +5167,24 @@ const file_users_proto_rawDesc = "" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\"A\n" +
 	"\x0fValidationError\x12\x14\n" +
 	"\x05field\x18\x01 \x01(\tR\x05field\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\xa3\x02\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xc4\x02\n" +
 	"\x04User\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x14\n" +
 	"\x05phone\x18\x03 \x01(\tR\x05phone\x12\x18\n" +
 	"\acompany\x18\x04 \x01(\tR\acompany\x12\x14\n" +
 	"\x05siren\x18\x05 \x01(\tR\x05siren\x12\x10\n" +
-	"\x03vat\x18\x06 \x01(\tR\x03vat\x12\x19\n" +
-	"\blogo_url\x18\a \x01(\tR\alogoUrl\x12\x1c\n" +
+	"\x03vat\x18\x06 \x01(\tR\x03vat\x12\x1c\n" +
 	"\tsuspended\x18\b \x01(\bR\tsuspended\x12\x1f\n" +
 	"\voss_enabled\x18\t \x01(\bR\n" +
 	"ossEnabled\x12\x12\n" +
 	"\x04iban\x18\n" +
 	" \x01(\tR\x04iban\x12\x10\n" +
 	"\x03bic\x18\v \x01(\tR\x03bic\x12\x14\n" +
-	"\x05siret\x18\f \x01(\tR\x05siret\")\n" +
+	"\x05siret\x18\f \x01(\tR\x05siret\x12\x1d\n" +
+	"\n" +
+	"first_name\x18\r \x01(\tR\tfirstName\x12\x1b\n" +
+	"\tlast_name\x18\x0e \x01(\tR\blastName\")\n" +
 	"\x11CreateUserRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\"\xa0\x01\n" +
 	"\x12CreateUserResponse\x12\x18\n" +
@@ -5227,14 +5197,13 @@ const file_users_proto_rawDesc = "" +
 	"\x0fGetUserResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x1f\n" +
-	"\x04user\x18\x03 \x01(\v2\v.users.UserR\x04user\"\xfc\x01\n" +
+	"\x04user\x18\x03 \x01(\v2\v.users.UserR\x04user\"\xe1\x01\n" +
 	"\x11UpdateUserRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05phone\x18\x02 \x01(\tR\x05phone\x12\x18\n" +
 	"\acompany\x18\x03 \x01(\tR\acompany\x12\x14\n" +
 	"\x05siren\x18\x04 \x01(\tR\x05siren\x12\x10\n" +
-	"\x03vat\x18\x05 \x01(\tR\x03vat\x12\x19\n" +
-	"\blogo_url\x18\x06 \x01(\tR\alogoUrl\x12\x1f\n" +
+	"\x03vat\x18\x05 \x01(\tR\x03vat\x12\x1f\n" +
 	"\voss_enabled\x18\a \x01(\bR\n" +
 	"ossEnabled\x12\x12\n" +
 	"\x04iban\x18\b \x01(\tR\x04iban\x12\x10\n" +
