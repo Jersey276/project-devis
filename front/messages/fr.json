@@ -1157,7 +1157,7 @@
         "billingCycleLabel": "Cycle de facturation",
         "billingCyclePlaceholder": "Sélectionner un cycle",
         "stripePriceIdLabel": "Stripe Price ID",
-        "stripePriceIdHint": "Copier depuis le Dashboard Stripe → Products → Price ID (price_xxx). Laisser vide pour les plans gratuits.",
+        "stripePriceIdHint": "Géré automatiquement — mis à jour à chaque modification du prix ou du cycle de facturation.",
         "featuresLabel": "Limites du plan",
         "features": {
           "max_schedules": "Échéanciers max",

@@ -27,10 +27,10 @@ func setupServer(t *testing.T) (*actions.Server, sqlmock.Sqlmock) {
 func TestListPlans_ReturnsPlans(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	rows := sqlmock.NewRows([]string{"plan_id", "name", "tier", "price_cents", "billing_cycle", "features", "active", "stripe_price_id"}).
-		AddRow(1, "Free", "free", 0, "none", `{"max_schedules":3}`, true, "").
-		AddRow(2, "Pro", "pro", 900, "monthly", `{"max_schedules":-1}`, true, "").
-		AddRow(3, "Enterprise", "enterprise", 4900, "monthly", `{"max_schedules":-1}`, true, "")
+	rows := sqlmock.NewRows([]string{"plan_id", "name", "tier", "price_cents", "billing_cycle", "features", "active", "stripe_price_id", "stripe_product_id"}).
+		AddRow(1, "Free", "free", 0, "none", `{"max_schedules":3}`, true, "", "").
+		AddRow(2, "Pro", "pro", 900, "monthly", `{"max_schedules":-1}`, true, "", "").
+		AddRow(3, "Enterprise", "enterprise", 4900, "monthly", `{"max_schedules":-1}`, true, "", "")
 
 	mock.ExpectQuery(`SELECT plan_id, name, tier, price_cents, billing_cycle, features::text, active, COALESCE`).
 		WillReturnRows(rows)
@@ -175,6 +175,98 @@ func TestAssignPlan_InvalidInput_MissingPlanId(t *testing.T) {
 	}
 	if resp.Success {
 		t.Fatal("expected failure for plan_id = 0")
+	}
+	if resp.Code != actions.CodeInvalidInput {
+		t.Fatalf("expected CodeInvalidInput (%d), got %d", actions.CodeInvalidInput, resp.Code)
+	}
+}
+
+// ─── UpdatePlan ───────────────────────────────────────────────────────────────
+
+// Without a Stripe key, UpdatePlan must still update the DB and return the plan.
+func TestUpdatePlan_DBOnly_NoStripeKey(t *testing.T) {
+	srv, mock := setupServer(t)
+
+	// SELECT current plan state
+	mock.ExpectQuery(`SELECT name, price_cents, billing_cycle, stripe_price_id, stripe_product_id FROM plans WHERE plan_id`).
+		WithArgs(int32(2)).
+		WillReturnRows(sqlmock.NewRows([]string{"name", "price_cents", "billing_cycle", "stripe_price_id", "stripe_product_id"}).
+			AddRow("Pro", int32(900), "monthly", nil, nil))
+
+	// UPDATE
+	mock.ExpectExec(`UPDATE plans`).
+		WithArgs("Pro Updated", int32(1200), "monthly", sqlmock.AnyArg(), sqlmock.AnyArg(), `{"max_schedules":-1}`, int32(2)).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	// SELECT read-back
+	mock.ExpectQuery(`SELECT plan_id, name, tier, price_cents, billing_cycle, features::text, active`).
+		WithArgs(int32(2)).
+		WillReturnRows(sqlmock.NewRows([]string{"plan_id", "name", "tier", "price_cents", "billing_cycle", "features", "active", "stripe_price_id", "stripe_product_id"}).
+			AddRow(2, "Pro Updated", "pro", int32(1200), "monthly", `{"max_schedules":-1}`, true, "", ""))
+
+	resp, err := srv.UpdatePlan(context.Background(), &subGrpc.UpdatePlanRequest{
+		PlanId:       2,
+		Name:         "Pro Updated",
+		PriceCents:   1200,
+		BillingCycle: "monthly",
+		Features:     `{"max_schedules":-1}`,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatalf("expected success, got code %d", resp.Code)
+	}
+	if resp.Plan.Name != "Pro Updated" {
+		t.Errorf("expected name 'Pro Updated', got %s", resp.Plan.Name)
+	}
+	if resp.Plan.PriceCents != 1200 {
+		t.Errorf("expected price_cents 1200, got %d", resp.Plan.PriceCents)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
+func TestUpdatePlan_InvalidInput_MissingPlanId(t *testing.T) {
+	srv, _ := setupServer(t)
+
+	resp, err := srv.UpdatePlan(context.Background(), &subGrpc.UpdatePlanRequest{PlanId: 0, Name: "x"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for plan_id = 0")
+	}
+	if resp.Code != actions.CodeInvalidInput {
+		t.Fatalf("expected CodeInvalidInput (%d), got %d", actions.CodeInvalidInput, resp.Code)
+	}
+}
+
+func TestUpdatePlan_InvalidInput_MissingName(t *testing.T) {
+	srv, _ := setupServer(t)
+
+	resp, err := srv.UpdatePlan(context.Background(), &subGrpc.UpdatePlanRequest{PlanId: 2, Name: ""})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for empty name")
+	}
+	if resp.Code != actions.CodeInvalidInput {
+		t.Fatalf("expected CodeInvalidInput (%d), got %d", actions.CodeInvalidInput, resp.Code)
+	}
+}
+
+func TestUpdatePlan_InvalidInput_BadJSON(t *testing.T) {
+	srv, _ := setupServer(t)
+
+	resp, err := srv.UpdatePlan(context.Background(), &subGrpc.UpdatePlanRequest{PlanId: 2, Name: "Pro", Features: "not-json"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for invalid JSON features")
 	}
 	if resp.Code != actions.CodeInvalidInput {
 		t.Fatalf("expected CodeInvalidInput (%d), got %d", actions.CodeInvalidInput, resp.Code)

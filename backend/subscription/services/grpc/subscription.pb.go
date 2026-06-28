@@ -82,9 +82,10 @@ type Plan struct {
 	BillingCycle  string                 `protobuf:"bytes,5,opt,name=billing_cycle,json=billingCycle,proto3" json:"billing_cycle,omitempty"`
 	Features      string                 `protobuf:"bytes,6,opt,name=features,proto3" json:"features,omitempty"`
 	Active        bool                   `protobuf:"varint,7,opt,name=active,proto3" json:"active,omitempty"`
-	StripePriceId string                 `protobuf:"bytes,8,opt,name=stripe_price_id,json=stripePriceId,proto3" json:"stripe_price_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	StripePriceId   string                 `protobuf:"bytes,8,opt,name=stripe_price_id,json=stripePriceId,proto3" json:"stripe_price_id,omitempty"`
+	StripeProductId string                 `protobuf:"bytes,9,opt,name=stripe_product_id,json=stripeProductId,proto3" json:"stripe_product_id,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Plan) Reset() {
@@ -169,6 +170,13 @@ func (x *Plan) GetActive() bool {
 func (x *Plan) GetStripePriceId() string {
 	if x != nil {
 		return x.StripePriceId
+	}
+	return ""
+}
+
+func (x *Plan) GetStripeProductId() string {
+	if x != nil {
+		return x.StripeProductId
 	}
 	return ""
 }

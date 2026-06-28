@@ -47,7 +47,6 @@ export async function updatePlan(
     name: string;
     price_cents: number;
     billing_cycle: string;
-    stripe_price_id: string;
     features: string;
   },
 ): Promise<ApiResult> {

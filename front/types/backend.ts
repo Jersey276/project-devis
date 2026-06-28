@@ -409,6 +409,7 @@ export type BackendPlan = {
   features: Record<string, number>;
   active: boolean;
   stripe_price_id?: string | null;
+  stripe_product_id?: string | null;
 };
 
 export type BackendSubscription = {

@@ -23,14 +23,15 @@ message GenericResponse {
 }
 
 message Plan {
-    int32  plan_id          = 1;
-    string name             = 2;
-    string tier             = 3;
-    int32  price_cents      = 4;
-    string billing_cycle    = 5;
-    string features         = 6;
-    bool   active           = 7;
-    string stripe_price_id  = 8;
+    int32  plan_id            = 1;
+    string name               = 2;
+    string tier               = 3;
+    int32  price_cents        = 4;
+    string billing_cycle      = 5;
+    string features           = 6;
+    bool   active             = 7;
+    string stripe_price_id    = 8;
+    string stripe_product_id  = 9;
 }
 
 message Subscription {

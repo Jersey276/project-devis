@@ -100,14 +100,15 @@ func ListPlans(c *gin.Context, client sub.SubscriptionServiceClient) {
 	out := make([]gin.H, 0, len(resp.Plans))
 	for _, p := range resp.Plans {
 		out = append(out, gin.H{
-			"plan_id":         p.PlanId,
-			"name":            p.Name,
-			"tier":            p.Tier,
-			"price_cents":     p.PriceCents,
-			"billing_cycle":   p.BillingCycle,
-			"features":        p.Features,
-			"active":          p.Active,
-			"stripe_price_id": p.StripePriceId,
+			"plan_id":           p.PlanId,
+			"name":              p.Name,
+			"tier":              p.Tier,
+			"price_cents":       p.PriceCents,
+			"billing_cycle":     p.BillingCycle,
+			"features":          p.Features,
+			"active":            p.Active,
+			"stripe_price_id":   p.StripePriceId,
+			"stripe_product_id": p.StripeProductId,
 		})
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "plans": out})
@@ -153,14 +154,15 @@ func UpdatePlan(c *gin.Context, client sub.SubscriptionServiceClient) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"plan": gin.H{
-			"plan_id":         p.PlanId,
-			"name":            p.Name,
-			"tier":            p.Tier,
-			"price_cents":     p.PriceCents,
-			"billing_cycle":   p.BillingCycle,
-			"features":        p.Features,
-			"active":          p.Active,
-			"stripe_price_id": p.StripePriceId,
+			"plan_id":           p.PlanId,
+			"name":              p.Name,
+			"tier":              p.Tier,
+			"price_cents":       p.PriceCents,
+			"billing_cycle":     p.BillingCycle,
+			"features":          p.Features,
+			"active":            p.Active,
+			"stripe_price_id":   p.StripePriceId,
+			"stripe_product_id": p.StripeProductId,
 		},
 	})
 }
