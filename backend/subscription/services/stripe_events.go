@@ -31,14 +31,15 @@ func ApplyStripeSubscriptionUpdate(ctx context.Context, db *sql.DB, sub stripe.S
 	var args []any
 	if planID > 0 {
 		query = `UPDATE subscriptions
-		         SET stripe_subscription_id = $1,
-		             status                 = $2,
-		             plan_id                = $3,
-		             current_period_start   = to_timestamp($4),
-		             current_period_end     = to_timestamp($5),
-		             cancel_at_period_end   = $6,
-		             pending_plan_id        = NULL,
-		             updated_at             = NOW()
+		         SET stripe_subscription_id       = $1,
+		             status                       = $2,
+		             plan_id                      = $3,
+		             current_period_start         = to_timestamp($4),
+		             current_period_end           = to_timestamp($5),
+		             cancel_at_period_end         = $6,
+		             pending_plan_id              = NULL,
+		             price_cents_at_subscription  = (SELECT price_cents FROM plans WHERE plan_id = $3),
+		             updated_at                   = NOW()
 		         WHERE stripe_customer_id = $7
 		         RETURNING (SELECT tier FROM plans WHERE plan_id = $3)`
 		args = []any{sub.ID, status, planID, periodStart, periodEnd, sub.CancelAtPeriodEnd, sub.Customer.ID}

@@ -109,12 +109,12 @@ func TestGetUserSubscription_NoRow_ReturnsSyntheticFree(t *testing.T) {
 func TestAssignPlan_NewSubscription(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	mock.ExpectQuery(`SELECT tier FROM plans WHERE plan_id = \$1 AND active = TRUE`).
+	mock.ExpectQuery(`SELECT tier, price_cents FROM plans WHERE plan_id = \$1 AND active = TRUE`).
 		WithArgs(int32(2)).
-		WillReturnRows(sqlmock.NewRows([]string{"tier"}).AddRow("pro"))
+		WillReturnRows(sqlmock.NewRows([]string{"tier", "price_cents"}).AddRow("pro", int32(900)))
 
 	mock.ExpectExec(`INSERT INTO subscriptions`).
-		WithArgs(sqlmock.AnyArg(), "user-1", int32(2)).
+		WithArgs(sqlmock.AnyArg(), "user-1", int32(2), int32(900)).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	resp, err := srv.AssignPlan(context.Background(), &subGrpc.AssignPlanRequest{UserId: "user-1", PlanId: 2})
@@ -135,9 +135,9 @@ func TestAssignPlan_NewSubscription(t *testing.T) {
 func TestAssignPlan_PlanNotFound(t *testing.T) {
 	srv, mock := setupServer(t)
 
-	mock.ExpectQuery(`SELECT tier FROM plans WHERE plan_id = \$1 AND active = TRUE`).
+	mock.ExpectQuery(`SELECT tier, price_cents FROM plans WHERE plan_id = \$1 AND active = TRUE`).
 		WithArgs(int32(99)).
-		WillReturnRows(sqlmock.NewRows([]string{"tier"}))
+		WillReturnRows(sqlmock.NewRows([]string{"tier", "price_cents"}))
 
 	resp, err := srv.AssignPlan(context.Background(), &subGrpc.AssignPlanRequest{UserId: "user-1", PlanId: 99})
 	if err != nil {
