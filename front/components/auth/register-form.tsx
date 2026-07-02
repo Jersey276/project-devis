@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import OAuthButtons from "@/components/auth/oauth-buttons";
 import {
   Card,
@@ -21,6 +22,8 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { CONSENT_VERSIONS } from "@/lib/consent-versions";
 
 // Must stay in sync with backend/auth/actions/errors.go field validation codes.
 const FIELD_VALIDATION_KEYS: Record<number, string> = {
@@ -48,6 +51,8 @@ export default function RegisterForm({
   const t = useTranslations("auth.register");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [cgvAccepted, setCgvAccepted] = useState(false);
+  const [cgvError, setCgvError] = useState<string | null>(null);
 
   function toMessages(field: RegisterField, codes: number[]): string[] {
     return codes.map((code) => {
@@ -63,6 +68,7 @@ export default function RegisterForm({
     e.preventDefault();
     setFieldErrors({});
     setConfirmError(null);
+    setCgvError(null);
 
     const form = e.currentTarget;
     const data = new FormData(form);
@@ -72,6 +78,11 @@ export default function RegisterForm({
 
     if (password !== confirmPassword) {
       setConfirmError(t("confirmMismatch"));
+      return;
+    }
+
+    if (!cgvAccepted) {
+      setCgvError(t("cgvRequired"));
       return;
     }
 
@@ -86,6 +97,12 @@ export default function RegisterForm({
       });
 
       if (response.ok) {
+        await fetch("/api/auth/consent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ type: "cgv", version: CONSENT_VERSIONS.cgv }),
+        });
         toast.success(t("successToast"));
         router.replace("/login");
         return;
@@ -170,6 +187,28 @@ export default function RegisterForm({
                 />
                 <FieldDescription>{t("confirmPasswordHint")}</FieldDescription>
               </Field>
+              <Field data-invalid={!!cgvError}>
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="cgv"
+                    checked={cgvAccepted}
+                    onCheckedChange={(v) => {
+                      setCgvAccepted(v === true);
+                      if (v) setCgvError(null);
+                    }}
+                    aria-invalid={!!cgvError}
+                  />
+                  <FieldLabel htmlFor="cgv" className="font-normal leading-snug">
+                    {t.rich("cgvLabel", {
+                      cgvLink: (chunks) => <a href="/cgv" target="_blank" className="underline">{chunks}</a>,
+                      privacyLink: (chunks) => <a href="/politique-de-confidentialite" target="_blank" className="underline">{chunks}</a>,
+                    })}
+                  </FieldLabel>
+                </div>
+                <FieldError
+                  errors={cgvError ? [{ message: cgvError }] : undefined}
+                />
+              </Field>
               <FieldGroup>
                 <Field>
                   <Button type="submit">{t("submit")}</Button>
@@ -183,10 +222,6 @@ export default function RegisterForm({
           </form>
         </CardContent>
       </Card>
-      <FieldDescription className="px-6 text-center">
-        {t("termsPrefix")} <a href="#">{t("termsLink")}</a> {t("termsJoiner")}{" "}
-        <a href="#">{t("privacyLink")}</a>.
-      </FieldDescription>
     </div>
   );
 }
