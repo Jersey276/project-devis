@@ -274,8 +274,11 @@ function DeleteAccountSection({ readOnly }: { readOnly: boolean }) {
     try {
       const { ok, body } = await apiFetch("/api/users/me", { method: "DELETE" });
       if (ok && body.success) {
+        // Best-effort logout to clear the refresh token cookie and DB row.
+        // Failure is ignored — the account is already deleted.
+        await apiFetch("/api/auth/logout", { method: "POST" }).catch(() => {});
         window.location.href = "/login?deleted=true";
-        return;
+        return; // stay in deleting=true state while page unloads
       }
       if (body.code === 1001) {
         toast.error(t("deleteAccountErrorNotFound"));
@@ -284,24 +287,8 @@ function DeleteAccountSection({ readOnly }: { readOnly: boolean }) {
       }
     } catch {
       toast.error(tCommon("errors.generic"));
-    } finally {
-      setDeleting(false);
     }
-  }
-
-  if (readOnly) {
-    return (
-      <section className="grid max-w-3xl gap-4">
-        <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-destructive">
-            {t("deleteAccountSectionTitle")}
-          </h3>
-          <p className="text-muted-foreground rounded-md border border-dashed px-3 py-2 text-sm">
-            {t("deleteAccountSuspendedNotice")}
-          </p>
-        </div>
-      </section>
-    );
+    setDeleting(false);
   }
 
   return (
@@ -310,56 +297,66 @@ function DeleteAccountSection({ readOnly }: { readOnly: boolean }) {
         <h3 className="text-sm font-semibold text-destructive">
           {t("deleteAccountSectionTitle")}
         </h3>
-        <p className="text-muted-foreground text-sm">
-          {t("deleteAccountSectionDescription")}
-        </p>
+        {readOnly ? (
+          <p className="text-muted-foreground rounded-md border border-dashed px-3 py-2 text-sm">
+            {t("deleteAccountSuspendedNotice")}
+          </p>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            {t("deleteAccountSectionDescription")}
+          </p>
+        )}
       </div>
 
-      <div>
-        <Button type="button" variant="destructive" onClick={() => setOpen(true)}>
-          {t("deleteAccountTriggerButton")}
-        </Button>
-      </div>
+      {!readOnly && (
+        <div>
+          <Button type="button" variant="destructive" onClick={() => setOpen(true)}>
+            {t("deleteAccountTriggerButton")}
+          </Button>
+        </div>
+      )}
 
-      <AlertDialog open={open} onOpenChange={handleOpenChange}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("deleteAccountDialogTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("deleteAccountDialogDescription")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+      {!readOnly && (
+        <AlertDialog open={open} onOpenChange={handleOpenChange}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("deleteAccountDialogTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("deleteAccountDialogDescription")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
 
-          <div className="grid gap-2">
-            <label htmlFor="delete-confirm" className="text-sm">
-              {t("deleteAccountConfirmLabel", { word: confirmWord })}
-            </label>
-            <Input
-              id="delete-confirm"
-              value={confirmInput}
-              onChange={(e) => setConfirmInput(e.target.value)}
-              placeholder={t("deleteAccountConfirmPlaceholder")}
-              disabled={deleting}
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck={false}
-            />
-          </div>
+            <div className="grid gap-2">
+              <label htmlFor="delete-confirm" className="text-sm">
+                {t("deleteAccountConfirmLabel", { word: confirmWord })}
+              </label>
+              <Input
+                id="delete-confirm"
+                value={confirmInput}
+                onChange={(e) => setConfirmInput(e.target.value)}
+                placeholder={t("deleteAccountConfirmPlaceholder")}
+                disabled={deleting}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+            </div>
 
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>
-              {t("deleteAccountCancelButton")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              disabled={!canConfirm || deleting}
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting ? t("deleteAccountDeleting") : t("deleteAccountConfirmButton")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>
+                {t("deleteAccountCancelButton")}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                disabled={!canConfirm || deleting}
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting ? t("deleteAccountDeleting") : t("deleteAccountConfirmButton")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </section>
   );
 }

@@ -91,13 +91,17 @@ export default async function AppLayout({
 
   let serverAuth: AuthContext | null = null;
   let authOk = false;
+  let outdatedConsents: ConsentType[] = [];
 
-  try {
-    const meRes = await fetch(`${gatewayUrl}/api/auth/me`, {
-      headers: { Cookie: freshCookieHeader },
-      cache: "no-store",
-    });
-    if (meRes.ok) {
+  const fetchOptions = { headers: { Cookie: freshCookieHeader }, cache: "no-store" } as const;
+
+  const [meRes, consentRes] = await Promise.all([
+    fetch(`${gatewayUrl}/api/auth/me`, fetchOptions).catch(() => null),
+    fetch(`${gatewayUrl}/api/consent/status`, fetchOptions).catch(() => null),
+  ]);
+
+  if (meRes?.ok) {
+    try {
       const data = await meRes.json();
       if (data.auth?.email_verified === false) {
         redirect("/verify-email");
@@ -106,29 +110,21 @@ export default async function AppLayout({
         serverAuth = (data.auth ?? null) as AuthContext | null;
         authOk = true;
       }
+    } catch {
+      // Gateway indisponible : fail open pour ne pas bloquer l'accès.
     }
-  } catch {
-    // Gateway indisponible : fail open pour ne pas bloquer l'accès.
   }
 
-  // Check consent status server-side to detect outdated versions.
-  let outdatedConsents: ConsentType[] = [];
-  if (authOk) {
+  if (authOk && consentRes?.ok) {
     try {
-      const consentRes = await fetch(`${gatewayUrl}/api/consent/status`, {
-        headers: { Cookie: freshCookieHeader },
-        cache: "no-store",
-      });
-      if (consentRes.ok) {
-        const consentData = await consentRes.json();
-        const accepted: Record<string, string> = {};
-        for (const entry of consentData.consents ?? []) {
-          accepted[entry.type] = entry.version;
-        }
-        outdatedConsents = (Object.keys(CONSENT_VERSIONS) as ConsentType[]).filter(
-          (type) => accepted[type] !== CONSENT_VERSIONS[type]
-        );
+      const consentData = await consentRes.json();
+      const accepted: Record<string, string> = {};
+      for (const entry of consentData.consents ?? []) {
+        accepted[entry.type] = entry.version;
       }
+      outdatedConsents = (Object.keys(CONSENT_VERSIONS) as ConsentType[]).filter(
+        (type) => accepted[type] !== CONSENT_VERSIONS[type]
+      );
     } catch {
       // Fail open — ne bloque pas l'accès si le service est indisponible.
     }

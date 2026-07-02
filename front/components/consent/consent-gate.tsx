@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { toast } from "sonner";
 import { CONSENT_VERSIONS, type ConsentType } from "@/lib/consent-versions";
+import { apiFetch } from "@/lib/api";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,13 +38,11 @@ export default function ConsentGate({ outdated }: Props) {
     setLoading(true);
     try {
       for (const type of outdated) {
-        const res = await fetch("/api/consent", {
+        const { ok } = await apiFetch("/api/consent", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
           body: JSON.stringify({ type, version: CONSENT_VERSIONS[type] }),
         });
-        if (!res.ok) throw new Error();
+        if (!ok) throw new Error();
       }
       setDone(true);
     } catch {

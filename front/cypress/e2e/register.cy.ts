@@ -55,6 +55,7 @@ describe("Register", () => {
     cy.get("input[name='email']").type("existing@test.fr");
     cy.get("input[name='password']").type("password123");
     cy.get("input[name='confirm-password']").type("password123");
+    cy.get("#cgv").check({ force: true });
     cy.get("button[type='submit']").click();
 
     cy.wait("@registerFailure").its("response.statusCode").should("eq", 400);
@@ -116,6 +117,7 @@ describe("Register", () => {
       cy.get("input[name='email']").type("existing@test.fr");
       cy.get("input[name='password']").type("password123");
       cy.get("input[name='confirm-password']").type("password123");
+      cy.get("#cgv").check({ force: true });
       cy.get("button[type='submit']").click();
 
       cy.wait("@registerEmailInUse");
@@ -142,6 +144,7 @@ describe("Register", () => {
       cy.get("input[name='email']").type("bad");
       cy.get("input[name='password']").type("short");
       cy.get("input[name='confirm-password']").type("short");
+      cy.get("#cgv").check({ force: true });
       cy.get("button[type='submit']").click();
 
       cy.wait("@registerValidationErrors");
@@ -171,6 +174,7 @@ describe("Register", () => {
       cy.get("input[name='email']").type("existing@test.fr");
       cy.get("input[name='password']").type("password123");
       cy.get("input[name='confirm-password']").type("password123");
+      cy.get("#cgv").check({ force: true });
       cy.get("button[type='submit']").click();
 
       cy.wait("@registerClearErrorsFirst");

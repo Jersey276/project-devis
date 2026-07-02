@@ -542,83 +542,71 @@ describe("Profile page", () => {
       );
     });
 
-    it("shows delete account section in connection tab", () => {
-      cy.visit("/profile");
-      cy.wait("@getMe");
-      cy.contains("[role='tab']", "Connexion").click();
-
-      cy.contains("Supprimer mon compte").should("be.visible");
-      cy.contains("button", "Supprimer mon compte").should("be.visible");
-    });
-
-    it("opens delete account dialog and disables confirm button until word is typed", () => {
-      cy.visit("/profile");
-      cy.wait("@getMe");
-      cy.contains("[role='tab']", "Connexion").click();
-
-      cy.contains("button", "Supprimer mon compte").click();
-      cy.get("[data-slot='alert-dialog-content']").should("be.visible");
-      cy.contains("[data-slot='alert-dialog-action']", "Supprimer définitivement").should(
-        "be.disabled",
-      );
-
-      cy.get("input#delete-confirm").type("SUPPRIMER");
-      cy.contains("[data-slot='alert-dialog-action']", "Supprimer définitivement").should(
-        "not.be.disabled",
-      );
-    });
-
-    it("cancels delete account dialog without calling API", () => {
-      cy.intercept("DELETE", "/api/users/me", () => {
-        throw new Error("DELETE should not be called when canceling");
+    describe("Delete account", () => {
+      beforeEach(() => {
+        cy.visit("/profile");
+        cy.wait("@getMe");
+        cy.contains("[role='tab']", "Connexion").click();
       });
 
-      cy.visit("/profile");
-      cy.wait("@getMe");
-      cy.contains("[role='tab']", "Connexion").click();
+      it("shows delete account section", () => {
+        cy.contains("Supprimer mon compte").should("be.visible");
+        cy.contains("button", "Supprimer mon compte").should("be.visible");
+      });
 
-      cy.contains("button", "Supprimer mon compte").click();
-      cy.get("[data-slot='alert-dialog-content']").should("be.visible");
-      cy.contains("[data-slot='alert-dialog-cancel']", "Annuler").click();
-      cy.get("[data-slot='alert-dialog-content']").should("not.exist");
-    });
+      it("disables confirm button until exact word is typed", () => {
+        cy.contains("button", "Supprimer mon compte").click();
+        cy.get("[data-slot='alert-dialog-content']").should("be.visible");
+        cy.contains("[data-slot='alert-dialog-action']", "Supprimer définitivement").should(
+          "be.disabled",
+        );
 
-    it("deletes account and redirects to /login?deleted=true", () => {
-      cy.intercept("DELETE", "/api/users/me", {
-        statusCode: 200,
-        body: { success: true },
-      }).as("deleteAccount");
+        cy.get("input#delete-confirm").type("SUPPRIMER");
+        cy.contains("[data-slot='alert-dialog-action']", "Supprimer définitivement").should(
+          "not.be.disabled",
+        );
+      });
 
-      cy.visit("/profile");
-      cy.wait("@getMe");
-      cy.contains("[role='tab']", "Connexion").click();
+      it("cancels dialog without calling API", () => {
+        cy.intercept("DELETE", "/api/users/me", () => {
+          throw new Error("DELETE should not be called when canceling");
+        });
 
-      cy.contains("button", "Supprimer mon compte").click();
-      cy.get("input#delete-confirm").type("SUPPRIMER");
-      cy.contains("[data-slot='alert-dialog-action']", "Supprimer définitivement").click();
+        cy.contains("button", "Supprimer mon compte").click();
+        cy.get("[data-slot='alert-dialog-content']").should("be.visible");
+        cy.contains("[data-slot='alert-dialog-cancel']", "Annuler").click();
+        cy.get("[data-slot='alert-dialog-content']").should("not.exist");
+      });
 
-      cy.wait("@deleteAccount");
-      cy.url().should("include", "/login");
-      cy.url().should("include", "deleted=true");
-    });
+      it("redirects to /login?deleted=true on success", () => {
+        cy.intercept("DELETE", "/api/users/me", {
+          statusCode: 200,
+          body: { success: true },
+        }).as("deleteAccount");
 
-    it("shows error toast when delete account fails", () => {
-      cy.intercept("DELETE", "/api/users/me", {
-        statusCode: 500,
-        body: { success: false, message: "Erreur interne." },
-      }).as("deleteAccountFail");
+        cy.contains("button", "Supprimer mon compte").click();
+        cy.get("input#delete-confirm").type("SUPPRIMER");
+        cy.contains("[data-slot='alert-dialog-action']", "Supprimer définitivement").click();
 
-      cy.visit("/profile");
-      cy.wait("@getMe");
-      cy.contains("[role='tab']", "Connexion").click();
+        cy.wait("@deleteAccount");
+        cy.url().should("include", "/login");
+        cy.url().should("include", "deleted=true");
+      });
 
-      cy.contains("button", "Supprimer mon compte").click();
-      cy.get("input#delete-confirm").type("SUPPRIMER");
-      cy.contains("[data-slot='alert-dialog-action']", "Supprimer définitivement").click();
+      it("shows error toast and keeps dialog open on failure", () => {
+        cy.intercept("DELETE", "/api/users/me", {
+          statusCode: 500,
+          body: { success: false, message: "Erreur interne." },
+        }).as("deleteAccountFail");
 
-      cy.wait("@deleteAccountFail");
-      cy.get("[data-sonner-toaster]").should("contain", "Erreur interne.");
-      cy.get("[data-slot='alert-dialog-content']").should("be.visible");
+        cy.contains("button", "Supprimer mon compte").click();
+        cy.get("input#delete-confirm").type("SUPPRIMER");
+        cy.contains("[data-slot='alert-dialog-action']", "Supprimer définitivement").click();
+
+        cy.wait("@deleteAccountFail");
+        cy.get("[data-sonner-toaster]").should("contain", "Erreur interne.");
+        cy.get("[data-slot='alert-dialog-content']").should("be.visible");
+      });
     });
 
     it("shows inline error for new_password too short (422)", () => {
