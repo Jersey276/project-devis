@@ -81,6 +81,13 @@ export default function LoginForm({
     }
   }, [oauthError, tOAuthErrors]);
 
+  const deleted = searchParams.get("deleted");
+  useEffect(() => {
+    if (deleted === "true") {
+      toast.success(t("deletedAccountToast"));
+    }
+  }, [deleted, t]);
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>

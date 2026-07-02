@@ -75,6 +75,44 @@ References:
 - CRUD pays/groupes: `/api/users/countries`, `/api/users/country-groups`
 - CRUD taxes: `/api/users/taxes`
 
+## Endpoints consentement (RGPD)
+
+Protégés par `AuthRequired` (token JWT obligatoire).
+
+| Méthode | Route | Description |
+| --- | --- | --- |
+| `POST` | `/api/consent` | Enregistre l'acceptation d'un type de consentement pour l'utilisateur courant |
+| `GET` | `/api/consent/status` | Retourne la dernière version acceptée par type |
+
+### POST /api/consent
+
+Body JSON :
+
+```json
+{ "type": "cgv" | "privacy_policy" | "cookies", "version": "2025-07" }
+```
+
+Réponse `200` :
+
+```json
+{ "success": true }
+```
+
+### GET /api/consent/status
+
+Réponse `200` :
+
+```json
+{
+  "consents": [
+    { "type": "cgv", "version": "2025-07", "accepted_at": "2025-07-01T10:00:00Z" },
+    { "type": "privacy_policy", "version": "2025-07", "accepted_at": "2025-07-01T10:00:00Z" }
+  ]
+}
+```
+
+Les versions courantes sont centralisées dans `front/lib/consent-versions.ts`. Un bump de version déclenche la re-validation au prochain chargement du layout authentifié.
+
 ## Endpoints quotes principaux
 
 - `GET/POST /api/quotes`

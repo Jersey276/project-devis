@@ -111,6 +111,18 @@ entity "taxes" as T {
   * created_at : TIMESTAMP
 }
 
+entity "consents" as CON {
+  * id : SERIAL <<PK>>
+  --
+  * user_id : TEXT <<FK>>
+  * type : TEXT (cgv | privacy_policy | cookies)
+  * version : TEXT
+  * accepted_at : TIMESTAMPTZ
+  ip : INET
+  * mechanism : TEXT (checkbox)
+}
+
+U ||--o{ CON : "user_id"
 U ||--o{ C : "user_id"
 U ||--o{ A : "owner_id (owner_type=USER)"
 C ||--o{ A : "owner_id (owner_type=CLIENT)"

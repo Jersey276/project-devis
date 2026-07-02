@@ -103,4 +103,12 @@ describe("Login", () => {
       "Échec de la connexion. Vérifiez vos identifiants et réessayez.",
     );
   });
+
+  it("shows success toast when arriving with ?deleted=true", () => {
+    cy.visit("/login?deleted=true");
+    cy.get("[data-sonner-toaster]").should(
+      "contain",
+      "Votre compte a été supprimé avec succès.",
+    );
+  });
 });
