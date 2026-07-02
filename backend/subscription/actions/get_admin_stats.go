@@ -30,9 +30,8 @@ func (s *Server) GetAdminStats(ctx context.Context, _ *subGrpc.GetAdminStatsRequ
 	var totalActive int32
 	var totalRevenue int64
 	err = s.db.QueryRowContext(ctx, `
-		SELECT COUNT(*), COALESCE(SUM(p.price_cents), 0)
+		SELECT COUNT(*), COALESCE(SUM(s.price_cents_at_subscription), 0)
 		FROM subscriptions s
-		JOIN plans p ON p.plan_id = s.plan_id
 		WHERE s.status IN ('active', 'cancelled')
 	`).Scan(&totalActive, &totalRevenue)
 	if err != nil {
@@ -41,9 +40,8 @@ func (s *Server) GetAdminStats(ctx context.Context, _ *subGrpc.GetAdminStatsRequ
 
 	monthRows, err := s.db.QueryContext(ctx, `
 		SELECT date_trunc('month', s.current_period_start)::date::text AS month,
-		       SUM(p.price_cents) AS revenue_cents
+		       SUM(s.price_cents_at_subscription) AS revenue_cents
 		FROM subscriptions s
-		JOIN plans p ON p.plan_id = s.plan_id
 		WHERE s.status = 'active'
 		  AND s.current_period_start >= date_trunc('month', NOW() - INTERVAL '11 months')
 		GROUP BY 1
