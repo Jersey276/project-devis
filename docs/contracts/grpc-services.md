@@ -47,6 +47,7 @@ Responsabilites:
 - clients/adresses
 - pays/groupes
 - taxes
+- consentements RGPD (`AcceptConsent`, `GetConsentStatus`)
 
 ## Quote service
 

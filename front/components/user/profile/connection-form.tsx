@@ -4,6 +4,17 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Separator } from "@/components/ui/separator";
+import {
   Field,
   FieldDescription,
   FieldError,
@@ -238,6 +249,121 @@ function PasswordSection({ readOnly }: { readOnly: boolean }) {
   );
 }
 
+// ─── Delete account section ───────────────────────────────────────────────────
+
+function DeleteAccountSection({ readOnly }: { readOnly: boolean }) {
+  const t = useTranslations("profile.connection");
+  const tCommon = useTranslations("common");
+  const [open, setOpen] = useState(false);
+  const [confirmInput, setConfirmInput] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  const confirmWord = t("deleteAccountConfirmWord");
+  const canConfirm = confirmInput === confirmWord;
+
+  function handleOpenChange(next: boolean) {
+    if (deleting) return;
+    if (!next) setConfirmInput("");
+    setOpen(next);
+  }
+
+  async function handleDelete(e: React.MouseEvent) {
+    e.preventDefault();
+    if (!canConfirm || deleting) return;
+    setDeleting(true);
+    try {
+      const { ok, body } = await apiFetch("/api/users/me", { method: "DELETE" });
+      if (ok && body.success) {
+        window.location.href = "/login?deleted=true";
+        return;
+      }
+      if (body.code === 1001) {
+        toast.error(t("deleteAccountErrorNotFound"));
+      } else {
+        toast.error(body.message ?? t("deleteAccountErrorGeneric"));
+      }
+    } catch {
+      toast.error(tCommon("errors.generic"));
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  if (readOnly) {
+    return (
+      <section className="grid max-w-3xl gap-4">
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold text-destructive">
+            {t("deleteAccountSectionTitle")}
+          </h3>
+          <p className="text-muted-foreground rounded-md border border-dashed px-3 py-2 text-sm">
+            {t("deleteAccountSuspendedNotice")}
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="grid max-w-3xl gap-4">
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold text-destructive">
+          {t("deleteAccountSectionTitle")}
+        </h3>
+        <p className="text-muted-foreground text-sm">
+          {t("deleteAccountSectionDescription")}
+        </p>
+      </div>
+
+      <div>
+        <Button type="button" variant="destructive" onClick={() => setOpen(true)}>
+          {t("deleteAccountTriggerButton")}
+        </Button>
+      </div>
+
+      <AlertDialog open={open} onOpenChange={handleOpenChange}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("deleteAccountDialogTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("deleteAccountDialogDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="grid gap-2">
+            <label htmlFor="delete-confirm" className="text-sm">
+              {t("deleteAccountConfirmLabel", { word: confirmWord })}
+            </label>
+            <Input
+              id="delete-confirm"
+              value={confirmInput}
+              onChange={(e) => setConfirmInput(e.target.value)}
+              placeholder={t("deleteAccountConfirmPlaceholder")}
+              disabled={deleting}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>
+              {t("deleteAccountCancelButton")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!canConfirm || deleting}
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? t("deleteAccountDeleting") : t("deleteAccountConfirmButton")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </section>
+  );
+}
+
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 type ConnectionFormProps = {
@@ -254,6 +380,8 @@ export default function ConnectionForm({
       <EmailSection currentEmail={email} readOnly={readOnly} />
       <PasswordSection readOnly={readOnly} />
       <OAuthAccounts readOnly={readOnly} />
+      <Separator />
+      <DeleteAccountSection readOnly={readOnly} />
     </div>
   );
 }

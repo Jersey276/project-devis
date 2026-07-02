@@ -5,7 +5,7 @@
     "cgv": {
       "title": "Conditions Générales de Vente",
       "s1Title": "1. Objet",
-      "s1": "Les présentes Conditions Générales de Vente (CGV) régissent l'utilisation du service de gestion de devis et de facturation proposé par [Nom de la société], société [forme juridique] au capital de [montant] €, immatriculée au RCS de [ville] sous le numéro [SIREN], dont le siège social est situé [adresse] (ci-après « le Prestataire »).",
+      "s1": "Les présentes Conditions Générales de Vente (CGV) régissent l'utilisation du service de gestion de devis et de facturation proposé par QUOTINVOICE INC., société SARL au capital de 1000 €, immatriculée au RCS de Rouen sous le numéro 823927595, dont le siège social est situé 22 PLACE HENRI GADEAU DE KERVILLE 76100 ROUEN (ci-après « le Prestataire »).",
       "s2Title": "2. Accès au service",
       "s2": "Le service est accessible sur abonnement. L'accès est conditionné à la création d'un compte, à l'acceptation des présentes CGV et au paiement de l'abonnement en vigueur. Le Prestataire se réserve le droit de suspendre ou de résilier tout compte en cas de non-respect des présentes conditions.",
       "s3Title": "3. Prix et facturation",
@@ -22,9 +22,9 @@
     "mentions": {
       "title": "Mentions légales",
       "s1Title": "Éditeur du site",
-      "s1": "Le site est édité par [Nom de la société], [forme juridique] au capital de [montant] €, immatriculée au RCS de [ville] sous le numéro SIREN [SIREN] — numéro de TVA intracommunautaire : [TVA].\nSiège social : [adresse complète]\nEmail : [contact@domaine.fr]\nDirecteur de la publication : [Prénom Nom]",
+      "s1": "Le site est édité par QUOTINVOICE INC., SARL au capital de 1000 €, immatriculée au RCS de Rouen sous le numéro SIREN 823927595 — numéro de TVA intracommunautaire : FR85823927595.\nSiège social : 22 PLACE HENRI GADEAU DE KERVILLE 76100 ROUEN\nEmail : tlefevre@normandiewebschool.fr\nDirecteur de la publication : Tristan Lefèvre",
       "s2Title": "Hébergement",
-      "s2": "Le site est hébergé par [Nom de l'hébergeur], [adresse], [pays].",
+      "s2": "Le site est hébergé par OVH SAS, 2 rue Kellermann, 59100 Roubaix, France.",
       "s3Title": "Propriété intellectuelle",
       "s3": "L'ensemble du contenu de ce site (textes, images, logiciels, marques, logos) est protégé par le droit de la propriété intellectuelle et est la propriété exclusive du Prestataire ou de ses partenaires. Toute reproduction, même partielle, est interdite sans autorisation préalable écrite.",
       "s4Title": "Liens hypertextes",
@@ -35,7 +35,7 @@
     "privacy": {
       "title": "Politique de confidentialité",
       "s1Title": "1. Responsable du traitement",
-      "s1": "[Nom de la société], [adresse], [email de contact] est responsable du traitement de vos données personnelles.",
+      "s1": "QUOTINVOICE INC., 22 PLACE HENRI GADEAU DE KERVILLE 76100 ROUEN, tlefevre@normandiewebschool.fr est responsable du traitement de vos données personnelles.",
       "s2Title": "2. Données collectées",
       "s2": "Nous collectons les données suivantes :\n• Données d'identification : nom, prénom, adresse email, numéro de téléphone.\n• Données professionnelles : raison sociale, SIREN, numéro de TVA intracommunautaire, IBAN/BIC.\n• Données de connexion : adresse IP, date et heure de connexion, journaux d'activité.\n• Données de consentement : type de document accepté, version, date et adresse IP.",
       "s3Title": "3. Finalités et bases légales",
@@ -45,7 +45,7 @@
       "s5Title": "5. Destinataires",
       "s5": "Vos données sont hébergées en Union Européenne. Elles ne sont pas vendues à des tiers. Certains sous-traitants techniques (hébergement, email transactionnel) peuvent y accéder dans le cadre de leurs missions, sous contrat de traitement.",
       "s6Title": "6. Vos droits",
-      "s6": "Conformément au RGPD, vous disposez des droits suivants : accès, rectification, suppression, limitation, portabilité, opposition. Pour les exercer : [email DPO ou contact]. En cas de réclamation, vous pouvez saisir la CNIL (www.cnil.fr).",
+      "s6": "Conformément au RGPD, vous disposez des droits suivants : accès, rectification, suppression, limitation, portabilité, opposition. Pour les exercer : tlefevre@normandiewebschool.fr. En cas de réclamation, vous pouvez saisir la CNIL (www.cnil.fr).",
       "s7Title": "7. Cookies",
       "s7": "Le service dépose uniquement des cookies fonctionnels (session, authentification). Aucun cookie tiers à finalité publicitaire n'est utilisé."
     }
@@ -160,7 +160,8 @@
       "signupPrompt": "Pas encore de compte ?",
       "signupLink": "Créer un compte",
       "successToast": "Connexion réussie.",
-      "failureToast": "Échec de la connexion. Vérifiez vos identifiants et réessayez."
+      "failureToast": "Échec de la connexion. Vérifiez vos identifiants et réessayez.",
+      "deletedAccountToast": "Votre compte a été supprimé avec succès."
     },
     "register": {
       "title": "Créer un compte",
@@ -1381,7 +1382,21 @@
       "oauthLoadError": "Impossible de charger les connexions externes.",
       "linkedLabel": "Lié",
       "disconnect": "Délier",
-      "lastMethodWarning": "Définissez un mot de passe avant de délier votre seule méthode de connexion."
+      "lastMethodWarning": "Définissez un mot de passe avant de délier votre seule méthode de connexion.",
+      "deleteAccountSectionTitle": "Supprimer mon compte",
+      "deleteAccountSectionDescription": "Cette action est irréversible. Toutes vos données seront définitivement supprimées.",
+      "deleteAccountTriggerButton": "Supprimer mon compte",
+      "deleteAccountDialogTitle": "Confirmer la suppression de votre compte",
+      "deleteAccountDialogDescription": "Cette action est permanente et irréversible. Toutes vos données (devis, factures, clients, adresses) seront supprimées et ne pourront pas être récupérées.",
+      "deleteAccountConfirmLabel": "Pour confirmer, tapez {word} ci-dessous",
+      "deleteAccountConfirmWord": "SUPPRIMER",
+      "deleteAccountConfirmPlaceholder": "SUPPRIMER",
+      "deleteAccountConfirmButton": "Supprimer définitivement mon compte",
+      "deleteAccountCancelButton": "Annuler",
+      "deleteAccountDeleting": "Suppression en cours…",
+      "deleteAccountErrorGeneric": "La suppression du compte a échoué. Veuillez réessayer.",
+      "deleteAccountErrorNotFound": "Compte introuvable.",
+      "deleteAccountSuspendedNotice": "Votre compte est suspendu. Contactez le support pour le supprimer."
     }
   },
   "user": {
