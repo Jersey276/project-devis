@@ -5,6 +5,7 @@ import (
 
 	"project-devis-users/actions/address"
 	"project-devis-users/actions/client"
+	"project-devis-users/actions/consent"
 	"project-devis-users/actions/country"
 	country_group "project-devis-users/actions/country_group"
 	"project-devis-users/actions/tax"
@@ -190,4 +191,14 @@ func (s *Server) UpdateTax(ctx context.Context, req *usersGrpc.UpdateTaxRequest)
 
 func (s *Server) DeleteTax(ctx context.Context, req *usersGrpc.DeleteTaxRequest) (*usersGrpc.GenericResponse, error) {
 	return tax.Delete(ctx, s.db, req)
+}
+
+// ─── Consent ─────────────────────────────────────────────────────────────────
+
+func (s *Server) AcceptConsent(ctx context.Context, req *usersGrpc.AcceptConsentRequest) (*usersGrpc.GenericResponse, error) {
+	return consent.Accept(ctx, s.db, req)
+}
+
+func (s *Server) GetConsentStatus(ctx context.Context, req *usersGrpc.GetConsentStatusRequest) (*usersGrpc.GetConsentStatusResponse, error) {
+	return consent.GetStatus(ctx, s.db, req)
 }

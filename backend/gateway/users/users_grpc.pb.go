@@ -61,6 +61,8 @@ const (
 	UserService_ListTaxesForCountry_FullMethodName      = "/users.UserService/ListTaxesForCountry"
 	UserService_UpdateTax_FullMethodName                = "/users.UserService/UpdateTax"
 	UserService_DeleteTax_FullMethodName                = "/users.UserService/DeleteTax"
+	UserService_AcceptConsent_FullMethodName            = "/users.UserService/AcceptConsent"
+	UserService_GetConsentStatus_FullMethodName         = "/users.UserService/GetConsentStatus"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -115,6 +117,9 @@ type UserServiceClient interface {
 	ListTaxesForCountry(ctx context.Context, in *ListTaxesForCountryRequest, opts ...grpc.CallOption) (*ListTaxesResponse, error)
 	UpdateTax(ctx context.Context, in *UpdateTaxRequest, opts ...grpc.CallOption) (*UpdateTaxResponse, error)
 	DeleteTax(ctx context.Context, in *DeleteTaxRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	// Consent
+	AcceptConsent(ctx context.Context, in *AcceptConsentRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	GetConsentStatus(ctx context.Context, in *GetConsentStatusRequest, opts ...grpc.CallOption) (*GetConsentStatusResponse, error)
 }
 
 type userServiceClient struct {
@@ -545,6 +550,26 @@ func (c *userServiceClient) DeleteTax(ctx context.Context, in *DeleteTaxRequest,
 	return out, nil
 }
 
+func (c *userServiceClient) AcceptConsent(ctx context.Context, in *AcceptConsentRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, UserService_AcceptConsent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetConsentStatus(ctx context.Context, in *GetConsentStatusRequest, opts ...grpc.CallOption) (*GetConsentStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetConsentStatusResponse)
+	err := c.cc.Invoke(ctx, UserService_GetConsentStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
@@ -597,6 +622,9 @@ type UserServiceServer interface {
 	ListTaxesForCountry(context.Context, *ListTaxesForCountryRequest) (*ListTaxesResponse, error)
 	UpdateTax(context.Context, *UpdateTaxRequest) (*UpdateTaxResponse, error)
 	DeleteTax(context.Context, *DeleteTaxRequest) (*GenericResponse, error)
+	// Consent
+	AcceptConsent(context.Context, *AcceptConsentRequest) (*GenericResponse, error)
+	GetConsentStatus(context.Context, *GetConsentStatusRequest) (*GetConsentStatusResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -732,6 +760,12 @@ func (UnimplementedUserServiceServer) UpdateTax(context.Context, *UpdateTaxReque
 }
 func (UnimplementedUserServiceServer) DeleteTax(context.Context, *DeleteTaxRequest) (*GenericResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteTax not implemented")
+}
+func (UnimplementedUserServiceServer) AcceptConsent(context.Context, *AcceptConsentRequest) (*GenericResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AcceptConsent not implemented")
+}
+func (UnimplementedUserServiceServer) GetConsentStatus(context.Context, *GetConsentStatusRequest) (*GetConsentStatusResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetConsentStatus not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -1510,6 +1544,42 @@ func _UserService_DeleteTax_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_AcceptConsent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AcceptConsentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).AcceptConsent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_AcceptConsent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).AcceptConsent(ctx, req.(*AcceptConsentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetConsentStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetConsentStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetConsentStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetConsentStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetConsentStatus(ctx, req.(*GetConsentStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1684,6 +1754,14 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteTax",
 			Handler:    _UserService_DeleteTax_Handler,
+		},
+		{
+			MethodName: "AcceptConsent",
+			Handler:    _UserService_AcceptConsent_Handler,
+		},
+		{
+			MethodName: "GetConsentStatus",
+			Handler:    _UserService_GetConsentStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

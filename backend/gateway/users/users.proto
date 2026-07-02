@@ -58,6 +58,10 @@ service UserService {
     rpc ListTaxesForCountry(ListTaxesForCountryRequest) returns (ListTaxesResponse);
     rpc UpdateTax(UpdateTaxRequest) returns (UpdateTaxResponse);
     rpc DeleteTax(DeleteTaxRequest) returns (GenericResponse);
+
+    // Consent
+    rpc AcceptConsent(AcceptConsentRequest) returns (GenericResponse);
+    rpc GetConsentStatus(GetConsentStatusRequest) returns (GetConsentStatusResponse);
 }
 
 message GenericResponse {
@@ -611,4 +615,29 @@ message LinkClientUserRequest {
 
 message GetClientByLinkedUserRequest {
     string linked_user_id = 1;
+}
+
+// ─── Consent ──────────────────────────────────────────────────────────────────
+
+message AcceptConsentRequest {
+    string user_id  = 1;
+    string type     = 2;
+    string version  = 3;
+    string ip       = 4;
+}
+
+message ConsentEntry {
+    string type        = 1;
+    string version     = 2;
+    string accepted_at = 3;
+}
+
+message GetConsentStatusRequest {
+    string user_id = 1;
+}
+
+message GetConsentStatusResponse {
+    bool   success  = 1;
+    int32  code     = 2;
+    repeated ConsentEntry consents = 3;
 }

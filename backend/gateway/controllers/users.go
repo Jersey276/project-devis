@@ -56,6 +56,8 @@ func UserRoutes(r *gin.RouterGroup) {
 	}
 	client := users.NewUserServiceClient(conn)
 
+	ConsentRoutes(r, client)
+
 	me := r.Group("/me")
 	me.GET("", func(c *gin.Context) { GetMe(c, client) })
 	me.PUT("", func(c *gin.Context) { UpdateMe(c, client) })

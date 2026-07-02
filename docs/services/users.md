@@ -73,6 +73,31 @@ Les clients sont les tiers (B2C ou B2B) pour lesquels un prestataire cree des de
 - `archived_at TIMESTAMP` present sur la table `addresses` ; l'archivage est definitif (pas de restore expose).
 - `ListAddresses` filtre toujours `archived_at IS NULL` — les adresses archivees sont invisibles par design (historique conserve en DB uniquement).
 
+## Consentements RGPD
+
+Table `consents` (migration `000022`) :
+
+| Colonne | Type | Notes |
+| --- | --- | --- |
+| `id` | SERIAL PK | |
+| `user_id` | TEXT FK → `users` | cascade delete |
+| `type` | TEXT CHECK | `'cgv'`, `'privacy_policy'`, `'cookies'` |
+| `version` | TEXT | identifiant de version (ex. `"2025-07"`) |
+| `accepted_at` | TIMESTAMPTZ | horodatage de l'acceptation |
+| `ip` | INET | adresse IP du client au moment de l'acceptation |
+| `mechanism` | TEXT | `'checkbox'` par défaut |
+
+### RPCs consentement
+
+| RPC | Description |
+| --- | --- |
+| `AcceptConsent` | Insère une ligne de consentement |
+| `GetConsentStatus` | Retourne le dernier consentement par type (`DISTINCT ON (type)`) |
+
+### Logique de versionnement
+
+Les versions sont centralisées dans `front/lib/consent-versions.ts`. Au chargement du layout authentifié, le frontend compare la version acceptée en base à la version courante : tout type dont la version ne correspond pas déclenche la `ConsentGate` (modale bloquante). L'acceptation lors de l'inscription (checkbox CGV dans le formulaire) pré-renseigne la table avant la première connexion.
+
 ## Notes gateway
 
 - Le gateway applique des validations d'entree (owner_type, URL logo, IDs)
