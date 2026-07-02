@@ -334,6 +334,12 @@ func (nopUsersClient) LinkClientUser(context.Context, *users.LinkClientUserReque
 func (nopUsersClient) UpdateUserEmail(context.Context, *users.UpdateUserEmailRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
 	return nil, nil
 }
+func (nopUsersClient) AcceptConsent(context.Context, *users.AcceptConsentRequest, ...grpc.CallOption) (*users.GenericResponse, error) {
+	return nil, nil
+}
+func (nopUsersClient) GetConsentStatus(context.Context, *users.GetConsentStatusRequest, ...grpc.CallOption) (*users.GetConsentStatusResponse, error) {
+	return nil, nil
+}
 
 type nopEmailNotifier struct{}
 
