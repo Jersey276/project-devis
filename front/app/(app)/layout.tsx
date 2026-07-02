@@ -10,6 +10,8 @@ import { AuthProvider } from "@/lib/auth-context";
 import { AUTH_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "@/lib/auth-constants";
 import { redirect } from "next/navigation";
 import type { AuthContext } from "@/lib/access";
+import ConsentGate from "@/components/consent/consent-gate";
+import { CONSENT_VERSIONS, type ConsentType } from "@/lib/consent-versions";
 
 const gatewayUrl =
   process.env.NODE_ENV === "development"
@@ -109,6 +111,29 @@ export default async function AppLayout({
     // Gateway indisponible : fail open pour ne pas bloquer l'accès.
   }
 
+  // Check consent status server-side to detect outdated versions.
+  let outdatedConsents: ConsentType[] = [];
+  if (authOk) {
+    try {
+      const consentRes = await fetch(`${gatewayUrl}/api/consent/status`, {
+        headers: { Cookie: freshCookieHeader },
+        cache: "no-store",
+      });
+      if (consentRes.ok) {
+        const consentData = await consentRes.json();
+        const accepted: Record<string, string> = {};
+        for (const entry of consentData.consents ?? []) {
+          accepted[entry.type] = entry.version;
+        }
+        outdatedConsents = (Object.keys(CONSENT_VERSIONS) as ConsentType[]).filter(
+          (type) => accepted[type] !== CONSENT_VERSIONS[type]
+        );
+      }
+    } catch {
+      // Fail open — ne bloque pas l'accès si le service est indisponible.
+    }
+  }
+
   const rawMode = cookieStore.get("user-mode")?.value;
   const initialMode: UserMode = rawMode === "customer" ? "customer" : "provider";
   return (
@@ -123,6 +148,7 @@ export default async function AppLayout({
             <main className="p-4">{children}</main>
           </SidebarInset>
         </SidebarProvider>
+        {outdatedConsents.length > 0 && <ConsentGate outdated={outdatedConsents} />}
       </AuthProvider>
     </ModeProvider>
   );

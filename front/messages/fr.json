@@ -1,4 +1,55 @@
 {
+  "legal": {
+    "backHome": "Retour à l'accueil",
+    "lastUpdated": "Dernière mise à jour : {date}",
+    "cgv": {
+      "title": "Conditions Générales de Vente",
+      "s1Title": "1. Objet",
+      "s1": "Les présentes Conditions Générales de Vente (CGV) régissent l'utilisation du service de gestion de devis et de facturation proposé par [Nom de la société], société [forme juridique] au capital de [montant] €, immatriculée au RCS de [ville] sous le numéro [SIREN], dont le siège social est situé [adresse] (ci-après « le Prestataire »).",
+      "s2Title": "2. Accès au service",
+      "s2": "Le service est accessible sur abonnement. L'accès est conditionné à la création d'un compte, à l'acceptation des présentes CGV et au paiement de l'abonnement en vigueur. Le Prestataire se réserve le droit de suspendre ou de résilier tout compte en cas de non-respect des présentes conditions.",
+      "s3Title": "3. Prix et facturation",
+      "s3": "Les tarifs sont indiqués en euros hors taxes sur la page de tarification. La TVA applicable sera ajoutée au moment de la facturation selon votre pays de résidence. Le Prestataire se réserve le droit de modifier ses tarifs à tout moment, sous réserve d'un préavis de 30 jours communiqué par email.",
+      "s4Title": "4. Durée et résiliation",
+      "s4": "L'abonnement est souscrit pour une durée d'un mois renouvelable tacitement. Vous pouvez résilier à tout moment depuis votre espace client. La résiliation prend effet à la fin de la période en cours. Aucun remboursement prorata n'est effectué.",
+      "s5Title": "5. Responsabilité",
+      "s5": "Le Prestataire met tout en œuvre pour assurer la disponibilité du service (objectif 99,5 % mensuel) mais ne saurait être tenu responsable des interruptions de service dues à des causes extérieures (hébergeur, réseau, force majeure). La responsabilité du Prestataire est limitée au montant des sommes effectivement versées par le client au cours des 12 derniers mois.",
+      "s6Title": "6. Données personnelles",
+      "s6": "Le traitement de vos données personnelles est décrit dans notre Politique de confidentialité. Conformément au RGPD, vous disposez d'un droit d'accès, de rectification, de suppression et de portabilité de vos données.",
+      "s7Title": "7. Loi applicable et juridiction",
+      "s7": "Les présentes CGV sont soumises au droit français. En cas de litige, les parties s'efforceront de trouver une solution amiable. À défaut, le litige sera soumis aux tribunaux compétents du ressort du siège social du Prestataire."
+    },
+    "mentions": {
+      "title": "Mentions légales",
+      "s1Title": "Éditeur du site",
+      "s1": "Le site est édité par [Nom de la société], [forme juridique] au capital de [montant] €, immatriculée au RCS de [ville] sous le numéro SIREN [SIREN] — numéro de TVA intracommunautaire : [TVA].\nSiège social : [adresse complète]\nEmail : [contact@domaine.fr]\nDirecteur de la publication : [Prénom Nom]",
+      "s2Title": "Hébergement",
+      "s2": "Le site est hébergé par [Nom de l'hébergeur], [adresse], [pays].",
+      "s3Title": "Propriété intellectuelle",
+      "s3": "L'ensemble du contenu de ce site (textes, images, logiciels, marques, logos) est protégé par le droit de la propriété intellectuelle et est la propriété exclusive du Prestataire ou de ses partenaires. Toute reproduction, même partielle, est interdite sans autorisation préalable écrite.",
+      "s4Title": "Liens hypertextes",
+      "s4": "Le site peut contenir des liens vers des sites tiers. Le Prestataire n'exerce aucun contrôle sur ces sites et décline toute responsabilité quant à leur contenu.",
+      "s5Title": "Cookies",
+      "s5": "Le site utilise des cookies strictement nécessaires au fonctionnement du service (authentification, session). Aucun cookie publicitaire ou de tracking tiers n'est déposé sans votre consentement."
+    },
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "s1Title": "1. Responsable du traitement",
+      "s1": "[Nom de la société], [adresse], [email de contact] est responsable du traitement de vos données personnelles.",
+      "s2Title": "2. Données collectées",
+      "s2": "Nous collectons les données suivantes :\n• Données d'identification : nom, prénom, adresse email, numéro de téléphone.\n• Données professionnelles : raison sociale, SIREN, numéro de TVA intracommunautaire, IBAN/BIC.\n• Données de connexion : adresse IP, date et heure de connexion, journaux d'activité.\n• Données de consentement : type de document accepté, version, date et adresse IP.",
+      "s3Title": "3. Finalités et bases légales",
+      "s3": "Vos données sont traitées pour : l'exécution du contrat (fourniture du service), le respect d'obligations légales (facturation, conservation des consentements), et nos intérêts légitimes (sécurité, amélioration du service).",
+      "s4Title": "4. Durée de conservation",
+      "s4": "Les données de compte sont conservées pendant la durée de l'abonnement puis 3 ans après la résiliation. Les données de facturation sont conservées 10 ans conformément aux obligations comptables. Les logs de connexion sont conservés 12 mois.",
+      "s5Title": "5. Destinataires",
+      "s5": "Vos données sont hébergées en Union Européenne. Elles ne sont pas vendues à des tiers. Certains sous-traitants techniques (hébergement, email transactionnel) peuvent y accéder dans le cadre de leurs missions, sous contrat de traitement.",
+      "s6Title": "6. Vos droits",
+      "s6": "Conformément au RGPD, vous disposez des droits suivants : accès, rectification, suppression, limitation, portabilité, opposition. Pour les exercer : [email DPO ou contact]. En cas de réclamation, vous pouvez saisir la CNIL (www.cnil.fr).",
+      "s7Title": "7. Cookies",
+      "s7": "Le service dépose uniquement des cookies fonctionnels (session, authentification). Aucun cookie tiers à finalité publicitaire n'est utilisé."
+    }
+  },
   "common": {
     "actions": {
       "cancel": "Annuler",
@@ -128,6 +179,8 @@
       "termsLink": "Conditions d'utilisation",
       "termsJoiner": "et notre",
       "privacyLink": "Politique de confidentialité",
+      "cgvLabel": "J'accepte les <cgvLink>Conditions Générales de Vente</cgvLink> et la <privacyLink>Politique de confidentialité</privacyLink>.",
+      "cgvRequired": "Vous devez accepter les conditions pour créer un compte.",
       "successToast": "Inscription réussie. Veuillez vous connecter.",
       "failureToast": "Échec de l'inscription. Veuillez réessayer.",
       "validation": {
@@ -138,6 +191,14 @@
         "emailInUse": "Cette adresse email est déjà utilisée.",
         "unknown": "Erreur de validation ({code})."
       }
+    },
+    "consentGate": {
+      "title": "Mise à jour de nos conditions",
+      "description": "Nos Conditions Générales de Vente et/ou notre Politique de confidentialité ont été mises à jour. Veuillez les accepter pour continuer à utiliser le service.",
+      "cgvLabel": "J'accepte les <cgvLink>Conditions Générales de Vente</cgvLink>.",
+      "privacyLabel": "J'accepte la <privacyLink>Politique de confidentialité</privacyLink>.",
+      "submit": "Accepter et continuer",
+      "errorToast": "Une erreur est survenue. Veuillez réessayer."
     },
     "oauth": {
       "google": "Continuer avec Google",
