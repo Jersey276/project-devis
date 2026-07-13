@@ -25,7 +25,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { FilterSidebar, FilterSidebarSection } from "@/components/ui/filter-sidebar";
+import {
+  FilterSidebar,
+  FilterSidebarSection,
+} from "@/components/ui/filter-sidebar";
 import { SelectCombobox } from "@/components/ui/select-combobox";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import InvoiceStatusBadge from "@/components/invoice/invoice-status-badge";
@@ -100,8 +103,12 @@ function InvoiceListTableInner() {
   const pathname = usePathname();
 
   const page = Number(searchParams.get("page") ?? "1");
-  const statuses = searchParams.get("statuses") ? searchParams.get("statuses")!.split(",") : [];
-  const lifecycleStatuses = searchParams.get("lifecycle_statuses") ? searchParams.get("lifecycle_statuses")!.split(",") : [];
+  const statuses = searchParams.get("statuses")
+    ? searchParams.get("statuses")!.split(",")
+    : [];
+  const lifecycleStatuses = searchParams.get("lifecycle_statuses")
+    ? searchParams.get("lifecycle_statuses")!.split(",")
+    : [];
   const issuedFrom = searchParams.get("issued_from") ?? "";
   const issuedTo = searchParams.get("issued_to") ?? "";
   const dueFrom = searchParams.get("due_from") ?? "";
@@ -109,7 +116,9 @@ function InvoiceListTableInner() {
   const clientId = searchParams.get("client_id") ?? "";
   const quoteIdFilter = searchParams.get("quote_id_filter") ?? "";
   const sortBy = searchParams.get("sort_by") ?? "created_at";
-  const sortDirection = (searchParams.get("sort_direction") ?? "desc") as "asc" | "desc";
+  const sortDirection = (searchParams.get("sort_direction") ?? "desc") as
+    | "asc"
+    | "desc";
 
   const [items, setItems] = useState<InvoiceRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -160,37 +169,47 @@ function InvoiceListTableInner() {
   useEffect(() => {
     if (isCustomer) return;
     listClients().then(({ ok, body }) => {
-      if (ok && Array.isArray(body.clients)) setClients(body.clients as BackendClient[]);
+      if (ok && Array.isArray(body.clients))
+        setClients(body.clients as BackendClient[]);
     });
     listQuotes().then(({ ok, body }) => {
-      if (ok && Array.isArray(body.quotes)) setQuotes(body.quotes as BackendQuote[]);
+      if (ok && Array.isArray(body.quotes))
+        setQuotes(body.quotes as BackendQuote[]);
     });
   }, [isCustomer]);
 
-  const fetchInvoices = useCallback(async (signal?: AbortSignal) => {
-    const params = new URLSearchParams({ page: String(page), page_size: String(PAGE_SIZE) });
-    if (statuses.length > 0) params.set("statuses", statuses.join(","));
-    if (lifecycleStatuses.length > 0) params.set("lifecycle_statuses", lifecycleStatuses.join(","));
-    if (issuedFrom) params.set("issued_from", issuedFrom);
-    if (issuedTo) params.set("issued_to", issuedTo);
-    if (dueFrom) params.set("due_from", dueFrom);
-    if (dueTo) params.set("due_to", dueTo);
-    if (!isCustomer && clientId) params.set("client_id", clientId);
-    if (!isCustomer && quoteIdFilter) params.set("quote_id_filter", quoteIdFilter);
-    params.set("sort_by", sortBy);
-    params.set("sort_direction", sortDirection);
+  const fetchInvoices = useCallback(
+    async (signal?: AbortSignal) => {
+      const params = new URLSearchParams({
+        page: String(page),
+        page_size: String(PAGE_SIZE),
+      });
+      if (statuses.length > 0) params.set("statuses", statuses.join(","));
+      if (lifecycleStatuses.length > 0)
+        params.set("lifecycle_statuses", lifecycleStatuses.join(","));
+      if (issuedFrom) params.set("issued_from", issuedFrom);
+      if (issuedTo) params.set("issued_to", issuedTo);
+      if (dueFrom) params.set("due_from", dueFrom);
+      if (dueTo) params.set("due_to", dueTo);
+      if (!isCustomer && clientId) params.set("client_id", clientId);
+      if (!isCustomer && quoteIdFilter)
+        params.set("quote_id_filter", quoteIdFilter);
+      params.set("sort_by", sortBy);
+      params.set("sort_direction", sortDirection);
 
-    const { ok, body } = await listInvoices(params.toString(), signal);
-    if (signal?.aborted) return;
-    if (!ok || !body.success) {
-      setError((body.message as string) ?? t("loadError"));
-      return;
-    }
-    setError(null);
-    setItems(toRows(readInvoicesFromBody(body)));
-    setTotal((body.total ?? 0) as number);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+      const { ok, body } = await listInvoices(params.toString(), signal);
+      if (signal?.aborted) return;
+      if (!ok || !body.success) {
+        setError((body.message as string) ?? t("loadError"));
+        return;
+      }
+      setError(null);
+      setItems(toRows(readInvoicesFromBody(body)));
+      setTotal((body.total ?? 0) as number);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [searchParams],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -200,10 +219,13 @@ function InvoiceListTableInner() {
   }, [fetchInvoices]);
 
   const clientItems = useMemo(
-    () => clients.map((c) => ({
-      value: c.client_id,
-      label: c.company ? `${c.company} (${c.first_name} ${c.last_name})` : `${c.first_name} ${c.last_name}`,
-    })),
+    () =>
+      clients.map((c) => ({
+        value: c.client_id,
+        label: c.company
+          ? `${c.company} (${c.first_name} ${c.last_name})`
+          : `${c.first_name} ${c.last_name}`,
+      })),
     [clients],
   );
 
@@ -269,161 +291,185 @@ function InvoiceListTableInner() {
     void fetchInvoices();
   }
 
-  const hasFilters = statuses.length > 0 || lifecycleStatuses.length > 0 || issuedFrom || issuedTo || dueFrom || dueTo || clientId || quoteIdFilter;
+  const hasFilters =
+    statuses.length > 0 ||
+    lifecycleStatuses.length > 0 ||
+    issuedFrom ||
+    issuedTo ||
+    dueFrom ||
+    dueTo ||
+    clientId ||
+    quoteIdFilter;
 
   return (
     <>
       {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
 
-      <div className="flex items-start gap-4">
-        <FilterSidebar
-          triggerLabel={tCommon("trigger")}
-          title={tCommon("title")}
-          activeCount={hasFilters ? 1 : 0}
-          onReset={() => pushParams({ statuses: [], lifecycleStatuses: [], issuedFrom: "", issuedTo: "", dueFrom: "", dueTo: "", clientId: "", quoteIdFilter: "", page: 1 })}
-          resetLabel={tCommon("reset")}
+      <FilterSidebar
+        triggerLabel={tCommon("trigger")}
+        title={tCommon("title")}
+        activeCount={hasFilters ? 1 : 0}
+        onReset={() =>
+          pushParams({
+            statuses: [],
+            lifecycleStatuses: [],
+            issuedFrom: "",
+            issuedTo: "",
+            dueFrom: "",
+            dueTo: "",
+            clientId: "",
+            quoteIdFilter: "",
+            page: 1,
+          })
+        }
+        resetLabel={tCommon("reset")}
+      >
+        <FilterSidebarSection label={tFilters("statusLabel")}>
+          <SelectCombobox
+            multiple
+            items={INVOICE_STATUS_ITEMS}
+            value={statuses}
+            onValueChange={(v) => pushParams({ statuses: v, page: 1 })}
+            placeholder={tFilters("statusPlaceholder")}
+            emptyLabel={tFilters("statusEmpty")}
+          />
+        </FilterSidebarSection>
+
+        <FilterSidebarSection label={tFilters("lifecycleLabel")}>
+          <SelectCombobox
+            multiple
+            items={LIFECYCLE_STATUS_ITEMS}
+            value={lifecycleStatuses}
+            onValueChange={(v) => pushParams({ lifecycleStatuses: v, page: 1 })}
+            placeholder={tFilters("lifecyclePlaceholder")}
+            emptyLabel={tFilters("lifecycleEmpty")}
+          />
+        </FilterSidebarSection>
+
+        <FilterSidebarSection label={tFilters("issuedDateLabel")}>
+          <DateRangePicker
+            from={issuedFrom}
+            to={issuedTo}
+            onValueChange={(from, to) =>
+              pushParams({ issuedFrom: from, issuedTo: to, page: 1 })
+            }
+          />
+        </FilterSidebarSection>
+
+        <FilterSidebarSection label={tFilters("dueDateLabel")}>
+          <DateRangePicker
+            from={dueFrom}
+            to={dueTo}
+            onValueChange={(from, to) =>
+              pushParams({ dueFrom: from, dueTo: to, page: 1 })
+            }
+          />
+        </FilterSidebarSection>
+
+        {!isCustomer && (
+          <FilterSidebarSection label={tFilters("clientLabel")}>
+            <SelectCombobox
+              items={clientItems}
+              value={clientId}
+              onValueChange={(v) => pushParams({ clientId: v, page: 1 })}
+              placeholder={tFilters("clientPlaceholder")}
+              emptyLabel={tFilters("clientEmpty")}
+            />
+          </FilterSidebarSection>
+        )}
+
+        {!isCustomer && (
+          <FilterSidebarSection label={tFilters("quoteLabel")}>
+            <SelectCombobox
+              items={quoteItems}
+              value={quoteIdFilter}
+              onValueChange={(v) => pushParams({ quoteIdFilter: v, page: 1 })}
+              placeholder={tFilters("quotePlaceholder")}
+              emptyLabel={tFilters("quoteEmpty")}
+            />
+          </FilterSidebarSection>
+        )}
+      </FilterSidebar>
+
+      <div className="flex-1 min-w-0">
+        <DataTable
+          datas={items}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onSortChange={(col, dir) =>
+            pushParams({ sortBy: col, sortDirection: dir, page: 1 })
+          }
+          row_actions={rowActions}
         >
-          <FilterSidebarSection label={tFilters("statusLabel")}>
-            <SelectCombobox
-              multiple
-              items={INVOICE_STATUS_ITEMS}
-              value={statuses}
-              onValueChange={(v) => pushParams({ statuses: v, page: 1 })}
-              placeholder={tFilters("statusPlaceholder")}
-              emptyLabel={tFilters("statusEmpty")}
-            />
-          </FilterSidebarSection>
-
-          <FilterSidebarSection label={tFilters("lifecycleLabel")}>
-            <SelectCombobox
-              multiple
-              items={LIFECYCLE_STATUS_ITEMS}
-              value={lifecycleStatuses}
-              onValueChange={(v) => pushParams({ lifecycleStatuses: v, page: 1 })}
-              placeholder={tFilters("lifecyclePlaceholder")}
-              emptyLabel={tFilters("lifecycleEmpty")}
-            />
-          </FilterSidebarSection>
-
-          <FilterSidebarSection label={tFilters("issuedDateLabel")}>
-            <DateRangePicker
-              from={issuedFrom}
-              to={issuedTo}
-              onValueChange={(from, to) => pushParams({ issuedFrom: from, issuedTo: to, page: 1 })}
-            />
-          </FilterSidebarSection>
-
-          <FilterSidebarSection label={tFilters("dueDateLabel")}>
-            <DateRangePicker
-              from={dueFrom}
-              to={dueTo}
-              onValueChange={(from, to) => pushParams({ dueFrom: from, dueTo: to, page: 1 })}
-            />
-          </FilterSidebarSection>
-
-          {!isCustomer && (
-            <FilterSidebarSection label={tFilters("clientLabel")}>
-              <SelectCombobox
-                items={clientItems}
-                value={clientId}
-                onValueChange={(v) => pushParams({ clientId: v, page: 1 })}
-                placeholder={tFilters("clientPlaceholder")}
-                emptyLabel={tFilters("clientEmpty")}
-              />
-            </FilterSidebarSection>
-          )}
-
-          {!isCustomer && (
-            <FilterSidebarSection label={tFilters("quoteLabel")}>
-              <SelectCombobox
-                items={quoteItems}
-                value={quoteIdFilter}
-                onValueChange={(v) => pushParams({ quoteIdFilter: v, page: 1 })}
-                placeholder={tFilters("quotePlaceholder")}
-                emptyLabel={tFilters("quoteEmpty")}
-              />
-            </FilterSidebarSection>
-          )}
-        </FilterSidebar>
-
-        <div className="flex-1 min-w-0">
-          <DataTable
-            datas={items}
-            sortBy={sortBy}
-            sortDirection={sortDirection}
-            onSortChange={(col, dir) => pushParams({ sortBy: col, sortDirection: dir, page: 1 })}
-            row_actions={rowActions}
-          >
-            <DataTableHeader>
-              <DataTableRow>
-                <DataTableSortableHead name="number">
-                  {t("columns.number")}
-                </DataTableSortableHead>
-                <DataTableSortableHead name="status">
-                  {t("columns.status")}
-                </DataTableSortableHead>
-                <DataTableSortableHead name="lifecycle">
-                  {t("columns.lifecycle")}
-                </DataTableSortableHead>
-                <DataTableSortableHead name="quoteId">
-                  {t("columns.quote")}
-                </DataTableSortableHead>
-                <DataTableSortableHead name="dueDate">
-                  {t("columns.dueDate")}
-                </DataTableSortableHead>
-                <DataTableHead>{t("columns.totalTtc")}</DataTableHead>
-                <DataTableHead>{t("columns.actions")}</DataTableHead>
+          <DataTableHeader>
+            <DataTableRow>
+              <DataTableSortableHead name="number">
+                {t("columns.number")}
+              </DataTableSortableHead>
+              <DataTableSortableHead name="status">
+                {t("columns.status")}
+              </DataTableSortableHead>
+              <DataTableSortableHead name="lifecycle">
+                {t("columns.lifecycle")}
+              </DataTableSortableHead>
+              <DataTableSortableHead name="quoteId">
+                {t("columns.quote")}
+              </DataTableSortableHead>
+              <DataTableSortableHead name="dueDate">
+                {t("columns.dueDate")}
+              </DataTableSortableHead>
+              <DataTableHead>{t("columns.totalTtc")}</DataTableHead>
+              <DataTableHead>{t("columns.actions")}</DataTableHead>
+            </DataTableRow>
+          </DataTableHeader>
+          <DataTableBodyRows<InvoiceRow>
+            emptyColSpan={7}
+            empty={<span className="text-muted-foreground">{t("empty")}</span>}
+            render={(item) => (
+              <DataTableRow key={item.id}>
+                <DataTableCell>{item.number || "—"}</DataTableCell>
+                <DataTableCell>
+                  <InvoiceStatusBadge status={item.status} />
+                </DataTableCell>
+                <DataTableCell>
+                  <InvoiceLifecycleBadge status={item.lifecycle} />
+                </DataTableCell>
+                <DataTableCell>{item.quoteId}</DataTableCell>
+                <DataTableCell>{item.dueDate || "—"}</DataTableCell>
+                <DataTableCell className="tabular-nums">
+                  {formatEurosFromCents(item.totalTtc)}
+                </DataTableCell>
+                <DataTableCell>
+                  <DataTableRowActions id={item.id} row={item} />
+                </DataTableCell>
               </DataTableRow>
-            </DataTableHeader>
-            <DataTableBodyRows<InvoiceRow>
-              emptyColSpan={7}
-              empty={<span className="text-muted-foreground">{t("empty")}</span>}
-              render={(item) => (
-                <DataTableRow key={item.id}>
-                  <DataTableCell>{item.number || "—"}</DataTableCell>
-                  <DataTableCell>
-                    <InvoiceStatusBadge status={item.status} />
-                  </DataTableCell>
-                  <DataTableCell>
-                    <InvoiceLifecycleBadge status={item.lifecycle} />
-                  </DataTableCell>
-                  <DataTableCell>{item.quoteId}</DataTableCell>
-                  <DataTableCell>{item.dueDate || "—"}</DataTableCell>
-                  <DataTableCell className="tabular-nums">
-                    {formatEurosFromCents(item.totalTtc)}
-                  </DataTableCell>
-                  <DataTableCell>
-                    <DataTableRowActions id={item.id} row={item} />
-                  </DataTableCell>
-                </DataTableRow>
-              )}
-            />
-          </DataTable>
+            )}
+          />
+        </DataTable>
 
-          {totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => pushParams({ page: page - 1 })}
-              >
-                Précédent
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                {page} / {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() => pushParams({ page: page + 1 })}
-              >
-                Suivant
-              </Button>
-            </div>
-          )}
-        </div>
+        {totalPages > 1 && (
+          <div className="mt-4 flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => pushParams({ page: page - 1 })}
+            >
+              Précédent
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {page} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => pushParams({ page: page + 1 })}
+            >
+              Suivant
+            </Button>
+          </div>
+        )}
       </div>
 
       <AlertDialog

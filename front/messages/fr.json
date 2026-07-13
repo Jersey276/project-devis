@@ -577,6 +577,12 @@
       "accepted": "Accepté",
       "refused": "Refusé",
       "archived": "Archivé"
+    },
+    "schedule": {
+      "DRAFT": "Brouillon",
+      "NEGOCIATE": "En négociation",
+      "DENIED": "Refusé",
+      "VALID": "Validé"
     }
   },
   "client": {
@@ -1511,6 +1517,14 @@
       "saveSuccessToast": "Template mis à jour.",
       "saveFailedToast": "Impossible de mettre à jour le template.",
       "loadFailedToast": "Impossible de charger le template."
+    }
+  },
+  "schedule": {
+    "statusSelect": {
+      "placeholder": "Statut",
+      "confirmValid": "Confirmer la validation de cet échéancier ? Cette action est definitive.",
+      "confirmDenied": "Confirmer le refus de cet échéancier ?",
+      "updateError": "Mise à jour impossible."
     }
   },
   "template": {

@@ -163,6 +163,7 @@ func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient, quoteC
 	// client_id is resolved from the caller's own linked-client record, never
 	// trusted from the request.
 	userID := userIDFromCtx(c)
+	providerUserID := userID
 	if c.GetHeader("X-Client-Mode") == "customer" {
 		linked := resolveMyClient(c, usersClient)
 		if linked == nil {
@@ -170,6 +171,7 @@ func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient, quoteC
 		}
 		userID = ""
 		filterClientID = linked.ClientId
+		providerUserID = linked.UserId
 	}
 
 	resp, err := client.ListSchedules(c.Request.Context(), &schedule.ListSchedulesRequest{
@@ -211,7 +213,7 @@ func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient, quoteC
 	}
 	if len(quoteIDs) > 0 {
 		qResp, qErr := quoteClient.ListQuotes(c.Request.Context(), &quote.ListQuotesRequest{
-			UserId:   userID,
+			UserId:   providerUserID,
 			Page:     1,
 			PageSize: int32(len(quoteIDs)),
 			Filters:  &quote.QuoteFilters{QuoteIds: quoteIDs},

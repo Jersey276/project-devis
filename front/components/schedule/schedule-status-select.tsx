@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Select,
   SelectContent,
@@ -14,12 +15,12 @@ import {
 } from "@/lib/services/schedules";
 import type { BackendScheduleStatus } from "@/types/backend";
 
-const STATUS_LABELS: Record<BackendScheduleStatus, string> = {
-  DRAFT: "Brouillon",
-  NEGOCIATE: "En négociation",
-  DENIED: "Refusé",
-  VALID: "Validé",
-};
+export const SCHEDULE_STATUSES: BackendScheduleStatus[] = [
+  "DRAFT",
+  "NEGOCIATE",
+  "DENIED",
+  "VALID",
+];
 
 type ScheduleStatusSelectProps = {
   scheduleId: string;
@@ -30,17 +31,6 @@ type ScheduleStatusSelectProps = {
   disabled?: boolean;
 };
 
-function confirmationMessage(status: BackendScheduleStatus): string | null {
-  switch (status) {
-    case "VALID":
-      return "Confirmer la validation de cet échéancier ? Cette action est definitive.";
-    case "DENIED":
-      return "Confirmer le refus de cet échéancier ?";
-    default:
-      return null;
-  }
-}
-
 export default function ScheduleStatusSelect({
   scheduleId,
   value,
@@ -49,9 +39,22 @@ export default function ScheduleStatusSelect({
   className,
   disabled,
 }: ScheduleStatusSelectProps) {
+  const t = useTranslations("schedule.statusSelect");
+  const tStatus = useTranslations("status.schedule");
   const [optimisticStatus, setOptimisticStatus] = useState<BackendScheduleStatus | null>(null);
   const status = optimisticStatus ?? value;
   const [isUpdating, setIsUpdating] = useState(false);
+
+  function confirmationMessage(nextStatus: BackendScheduleStatus): string | null {
+    switch (nextStatus) {
+      case "VALID":
+        return t("confirmValid");
+      case "DENIED":
+        return t("confirmDenied");
+      default:
+        return null;
+    }
+  }
 
   async function handleChange(nextValue: string) {
     const nextStatus = nextValue as BackendScheduleStatus;
@@ -70,13 +73,11 @@ export default function ScheduleStatusSelect({
         status: nextStatus,
       } satisfies UpdateScheduleStatusPayload);
       if (!ok || !body.success) {
-        throw new Error((body.message as string) ?? "Mise à jour impossible.");
+        throw new Error((body.message as string) ?? t("updateError"));
       }
       await onUpdated?.(nextStatus);
     } catch (error) {
-      onError?.(
-        error instanceof Error ? error.message : "Mise à jour impossible.",
-      );
+      onError?.(error instanceof Error ? error.message : t("updateError"));
     } finally {
       setOptimisticStatus(null);
       setIsUpdating(false);
@@ -90,16 +91,14 @@ export default function ScheduleStatusSelect({
       disabled={disabled || isUpdating}
     >
       <SelectTrigger className={className} size="sm">
-        <SelectValue placeholder="Statut" />
+        <SelectValue placeholder={t("placeholder")} />
       </SelectTrigger>
       <SelectContent>
-        {(Object.keys(STATUS_LABELS) as BackendScheduleStatus[]).map(
-          (option) => (
-            <SelectItem key={option} value={option}>
-              {STATUS_LABELS[option]}
-            </SelectItem>
-          ),
-        )}
+        {SCHEDULE_STATUSES.map((option) => (
+          <SelectItem key={option} value={option}>
+            {tStatus(option)}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );

@@ -2,6 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   DataTable,
   DataTableBodyRows,
@@ -20,17 +21,10 @@ import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { listSchedules } from "@/lib/services/schedules";
 import type { BackendScheduleSummary } from "@/types/backend";
 import CreateScheduleDialog from "@/components/schedule/create-schedule-dialog";
-import ScheduleStatusSelect from "@/components/schedule/schedule-status-select";
+import ScheduleStatusSelect, { SCHEDULE_STATUSES } from "@/components/schedule/schedule-status-select";
 import { useMode } from "@/lib/mode-context";
 
 const PAGE_SIZE = 20;
-
-const SCHEDULE_STATUS_ITEMS = [
-  { value: "DRAFT", label: "Brouillon" },
-  { value: "NEGOCIATE", label: "En négociation" },
-  { value: "DENIED", label: "Refusé" },
-  { value: "VALID", label: "Validé" },
-];
 
 type ScheduleRow = {
   id: string;
@@ -56,6 +50,7 @@ function toRows(schedules: BackendScheduleSummary[]): ScheduleRow[] {
 
 function ScheduleListTableInner() {
   const { isCustomer } = useMode();
+  const tStatus = useTranslations("status.schedule");
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -144,7 +139,7 @@ function ScheduleListTableInner() {
           <FilterSidebarSection label="Statut">
             <SelectCombobox
               multiple
-              items={SCHEDULE_STATUS_ITEMS}
+              items={SCHEDULE_STATUSES.map((value) => ({ value, label: tStatus(value) }))}
               value={statuses}
               onValueChange={(vals) => pushParams({ statuses: vals })}
               placeholder="Sélectionner des statuts…"
@@ -196,7 +191,7 @@ function ScheduleListTableInner() {
               <DataTableCell>{item.quoteName}</DataTableCell>
               <DataTableCell>
                 {isCustomer ? (
-                  <span>{item.status}</span>
+                  <span>{tStatus(item.status as BackendScheduleSummary["status"])}</span>
                 ) : (
                   <ScheduleStatusSelect
                     scheduleId={item.id}
