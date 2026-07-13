@@ -63,7 +63,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: "1.25.x"
+          go-version: "1.25.12"
 
       # The export service validates generated Factur-X against the official CII
       # XSD via xmllint; without it the conformance test silently skips.
