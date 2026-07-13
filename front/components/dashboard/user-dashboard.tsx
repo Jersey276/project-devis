@@ -9,9 +9,7 @@ import PieChartCard from "@/components/charts/pie-chart-card";
 import BarChartCard from "@/components/charts/bar-chart-card";
 import {
   QUOTE_STATE_COLORS,
-  QUOTE_STATE_LABELS,
   SCHEDULE_STATUS_COLORS,
-  SCHEDULE_STATUS_LABELS,
   formatEuros,
 } from "@/components/project/project-charts";
 import { listProjects, getProjectDetail } from "@/lib/services/projects";
@@ -34,6 +32,10 @@ const QUOTE_STATE_BADGE: Record<string, string> = {
 
 export default function UserDashboard() {
   const t = useTranslations("dashboard.user");
+  const tCharts = useTranslations("project.detail.charts");
+  const tQuotesTable = useTranslations("project.detail.quotesTable");
+  const tQuoteStatus = useTranslations("status.quote");
+  const tScheduleStatus = useTranslations("status.schedule");
   const [details, setDetails] = useState<BackendProjectDetail[]>([]);
   const [recentProjects, setRecentProjects] = useState<BackendProject[]>([]);
   const [recentQuotes, setRecentQuotes] = useState<BackendQuote[]>([]);
@@ -86,20 +88,20 @@ export default function UserDashboard() {
   }
 
   const statePieData = Object.entries(stateCount).map(([state, count]) => ({
-    name: QUOTE_STATE_LABELS[state] ?? state,
+    name: tQuoteStatus(state),
     value: count,
     color: QUOTE_STATE_COLORS[state] ?? "#6b7280",
   }));
 
   const scheduleBarData = Object.entries(scheduleCount).map(([status, count]) => ({
-    name: SCHEDULE_STATUS_LABELS[status] ?? status,
+    name: tScheduleStatus(status),
     count,
     color: SCHEDULE_STATUS_COLORS[status] ?? "#6b7280",
   }));
 
   const revenueData = [
-    { name: "Total HT contractualisé", montant: totalHtCents / 100 },
-    { name: "Encaissé", montant: collectedHtCents / 100 },
+    { name: tCharts("totalHt"), montant: totalHtCents / 100 },
+    { name: tCharts("collected"), montant: collectedHtCents / 100 },
   ];
 
   const hasData = details.length > 0;
@@ -121,26 +123,26 @@ export default function UserDashboard() {
           ) : hasData ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <PieChartCard
-                title="Répartition des devis par état"
+                title={tCharts("quoteStates")}
                 data={statePieData}
                 outerRadius={70}
                 height={200}
               />
               <BarChartCard
-                title="Répartition des échéanciers"
+                title={tCharts("scheduleStatuses")}
                 data={scheduleBarData}
                 dataKey="count"
                 colorKey="color"
-                barName="Nb"
+                barName={tCharts("barNameCount")}
                 height={200}
-                noDataMessage="Aucun échéancier."
+                noDataMessage={tQuotesTable("noSchedules")}
               />
               <BarChartCard
-                title="Chiffre d'affaires (HT)"
+                title={tCharts("revenue")}
                 data={revenueData}
                 dataKey="montant"
                 defaultColor="#3b82f6"
-                barName="Montant HT"
+                barName={tCharts("barNameAmount")}
                 height={200}
                 tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
                 tooltipFormatter={(v) => formatEuros(v * 100)}
@@ -240,7 +242,7 @@ export default function UserDashboard() {
                         <span
                           className={`rounded px-2 py-0.5 text-xs font-medium ${QUOTE_STATE_BADGE[q.state] ?? "bg-gray-100 text-gray-700"}`}
                         >
-                          {QUOTE_STATE_LABELS[q.state] ?? q.state}
+                          {tQuoteStatus(q.state)}
                         </span>
                       </td>
                       <td className="py-2 text-muted-foreground">
