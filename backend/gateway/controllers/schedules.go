@@ -82,11 +82,11 @@ func SchedulesRoutes(r *gin.RouterGroup, emailNotifier gatewaySvc.EmailNotifier)
 	}
 	usersClient := users.NewUserServiceClient(usersConn)
 
-	r.GET("", func(c *gin.Context) { ListSchedules(c, client, quoteClient) })
+	r.GET("", func(c *gin.Context) { ListSchedules(c, client, quoteClient, usersClient) })
 	r.POST("", func(c *gin.Context) { CreateSchedule(c, client, quoteClient) })
 
 	one := r.Group("/:id")
-	one.GET("", func(c *gin.Context) { GetSchedule(c, client, quoteClient) })
+	one.GET("", func(c *gin.Context) { GetSchedule(c, client, quoteClient, usersClient) })
 	one.PATCH("/cells", func(c *gin.Context) { UpdateScheduleCell(c, client) })
 	one.PATCH("/status", func(c *gin.Context) { UpdateScheduleStatus(c, client, quoteClient, usersClient, emailNotifier) })
 	one.POST("/validate", func(c *gin.Context) { ValidateSchedule(c, client, quoteClient, usersClient, emailNotifier) })
@@ -141,7 +141,7 @@ func sendScheduleEmailNotification(
 
 // ─── Handlers ────────────────────────────────────────────────────────────────
 
-func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient, quoteClient quote.QuoteServiceClient) {
+func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient, quoteClient quote.QuoteServiceClient, usersClient users.UserServiceClient) {
 	startedAt := time.Now()
 	grpcCode := int32(0)
 	success := false
@@ -159,10 +159,19 @@ func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient, quoteC
 
 	filterClientID := c.Query("client_id")
 	// In customer mode, filter by client_id only — the authenticated user_id is
-	// that of the client account, not the provider who owns the schedules.
+	// that of the client account, not the provider who owns the schedules. The
+	// client_id is resolved from the caller's own linked-client record, never
+	// trusted from the request.
 	userID := userIDFromCtx(c)
-	if filterClientID != "" && c.GetHeader("X-Client-Mode") == "customer" {
+	providerUserID := userID
+	if c.GetHeader("X-Client-Mode") == "customer" {
+		linked := resolveMyClient(c, usersClient)
+		if linked == nil {
+			return
+		}
 		userID = ""
+		filterClientID = linked.ClientId
+		providerUserID = linked.UserId
 	}
 
 	resp, err := client.ListSchedules(c.Request.Context(), &schedule.ListSchedulesRequest{
@@ -204,7 +213,7 @@ func ListSchedules(c *gin.Context, client schedule.ScheduleServiceClient, quoteC
 	}
 	if len(quoteIDs) > 0 {
 		qResp, qErr := quoteClient.ListQuotes(c.Request.Context(), &quote.ListQuotesRequest{
-			UserId:   userID,
+			UserId:   providerUserID,
 			Page:     1,
 			PageSize: int32(len(quoteIDs)),
 			Filters:  &quote.QuoteFilters{QuoteIds: quoteIDs},
@@ -298,7 +307,7 @@ type scheduleLineEnrichment struct {
 	ParentLineID string
 }
 
-func GetSchedule(c *gin.Context, client schedule.ScheduleServiceClient, quoteClient quote.QuoteServiceClient) {
+func GetSchedule(c *gin.Context, client schedule.ScheduleServiceClient, quoteClient quote.QuoteServiceClient, usersClient users.UserServiceClient) {
 	startedAt := time.Now()
 	grpcCode := int32(0)
 	success := false
@@ -306,9 +315,23 @@ func GetSchedule(c *gin.Context, client schedule.ScheduleServiceClient, quoteCli
 		recordScheduleHTTP("get_schedule", success, grpcCode, startedAt)
 	}()
 
+	userID := userIDFromCtx(c)
+	providerUserID := userID
+	var filterClientID string
+	if c.GetHeader("X-Client-Mode") == "customer" {
+		linked := resolveMyClient(c, usersClient)
+		if linked == nil {
+			return
+		}
+		userID = ""
+		filterClientID = linked.ClientId
+		providerUserID = linked.UserId
+	}
+
 	resp, err := client.GetSchedule(c.Request.Context(), &schedule.GetScheduleRequest{
 		ScheduleId: c.Param("id"),
-		UserId:     userIDFromCtx(c),
+		UserId:     userID,
+		ClientId:   filterClientID,
 	})
 	if err != nil {
 		grpcCode = ScheduleCodeInternalError
@@ -320,15 +343,23 @@ func GetSchedule(c *gin.Context, client schedule.ScheduleServiceClient, quoteCli
 		scheduleErrors.reply(c, resp.Code)
 		return
 	}
+	if filterClientID != "" && resp.Schedule.ClientId != filterClientID {
+		grpcCode = ScheduleCodeNotFound
+		scheduleErrors.reply(c, ScheduleCodeNotFound)
+		return
+	}
 	grpcCode = resp.Code
 	success = true
 	s := resp.Schedule
 
-	// Enrich lines with name/kind/position from the quote service.
+	// Enrich lines with name/kind/position from the quote service, always
+	// scoped by the provider's own user_id — the quote service has no
+	// customer-mode concept of its own; the schedule ownership check above
+	// already guards which schedule (and thus which quote) is reachable here.
 	lineInfoMap := map[string]scheduleLineEnrichment{}
 	qResp, qErr := quoteClient.ListQuoteLines(c.Request.Context(), &quote.ListQuoteLinesRequest{
 		QuoteId: s.QuoteId,
-		UserId:  userIDFromCtx(c),
+		UserId:  providerUserID,
 	})
 	if qErr != nil {
 		log.Printf("GetSchedule: ListQuoteLines failed for quote %s: %v", s.QuoteId, qErr)

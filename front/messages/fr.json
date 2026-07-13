@@ -335,12 +335,15 @@
       "charts": {
         "quoteStates": "Répartition des devis par état",
         "scheduleStatuses": "Répartition des échéanciers",
-        "revenue": "Chiffre d'affaires",
+        "revenue": "Chiffre d'affaires (HT)",
         "totalHt": "Total HT contractualisé",
-        "collected": "Encaissé"
+        "collected": "Encaissé",
+        "barNameCount": "Nb",
+        "barNameAmount": "Montant HT"
       },
       "quotesTable": {
         "title": "Devis du projet",
+        "empty": "Aucun devis rattaché au projet.",
         "noSchedules": "Aucun échéancier.",
         "noInvoices": "Aucune facture."
       }
@@ -577,6 +580,12 @@
       "accepted": "Accepté",
       "refused": "Refusé",
       "archived": "Archivé"
+    },
+    "schedule": {
+      "DRAFT": "Brouillon",
+      "NEGOCIATE": "En négociation",
+      "DENIED": "Refusé",
+      "VALID": "Validé"
     }
   },
   "client": {
@@ -1511,6 +1520,14 @@
       "saveSuccessToast": "Template mis à jour.",
       "saveFailedToast": "Impossible de mettre à jour le template.",
       "loadFailedToast": "Impossible de charger le template."
+    }
+  },
+  "schedule": {
+    "statusSelect": {
+      "placeholder": "Statut",
+      "confirmValid": "Confirmer la validation de cet échéancier ? Cette action est definitive.",
+      "confirmDenied": "Confirmer le refus de cet échéancier ?",
+      "updateError": "Mise à jour impossible."
     }
   },
   "template": {

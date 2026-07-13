@@ -29,6 +29,11 @@ function formatEuros(cents: number): string {
   }).format(cents / 100);
 }
 
+function formatMonth(month: string): string {
+  const d = new Date(month.length === 7 ? `${month}-01T00:00:00Z` : `${month}T00:00:00Z`);
+  return d.toLocaleDateString("fr-FR", { month: "2-digit", year: "numeric", timeZone: "UTC" });
+}
+
 export default function AnalyticsDashboard() {
   const t = useTranslations("admin.analytics");
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -106,6 +111,8 @@ export default function AnalyticsDashboard() {
           lines={[{ key: "revenue", color: "#3b82f6", label: "Revenu" }]}
           xAxisKey="month"
           height={280}
+          xTickFormatter={formatMonth}
+          tooltipLabelFormatter={formatMonth}
           yTickFormatter={(v) => `${v}€`}
           tooltipFormatter={(v) => [`${v}€`, "Revenu"]}
           vertical={false}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { BackendScheduleDetails } from "@/types/backend";
 import ScheduleStatusSelect from "@/components/schedule/schedule-status-select";
 
@@ -16,6 +17,7 @@ export default function ScheduleMetadata({
   onUpdated,
   onError,
 }: Props) {
+  const tStatus = useTranslations("status.schedule");
   return (
     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
       <p>
@@ -24,7 +26,7 @@ export default function ScheduleMetadata({
       <p>
         <strong>Statut:</strong>{" "}
         {isCustomer ? (
-          <span>{schedule.status}</span>
+          <span>{tStatus(schedule.status)}</span>
         ) : (
           <ScheduleStatusSelect
             scheduleId={schedule.schedule_id}

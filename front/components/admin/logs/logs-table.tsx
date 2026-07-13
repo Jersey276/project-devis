@@ -94,7 +94,11 @@ function DetailPanel({ detail, error, tTable }: DetailPanelProps) {
   );
 }
 
-const DATE_FORMAT = new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "medium" });
+const DATE_FORMAT = new Intl.DateTimeFormat("fr-FR", {
+  dateStyle: "short",
+  timeStyle: "medium",
+  timeZone: "Europe/Paris",
+});
 
 export default function LogsTable({ logs }: LogsTableProps) {
   const t = useTranslations("admin.logs.table");

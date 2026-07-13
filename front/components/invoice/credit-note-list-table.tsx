@@ -16,7 +16,10 @@ import {
 } from "@/components/custom/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FilterSidebar, FilterSidebarSection } from "@/components/ui/filter-sidebar";
+import {
+  FilterSidebar,
+  FilterSidebarSection,
+} from "@/components/ui/filter-sidebar";
 import { SelectCombobox } from "@/components/ui/select-combobox";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import {
@@ -63,7 +66,9 @@ function CreditNoteListTableInner() {
   const issuedFrom = searchParams.get("issued_from") ?? "";
   const issuedTo = searchParams.get("issued_to") ?? "";
   const sortBy = searchParams.get("sort_by") ?? "created_at";
-  const sortDirection = (searchParams.get("sort_direction") ?? "desc") as "asc" | "desc";
+  const sortDirection = (searchParams.get("sort_direction") ?? "desc") as
+    | "asc"
+    | "desc";
 
   const [items, setItems] = useState<CreditNoteRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -93,25 +98,31 @@ function CreditNoteListTableInner() {
     router.push(`${pathname}?${next.toString()}`);
   }
 
-  const fetchCreditNotes = useCallback(async (signal: AbortSignal) => {
-    const params = new URLSearchParams({ page: String(page), page_size: String(PAGE_SIZE) });
-    if (isTotal) params.set("is_total", isTotal);
-    if (issuedFrom) params.set("issued_from", issuedFrom);
-    if (issuedTo) params.set("issued_to", issuedTo);
-    params.set("sort_by", sortBy);
-    params.set("sort_direction", sortDirection);
+  const fetchCreditNotes = useCallback(
+    async (signal: AbortSignal) => {
+      const params = new URLSearchParams({
+        page: String(page),
+        page_size: String(PAGE_SIZE),
+      });
+      if (isTotal) params.set("is_total", isTotal);
+      if (issuedFrom) params.set("issued_from", issuedFrom);
+      if (issuedTo) params.set("issued_to", issuedTo);
+      params.set("sort_by", sortBy);
+      params.set("sort_direction", sortDirection);
 
-    const { ok, body } = await listCreditNotes(params.toString(), signal);
-    if (signal.aborted) return;
-    if (!ok || !body.success) {
-      setError((body.message as string) ?? t("loadError"));
-      return;
-    }
-    setError(null);
-    setItems(toRows(readCreditNotesFromBody(body)));
-    setTotal((body.total ?? 0) as number);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+      const { ok, body } = await listCreditNotes(params.toString(), signal);
+      if (signal.aborted) return;
+      if (!ok || !body.success) {
+        setError((body.message as string) ?? t("loadError"));
+        return;
+      }
+      setError(null);
+      setItems(toRows(readCreditNotesFromBody(body)));
+      setTotal((body.total ?? 0) as number);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [searchParams],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -149,105 +160,109 @@ function CreditNoteListTableInner() {
     <>
       {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
 
-      <div className="flex items-start gap-4">
-        <FilterSidebar
-          triggerLabel={tCommon("trigger")}
-          title={tCommon("title")}
-          activeCount={hasFilters ? 1 : 0}
-          onReset={() => pushParams({ isTotal: "", issuedFrom: "", issuedTo: "", page: 1 })}
-          resetLabel={tCommon("reset")}
+      <FilterSidebar
+        triggerLabel={tCommon("trigger")}
+        title={tCommon("title")}
+        activeCount={hasFilters ? 1 : 0}
+        onReset={() =>
+          pushParams({ isTotal: "", issuedFrom: "", issuedTo: "", page: 1 })
+        }
+        resetLabel={tCommon("reset")}
+      >
+        <FilterSidebarSection label={tFilters("typeLabel")}>
+          <SelectCombobox
+            items={isTotalItems}
+            value={isTotal}
+            onValueChange={(v) => pushParams({ isTotal: v, page: 1 })}
+            placeholder={tFilters("typePlaceholder")}
+            emptyLabel={tFilters("typeEmpty")}
+          />
+        </FilterSidebarSection>
+
+        <FilterSidebarSection label={tFilters("issuedDateLabel")}>
+          <DateRangePicker
+            from={issuedFrom}
+            to={issuedTo}
+            onValueChange={(from, to) =>
+              pushParams({ issuedFrom: from, issuedTo: to, page: 1 })
+            }
+          />
+        </FilterSidebarSection>
+      </FilterSidebar>
+
+      <div className="flex-1 min-w-0">
+        <DataTable
+          datas={items}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onSortChange={(col, dir) =>
+            pushParams({ sortBy: col, sortDirection: dir, page: 1 })
+          }
+          row_actions={rowActions}
         >
-          <FilterSidebarSection label={tFilters("typeLabel")}>
-            <SelectCombobox
-              items={isTotalItems}
-              value={isTotal}
-              onValueChange={(v) => pushParams({ isTotal: v, page: 1 })}
-              placeholder={tFilters("typePlaceholder")}
-              emptyLabel={tFilters("typeEmpty")}
-            />
-          </FilterSidebarSection>
-
-          <FilterSidebarSection label={tFilters("issuedDateLabel")}>
-            <DateRangePicker
-              from={issuedFrom}
-              to={issuedTo}
-              onValueChange={(from, to) => pushParams({ issuedFrom: from, issuedTo: to, page: 1 })}
-            />
-          </FilterSidebarSection>
-        </FilterSidebar>
-
-        <div className="flex-1 min-w-0">
-          <DataTable
-            datas={items}
-            sortBy={sortBy}
-            sortDirection={sortDirection}
-            onSortChange={(col, dir) => pushParams({ sortBy: col, sortDirection: dir, page: 1 })}
-            row_actions={rowActions}
-          >
-            <DataTableHeader>
-              <DataTableRow>
-                <DataTableSortableHead name="number">
-                  {t("columns.number")}
-                </DataTableSortableHead>
-                <DataTableSortableHead name="invoiceNumber">
-                  {t("columns.invoice")}
-                </DataTableSortableHead>
-                <DataTableHead>{t("columns.type")}</DataTableHead>
-                <DataTableSortableHead name="issuedAt">
-                  {t("columns.issuedAt")}
-                </DataTableSortableHead>
-                <DataTableHead>{t("columns.totalTtc")}</DataTableHead>
-                <DataTableHead>{t("columns.actions")}</DataTableHead>
+          <DataTableHeader>
+            <DataTableRow>
+              <DataTableSortableHead name="number">
+                {t("columns.number")}
+              </DataTableSortableHead>
+              <DataTableSortableHead name="invoiceNumber">
+                {t("columns.invoice")}
+              </DataTableSortableHead>
+              <DataTableHead>{t("columns.type")}</DataTableHead>
+              <DataTableSortableHead name="issuedAt">
+                {t("columns.issuedAt")}
+              </DataTableSortableHead>
+              <DataTableHead>{t("columns.totalTtc")}</DataTableHead>
+              <DataTableHead>{t("columns.actions")}</DataTableHead>
+            </DataTableRow>
+          </DataTableHeader>
+          <DataTableBodyRows<CreditNoteRow>
+            emptyColSpan={6}
+            empty={<span className="text-muted-foreground">{t("empty")}</span>}
+            render={(item) => (
+              <DataTableRow key={item.id}>
+                <DataTableCell>{item.number}</DataTableCell>
+                <DataTableCell>{item.invoiceNumber || "—"}</DataTableCell>
+                <DataTableCell>
+                  <Badge variant={item.isTotal ? "default" : "secondary"}>
+                    {item.isTotal ? t("total") : t("partial")}
+                  </Badge>
+                </DataTableCell>
+                <DataTableCell>{item.issuedAt || "—"}</DataTableCell>
+                <DataTableCell className="tabular-nums">
+                  -{formatEurosFromCents(item.totalTtc)}
+                </DataTableCell>
+                <DataTableCell>
+                  <DataTableRowActions id={item.id} row={item} />
+                </DataTableCell>
               </DataTableRow>
-            </DataTableHeader>
-            <DataTableBodyRows<CreditNoteRow>
-              emptyColSpan={6}
-              empty={<span className="text-muted-foreground">{t("empty")}</span>}
-              render={(item) => (
-                <DataTableRow key={item.id}>
-                  <DataTableCell>{item.number}</DataTableCell>
-                  <DataTableCell>{item.invoiceNumber || "—"}</DataTableCell>
-                  <DataTableCell>
-                    <Badge variant={item.isTotal ? "default" : "secondary"}>
-                      {item.isTotal ? t("total") : t("partial")}
-                    </Badge>
-                  </DataTableCell>
-                  <DataTableCell>{item.issuedAt || "—"}</DataTableCell>
-                  <DataTableCell className="tabular-nums">
-                    -{formatEurosFromCents(item.totalTtc)}
-                  </DataTableCell>
-                  <DataTableCell>
-                    <DataTableRowActions id={item.id} row={item} />
-                  </DataTableCell>
-                </DataTableRow>
-              )}
-            />
-          </DataTable>
+            )}
+          />
+        </DataTable>
 
-          {totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => pushParams({ page: page - 1 })}
-              >
-                Précédent
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                {page} / {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() => pushParams({ page: page + 1 })}
-              >
-                Suivant
-              </Button>
-            </div>
-          )}
-        </div>
+        {totalPages > 1 && (
+          <div className="mt-4 flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => pushParams({ page: page - 1 })}
+            >
+              Précédent
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {page} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => pushParams({ page: page + 1 })}
+            >
+              Suivant
+            </Button>
+          </div>
+        )}
       </div>
     </>
   );

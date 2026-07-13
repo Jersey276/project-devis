@@ -56,7 +56,7 @@ func ProjectsRoutes(r *gin.RouterGroup) {
 	}
 	client := project.NewProjectServiceClient(conn)
 
-	usersAddr := os.Getenv("USERS_SERVICE_ADDRESS")
+	usersAddr := os.Getenv("USER_SERVICE_ADDRESS")
 	if usersAddr == "" {
 		usersAddr = "localhost:50052"
 	}

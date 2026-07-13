@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { ChevronDownIcon, ChevronRightIcon, UnlinkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,14 +36,6 @@ import type {
   BackendScheduleSummary,
 } from "@/types/backend";
 
-const QUOTE_STATE_LABELS: Record<string, string> = {
-  draft: "Brouillon",
-  negociation: "Négociation",
-  validated: "Validé",
-  drop: "Abandonné",
-  sent: "Envoyé",
-};
-
 const QUOTE_STATE_VARIANTS: Record<
   string,
   "default" | "secondary" | "outline" | "destructive"
@@ -51,21 +44,8 @@ const QUOTE_STATE_VARIANTS: Record<
   negociation: "default",
   validated: "secondary",
   drop: "destructive",
-  sent: "default",
-};
-
-const SCHEDULE_STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Brouillon",
-  NEGOCIATE: "Négociation",
-  VALID: "Validé",
-  DENIED: "Refusé",
-};
-
-const INVOICE_STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Brouillon",
-  ISSUED: "Émise",
-  PAID: "Payée",
-  CANCELLED: "Annulée",
+  accepted: "secondary",
+  refused: "destructive",
 };
 
 const INVOICE_STATUS_VARIANTS: Record<
@@ -89,6 +69,7 @@ function ScheduleSubTable({
 }: {
   schedules: BackendScheduleSummary[];
 }) {
+  const tScheduleStatus = useTranslations("status.schedule");
   if (!schedules?.length)
     return <p className="text-xs text-muted-foreground">Aucun échéancier.</p>;
   return (
@@ -113,7 +94,7 @@ function ScheduleSubTable({
               </Link>
             </TableCell>
             <TableCell className="text-xs">
-              {SCHEDULE_STATUS_LABELS[s.status] ?? s.status}
+              {tScheduleStatus(s.status)}
             </TableCell>
             <TableCell className="text-xs">{s.start_month}</TableCell>
             <TableCell className="text-xs">{s.duration_months} mois</TableCell>
@@ -125,6 +106,7 @@ function ScheduleSubTable({
 }
 
 function InvoiceSubTable({ invoices }: { invoices: BackendInvoiceSummary[] }) {
+  const tInvoiceStatus = useTranslations("invoice.status");
   if (!invoices?.length)
     return <p className="text-xs text-muted-foreground">Aucune facture.</p>;
   return (
@@ -153,7 +135,7 @@ function InvoiceSubTable({ invoices }: { invoices: BackendInvoiceSummary[] }) {
                 variant={INVOICE_STATUS_VARIANTS[inv.status] ?? "outline"}
                 className="text-xs"
               >
-                {INVOICE_STATUS_LABELS[inv.status] ?? inv.status}
+                {tInvoiceStatus(inv.status)}
               </Badge>
             </TableCell>
             <TableCell className="text-xs">
@@ -176,6 +158,7 @@ export default function ProjectQuotesTable({
   quotes,
   onChanged,
 }: Props) {
+  const tQuoteStatus = useTranslations("status.quote");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [availableQuotes, setAvailableQuotes] = useState<BackendQuote[]>([]);
   const [addQuoteId, setAddQuoteId] = useState("");
@@ -284,7 +267,7 @@ export default function ProjectQuotesTable({
                 {q.name}
               </Link>
               <Badge variant={QUOTE_STATE_VARIANTS[q.state] ?? "outline"}>
-                {QUOTE_STATE_LABELS[q.state] ?? q.state}
+                {tQuoteStatus(q.state)}
               </Badge>
               <span className="text-xs text-muted-foreground">
                 {q.schedules?.length ?? 0} éch. · {q.invoices?.length ?? 0}{" "}
