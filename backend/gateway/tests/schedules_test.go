@@ -364,10 +364,10 @@ func setupScheduleRouter(client schedule.ScheduleServiceClient) *gin.Engine {
 		c.Next()
 	})
 	g := r.Group("/schedules")
-	g.GET("", func(c *gin.Context) { controllers.ListSchedules(c, client, nopQuoteClient{}) })
+	g.GET("", func(c *gin.Context) { controllers.ListSchedules(c, client, nopQuoteClient{}, nopUsersClient{}) })
 	g.POST("", func(c *gin.Context) { controllers.CreateSchedule(c, client, nopQuoteClient{}) })
 	one := g.Group("/:id")
-	one.GET("", func(c *gin.Context) { controllers.GetSchedule(c, client, nopQuoteClient{}) })
+	one.GET("", func(c *gin.Context) { controllers.GetSchedule(c, client, nopQuoteClient{}, nopUsersClient{}) })
 	one.PATCH("/cells", func(c *gin.Context) { controllers.UpdateScheduleCell(c, client) })
 	one.POST("/validate", func(c *gin.Context) {
 		controllers.ValidateSchedule(c, client, nopQuoteClient{}, nopUsersClient{}, nopEmailNotifier{})

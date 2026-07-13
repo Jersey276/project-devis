@@ -40,8 +40,9 @@ const PAGE_SIZE = 20;
 const DATE_FMT = new Intl.DateTimeFormat("fr-FR", {
   dateStyle: "medium",
   timeStyle: "short",
+  timeZone: "Europe/Paris",
 });
-const DATE_ONLY = new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" });
+const DATE_ONLY = new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeZone: "Europe/Paris" });
 
 function formatDate(v: string | null | undefined, fallback: string): string {
   if (!v) return fallback;

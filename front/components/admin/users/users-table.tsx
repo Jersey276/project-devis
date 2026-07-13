@@ -42,6 +42,7 @@ function formatLastLogin(value: string | null, fallback: string): string {
   return new Intl.DateTimeFormat("fr-FR", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: "Europe/Paris",
   }).format(date);
 }
 

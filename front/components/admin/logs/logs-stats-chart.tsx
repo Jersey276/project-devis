@@ -34,14 +34,33 @@ function groupKey(status: number): string {
 
 function pivot(raw: RawStat[]): ChartPoint[] {
   const byDate = new Map<string, ChartPoint>();
+  const groups = new Set<string>();
   for (const entry of raw) {
     if (!byDate.has(entry.date)) {
       byDate.set(entry.date, { date: entry.date });
     }
     const point = byDate.get(entry.date)!;
     const key = groupKey(entry.resp_status);
+    groups.add(key);
     point[key] = ((point[key] as number | undefined) ?? 0) + entry.count;
   }
+
+  // Fill in missing days with 0 so the line doesn't skip over date gaps.
+  const dates = Array.from(byDate.keys()).sort();
+  if (dates.length > 1) {
+    const cursor = new Date(dates[0] + "T00:00:00Z");
+    const end = new Date(dates[dates.length - 1] + "T00:00:00Z");
+    while (cursor < end) {
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+      const dateStr = cursor.toISOString().slice(0, 10);
+      if (!byDate.has(dateStr)) {
+        const point: ChartPoint = { date: dateStr };
+        for (const key of groups) point[key] = 0;
+        byDate.set(dateStr, point);
+      }
+    }
+  }
+
   return Array.from(byDate.values()).sort((a, b) => (a.date < b.date ? -1 : 1));
 }
 

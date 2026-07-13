@@ -409,6 +409,7 @@ type GetScheduleRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ScheduleId    string                 `protobuf:"bytes,1,opt,name=schedule_id,json=scheduleId,proto3" json:"schedule_id,omitempty"`
 	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	ClientId      string                 `protobuf:"bytes,3,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -453,6 +454,13 @@ func (x *GetScheduleRequest) GetScheduleId() string {
 func (x *GetScheduleRequest) GetUserId() string {
 	if x != nil {
 		return x.UserId
+	}
+	return ""
+}
+
+func (x *GetScheduleRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
 	}
 	return ""
 }
@@ -581,6 +589,7 @@ type ScheduleDetails struct {
 	ColumnTotals      []*ScheduleColumnTotal `protobuf:"bytes,8,rep,name=column_totals,json=columnTotals,proto3" json:"column_totals,omitempty"`
 	QuoteTotalCents   int64                  `protobuf:"varint,9,opt,name=quote_total_cents,json=quoteTotalCents,proto3" json:"quote_total_cents,omitempty"`
 	PlannedTotalCents int64                  `protobuf:"varint,10,opt,name=planned_total_cents,json=plannedTotalCents,proto3" json:"planned_total_cents,omitempty"`
+	ClientId          string                 `protobuf:"bytes,11,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -683,6 +692,13 @@ func (x *ScheduleDetails) GetPlannedTotalCents() int64 {
 		return x.PlannedTotalCents
 	}
 	return 0
+}
+
+func (x *ScheduleDetails) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
 }
 
 type GetScheduleResponse struct {
@@ -1284,11 +1300,12 @@ const file_schedule_proto_rawDesc = "" +
 	"\x17ValidateScheduleRequest\x12\x1f\n" +
 	"\vschedule_id\x18\x01 \x01(\tR\n" +
 	"scheduleId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"N\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"k\n" +
 	"\x12GetScheduleRequest\x12\x1f\n" +
 	"\vschedule_id\x18\x01 \x01(\tR\n" +
 	"scheduleId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"\x85\x01\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1b\n" +
+	"\tclient_id\x18\x03 \x01(\tR\bclientId\"\x85\x01\n" +
 	"\x13ScheduleLineSummary\x12\"\n" +
 	"\rquote_line_id\x18\x01 \x01(\tR\vquoteLineId\x12#\n" +
 	"\rplanned_cents\x18\x02 \x01(\x03R\fplannedCents\x12%\n" +
@@ -1296,7 +1313,7 @@ const file_schedule_proto_rawDesc = "" +
 	"\x13ScheduleColumnTotal\x12\x1f\n" +
 	"\vmonth_index\x18\x01 \x01(\x05R\n" +
 	"monthIndex\x12!\n" +
-	"\famount_cents\x18\x02 \x01(\x03R\vamountCents\"\x98\x03\n" +
+	"\famount_cents\x18\x02 \x01(\x03R\vamountCents\"\xb5\x03\n" +
 	"\x0fScheduleDetails\x12\x1f\n" +
 	"\vschedule_id\x18\x01 \x01(\tR\n" +
 	"scheduleId\x12\x19\n" +
@@ -1310,7 +1327,8 @@ const file_schedule_proto_rawDesc = "" +
 	"\rcolumn_totals\x18\b \x03(\v2\x1d.schedule.ScheduleColumnTotalR\fcolumnTotals\x12*\n" +
 	"\x11quote_total_cents\x18\t \x01(\x03R\x0fquoteTotalCents\x12.\n" +
 	"\x13planned_total_cents\x18\n" +
-	" \x01(\x03R\x11plannedTotalCents\"z\n" +
+	" \x01(\x03R\x11plannedTotalCents\x12\x1b\n" +
+	"\tclient_id\x18\v \x01(\tR\bclientId\"z\n" +
 	"\x13GetScheduleResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\x05R\x04code\x125\n" +

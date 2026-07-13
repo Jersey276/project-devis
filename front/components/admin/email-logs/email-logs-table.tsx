@@ -15,7 +15,11 @@ type Props = {
   logs: EmailLog[];
 };
 
-const DATE_FORMAT = new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "medium" });
+const DATE_FORMAT = new Intl.DateTimeFormat("fr-FR", {
+  dateStyle: "short",
+  timeStyle: "medium",
+  timeZone: "Europe/Paris",
+});
 
 function statusClass(status: string): string {
   return status === "failed" ? "text-red-600 font-semibold" : "text-green-600";
