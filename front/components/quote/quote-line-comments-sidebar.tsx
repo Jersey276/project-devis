@@ -42,20 +42,32 @@ type Props = {
   currentUserName: string;
 };
 
+const PARIS_DAY_KEY = new Intl.DateTimeFormat("fr-CA", {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  timeZone: "Europe/Paris",
+});
+
 function formatDate(iso: string): string {
   try {
     const d = new Date(iso);
     const now = new Date();
-    const time = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-    if (
-      d.getDate() === now.getDate() &&
-      d.getMonth() === now.getMonth() &&
-      d.getFullYear() === now.getFullYear()
-    ) {
+    const time = d.toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/Paris",
+    });
+    if (PARIS_DAY_KEY.format(d) === PARIS_DAY_KEY.format(now)) {
       return time;
     }
     return (
-      d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" }) +
+      d.toLocaleDateString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        timeZone: "Europe/Paris",
+      }) +
       " " +
       time
     );
