@@ -20,12 +20,13 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 		return resp.Code, resp.Success
 	}, &err)()
 
-	if req == nil || strings.TrimSpace(req.ScheduleId) == "" || strings.TrimSpace(req.UserId) == "" {
+	clientID := strings.TrimSpace(req.GetClientId())
+	if req == nil || strings.TrimSpace(req.ScheduleId) == "" || (strings.TrimSpace(req.UserId) == "" && clientID == "") {
 		resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInvalidInput}
 		return resp, nil
 	}
 
-	quoteID, status, name, startMonth, durationMonths, err := loadScheduleHeader(ctx, s.db, req.ScheduleId, req.UserId)
+	quoteID, status, name, startMonth, durationMonths, ownerUserID, scheduleClientID, err := loadScheduleHeader(ctx, s.db, req.ScheduleId, req.UserId, clientID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeNotFound}
@@ -35,7 +36,7 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 		return resp, err
 	}
 
-	expectedByLineID, err := getQuoteLineExpectedCents(ctx, req.UserId, quoteID)
+	expectedByLineID, err := getQuoteLineExpectedCents(ctx, ownerUserID, quoteID)
 	if err != nil {
 		resp = &scheduleGrpc.GetScheduleResponse{Success: false, Code: CodeInternalError}
 		return resp, err
@@ -72,17 +73,29 @@ func (s *Server) GetSchedule(ctx context.Context, req *scheduleGrpc.GetScheduleR
 			ColumnTotals:      columnTotals,
 			QuoteTotalCents:   quoteTotalCents,
 			PlannedTotalCents: plannedTotalCents,
+			ClientId:          scheduleClientID,
 		},
 	}
 
 	return resp, nil
 }
 
-func loadScheduleHeader(ctx context.Context, db *sql.DB, scheduleID, userID string) (quoteID, status, name string, startMonth time.Time, durationMonths int32, err error) {
+// loadScheduleHeader looks up a schedule either by its owning provider (userID)
+// or, in customer mode, by the client it belongs to (clientID). userID takes
+// precedence when both are set. Always returns the owning provider's userID
+// (ownerUserID) so downstream provider-scoped calls (e.g. the quote service)
+// work regardless of which identity was used to look the schedule up.
+func loadScheduleHeader(ctx context.Context, db *sql.DB, scheduleID, userID, clientID string) (quoteID, status, name string, startMonth time.Time, durationMonths int32, ownerUserID, scheduleClientID string, err error) {
+	where := "schedule_id=$1 AND user_id=$2"
+	arg := userID
+	if strings.TrimSpace(userID) == "" {
+		where = "schedule_id=$1 AND client_id=$2"
+		arg = clientID
+	}
 	err = db.QueryRowContext(ctx,
-		`SELECT quote_id, status, name, start_month, duration_months FROM schedules WHERE schedule_id=$1 AND user_id=$2`,
-		scheduleID, userID,
-	).Scan(&quoteID, &status, &name, &startMonth, &durationMonths)
+		`SELECT quote_id, status, name, start_month, duration_months, user_id, COALESCE(client_id, '') FROM schedules WHERE `+where,
+		scheduleID, arg,
+	).Scan(&quoteID, &status, &name, &startMonth, &durationMonths, &ownerUserID, &scheduleClientID)
 	return
 }
 

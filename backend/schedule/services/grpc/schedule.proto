@@ -55,6 +55,7 @@ message ValidateScheduleRequest {
 message GetScheduleRequest {
     string schedule_id = 1;
     string user_id     = 2;
+    string client_id   = 3;
 }
 
 message ScheduleLineSummary {
@@ -79,6 +80,7 @@ message ScheduleDetails {
     repeated ScheduleColumnTotal column_totals = 8;
     int64  quote_total_cents   = 9;
     int64  planned_total_cents = 10;
+    string client_id           = 11;
 }
 
 message GetScheduleResponse {
