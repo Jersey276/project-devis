@@ -34,8 +34,18 @@ describe("Invoice", () => {
         body: {
           success: true,
           invoices: [
-            invoiceSummary({ invoice_id: "inv-1", invoice_number: "2026-0001", status: "ISSUED" }),
-            invoiceSummary({ invoice_id: "inv-2", invoice_number: "", status: "DRAFT", total_ttc_cents: 5000, total_ht_cents: 5000 }),
+            invoiceSummary({
+              invoice_id: "inv-1",
+              invoice_number: "2026-0001",
+              status: "ISSUED",
+            }),
+            invoiceSummary({
+              invoice_id: "inv-2",
+              invoice_number: "",
+              status: "DRAFT",
+              total_ttc_cents: 5000,
+              total_ht_cents: 5000,
+            }),
           ],
           total: 2,
         },
@@ -62,12 +72,17 @@ describe("Invoice", () => {
 
       cy.intercept("GET", "/api/invoices**statuses=ISSUED**", (req) => {
         expect(req.url).to.include("statuses=ISSUED");
-        req.reply({ statusCode: 200, body: { success: true, invoices: [], total: 0 } });
+        req.reply({
+          statusCode: 200,
+          body: { success: true, invoices: [], total: 0 },
+        });
       }).as("listInvoicesFiltered");
 
       cy.contains("button", "Filtres").click();
       cy.get('input[placeholder="Filtrer par statut"]').click();
-      cy.contains("[data-slot='combobox-item']", "Émise").click({ force: true });
+      cy.contains("[data-slot='combobox-item']", "Émise").click({
+        force: true,
+      });
       cy.wait("@listInvoicesFiltered");
     });
   });
@@ -77,10 +92,16 @@ describe("Invoice", () => {
     // ISSUED/PAID invoices) the lifecycle timeline, so every visit to
     // /invoice/:id fires both — stub both here so a missed one doesn't fall
     // through to a real 401 and redirect to /login mid-test.
-    function stubInvoiceDetail(invoiceId: string, over: Partial<InvoiceDetailsFixture> = {}) {
+    function stubInvoiceDetail(
+      invoiceId: string,
+      over: Partial<InvoiceDetailsFixture> = {},
+    ) {
       cy.intercept("GET", `/api/invoices/${invoiceId}`, {
         statusCode: 200,
-        body: { success: true, invoice: invoiceDetails({ invoice_id: invoiceId, ...over }) },
+        body: {
+          success: true,
+          invoice: invoiceDetails({ invoice_id: invoiceId, ...over }),
+        },
       }).as("getInvoice");
       cy.intercept("GET", `/api/invoices/${invoiceId}/lifecycle-events`, {
         statusCode: 200,
@@ -160,7 +181,10 @@ describe("Invoice", () => {
       cy.login();
       cy.intercept("GET", "/api/invoices/inv-1", {
         statusCode: 200,
-        body: { success: true, invoice: invoiceDetails({ invoice_id: "inv-1", status: "ISSUED" }) },
+        body: {
+          success: true,
+          invoice: invoiceDetails({ invoice_id: "inv-1", status: "ISSUED" }),
+        },
       }).as("getInvoice");
       // LifecycleTimeline is gated on !isCustomer, so no lifecycle-events call
       // is expected here — only LinkedCreditNotes, which always renders.
@@ -185,7 +209,10 @@ describe("Invoice", () => {
       cy.login();
       cy.intercept("GET", "/api/quotes/q-1", {
         statusCode: 200,
-        body: { success: true, quote: quote({ quote_id: "q-1", state: "validated" }) },
+        body: {
+          success: true,
+          quote: quote({ quote_id: "q-1", state: "validated" }),
+        },
       }).as("getQuote");
       cy.intercept("GET", "/api/quotes/q-1/lines**", {
         statusCode: 200,
@@ -201,7 +228,10 @@ describe("Invoice", () => {
       }).as("createFromQuote");
       cy.intercept("GET", "/api/invoices/inv-new", {
         statusCode: 200,
-        body: { success: true, invoice: invoiceDetails({ invoice_id: "inv-new" }) },
+        body: {
+          success: true,
+          invoice: invoiceDetails({ invoice_id: "inv-new" }),
+        },
       }).as("getNewInvoice");
       cy.intercept("GET", "/api/invoices/inv-new/lifecycle-events", {
         statusCode: 200,
@@ -224,7 +254,10 @@ describe("Invoice", () => {
       cy.login();
       cy.intercept("GET", "/api/quotes/q-1", {
         statusCode: 200,
-        body: { success: true, quote: quote({ quote_id: "q-1", state: "validated" }) },
+        body: {
+          success: true,
+          quote: quote({ quote_id: "q-1", state: "validated" }),
+        },
       }).as("getQuote");
       cy.intercept("GET", "/api/quotes/q-1/lines**", {
         statusCode: 200,
@@ -245,7 +278,10 @@ describe("Invoice", () => {
       cy.login();
       cy.intercept("GET", "/api/quotes/q-1", {
         statusCode: 200,
-        body: { success: true, quote: quote({ quote_id: "q-1", state: "validated" }) },
+        body: {
+          success: true,
+          quote: quote({ quote_id: "q-1", state: "validated" }),
+        },
       }).as("getQuote");
       cy.intercept("GET", "/api/quotes/q-1/lines**", {
         statusCode: 200,
@@ -264,7 +300,10 @@ describe("Invoice", () => {
       cy.wait(["@getQuote", "@listSchedules"]);
       cy.contains("button", "Générer une facture").click();
       cy.wait("@createFromQuote");
-      cy.get("[data-sonner-toaster]").should("contain", "La génération de la facture a échoué.");
+      cy.get("[data-sonner-toaster]").should(
+        "contain",
+        "La génération de la facture a échoué.",
+      );
     });
   });
 
@@ -301,7 +340,10 @@ describe("Invoice", () => {
           due_in_days: 0,
           issue_now: true,
         });
-        req.reply({ statusCode: 200, body: { success: true, invoice_id: "inv-new" } });
+        req.reply({
+          statusCode: 200,
+          body: { success: true, invoice_id: "inv-new" },
+        });
       }).as("createFromSchedule");
 
       cy.visit("/schedule/sched-1");
