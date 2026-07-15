@@ -71,7 +71,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [auth, users, quote, gateway, export, schedule, audit, template, invoice, subscription, email, project]
+        service:
+          [
+            auth,
+            users,
+            quote,
+            gateway,
+            export,
+            schedule,
+            audit,
+            template,
+            invoice,
+            subscription,
+            email,
+            project,
+          ]
     defaults:
       run:
         working-directory: backend/${{ matrix.service }}
@@ -239,15 +253,13 @@ jobs:
           docker compose logs
           exit 1
 
-      - name: Download Next build artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: next-build
-          path: front/.next
-
       - name: Install front dependencies
         working-directory: front
         run: npm ci
+
+      - name: Build front (with API_PROXY_TARGET baked in)
+        working-directory: front
+        run: npm run build
 
       - name: Cypress run against real backend
         uses: cypress-io/github-action@v4
