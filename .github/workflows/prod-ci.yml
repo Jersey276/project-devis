@@ -71,10 +71,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [auth, users, quote, gateway, export, schedule, audit, template]
+        service: [auth, users, quote, gateway, export, schedule, audit, template, invoice, subscription, email, project]
     defaults:
       run:
         working-directory: backend/${{ matrix.service }}
+    # invoice's integration tests (backend/invoice/tests/*_integration_test.go)
+    # create their own schema and run migrations against this DB; they no-op
+    # via t.Skip() for every other service, so the service costs nothing there.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: testadmin
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U testadmin"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v6
 
@@ -102,7 +119,9 @@ jobs:
         run: govulncheck ./...
 
       - name: Run unit tests with coverage
-        run: go test -coverprofile=coverage.out ./...
+        env:
+          INVOICE_TEST_DATABASE_URL: postgres://testadmin:testpass@localhost:5432/testdb?sslmode=disable
+        run: go test -coverpkg=./... -coverprofile=coverage.out ./...
 
       - name: Upload coverage report
         if: always()
