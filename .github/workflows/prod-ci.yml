@@ -176,10 +176,17 @@ jobs:
       # Make `docker compose build` delegate to `buildx bake`, which honours the
       # cache_from/cache_to directives in docker-compose.yml.
       COMPOSE_BAKE: "true"
-      # Read from and write to the GitHub Actions layer cache. buildx bake scopes
-      # this per target (per service) automatically, so the 8 service images do
-      # not clobber each other's cache.
-      BUILDX_CACHE: "type=gha,mode=max"
+      # Read from and write to the GitHub Actions layer cache, under a scope
+      # dedicated to this job (distinct from prod-cd.yml's per-image scopes).
+      BUILDX_CACHE: "type=gha,mode=max,scope=e2e"
+      # Next.js runs natively on this runner (not inside the compose network),
+      # so it can't resolve the `devis-gateway` Docker-internal hostname that
+      # next.config.ts/layout.tsx fall back to outside development. The
+      # gateway IS reachable via its host port mapping, so point there instead.
+      API_PROXY_TARGET: "http://localhost:8080"
+      # Lets the real-backend Cypress spec opt in; every other job leaves this
+      # unset, so it stays a no-op describe.skip there.
+      CYPRESS_REAL_BACKEND: "1"
     steps:
       - uses: actions/checkout@v6
 
