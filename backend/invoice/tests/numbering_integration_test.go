@@ -2,8 +2,6 @@ package tests
 
 import (
 	"context"
-	"database/sql"
-	"os"
 	"sync"
 	"testing"
 
@@ -13,32 +11,11 @@ import (
 )
 
 func TestAllocateInvoiceNumber_Concurrent(t *testing.T) {
-	dsn := os.Getenv("INVOICE_TEST_DATABASE_URL")
-	if dsn == "" {
-		t.Skip("set INVOICE_TEST_DATABASE_URL to run the numbering integration test")
-	}
-
-	db, err := sql.Open("postgres", dsn)
-	if err != nil {
-		t.Fatalf("open db: %v", err)
-	}
-	defer db.Close()
-	if err := db.Ping(); err != nil {
-		t.Fatalf("ping db: %v", err)
-	}
+	db := sealTestDB(t)
 
 	ctx := context.Background()
 	const userID = "concurrent-test-user"
 	const year = 2099
-
-	if _, err := db.ExecContext(ctx,
-		`DELETE FROM invoice_number_sequences WHERE user_id=$1 AND year=$2`, userID, year); err != nil {
-		t.Fatalf("cleanup: %v", err)
-	}
-	t.Cleanup(func() {
-		_, _ = db.ExecContext(context.Background(),
-			`DELETE FROM invoice_number_sequences WHERE user_id=$1 AND year=$2`, userID, year)
-	})
 
 	const n = 50
 	results := make([]int, n)
