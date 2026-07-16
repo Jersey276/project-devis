@@ -11,6 +11,10 @@ on:
       - "backend/audit/**"
       - "backend/template/**"
       - "backend/gateway/**"
+      - "backend/invoice/**"
+      - "backend/subscription/**"
+      - "backend/email/**"
+      - "backend/project/**"
     branches:
       - dev
 
@@ -45,6 +49,16 @@ jobs:
               - "backend/audit/**"
             template:
               - "backend/template/**"
+            gateway:
+              - "backend/gateway/**"
+            invoice:
+              - "backend/invoice/**"
+            subscription:
+              - "backend/subscription/**"
+            email:
+              - "backend/email/**"
+            project:
+              - "backend/project/**"
   ci:
     needs: check-changes
     if: needs.check-changes.outputs.services != '[]'
@@ -55,6 +69,23 @@ jobs:
     defaults:
       run:
         working-directory: backend/${{ matrix.service }}
+    # invoice's integration tests (backend/invoice/tests/*_integration_test.go)
+    # create their own schema and run migrations against this DB; they no-op
+    # via t.Skip() for every other service, so the service costs nothing there.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: testadmin
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U testadmin"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v6
         with:
@@ -64,6 +95,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: "1.26.5"
+          cache-dependency-path: backend/${{ matrix.service }}/go.sum
 
       # The export service validates generated Factur-X against the official CII
       # XSD via xmllint; without it the conformance test silently skips.
@@ -83,9 +115,11 @@ jobs:
 
       - name: Run tests with coverage
         id: tests
+        env:
+          INVOICE_TEST_DATABASE_URL: postgres://testadmin:testpass@localhost:5432/testdb?sslmode=disable
         run: |
           set -o pipefail
-          go test -json -coverprofile=coverage.out ./... 2>&1 | tee test_output.json
+          go test -json -coverpkg=./... -coverprofile=coverage.out ./... 2>&1 | tee test_output.json
 
       - name: Upload coverage report
         if: always()

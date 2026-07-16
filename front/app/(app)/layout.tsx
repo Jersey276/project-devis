@@ -12,11 +12,7 @@ import { redirect } from "next/navigation";
 import type { AuthContext } from "@/lib/access";
 import ConsentGate from "@/components/consent/consent-gate";
 import { CONSENT_VERSIONS, type ConsentType } from "@/lib/consent-versions";
-
-const gatewayUrl =
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:8080"
-    : "http://devis-gateway:8080";
+import { gatewayUrl } from "@/lib/gateway-url";
 
 // Attempts a server-side token refresh. On success, propagates the new cookies
 // to the browser via Next.js cookies() API and returns the new access token.

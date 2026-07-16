@@ -13,7 +13,7 @@ jobs:
   # Quality gates (parallel front / back)
   # ---------------------------------------------------------------------------
   front-quality:
-    name: Front quality (lint + audit + build + cypress)
+    name: Front quality (lint + audit + build)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -36,34 +36,10 @@ jobs:
       - name: Security audit (block on high/critical)
         run: npm audit --audit-level=high
 
+      # Cypress runs once for the whole suite, against the real backend, in
+      # e2e-integration below — no separate mocked-only run here.
       - name: Build
         run: npm run build
-
-      - name: Upload Next build artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: next-build
-          path: front/.next
-          retention-days: 1
-          include-hidden-files: true
-
-      - name: Cypress run (mocked / no backend)
-        uses: cypress-io/github-action@v4
-        with:
-          install: false
-          start: npm run start
-          wait-on: "http://localhost:3000"
-          wait-on-timeout: 120
-          browser: chrome
-          working-directory: front
-
-      - name: Upload Cypress screenshots on failure
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: cypress-screenshots-front-quality
-          path: front/cypress/screenshots
-          retention-days: 7
 
   back-quality:
     name: Back quality (lint + audit + tests)
@@ -71,10 +47,41 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [auth, users, quote, gateway, export, schedule, audit, template]
+        service:
+          [
+            auth,
+            users,
+            quote,
+            gateway,
+            export,
+            schedule,
+            audit,
+            template,
+            invoice,
+            subscription,
+            email,
+            project,
+          ]
     defaults:
       run:
         working-directory: backend/${{ matrix.service }}
+    # invoice's integration tests (backend/invoice/tests/*_integration_test.go)
+    # create their own schema and run migrations against this DB; they no-op
+    # via t.Skip() for every other service, so the service costs nothing there.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: testadmin
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U testadmin"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v6
 
@@ -102,7 +109,9 @@ jobs:
         run: govulncheck ./...
 
       - name: Run unit tests with coverage
-        run: go test -coverprofile=coverage.out ./...
+        env:
+          INVOICE_TEST_DATABASE_URL: postgres://testadmin:testpass@localhost:5432/testdb?sslmode=disable
+        run: go test -coverpkg=./... -coverprofile=coverage.out ./...
 
       - name: Upload coverage report
         if: always()
@@ -157,10 +166,14 @@ jobs:
       # Make `docker compose build` delegate to `buildx bake`, which honours the
       # cache_from/cache_to directives in docker-compose.yml.
       COMPOSE_BAKE: "true"
-      # Read from and write to the GitHub Actions layer cache. buildx bake scopes
-      # this per target (per service) automatically, so the 8 service images do
-      # not clobber each other's cache.
-      BUILDX_CACHE: "type=gha,mode=max"
+      # Read from and write to the GitHub Actions layer cache, under a scope
+      # dedicated to this job (distinct from prod-cd.yml's per-image scopes).
+      BUILDX_CACHE: "type=gha,mode=max,scope=e2e"
+      # Next.js runs natively on this runner (not inside the compose network),
+      # so it can't resolve the `devis-gateway` Docker-internal hostname that
+      # next.config.ts/layout.tsx fall back to outside development. The
+      # gateway IS reachable via its host port mapping, so point there instead.
+      API_PROXY_TARGET: "http://localhost:8080"
     steps:
       - uses: actions/checkout@v6
 
@@ -213,17 +226,20 @@ jobs:
           docker compose logs
           exit 1
 
-      - name: Download Next build artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: next-build
-          path: front/.next
-
       - name: Install front dependencies
         working-directory: front
         run: npm ci
 
-      - name: Cypress run against real backend
+      - name: Build front (with API_PROXY_TARGET baked in)
+        working-directory: front
+        run: npm run build
+
+      # Runs the whole (mocked) suite here — their cy.intercept calls still
+      # apply, a real backend running alongside doesn't change that — so
+      # front-quality doesn't need its own separate Cypress pass. The real
+      # backend stack still boots and is smoke-tested via the gateway
+      # readiness check above.
+      - name: Cypress run (full suite, real backend up)
         uses: cypress-io/github-action@v4
         with:
           install: false
