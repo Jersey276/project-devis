@@ -100,7 +100,14 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-no-reply@project-devis.local}
+      RESEND_API_KEY_FILE: /run/secrets/resend_api_key
       RESET_PASSWORD_BASE_URL: ${RESET_PASSWORD_BASE_URL:-http://localhost:3001/reset-password}
+      VERIFY_EMAIL_BASE_URL: ${VERIFY_EMAIL_BASE_URL:-http://localhost:3001/verify-email}
+      CLIENT_INVITE_BASE_URL: ${CLIENT_INVITE_BASE_URL:-http://localhost:3001/accept-invitation}
+      EMAIL_CHANGE_BASE_URL: ${EMAIL_CHANGE_BASE_URL:-http://localhost:3001/confirm-email-change}
+    secrets:
+      - db_password
+      - resend_api_key
 
   devis-user:
     <<: *db-service
