@@ -188,7 +188,7 @@ func NewEmailSenderFromEnv() EmailSender {
 	inviteBaseURL := getClientInviteBaseURL()
 	emailChangeURL := getEmailChangeBaseURL()
 
-	if apiKey := ResendAPIKey.GetValue(); apiKey != "" {
+	if apiKey := ReadSecret(ResendAPIKey, ResendAPIKeyFile); apiKey != "" {
 		from := SMTPFrom.GetValue()
 		if from == "" {
 			from = "no-reply@project-devis.local"
