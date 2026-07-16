@@ -163,33 +163,35 @@ export default function PaymentDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] grid-rows-[auto_1fr] overflow-hidden p-6">
         <DialogHeader>
           <DialogTitle>
             {plan ? t("title", { name: plan.name }) : t("title", { name: "" })}
           </DialogTitle>
         </DialogHeader>
 
-        {loading && (
-          <p className="text-sm text-muted-foreground">{t("loading")}</p>
-        )}
+        <div className="overflow-y-auto pr-2 -mr-2">
+          {loading && (
+            <p className="text-sm text-muted-foreground">{t("loading")}</p>
+          )}
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
-        {clientSecret && stripePromise && (
-          <StripeErrorBoundary fallback={null}>
-            <Elements
-              stripe={stripePromise}
-              options={{ clientSecret, locale: "fr" }}
-            >
-              <CheckoutForm
-                onSuccess={onSuccess}
-                onClose={() => handleOpenChange(false)}
-                billingDetails={billingDetails}
-              />
-            </Elements>
-          </StripeErrorBoundary>
-        )}
+          {clientSecret && stripePromise && (
+            <StripeErrorBoundary fallback={null}>
+              <Elements
+                stripe={stripePromise}
+                options={{ clientSecret, locale: "fr" }}
+              >
+                <CheckoutForm
+                  onSuccess={onSuccess}
+                  onClose={() => handleOpenChange(false)}
+                  billingDetails={billingDetails}
+                />
+              </Elements>
+            </StripeErrorBoundary>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -31,17 +31,17 @@ export default function VerifyEmailForm({
   const [verifying, setVerifying] = useState(!!token);
   const [verifyDone, setVerifyDone] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
+  const verifyStarted = useRef(false);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || verifyStarted.current) return;
+    verifyStarted.current = true;
 
-    let cancelled = false;
     (async () => {
       const result = await apiFetch("/api/auth/email/verify", {
         method: "POST",
         body: JSON.stringify({ token }),
       });
-      if (cancelled) return;
       setVerifying(false);
       if (result.ok || result.body.code === CODE_ALREADY_VERIFIED) {
         setVerifyDone(true);
@@ -58,9 +58,6 @@ export default function VerifyEmailForm({
       }
       toast.error(t("verifyInvalidToken"));
     })();
-    return () => {
-      cancelled = true;
-    };
   }, [token, t]);
 
   async function handleResend() {
