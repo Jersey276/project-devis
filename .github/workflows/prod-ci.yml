@@ -174,9 +174,6 @@ jobs:
       # next.config.ts/layout.tsx fall back to outside development. The
       # gateway IS reachable via its host port mapping, so point there instead.
       API_PROXY_TARGET: "http://localhost:8080"
-      # Lets the real-backend Cypress spec opt in; every other job leaves this
-      # unset, so it stays a no-op describe.skip there.
-      CYPRESS_REAL_BACKEND: "1"
     steps:
       - uses: actions/checkout@v6
 
@@ -237,10 +234,11 @@ jobs:
         working-directory: front
         run: npm run build
 
-      # Runs the whole suite here (mocked specs included — their cy.intercept
-      # calls still apply, a real backend running alongside doesn't change
-      # that) so front-quality doesn't need its own separate Cypress pass.
-      # Only invoice-real-backend.cy.ts actually exercises the real backend.
+      # Runs the whole (mocked) suite here — their cy.intercept calls still
+      # apply, a real backend running alongside doesn't change that — so
+      # front-quality doesn't need its own separate Cypress pass. The real
+      # backend stack still boots and is smoke-tested via the gateway
+      # readiness check above.
       - name: Cypress run (full suite, real backend up)
         uses: cypress-io/github-action@v4
         with:
