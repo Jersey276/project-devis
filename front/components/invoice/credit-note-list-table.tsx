@@ -27,7 +27,7 @@ import {
   readCreditNotesFromBody,
 } from "@/lib/services/invoices";
 import { exportCreditNotePdf } from "@/lib/services/export";
-import { formatEurosFromCents } from "@/lib/utils";
+import { formatEurosFromCents, formatTimestampDateFR } from "@/lib/utils";
 import type { BackendCreditNoteSummary } from "@/types/backend";
 
 const PAGE_SIZE = 20;
@@ -228,7 +228,7 @@ function CreditNoteListTableInner() {
                     {item.isTotal ? t("total") : t("partial")}
                   </Badge>
                 </DataTableCell>
-                <DataTableCell>{item.issuedAt || "—"}</DataTableCell>
+                <DataTableCell>{formatTimestampDateFR(item.issuedAt)}</DataTableCell>
                 <DataTableCell className="tabular-nums">
                   -{formatEurosFromCents(item.totalTtc)}
                 </DataTableCell>

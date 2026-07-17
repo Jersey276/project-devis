@@ -43,7 +43,7 @@ import { listClients } from "@/lib/services/clients";
 import { listQuotes } from "@/lib/services/quotes";
 import { useMode } from "@/lib/mode-context";
 import { exportInvoicePdf } from "@/lib/services/export";
-import { formatEurosFromCents } from "@/lib/utils";
+import { formatDateFR, formatEurosFromCents } from "@/lib/utils";
 import type {
   BackendClient,
   BackendInvoiceLifecycleStatus,
@@ -435,7 +435,7 @@ function InvoiceListTableInner() {
                   <InvoiceLifecycleBadge status={item.lifecycle} />
                 </DataTableCell>
                 <DataTableCell>{item.quoteId}</DataTableCell>
-                <DataTableCell>{item.dueDate || "—"}</DataTableCell>
+                <DataTableCell>{formatDateFR(item.dueDate)}</DataTableCell>
                 <DataTableCell className="tabular-nums">
                   {formatEurosFromCents(item.totalTtc)}
                 </DataTableCell>
