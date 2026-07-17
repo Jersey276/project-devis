@@ -29,7 +29,6 @@ type scheduleViewModel struct {
 	QuoteLabel     string
 	MonthlyTotals  []scheduleMonthTotalView
 	PlannedTotal   string
-	QuoteTotal     string
 }
 
 type scheduleMonthTotalView struct {
@@ -95,7 +94,6 @@ func buildScheduleViewModel(in scheduleRenderInput) scheduleViewModel {
 		QuoteLabel:     quoteLabel,
 		MonthlyTotals:  months,
 		PlannedTotal:   format.Cents(s.PlannedTotalCents),
-		QuoteTotal:     format.Cents(s.QuoteTotalCents),
 	}
 }
 
