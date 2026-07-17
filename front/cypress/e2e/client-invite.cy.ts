@@ -273,7 +273,7 @@ describe("Client invitation", () => {
         statusCode: 200,
         body: { success: true, addresses: [address] },
       }).as("listAddresses");
-      cy.intercept("GET", "/api/users/countries**", {
+      cy.intercept("GET", "/api/users/countries/available**", {
         statusCode: 200,
         body: { success: true, countries: [{ id: 1, code: "FR", name: "France" }] },
       });
