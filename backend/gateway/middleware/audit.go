@@ -3,9 +3,11 @@ package middleware
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -19,7 +21,58 @@ import (
 const (
 	auditChannelSize = 512
 	auditBodyLimit   = 64 * 1024 // 64 KB
+	redactedValue    = "[REDACTED]"
 )
+
+// sensitiveFields lists JSON keys (case-insensitive) whose values must never
+// reach the audit log store, e.g. plaintext passwords or bank details.
+var sensitiveFields = map[string]bool{
+	"password":     true,
+	"old_password": true,
+	"new_password": true,
+	"iban":         true,
+	"bic":          true,
+}
+
+// redactJSONBody parses body as JSON and blanks out sensitive field values,
+// recursing into nested objects/arrays. Non-JSON input (e.g. a raw query
+// string) is returned unchanged.
+func redactJSONBody(body string) string {
+	trimmed := strings.TrimSpace(body)
+	if trimmed == "" {
+		return body
+	}
+
+	var parsed any
+	if err := json.Unmarshal([]byte(trimmed), &parsed); err != nil {
+		return body
+	}
+
+	redactValue(parsed)
+
+	redacted, err := json.Marshal(parsed)
+	if err != nil {
+		return body
+	}
+	return string(redacted)
+}
+
+func redactValue(v any) {
+	switch val := v.(type) {
+	case map[string]any:
+		for k, child := range val {
+			if sensitiveFields[strings.ToLower(k)] {
+				val[k] = redactedValue
+				continue
+			}
+			redactValue(child)
+		}
+	case []any:
+		for _, child := range val {
+			redactValue(child)
+		}
+	}
+}
 
 type auditEntry struct {
 	userID     string
@@ -134,8 +187,8 @@ func (al *AuditLogger) Middleware() gin.HandlerFunc {
 			method:     c.Request.Method,
 			url:        c.Request.URL.Path,
 			durationMs: durationMs,
-			reqBody:    reqBodyStr,
-			respBody:   bw.body.String(),
+			reqBody:    redactJSONBody(reqBodyStr),
+			respBody:   redactJSONBody(bw.body.String()),
 			respStatus: int32(c.Writer.Status()),
 		}
 
