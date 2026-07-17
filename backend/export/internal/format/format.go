@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Cents formats a cent-denominated integer as a French-locale euro string,
@@ -55,16 +56,21 @@ func Rate(rate string) string {
 	return rate + " %"
 }
 
-// Date extracts the date portion of an RFC3339 string for display.
-// "2024-03-15T..." → "2024-03-15". Returns the input unchanged if no 'T' is found.
-func Date(rfc3339 string) string {
-	if rfc3339 == "" {
+// Date formats an RFC3339 timestamp or a "2006-01-02" date string as a
+// French-locale date, e.g. "2024-03-15T10:30:00Z" → "15/03/2024".
+// Returns the input unchanged if it cannot be parsed.
+func Date(value string) string {
+	if value == "" {
 		return ""
 	}
-	if i := strings.IndexByte(rfc3339, 'T'); i > 0 {
-		return rfc3339[:i]
+	if i := strings.IndexByte(value, 'T'); i > 0 {
+		value = value[:i]
 	}
-	return rfc3339
+	t, err := time.Parse("2006-01-02", value)
+	if err != nil {
+		return value
+	}
+	return t.Format("02/01/2006")
 }
 
 // ShortID returns the first 8 characters of an ID string,

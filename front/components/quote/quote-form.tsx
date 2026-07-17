@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatDateFR } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Loader2Icon } from "lucide-react";
@@ -563,7 +564,7 @@ export default function QuoteForm({ quoteId }: QuoteFormProps) {
       {!isCustomer && validUntil && validUntil < new Date().toISOString().slice(0, 10) && (
         <Alert variant="destructive" className="mx-6 mt-6 w-auto">
           <AlertTitle>{t("expiredAlertTitle")}</AlertTitle>
-          <AlertDescription>{t("expiredAlertDescription", { date: validUntil })}</AlertDescription>
+          <AlertDescription>{t("expiredAlertDescription", { date: formatDateFR(validUntil) })}</AlertDescription>
         </Alert>
       )}
 

@@ -7,6 +7,7 @@ import {
   readLifecycleEventsFromBody,
 } from "@/lib/services/invoices";
 import type { BackendInvoiceLifecycleEvent } from "@/types/backend";
+import { formatDateTimeFR } from "@/lib/utils";
 
 type Props = {
   invoiceId: string;
@@ -38,7 +39,7 @@ export default function LifecycleTimeline({ invoiceId, refreshKey }: Props) {
           {events.map((e, i) => (
             <li key={i} className="flex items-baseline gap-2 border-b py-1">
               <span className="font-medium">{t(`status.${e.status}`)}</span>
-              <span className="text-muted-foreground">{e.created_at}</span>
+              <span className="text-muted-foreground">{formatDateTimeFR(e.created_at)}</span>
               {e.note ? <span className="text-muted-foreground">— {e.note}</span> : null}
             </li>
           ))}

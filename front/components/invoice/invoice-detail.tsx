@@ -37,7 +37,7 @@ import {
   readInvoiceFromBody,
 } from "@/lib/services/invoices";
 import { exportInvoiceFacturx, exportInvoicePdf } from "@/lib/services/export";
-import { formatEurosFromCents } from "@/lib/utils";
+import { formatDateFR, formatDateTimeFR, formatEurosFromCents } from "@/lib/utils";
 import type { BackendInvoiceDetails, BackendInvoiceParty } from "@/types/backend";
 
 function partyLines(p: BackendInvoiceParty | undefined): string[] {
@@ -257,9 +257,9 @@ export default function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
         </div>
 
         <div className="grid grid-cols-3 gap-4 text-sm text-muted-foreground">
-          <div>{t("saleDate")}: {invoice.sale_date || "—"}</div>
-          <div>{t("dueDate")}: {invoice.due_date || "—"}</div>
-          <div>{t("issuedAt")}: {invoice.issued_at || "—"}</div>
+          <div>{t("saleDate")}: {formatDateFR(invoice.sale_date)}</div>
+          <div>{t("dueDate")}: {formatDateFR(invoice.due_date)}</div>
+          <div>{t("issuedAt")}: {formatDateTimeFR(invoice.issued_at)}</div>
         </div>
 
         <table className="w-full border-collapse text-sm">
