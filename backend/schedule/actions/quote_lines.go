@@ -2,6 +2,7 @@ package actions
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -12,6 +13,16 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
+
+type quoteLineData struct {
+	Kind     string             `json:"kind"`
+	Sublines []quoteLineSubline `json:"sublines"`
+}
+
+type quoteLineSubline struct {
+	Quantity  string `json:"quantity"`
+	UnitPrice int64  `json:"unit_price"`
+}
 
 var quoteLineExpectedCentsFetcher = fetchQuoteLineExpectedCentsFromQuoteService
 
@@ -59,13 +70,45 @@ func fetchQuoteLineExpectedCentsFromQuoteService(ctx context.Context, userID, qu
 		if lineID == "" {
 			continue
 		}
-		qty, err := strconv.ParseFloat(strings.TrimSpace(line.GetQuantity()), 64)
+
+		amount, err := quoteLineExpectedCents(line)
 		if err != nil {
 			return nil, fmt.Errorf("invalid quote line quantity for %s: %w", lineID, err)
 		}
-		// quote unit_price is stored in cents.
-		amounts[lineID] = int64(float64(line.GetUnitPrice())*qty + 0.5)
+		amounts[lineID] = amount
 	}
 
 	return amounts, nil
+}
+
+// quoteLineExpectedCents computes the expected amount for a single quote line.
+// Detailed lines (kind="detailed", or legacy type="multiple") carry no price of
+// their own — their amount is the sum of their sublines — while simple lines
+// price directly from quantity * unit_price.
+func quoteLineExpectedCents(line *quoteGrpc.QuoteLine) (int64, error) {
+	var data quoteLineData
+	_ = json.Unmarshal([]byte(line.GetData()), &data)
+	kind := strings.TrimSpace(data.Kind)
+	if kind == "" && line.GetType() == "multiple" {
+		kind = "detailed"
+	}
+
+	if kind == "detailed" {
+		var total int64
+		for _, sub := range data.Sublines {
+			qty, err := strconv.ParseFloat(strings.TrimSpace(sub.Quantity), 64)
+			if err != nil {
+				continue
+			}
+			total += int64(float64(sub.UnitPrice)*qty + 0.5)
+		}
+		return total, nil
+	}
+
+	qty, err := strconv.ParseFloat(strings.TrimSpace(line.GetQuantity()), 64)
+	if err != nil {
+		return 0, err
+	}
+	// quote unit_price is stored in cents.
+	return int64(float64(line.GetUnitPrice())*qty + 0.5), nil
 }
