@@ -30,7 +30,7 @@ describe("Countries page", () => {
         },
       },
     }).as("getAuthMe");
-    cy.intercept("GET", "/api/users/countries", {
+    cy.intercept("GET", "/api/users/countries/available", {
       statusCode: 200,
       body: { success: true, countries: opts?.countries ?? COUNTRIES },
     }).as("getCountries");

@@ -80,7 +80,7 @@ function stubSubscriptionTab(subscription = FREE_SUB) {
     statusCode: 200,
     body: { success: true, addresses: [] },
   });
-  cy.intercept("GET", "/api/users/countries", {
+  cy.intercept("GET", "/api/users/countries/available", {
     statusCode: 200,
     body: { success: true, countries: [] },
   });

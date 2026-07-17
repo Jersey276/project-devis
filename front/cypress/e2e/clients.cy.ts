@@ -3,7 +3,7 @@ import { client, type ClientFixture } from "../support/fixtures";
 const COUNTRIES = [{ id: 1, code: "FR", name: "France" }];
 
 function stubCountries() {
-  cy.intercept("GET", "/api/users/countries", {
+  cy.intercept("GET", "/api/users/countries/available", {
     statusCode: 200,
     body: { success: true, countries: COUNTRIES },
   }).as("getCountries");
