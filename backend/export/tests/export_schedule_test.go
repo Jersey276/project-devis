@@ -180,6 +180,40 @@ func TestExportSchedule_Success_WithEmptyMonthlyTotals(t *testing.T) {
 	}
 }
 
+func TestExportSchedule_Success_RendersLabelsInsteadOfRawIDs(t *testing.T) {
+	sc, qc, gt := happyScheduleFakes()
+	var renderedHTML []byte
+	gt.convert = func(_ context.Context, html []byte) ([]byte, error) {
+		renderedHTML = html
+		return []byte("%PDF-1.4 fake"), nil
+	}
+
+	resp, err := scheduleexport.Export(context.Background(), sc, qc, gt, validScheduleReq())
+	if err != nil {
+		t.Fatalf("unexpected transport error: %v", err)
+	}
+	if !resp.Success || resp.Code != codes.Success {
+		t.Fatalf("expected Success, got success=%v code=%d", resp.Success, resp.Code)
+	}
+
+	html := string(renderedHTML)
+	if !strings.Contains(html, "Brouillon") {
+		t.Errorf("expected status label 'Brouillon' in rendered HTML, not the raw status")
+	}
+	if strings.Contains(html, ">DRAFT<") {
+		t.Errorf("expected raw status DRAFT not to leak into rendered HTML")
+	}
+	if !strings.Contains(html, "Cuisine équipée") {
+		t.Errorf("expected quote name 'Cuisine équipée' in rendered HTML instead of the raw quote id")
+	}
+	if strings.Contains(html, "quote-1") {
+		t.Errorf("expected raw quote id not to leak into rendered HTML")
+	}
+	if !strings.Contains(html, "Résumé mensuel") {
+		t.Errorf("expected a single month-by-month summary table")
+	}
+}
+
 func TestExportSchedule_Success_WhenDenied(t *testing.T) {
 	sc, qc, gt := happyScheduleFakes()
 	sc.getSchedule = func(_ context.Context, req *schedulepb.GetScheduleRequest) (*schedulepb.GetScheduleResponse, error) {

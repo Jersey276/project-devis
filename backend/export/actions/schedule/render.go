@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"project-devis-export/internal/format"
-	"project-devis-export/quote"
 	schedulepb "project-devis-export/services/schedule"
 	"project-devis-export/templates"
 )
@@ -18,7 +17,7 @@ var scheduleTpl = template.Must(template.New("schedule.html").Parse(string(templ
 
 type scheduleRenderInput struct {
 	Schedule  *schedulepb.ScheduleDetails
-	QuoteLine map[string]*quote.QuoteLine
+	QuoteName string
 }
 
 type scheduleViewModel struct {
@@ -27,23 +26,30 @@ type scheduleViewModel struct {
 	Status         string
 	StartMonth     string
 	DurationMonths int32
-	QuoteID        string
-	Lines          []scheduleLineView
+	QuoteLabel     string
 	MonthlyTotals  []scheduleMonthTotalView
 	PlannedTotal   string
 	QuoteTotal     string
 }
 
-type scheduleLineView struct {
-	Name      string
-	Expected  string
-	Planned   string
-	Remaining string
+type scheduleMonthTotalView struct {
+	Label     string
+	Amount    string
+	Cumulated string
 }
 
-type scheduleMonthTotalView struct {
-	Label  string
-	Amount string
+var scheduleStatusLabels = map[string]string{
+	"DRAFT":     "Brouillon",
+	"NEGOCIATE": "En négociation",
+	"DENIED":    "Refusé",
+	"VALID":     "Validé",
+}
+
+func scheduleStatusLabel(status string) string {
+	if label, ok := scheduleStatusLabels[status]; ok {
+		return label
+	}
+	return status
 }
 
 func renderSchedule(ctx context.Context, gt schedulePDFConverter, in scheduleRenderInput) ([]byte, error) {
@@ -58,36 +64,35 @@ func renderSchedule(ctx context.Context, gt schedulePDFConverter, in scheduleRen
 
 func buildScheduleViewModel(in scheduleRenderInput) scheduleViewModel {
 	s := in.Schedule
-	lines := make([]scheduleLineView, 0, len(s.Lines))
-	for _, line := range s.Lines {
-		name := line.QuoteLineId
-		if ql, ok := in.QuoteLine[line.QuoteLineId]; ok && strings.TrimSpace(ql.Name) != "" {
-			name = ql.Name
-		}
-		lines = append(lines, scheduleLineView{
-			Name:      name,
-			Expected:  format.Cents(line.ExpectedCents),
-			Planned:   format.Cents(line.PlannedCents),
-			Remaining: format.Cents(line.ExpectedCents - line.PlannedCents),
+
+	amountByMonth := make(map[int32]int64, len(s.ColumnTotals))
+	for _, col := range s.ColumnTotals {
+		amountByMonth[col.MonthIndex] = col.AmountCents
+	}
+
+	months := make([]scheduleMonthTotalView, 0, s.DurationMonths)
+	var cumulated int64
+	for monthIndex := int32(1); monthIndex <= s.DurationMonths; monthIndex++ {
+		cumulated += amountByMonth[monthIndex]
+		months = append(months, scheduleMonthTotalView{
+			Label:     monthLabel(s.StartMonth, monthIndex),
+			Amount:    format.Cents(amountByMonth[monthIndex]),
+			Cumulated: format.Cents(cumulated),
 		})
 	}
 
-	months := make([]scheduleMonthTotalView, 0, len(s.ColumnTotals))
-	for _, col := range s.ColumnTotals {
-		months = append(months, scheduleMonthTotalView{
-			Label:  monthLabel(s.StartMonth, col.MonthIndex),
-			Amount: format.Cents(col.AmountCents),
-		})
+	quoteLabel := strings.TrimSpace(in.QuoteName)
+	if quoteLabel == "" {
+		quoteLabel = format.ShortID(s.QuoteId)
 	}
 
 	return scheduleViewModel{
 		ShortID:        format.ShortID(s.ScheduleId),
 		ScheduleName:   s.Name,
-		Status:         s.Status,
+		Status:         scheduleStatusLabel(s.Status),
 		StartMonth:     s.StartMonth,
 		DurationMonths: s.DurationMonths,
-		QuoteID:        s.QuoteId,
-		Lines:          lines,
+		QuoteLabel:     quoteLabel,
 		MonthlyTotals:  months,
 		PlannedTotal:   format.Cents(s.PlannedTotalCents),
 		QuoteTotal:     format.Cents(s.QuoteTotalCents),

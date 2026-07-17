@@ -124,38 +124,17 @@
       </article>
       <article class="meta-card">
         <div class="meta-label">Devis lié</div>
-        <div class="meta-value">{{.QuoteID}}</div>
+        <div class="meta-value">{{.QuoteLabel}}</div>
       </article>
     </section>
 
-    <h2>Répartition par ligne</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Ligne</th>
-          <th class="num">Prévu</th>
-          <th class="num">Planifié</th>
-          <th class="num">Restant</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{range .Lines}}
-        <tr>
-          <td>{{.Name}}</td>
-          <td class="num">{{.Expected}}</td>
-          <td class="num">{{.Planned}}</td>
-          <td class="num">{{.Remaining}}</td>
-        </tr>
-        {{end}}
-      </tbody>
-    </table>
-
-    <h2>Totaux mensuels</h2>
+    <h2>Résumé mensuel</h2>
     <table>
       <thead>
         <tr>
           <th>Mois</th>
-          <th class="num">Montant</th>
+          <th class="num">Montant planifié</th>
+          <th class="num">Cumul</th>
         </tr>
       </thead>
       <tbody>
@@ -163,15 +142,16 @@
         <tr>
           <td>{{.Label}}</td>
           <td class="num">{{.Amount}}</td>
+          <td class="num">{{.Cumulated}}</td>
         </tr>
         {{end}}
         <tr class="total-row">
           <td>Total planifié</td>
-          <td class="num">{{.PlannedTotal}}</td>
+          <td class="num" colspan="2">{{.PlannedTotal}}</td>
         </tr>
         <tr class="total-row">
           <td>Total devis</td>
-          <td class="num">{{.QuoteTotal}}</td>
+          <td class="num" colspan="2">{{.QuoteTotal}}</td>
         </tr>
       </tbody>
     </table>
