@@ -2,6 +2,7 @@ package actions
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
@@ -245,13 +246,14 @@ func (s *Server) buildResolved(ctx context.Context, invoiceID, userID string, q 
 			rate, label, taxID = oss.rate, oss.label, 0
 		}
 		numRate := parseRate(rate)
+		quantity, unitPriceCents := lineQuantityAndUnitPrice(l, ht)
 		snapLines = append(snapLines, lineSnapshot{
 			position:       pos,
 			quoteLineID:    l.GetLineId(),
 			name:           l.GetName(),
 			unit:           l.GetUnit(),
-			quantity:       l.GetQuantity(),
-			unitPriceCents: l.GetUnitPrice(),
+			quantity:       quantity,
+			unitPriceCents: unitPriceCents,
 			lineHTCents:    ht,
 			taxID:          taxID,
 			taxRate:        rate,
@@ -334,12 +336,62 @@ func (s *Server) fetchQuoteAndLines(ctx context.Context, userID, quoteID string)
 	return resp.GetQuote(), resp.GetLines(), codes.Success, nil
 }
 
+type quoteLineData struct {
+	Kind     string             `json:"kind"`
+	Sublines []quoteLineSubline `json:"sublines"`
+}
+
+type quoteLineSubline struct {
+	Quantity  string `json:"quantity"`
+	UnitPrice int64  `json:"unit_price"`
+}
+
+func quoteLineKind(l *quoteGrpc.QuoteLine) string {
+	var data quoteLineData
+	_ = json.Unmarshal([]byte(l.GetData()), &data)
+	kind := strings.TrimSpace(data.Kind)
+	if kind == "" && l.GetType() == "multiple" {
+		kind = "detailed"
+	}
+	return kind
+}
+
+// lineHTFromQuoteLine computes a quote line's own HT amount for a direct
+// quote-to-invoice conversion. Detailed lines carry no price of their own —
+// their amount is the sum of their sublines, mirroring quoteLineExpectedCents
+// in the schedule service and evalLine in the gateway.
 func lineHTFromQuoteLine(l *quoteGrpc.QuoteLine) int64 {
+	if quoteLineKind(l) == "detailed" {
+		var data quoteLineData
+		_ = json.Unmarshal([]byte(l.GetData()), &data)
+		var total int64
+		for _, sub := range data.Sublines {
+			qty, err := strconv.ParseFloat(strings.ReplaceAll(strings.TrimSpace(sub.Quantity), ",", "."), 64)
+			if err != nil {
+				continue
+			}
+			total += int64(float64(sub.UnitPrice)*qty + 0.5)
+		}
+		return total
+	}
+
 	qty, err := strconv.ParseFloat(strings.ReplaceAll(strings.TrimSpace(l.GetQuantity()), ",", "."), 64)
 	if err != nil {
 		return 0
 	}
 	return int64(float64(l.GetUnitPrice())*qty + 0.5)
+}
+
+// lineQuantityAndUnitPrice returns the (quantity, unit_price_cents) pair to
+// snapshot on the invoice line. Detailed lines have no meaningful quantity or
+// unit price of their own (they are the sum of heterogeneous sublines), so a
+// quantity of 1 and a unit price equal to the line's HT total are derived —
+// avoiding a misleading 0 while keeping quantity * unit_price == total.
+func lineQuantityAndUnitPrice(l *quoteGrpc.QuoteLine, htCents int64) (string, int64) {
+	if quoteLineKind(l) == "detailed" {
+		return "1", htCents
+	}
+	return l.GetQuantity(), l.GetUnitPrice()
 }
 
 func clientTypeToString(t usersGrpc.ClientType) string {
