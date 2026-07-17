@@ -39,7 +39,7 @@ func Export(ctx context.Context, sc schedulepb.ScheduleServiceClient, qc quote.Q
 		return fail(mapScheduleCode(sResp.Code)), nil
 	}
 
-	lineByID := map[string]*quote.QuoteLine{}
+	quoteName := ""
 	qResp, err := qc.GetQuote(ctx, &quote.GetQuoteRequest{
 		QuoteId: sResp.Schedule.QuoteId,
 		UserId:  req.UserId,
@@ -47,15 +47,13 @@ func Export(ctx context.Context, sc schedulepb.ScheduleServiceClient, qc quote.Q
 	if err != nil {
 		return nil, err
 	}
-	if qResp.Success {
-		for _, line := range qResp.Lines {
-			lineByID[line.LineId] = line
-		}
+	if qResp.Success && qResp.Quote != nil {
+		quoteName = qResp.Quote.Name
 	}
 
 	pdfBytes, err := renderSchedule(ctx, gt, scheduleRenderInput{
 		Schedule:  sResp.Schedule,
-		QuoteLine: lineByID,
+		QuoteName: quoteName,
 	})
 	if err != nil {
 		return nil, err
