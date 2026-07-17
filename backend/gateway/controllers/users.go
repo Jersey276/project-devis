@@ -118,12 +118,15 @@ func UserRoutes(r *gin.RouterGroup) {
 	addresses.DELETE("/:id", func(c *gin.Context) { ArchiveAddress(c, client) })
 
 	countries := r.Group("/countries")
-	countries.Use(middleware.RequireAdminResource(authz.ResourceAdminCountries))
-	countries.GET("", func(c *gin.Context) { ListCountries(c, client) })
-	countries.POST("", func(c *gin.Context) { CreateCountry(c, client) })
-	countries.GET("/:id", func(c *gin.Context) { GetCountry(c, client) })
-	countries.PUT("/:id", func(c *gin.Context) { UpdateCountry(c, client) })
-	countries.DELETE("/:id", func(c *gin.Context) { DeleteCountry(c, client) })
+	countries.GET("/available", func(c *gin.Context) { ListCountriesForUser(c, client) })
+
+	adminCountries := countries.Group("")
+	adminCountries.Use(middleware.RequireAdminResource(authz.ResourceAdminCountries))
+	adminCountries.GET("", func(c *gin.Context) { ListCountries(c, client) })
+	adminCountries.POST("", func(c *gin.Context) { CreateCountry(c, client) })
+	adminCountries.GET("/:id", func(c *gin.Context) { GetCountry(c, client) })
+	adminCountries.PUT("/:id", func(c *gin.Context) { UpdateCountry(c, client) })
+	adminCountries.DELETE("/:id", func(c *gin.Context) { DeleteCountry(c, client) })
 
 	groups := r.Group("/country-groups")
 	groups.Use(middleware.RequireAdminResource(authz.ResourceAdminCountryGroup))
@@ -951,6 +954,28 @@ func resolveMyClient(c *gin.Context, client users.UserServiceClient) *users.Clie
 }
 
 func ListCountries(c *gin.Context, client users.UserServiceClient) {
+	resp, err := client.ListCountries(c.Request.Context(), &users.ListCountriesRequest{})
+	if err != nil {
+		usersErrors.unavailable(c)
+		return
+	}
+	if !resp.Success {
+		usersErrors.reply(c, resp.Code)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "countries": marshalCountries(resp.Countries)})
+}
+
+func ListCountriesForUser(c *gin.Context, client users.UserServiceClient) {
+	if status, _ := c.Get(middleware.CtxAccountStatus); status == "suspended" {
+		c.JSON(http.StatusForbidden, gin.H{
+			"success": false,
+			"message": "Compte suspendu: accès restreint.",
+			"code":    "ACCOUNT_SUSPENDED",
+		})
+		return
+	}
+
 	resp, err := client.ListCountries(c.Request.Context(), &users.ListCountriesRequest{})
 	if err != nil {
 		usersErrors.unavailable(c)

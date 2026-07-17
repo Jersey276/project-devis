@@ -72,8 +72,10 @@ References:
 - `GET/PUT/DELETE /api/users/me`
 - CRUD clients: `/api/users/clients`
 - CRUD adresses: `/api/users/addresses`
-- CRUD pays/groupes: `/api/users/countries`, `/api/users/country-groups`
-- CRUD taxes: `/api/users/taxes`
+- CRUD pays/groupes (super_admin): `/api/users/countries`, `/api/users/country-groups`
+  - Lecture publique (tout utilisateur actif): `GET /api/users/countries/available`
+- CRUD taxes (super_admin): `/api/users/taxes`
+  - Lecture publique (tout utilisateur actif): `GET /api/users/taxes/available`
 
 ## Endpoints consentement (RGPD)
 

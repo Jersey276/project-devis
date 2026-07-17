@@ -36,7 +36,7 @@ function stubProfile(addresses = INITIAL_ADDRESSES) {
     statusCode: 200,
     body: { success: true, user: USER },
   }).as("getMe");
-  cy.intercept("GET", "/api/users/countries", {
+  cy.intercept("GET", "/api/users/countries/available", {
     statusCode: 200,
     body: { success: true, countries: COUNTRIES },
   }).as("getCountries");
@@ -248,7 +248,7 @@ describe("Profile page", () => {
 
       cy.contains("button", "Ajouter une adresse").click();
       cy.get("[data-slot='dialog-content']").should("be.visible");
-      // AddressForm fires /api/users/countries on mount; wait for it so the
+      // AddressForm fires /api/users/countries/available on mount; wait for it so the
       // combobox is populated before we start typing.
       cy.wait("@getCountries");
       cy.get("input[name='name']").should("be.visible");

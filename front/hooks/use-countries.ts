@@ -10,7 +10,7 @@ export function useCountries(reloadKey = 0, skip = false): Country[] {
   useEffect(() => {
     if (skip) return;
     let cancelled = false;
-    apiFetch("/api/users/countries").then(({ ok, body }) => {
+    apiFetch("/api/users/countries/available").then(({ ok, body }) => {
       if (cancelled) return;
       if (ok && Array.isArray(body.countries)) {
         setCountries(body.countries as Country[]);
